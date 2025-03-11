@@ -71,7 +71,10 @@
                    Margin="0,0,0,16"/>
         
         <!-- 表单内容 -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" 
+                      VerticalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Disabled"
+                      Style="{StaticResource AutoHideScrollViewerStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -137,7 +140,8 @@
                                     BorderBrush="{DynamicResource MaterialDesignDivider}" 
                                     BorderThickness="1" 
                                     MaxHeight="200">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                            Style="{StaticResource AutoHideScrollViewerStyle}">
                                     <ItemsControl ItemsSource="{Binding DepartStationSuggestions}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -186,7 +190,8 @@
                                     BorderBrush="{DynamicResource MaterialDesignDivider}" 
                                     BorderThickness="1" 
                                     MaxHeight="200">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                            Style="{StaticResource AutoHideScrollViewerStyle}">
                                     <ItemsControl ItemsSource="{Binding ArriveStationSuggestions}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>

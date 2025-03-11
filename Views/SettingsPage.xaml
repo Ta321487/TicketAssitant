@@ -22,7 +22,9 @@
                    Margin="0,0,0,20"/>
         
         <!-- 设置内容 -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" 
+                      VerticalScrollBarVisibility="Auto"
+                      Style="{StaticResource AutoHideScrollViewerStyle}">
             <StackPanel>
                 <!-- 外观设置 -->
                 <materialDesign:Card Margin="0,0,0,16" Padding="16">

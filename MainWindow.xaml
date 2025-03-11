@@ -236,6 +236,80 @@
                             ScrollViewer.IsDeferredScrollingEnabled="True"
                             ScrollViewer.CanContentScroll="True"
                             Visibility="{Binding ShowDataGrid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <DataGrid.Template>
+                            <ControlTemplate TargetType="DataGrid">
+                                <Border BorderThickness="{TemplateBinding BorderThickness}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        Background="{TemplateBinding Background}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- 表头 -->
+                                        <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
+                                                                      Grid.Row="0"
+                                                                      Grid.Column="0"
+                                                                      Grid.ColumnSpan="2"/>
+
+                                        <!-- 内容区域 -->
+                                        <ScrollViewer x:Name="DG_ScrollViewer" 
+                                                    Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Focusable="False"
+                                                    Padding="{TemplateBinding Padding}"
+                                                    VerticalScrollBarVisibility="Auto"
+                                                    HorizontalScrollBarVisibility="Auto">
+                                            <ScrollViewer.Style>
+                                                <Style TargetType="ScrollViewer">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ScrollViewer">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="*"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                    </Grid.RowDefinitions>
+                                                                    <ScrollContentPresenter Grid.Column="0" 
+                                                                                          Grid.Row="0"/>
+                                                                    <ScrollBar x:Name="PART_VerticalScrollBar"
+                                                                             Grid.Column="1"
+                                                                             Grid.Row="0"
+                                                                             Orientation="Vertical"
+                                                                             Value="{TemplateBinding VerticalOffset}"
+                                                                             Maximum="{TemplateBinding ScrollableHeight}"
+                                                                             ViewportSize="{TemplateBinding ViewportHeight}"
+                                                                             Style="{StaticResource AutoHideScrollBarStyle}"/>
+                                                                    <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                                                             Grid.Column="0"
+                                                                             Grid.Row="1"
+                                                                             Orientation="Horizontal"
+                                                                             Value="{TemplateBinding HorizontalOffset}"
+                                                                             Maximum="{TemplateBinding ScrollableWidth}"
+                                                                             ViewportSize="{TemplateBinding ViewportWidth}"
+                                                                             Style="{StaticResource AutoHideScrollBarStyle}"/>
+                                                                </Grid>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </ScrollViewer.Style>
+                                            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Border>
+                            </ControlTemplate>
+                        </DataGrid.Template>
                         <DataGrid.Resources>
                             <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -248,6 +322,22 @@
                                 <Setter Property="Foreground" Value="White" />
                                 <Setter Property="Height" Value="Auto" />
                                 <Setter Property="MinHeight" Value="45" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridColumnHeader">
+                                            <Grid>
+                                                <Border x:Name="BackgroundBorder"
+                                                        Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                    Margin="{TemplateBinding Padding}"/>
+                                                </Border>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                             </Style>
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
                                 <Setter Property="HorizontalAlignment" Value="Center" />
