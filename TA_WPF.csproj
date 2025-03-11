@@ -10,22 +10,35 @@
     <EnableComHosting>true</EnableComHosting>
     <EnableComServices>true</EnableComServices>
     <ApplicationIcon>Assets\Icons\app_icon.ico</ApplicationIcon>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
     <PackageReference Include="MaterialDesignColors" Version="2.1.4" />
+    <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
     <PackageReference Include="MySql.Data" Version="8.3.0" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="Styles\" />
     <Folder Include="Views\" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\Icons\app_icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="DesignTimeResources.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <ContainsDesignTimeResources>true</ContainsDesignTimeResources>
+    </Page>
+    <Page Include="App.xaml" />
+    <Page Include="MainWindow.xaml" />
+    <Page Include="Views\*.xaml" />
   </ItemGroup>
 
 </Project>

@@ -5,8 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TA_WPF.Views"
         xmlns:utils="clr-namespace:TA_WPF.Utils"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels" xmlns:converters="clr-namespace:TA_WPF.Converters" d:DataContext="{d:DesignInstance Type=viewmodels:AddTicketViewModel}"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" 
+        xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels" 
+        xmlns:converters="clr-namespace:TA_WPF.Converters" 
+        d:DataContext="{d:DesignInstance Type=viewmodels:AddTicketViewModel}"
         mc:Ignorable="d"
+        d:DesignHeight="800" d:DesignWidth="900"
         Title="添加车票" Height="1050" Width="900"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
@@ -17,44 +21,62 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="Microsoft YaHei"
+        materialDesign:ThemeAssist.Theme="{Binding Source={StaticResource Theme.Dark}, Converter={StaticResource BooleanToThemeConverter}}"
         SizeToContent="Manual">
     
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <converters:StationNameConverter x:Key="StationNameConverter" />
-        <Style x:Key="FormLabelStyle" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,0,8,0"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="FontFamily" Value="Microsoft YaHei"/>
-            <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
-        </Style>
-        <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
-            <Setter Property="Margin" Value="0,8,0,8"/>
-            <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
-            <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="True"/>
-            <Setter Property="FontFamily" Value="Microsoft YaHei"/>
-            <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
-            <Setter Property="Height" Value="Auto"/>
-            <Setter Property="MinHeight" Value="45"/>
-        </Style>
-        <Style x:Key="FormComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
-            <Setter Property="Margin" Value="0,8,0,8"/>
-            <Setter Property="Height" Value="Auto"/>
-            <Setter Property="MinHeight" Value="45"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
-            <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
-            <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
-        </Style>
-        <Style x:Key="FormComboBoxItemStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Height" Value="Auto"/>
-            <Setter Property="MinHeight" Value="35"/>
-            <Setter Property="Padding" Value="16,8"/>
-        </Style>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:StationNameConverter x:Key="StationNameConverter" />
+            <Style x:Key="FormLabelStyle" TargetType="TextBlock">
+                <Setter Property="Margin" Value="0,0,8,0"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+            </Style>
+            <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+            </Style>
+            <Style x:Key="FormNumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomNumberTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+            </Style>
+            <Style x:Key="FormReadOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomReadOnlyTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+            </Style>
+            <Style x:Key="FormSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomSearchTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+            </Style>
+            <Style x:Key="FormComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
+                <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
+                <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
+            </Style>
+            <Style x:Key="FormComboBoxItemStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="35"/>
+                <Setter Property="Padding" Value="16,8"/>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
     
     <Grid Margin="16">
@@ -128,7 +150,7 @@
                     <Grid Grid.Column="0">
                         <TextBox 
                              Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource FormTextBoxStyle}"
+                             Style="{StaticResource FormSearchTextBoxStyle}"
                              materialDesign:HintAssist.Hint="出发站"
                              Tag="Depart"
                              Margin="0"/>
@@ -178,7 +200,7 @@
                     <Grid Grid.Column="0">
                         <TextBox 
                              Text="{Binding ArriveStationSearchText, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource FormTextBoxStyle}"
+                             Style="{StaticResource FormSearchTextBoxStyle}"
                              materialDesign:HintAssist.Hint="到达站"
                              Tag="Arrive"
                              Margin="0"/>
@@ -244,19 +266,33 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="¥" 
+                             Grid.Column="0"
                              VerticalAlignment="Center" 
                              Margin="0,0,4,0"
                              FontFamily="Microsoft YaHei"
                              Style="{StaticResource MaterialDesignBody1TextBlock}"/>
                     <TextBox Grid.Column="1"
                          Text="{Binding Money, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
-                         Style="{StaticResource FormTextBoxStyle}"
+                         Style="{StaticResource FormNumberTextBoxStyle}"
                          materialDesign:HintAssist.Hint="金额"
                          PreviewTextInput="MoneyTextBox_PreviewTextInput"
                          LostFocus="MoneyTextBox_LostFocus"
-                         materialDesign:TextFieldAssist.HasClearButton="False"/>
+                         materialDesign:TextFieldAssist.HasClearButton="False"
+                         materialDesign:TextFieldAssist.RippleOnFocusEnabled="True"
+                         materialDesign:TextFieldAssist.SuffixText=""
+                         HorizontalContentAlignment="Left"
+                         Padding="8,8,4,8"/>
+                    <TextBlock Text="元" 
+                             Grid.Column="2"
+                             VerticalAlignment="Center" 
+                             Margin="4,0,0,0"
+                             FontWeight="Normal"
+                             FontFamily="Microsoft YaHei"
+                             Foreground="{DynamicResource MaterialDesignBody}"
+                             Style="{StaticResource MaterialDesignBody1TextBlock}"/>
                 </Grid>
                 
                 <TextBlock Grid.Row="3" Grid.Column="2" 
@@ -365,7 +401,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0" 
                              Text="{Binding CoachNo, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource FormTextBoxStyle}"
+                             Style="{StaticResource FormNumberTextBoxStyle}"
                              materialDesign:HintAssist.Hint="车厢号"
                              Margin="0"/>
                     <TextBlock Grid.Column="1" 
@@ -396,7 +432,7 @@
                         <TextBox Grid.Column="0" 
                                  Text="{Binding SeatNo, UpdateSourceTrigger=PropertyChanged}" 
                                  IsEnabled="{Binding IsSeatInputEnabled}"
-                                 Style="{StaticResource FormTextBoxStyle}"
+                                 Style="{StaticResource FormNumberTextBoxStyle}"
                                  materialDesign:HintAssist.Hint="座位号"
                                  Margin="0"/>
                         <ComboBox Grid.Column="1" 
@@ -489,16 +525,22 @@
                     Margin="0,16,0,0">
             <Button Content="重置" 
                     Command="{Binding ResetCommand}" 
-                    Style="{StaticResource MaterialDesignOutlinedButton}" 
+                    Style="{StaticResource MaterialDesignFlatButton}" 
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
                     Margin="0,0,16,0"
-                    Height="Auto"
+                    Height="48"
                     MinHeight="36"
+                    FontSize="{DynamicResource MaterialDesignFontSize}"
                     Padding="16,8"/>
             <Button Content="保存" 
                     Command="{Binding SaveCommand}" 
-                    Style="{StaticResource MaterialDesignRaisedButton}"
-                    Height="Auto"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
+                    Height="48"
                     MinHeight="36"
+                    FontSize="{DynamicResource MaterialDesignFontSize}"
                     Padding="16,8"/>
         </StackPanel>
     </Grid>

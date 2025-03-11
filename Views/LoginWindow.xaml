@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:TA_WPF.Views"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
+        d:DesignHeight="890" d:DesignWidth="450"
         Title="登录" Height="890" Width="450"
         MinHeight="890" MinWidth="450"
         WindowStartupLocation="CenterScreen"
@@ -18,46 +19,49 @@
         FontFamily="Microsoft YaHei"
         ResizeMode="CanResize"
         KeyDown="Window_KeyDown"
+        materialDesign:ThemeAssist.Theme="{Binding Source={StaticResource Theme.Dark}, Converter={StaticResource BooleanToThemeConverter}}"
         Loaded="Window_Loaded">
     
     <Window.Resources>
-        <Style x:Key="ResponsiveTextBlock" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
-        </Style>
-        
-        <Style x:Key="ResponsiveButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
-            <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
-            <Setter Property="Padding" Value="16,8"/>
-            <Setter Property="Height" Value="Auto"/>
-            <Setter Property="MinHeight" Value="36"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
-        </Style>
-        
-        <Style x:Key="ResponsiveTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignFilledTextBox}">
-            <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-            <Setter Property="Padding" Value="8,8,8,8"/>
-            <Setter Property="Height" Value="Auto"/>
-            <Setter Property="MinHeight" Value="48"/>
-        </Style>
-        
-        <Style x:Key="ResponsivePasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource MaterialDesignFilledPasswordBox}">
-            <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-            <Setter Property="Padding" Value="8,8,8,8"/>
-            <Setter Property="Height" Value="Auto"/>
-            <Setter Property="MinHeight" Value="48"/>
-        </Style>
-        
-        <Style x:Key="ResponsiveComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignFilledComboBox}">
-            <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-            <Setter Property="Padding" Value="8,8,8,8"/>
-            <Setter Property="Height" Value="Auto"/>
-            <Setter Property="MinHeight" Value="48"/>
-        </Style>
+        <ResourceDictionary>
+            <Style x:Key="ResponsiveTextBlock" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
+            </Style>
+            
+            <Style x:Key="ResponsiveButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
+                <Setter Property="Padding" Value="16,8"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="36"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
+            </Style>
+            
+            <Style x:Key="ResponsiveTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignFilledTextBox}">
+                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
+                <Setter Property="Margin" Value="0,0,0,16"/>
+                <Setter Property="Padding" Value="8,8,8,8"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="48"/>
+            </Style>
+            
+            <Style x:Key="ResponsivePasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource MaterialDesignFilledPasswordBox}">
+                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
+                <Setter Property="Margin" Value="0,0,0,16"/>
+                <Setter Property="Padding" Value="8,8,8,8"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="48"/>
+            </Style>
+            
+            <Style x:Key="ResponsiveComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignFilledComboBox}">
+                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
+                <Setter Property="Margin" Value="0,0,0,16"/>
+                <Setter Property="Padding" Value="8,8,8,8"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="48"/>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
     
     <materialDesign:DialogHost Identifier="LoginDialogHost">
@@ -144,8 +148,12 @@
                             <Button x:Name="CreateDatabaseButton"
                                     Content="创建"
                                     Grid.Column="1"
-                                    Style="{StaticResource ResponsiveButton}"
+                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                    materialDesign:ButtonAssist.CornerRadius="4"
+                                    Foreground="{DynamicResource GlobalAccentBrush}"
                                     Click="CreateDatabaseButton_Click"
+                                    Height="48"
+                                    FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"
                                     MinWidth="80"/>
                         </Grid>
                     </Expander>
@@ -234,7 +242,8 @@
                 <Button x:Name="LoginButton"
                         Content="登录"
                         Grid.Column="0"
-                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        materialDesign:ButtonAssist.CornerRadius="4"
                         Click="LoginButton_Click"
                         Margin="0,0,8,0"
                         Height="48"
@@ -244,7 +253,8 @@
                 <Button x:Name="CancelButton"
                         Content="关闭"
                         Grid.Column="1"
-                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        materialDesign:ButtonAssist.CornerRadius="4"
                         Click="CancelButton_Click"
                         Margin="8,0,0,0"
                         Height="48"

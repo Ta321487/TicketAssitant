@@ -17,6 +17,13 @@ using System.Globalization;
 using System.Data;
 using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
+using TA_WPF.Utils;
+using TA_WPF.ViewModels;
+using Theme = MaterialDesignThemes.Wpf.Theme;
+using BaseTheme = MaterialDesignThemes.Wpf.BaseTheme;
+using System.Windows.Threading;
+using MaterialDesignThemes.Wpf.Converters;
+using ITheme = MaterialDesignThemes.Wpf.ITheme;
 
 namespace TA_WPF.Views
 {
@@ -34,30 +41,135 @@ namespace TA_WPF.Views
 
         public LoginWindow()
         {
-            InitializeComponent();
-            UsernameTextBox.Focus();
-            
-            // 确保端口号文本框的清空按钮初始状态是禁用的
-            MaterialDesignThemes.Wpf.TextFieldAssist.SetHasClearButton(PortTextBox, false);
-            
-            // 初始化Snackbar消息队列
-            LoginSnackbar.MessageQueue = new SnackbarMessageQueue(TimeSpan.FromMilliseconds(3000));
-            
-            // 初始化主题图标
-            UpdateThemeIcon();
-            
-            // 从配置文件中加载上次使用的数据库名称和服务器地址
-            LoadLastDatabaseName();
-            LoadLastServerAddress();
-            
-            // 从配置文件中加载字体大小设置
-            LoadFontSizeFromConfig();
+            try
+            {
+                InitializeComponent();
+                UsernameTextBox.Focus();
+                
+                // 确保端口号文本框的清空按钮初始状态是禁用的
+                MaterialDesignThemes.Wpf.TextFieldAssist.SetHasClearButton(PortTextBox, false);
+                
+                // 初始化Snackbar消息队列
+                LoginSnackbar.MessageQueue = new SnackbarMessageQueue(TimeSpan.FromMilliseconds(3000));
+                
+                // 从配置文件中加载上次使用的数据库名称和服务器地址
+                LoadLastDatabaseName();
+                LoadLastServerAddress();
+                
+                // 从配置文件中加载字体大小设置
+                LoadFontSizeFromConfig();
+                
+                // 注意：UpdateThemeIcon已移至Window_Loaded事件中，确保UI元素已完全加载
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"LoginWindow构造函数异常: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                MessageBox.Show($"初始化登录窗口时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // 确保窗口加载后应用字体大小设置
-            LoadFontSizeFromConfig();
+            try
+            {
+                // 确保窗口加载后应用字体大小设置
+                LoadFontSizeFromConfig();
+                
+                // 初始化主题
+                InitializeTheme();
+                
+                // 延迟执行UpdateThemeIcon，确保UI元素已完全加载
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        UpdateThemeIcon();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"延迟执行UpdateThemeIcon异常: {ex.Message}");
+                        Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                    }
+                }), DispatcherPriority.Loaded);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Window_Loaded异常: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
+        }
+        
+        private void InitializeTheme()
+        {
+            try
+            {
+                // 从配置文件加载主题设置
+                bool isDarkMode = false;
+                try
+                {
+                    var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    if (config.AppSettings.Settings["IsDarkMode"] != null)
+                    {
+                        if (bool.TryParse(config.AppSettings.Settings["IsDarkMode"].Value, out bool darkMode))
+                        {
+                            isDarkMode = darkMode;
+                            Console.WriteLine($"从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"加载主题设置时出错: {ex.Message}");
+                }
+                
+                // 创建新的主题辅助器
+                var paletteHelper = new PaletteHelper();
+                
+                // 获取当前主题
+                ITheme theme = paletteHelper.GetTheme();
+                
+                // 设置主题
+                theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
+                
+                // 应用主题
+                paletteHelper.SetTheme(theme);
+                
+                // 更新应用程序资源
+                if (Application.Current?.Resources != null)
+                {
+                    // 更新Theme.Dark和Theme.Light资源
+                    if (Application.Current.Resources.Contains("Theme.Dark"))
+                    {
+                        Application.Current.Resources["Theme.Dark"] = !isDarkMode;
+                    }
+                    
+                    if (Application.Current.Resources.Contains("Theme.Light"))
+                    {
+                        Application.Current.Resources["Theme.Light"] = isDarkMode;
+                    }
+                    
+                    // 更新全局颜色资源
+                    if (!isDarkMode)
+                    {
+                        // 深色模式下稍微调亮主色调
+                        Application.Current.Resources["PrimaryHueLightBrush"] = new SolidColorBrush(Color.FromRgb(156, 100, 255)); // #9C64FF
+                        Application.Current.Resources["PrimaryHueMidBrush"] = new SolidColorBrush(Color.FromRgb(124, 77, 255));   // #7C4DFF
+                        Application.Current.Resources["PrimaryHueDarkBrush"] = new SolidColorBrush(Color.FromRgb(94, 53, 177));   // #5E35B1
+                        
+                        Application.Current.Resources["GlobalAccentBrush"] = new SolidColorBrush(Color.FromRgb(124, 77, 255));    // #7C4DFF
+                        Application.Current.Resources["GlobalAccentLightBrush"] = new SolidColorBrush(Color.FromRgb(156, 100, 255)); // #9C64FF
+                        Application.Current.Resources["GlobalAccentDarkBrush"] = new SolidColorBrush(Color.FromRgb(94, 53, 177));  // #5E35B1
+                    }
+                }
+                
+                Console.WriteLine($"已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"InitializeTheme异常: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
         }
         
         private void LoadFontSizeFromConfig()
@@ -262,32 +374,134 @@ namespace TA_WPF.Views
 
         private void UpdateThemeIcon()
         {
-            // 获取当前主题
-            var baseTheme = (BaseTheme)Application.Current.Resources["MaterialDesignTheme.BaseTheme"];
-            bool isDarkMode = (baseTheme == BaseTheme.Dark);
-            
-            // 更新图标
-            ThemeIcon.Kind = isDarkMode ? PackIconKind.WeatherSunny : PackIconKind.WeatherNight;
+            try
+            {
+                // 检查ThemeIcon是否已初始化
+                if (ThemeIcon == null)
+                {
+                    Console.WriteLine("UpdateThemeIcon: ThemeIcon为空");
+                    return;
+                }
+                
+                // 创建新的主题辅助器
+                var paletteHelper = new PaletteHelper();
+                
+                // 获取当前主题
+                ITheme theme = paletteHelper.GetTheme();
+                
+                // 检查当前主题是否为深色
+                bool isDarkTheme = theme.GetBaseTheme() == BaseTheme.Dark;
+                
+                // 更新图标
+                ThemeIcon.Kind = isDarkTheme ? PackIconKind.WeatherSunny : PackIconKind.WeatherNight;
+                
+                Console.WriteLine($"当前主题: {(isDarkTheme ? "深色" : "浅色")}");
+            }
+            catch (Exception ex)
+            {
+                // 记录异常但不中断操作
+                Console.WriteLine($"UpdateThemeIcon异常: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                
+                // 尝试设置默认图标
+                try
+                {
+                    if (ThemeIcon != null)
+                    {
+                        ThemeIcon.Kind = PackIconKind.WeatherNight;
+                    }
+                }
+                catch
+                {
+                    // 忽略进一步的异常
+                }
+            }
         }
         
         private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
         {
-            // 获取当前主题
-            var baseTheme = (BaseTheme)Application.Current.Resources["MaterialDesignTheme.BaseTheme"];
-            bool isDarkMode = (baseTheme == BaseTheme.Dark);
-            
-            // 切换主题
-            var paletteHelper = new PaletteHelper();
-            var theme = paletteHelper.GetTheme();
-            
-            theme.SetBaseTheme(!isDarkMode ? Theme.Dark : Theme.Light);
-            paletteHelper.SetTheme(theme);
-            
-            // 更新资源字典
-            Application.Current.Resources["MaterialDesignTheme.BaseTheme"] = !isDarkMode ? BaseTheme.Dark : BaseTheme.Light;
-            
-            // 更新图标
-            UpdateThemeIcon();
+            try
+            {
+                // 检查ThemeIcon是否已初始化
+                if (ThemeIcon == null)
+                {
+                    Console.WriteLine("ThemeToggleButton_Click: ThemeIcon为空");
+                    return;
+                }
+                
+                // 创建新的主题辅助器
+                var paletteHelper = new PaletteHelper();
+                
+                // 获取当前主题
+                ITheme theme = paletteHelper.GetTheme();
+                
+                // 检查当前主题是否为深色
+                bool isDarkTheme = theme.GetBaseTheme() == BaseTheme.Dark;
+                
+                // 切换主题
+                theme.SetBaseTheme(isDarkTheme ? Theme.Light : Theme.Dark);
+                paletteHelper.SetTheme(theme);
+                
+                // 更新应用程序资源
+                if (Application.Current?.Resources != null)
+                {
+                    // 更新Theme.Dark和Theme.Light资源
+                    if (Application.Current.Resources.Contains("Theme.Dark"))
+                    {
+                        Application.Current.Resources["Theme.Dark"] = !isDarkTheme;
+                    }
+                    
+                    if (Application.Current.Resources.Contains("Theme.Light"))
+                    {
+                        Application.Current.Resources["Theme.Light"] = isDarkTheme;
+                    }
+                    
+                    // 更新全局颜色资源
+                    if (!isDarkTheme)
+                    {
+                        // 深色模式下稍微调亮主色调
+                        Application.Current.Resources["PrimaryHueLightBrush"] = new SolidColorBrush(Color.FromRgb(156, 100, 255)); // #9C64FF
+                        Application.Current.Resources["PrimaryHueMidBrush"] = new SolidColorBrush(Color.FromRgb(124, 77, 255));   // #7C4DFF
+                        Application.Current.Resources["PrimaryHueDarkBrush"] = new SolidColorBrush(Color.FromRgb(94, 53, 177));   // #5E35B1
+                        
+                        Application.Current.Resources["GlobalAccentBrush"] = new SolidColorBrush(Color.FromRgb(124, 77, 255));    // #7C4DFF
+                        Application.Current.Resources["GlobalAccentLightBrush"] = new SolidColorBrush(Color.FromRgb(156, 100, 255)); // #9C64FF
+                        Application.Current.Resources["GlobalAccentDarkBrush"] = new SolidColorBrush(Color.FromRgb(94, 53, 177));  // #5E35B1
+                    }
+                }
+                
+                // 更新图标
+                ThemeIcon.Kind = isDarkTheme ? PackIconKind.WeatherNight : PackIconKind.WeatherSunny;
+                
+                // 保存主题设置到配置文件
+                try
+                {
+                    var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    if (config.AppSettings.Settings["IsDarkMode"] == null)
+                    {
+                        config.AppSettings.Settings.Add("IsDarkMode", (!isDarkTheme).ToString());
+                    }
+                    else
+                    {
+                        config.AppSettings.Settings["IsDarkMode"].Value = (!isDarkTheme).ToString();
+                    }
+                    config.Save(ConfigurationSaveMode.Modified);
+                    ConfigurationManager.RefreshSection("appSettings");
+                    
+                    Console.WriteLine($"已保存主题设置: {(!isDarkTheme ? "深色" : "浅色")}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"保存主题设置时出错: {ex.Message}");
+                }
+                
+                Console.WriteLine($"主题已切换为: {(!isDarkTheme ? "深色" : "浅色")}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ThemeToggleButton_Click异常: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
         }
 
         // 处理窗口的键盘事件

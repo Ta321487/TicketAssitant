@@ -3,17 +3,90 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:TA_WPF"
-             xmlns:converters="clr-namespace:TA_WPF.Converters"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             xmlns:system="clr-namespace:System;assembly=mscorlib">
+             xmlns:converters="clr-namespace:TA_WPF.Converters"
+             xmlns:views="clr-namespace:TA_WPF.Views"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- 主题相关资源 -->
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <SolidColorBrush x:Key="PrimaryHueLightBrush" Color="#9C64FF"/>
+            <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#7C4DFF"/>
+            <SolidColorBrush x:Key="PrimaryHueDarkBrush" Color="#5E35B1"/>
+            <SolidColorBrush x:Key="SecondaryHueMidBrush" Color="#CDDC39"/>
+            
+            <!-- 深色/浅色主题标志 -->
+            <system:Boolean x:Key="Theme.Dark">False</system:Boolean>
+            <system:Boolean x:Key="Theme.Light">True</system:Boolean>
+            
+            <!-- 深色模式下的额外样式 -->
+            <SolidColorBrush x:Key="DarkModeTextBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DarkModeBackgroundBrush" Color="#303030" />
+            <SolidColorBrush x:Key="DarkModeBorderBrush" Color="#505050" />
+            <SolidColorBrush x:Key="DarkModeCardBackgroundBrush" Color="#424242" />
+            
+            <!-- 全局主题颜色资源 -->
+            <SolidColorBrush x:Key="GlobalAccentBrush" Color="#7C4DFF" />
+            <SolidColorBrush x:Key="GlobalAccentLightBrush" Color="#9C64FF" />
+            <SolidColorBrush x:Key="GlobalAccentDarkBrush" Color="#5E35B1" />
+            <SolidColorBrush x:Key="GlobalSecondaryBrush" Color="#CDDC39" />
+            
+            <!-- 自定义样式 -->
+            <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer" BasedOn="{StaticResource {x:Type ScrollViewer}}">
+                <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+                <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+                <Style.Resources>
+                    <Style TargetType="ScrollBar" BasedOn="{StaticResource {x:Type ScrollBar}}">
+                        <Setter Property="Opacity" Value="0.3" />
+                        <Style.Triggers>
+                            <EventTrigger RoutedEvent="MouseEnter">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                       To="1"
+                                                       Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                            <EventTrigger RoutedEvent="MouseLeave">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                       To="0.3"
+                                                       Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Style.Resources>
+            </Style>
+
+            <!-- MaterialDesign样式资源 -->
+            <Style x:Key="MaterialDesignHeadline6TextBlock" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignHeadline6TextBlock}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+            </Style>
+            
+            <Style x:Key="MaterialDesignTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+            </Style>
+            
+            <Style x:Key="MaterialDesignOutlinedButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+            </Style>
+            
+            <Style x:Key="MaterialDesignRaisedButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+            </Style>
 
             <!-- 应用程序图标 -->
             <DrawingImage x:Key="AppIconDrawing">
@@ -26,123 +99,290 @@
                 </DrawingImage.Drawing>
             </DrawingImage>
 
-            <!-- 主题设置 -->
-            <materialDesign:BaseTheme x:Key="MaterialDesignTheme.BaseTheme">Light</materialDesign:BaseTheme>
-
             <!-- 转换器 -->
             <converters:FontSizeIncreaseConverter x:Key="FontSizeIncreaseConverter" />
+            <converters:StationNameConverter x:Key="StationNameConverter" />
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
 
-            <!-- 全局字体设置 -->
-            <Style TargetType="{x:Type Control}">
-                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
-                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
-            </Style>
-            <Style TargetType="{x:Type TextBlock}">
-                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
-                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
-            </Style>
+            <!-- 数据表格样式 -->
             <Style TargetType="{x:Type DataGrid}">
+                <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="RowHeight" Value="40"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
-                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
-            </Style>
-            
-            <!-- 添加全局DataGridColumnHeader样式 -->
-            <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-                <Setter Property="HorizontalContentAlignment" Value="Center" />
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignSubtitle1FontSize}" />
-                <Setter Property="Padding" Value="12,10" />
-                <Setter Property="BorderThickness" Value="0,0,0,1" />
-            </Style>
-            
-            <!-- 添加全局DataGridCell样式 -->
-            <Style TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource MaterialDesignDataGridCell}">
-                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}" />
-            </Style>
-            
-            <Style TargetType="{x:Type TextBox}">
-                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
-                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
-            </Style>
-            <Style TargetType="{x:Type ComboBox}">
-                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
-                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
-            </Style>
-            
-            <!-- 深色模式下的颜色调整 -->
-            <SolidColorBrush x:Key="DarkModeTextBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="DarkModeBackgroundBrush" Color="#303030" />
-            <SolidColorBrush x:Key="DarkModeBorderBrush" Color="#505050" />
-            <SolidColorBrush x:Key="DarkModeHighlightBrush" Color="#673AB7" />
-            
-            <!-- 浅色模式下的颜色调整 -->
-            <SolidColorBrush x:Key="LightModeTextBrush" Color="#212121" />
-            <SolidColorBrush x:Key="LightModeBackgroundBrush" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="LightModeBorderBrush" Color="#E0E0E0" />
-            <SolidColorBrush x:Key="LightModeHighlightBrush" Color="#673AB7" />
-            
-            <!-- 字体大小设置 -->
-            <system:Double x:Key="MaterialDesignFontSize">13</system:Double>
-            <system:Double x:Key="MaterialDesignSubtitle1FontSize">15</system:Double>
-            <system:Double x:Key="MaterialDesignSubtitle2FontSize">14</system:Double>
-            <system:Double x:Key="MaterialDesignHeadline6FontSize">17</system:Double>
-            <system:Double x:Key="MaterialDesignHeadline5FontSize">19</system:Double>
-
-            <!-- 自动隐藏滚动条样式 -->
-            <Style x:Key="AutoHideScrollBarStyle" TargetType="{x:Type ScrollBar}">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Width" Value="6"/>
-                <Setter Property="MinWidth" Value="6"/>
+                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+                <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
                 <Setter Property="Template">
                     <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type ScrollBar}">
-                            <Grid x:Name="Bg" SnapsToDevicePixels="True" Margin="2,0">
-                                <Border Background="{TemplateBinding Background}" 
-                                        BorderBrush="{TemplateBinding BorderBrush}" 
-                                        BorderThickness="{TemplateBinding BorderThickness}" 
-                                        CornerRadius="3"/>
-                                <Track x:Name="PART_Track" 
-                                       IsDirectionReversed="True" 
-                                       IsEnabled="{TemplateBinding IsMouseOver}">
-                                    <Track.DecreaseRepeatButton>
-                                        <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Opacity="0"/>
-                                    </Track.DecreaseRepeatButton>
-                                    <Track.IncreaseRepeatButton>
-                                        <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Opacity="0"/>
-                                    </Track.IncreaseRepeatButton>
-                                    <Track.Thumb>
-                                        <Thumb>
-                                            <Thumb.Style>
-                                                <Style TargetType="{x:Type Thumb}">
-                                                    <Setter Property="Template">
-                                                        <Setter.Value>
-                                                            <ControlTemplate TargetType="{x:Type Thumb}">
-                                                                <Border x:Name="ThumbBorder" 
-                                                                        Background="{DynamicResource PrimaryHueMidBrush}" 
-                                                                        CornerRadius="3" 
-                                                                        Opacity="0.5"/>
-                                                                <ControlTemplate.Triggers>
-                                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter TargetName="ThumbBorder" Property="Opacity" Value="1"/>
-                                                                    </Trigger>
-                                                                    <Trigger Property="IsDragging" Value="True">
-                                                                        <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource PrimaryHueDarkBrush}"/>
-                                                                    </Trigger>
-                                                                </ControlTemplate.Triggers>
-                                                            </ControlTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Style>
-                                            </Thumb.Style>
-                                        </Thumb>
-                                    </Track.Thumb>
-                                </Track>
+                        <ControlTemplate TargetType="{x:Type DataGrid}">
+                            <Border BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    Background="{TemplateBinding Background}" 
+                                    Padding="{TemplateBinding Padding}" 
+                                    SnapsToDevicePixels="True">
+                                <ScrollViewer x:Name="DG_ScrollViewer" 
+                                             Style="{StaticResource DataGridScrollViewerStyle}"
+                                             Focusable="false">
+                                    <ScrollViewer.Template>
+                                        <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Button Command="{x:Static DataGrid.SelectAllCommand}" 
+                                                       Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.All}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" 
+                                                       Width="{Binding CellsPanelHorizontalOffset, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" 
+                                                       Style="{StaticResource {ComponentResourceKey ResourceId=DataGridSelectAllButtonStyle, TypeInTargetAssembly={x:Type DataGrid}}}" />
+                                                <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter" 
+                                                                              Grid.Column="1" 
+                                                                              Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Column}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
+                                                <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" 
+                                                                       Grid.ColumnSpan="2" 
+                                                                       Grid.Row="1" 
+                                                                       CanContentScroll="{TemplateBinding CanContentScroll}"/>
+                                                <ScrollBar x:Name="PART_VerticalScrollBar" 
+                                                         Style="{StaticResource DataGridScrollBarStyle}"
+                                                         Grid.Column="2" 
+                                                         Grid.Row="1" 
+                                                         Orientation="Vertical" 
+                                                         ViewportSize="{TemplateBinding ViewportHeight}" 
+                                                         Maximum="{TemplateBinding ScrollableHeight}" 
+                                                         Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
+                                                         Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                                <Grid Grid.Column="1" Grid.Row="2">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="{Binding NonFrozenColumnsViewportHorizontalOffset, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <ScrollBar x:Name="PART_HorizontalScrollBar" 
+                                                             Style="{StaticResource DataGridScrollBarStyle}"
+                                                             Grid.Column="1" 
+                                                             Orientation="Horizontal" 
+                                                             ViewportSize="{TemplateBinding ViewportWidth}" 
+                                                             Maximum="{TemplateBinding ScrollableWidth}" 
+                                                             Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
+                                                             Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                                </Grid>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </ScrollViewer.Template>
+                                    <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </ScrollViewer>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            
+            <!-- 数据表格单元格样式 -->
+            <Style TargetType="{x:Type DataGridCell}">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type DataGridCell}">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource MaterialDesignSelection}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            
+            <!-- 数据表格行样式 -->
+            <Style TargetType="{x:Type DataGridRow}">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="SnapsToDevicePixels" Value="true"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type DataGridRow}">
+                            <Border x:Name="DGR_Border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    SnapsToDevicePixels="True">
+                                <SelectiveScrollingGrid>
+                                    <SelectiveScrollingGrid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </SelectiveScrollingGrid.ColumnDefinitions>
+                                    <SelectiveScrollingGrid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </SelectiveScrollingGrid.RowDefinitions>
+                                    <DataGridCellsPresenter Grid.Column="1"
+                                                          ItemsPanel="{TemplateBinding ItemsPanel}"
+                                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                    <DataGridDetailsPresenter Grid.Column="1"
+                                                            Grid.Row="1"
+                                                            SelectiveScrollingGrid.SelectiveScrollingOrientation="{Binding AreRowDetailsFrozen, 
+                                                                                                                        RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, 
+                                                                                                                        Converter={x:Static DataGrid.RowDetailsScrollingConverter}, 
+                                                                                                                        ConverterParameter={x:Static SelectiveScrollingOrientation.Vertical}}"
+                                                            Visibility="{TemplateBinding DetailsVisibility}"/>
+                                    <DataGridRowHeader Grid.RowSpan="2"
+                                                     SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical"
+                                                     Visibility="{Binding HeadersVisibility, 
+                                                                        ConverterParameter={x:Static DataGridHeadersVisibility.Row}, 
+                                                                        Converter={x:Static DataGrid.HeadersVisibilityConverter}, 
+                                                                        RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
+                                </SelectiveScrollingGrid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource MaterialDesignSelection}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource MaterialDesignDivider}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            
+            <!-- 数据表格行头样式 -->
+            <Style TargetType="{x:Type DataGridRowHeader}">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            
+            <!-- 数据表格滚动条样式 -->
+            <Style x:Key="DataGridScrollBarStyle" TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource {x:Type ScrollBar}}">
+                <Setter Property="Width" Value="6" />
+                <Setter Property="MinWidth" Value="6" />
+                <Setter Property="Height" Value="6" />
+                <Setter Property="MinHeight" Value="6" />
+                <Setter Property="Opacity" Value="0" />
+                <Style.Triggers>
+                    <EventTrigger RoutedEvent="MouseEnter">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                               To="1"
+                                               Duration="0:0:0.2"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                    <EventTrigger RoutedEvent="MouseLeave">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                               To="0"
+                                               Duration="0:0:0.5"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ScrollViewer}}, Path=ComputedHorizontalScrollBarVisibility}" Value="Visible">
+                        <Setter Property="Opacity" Value="0.3" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ScrollViewer}}, Path=ComputedVerticalScrollBarVisibility}" Value="Visible">
+                        <Setter Property="Opacity" Value="0.3" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            
+            <!-- 数据表格ScrollViewer样式 -->
+            <Style x:Key="DataGridScrollViewerStyle" TargetType="{x:Type ScrollViewer}" BasedOn="{StaticResource {x:Type ScrollViewer}}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                            <Grid x:Name="Grid" Background="{TemplateBinding Background}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Rectangle x:Name="Corner" Grid.Column="1" Fill="{DynamicResource MaterialDesignPaper}" Grid.Row="1" />
+                                <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" 
+                                                       CanContentScroll="{TemplateBinding CanContentScroll}" 
+                                                       CanHorizontallyScroll="False" 
+                                                       CanVerticallyScroll="False" 
+                                                       ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                                       Content="{TemplateBinding Content}" 
+                                                       Grid.Column="0" 
+                                                       Margin="{TemplateBinding Padding}" 
+                                                       Grid.Row="0" />
+                                <ScrollBar x:Name="PART_VerticalScrollBar" 
+                                          Style="{StaticResource DataGridScrollBarStyle}"
+                                          AutomationProperties.AutomationId="VerticalScrollBar" 
+                                          Cursor="Arrow" 
+                                          Grid.Column="1" 
+                                          Maximum="{TemplateBinding ScrollableHeight}" 
+                                          Minimum="0" 
+                                          Grid.Row="0" 
+                                          Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
+                                          Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                          ViewportSize="{TemplateBinding ViewportHeight}" />
+                                <ScrollBar x:Name="PART_HorizontalScrollBar" 
+                                          Style="{StaticResource DataGridScrollBarStyle}"
+                                          AutomationProperties.AutomationId="HorizontalScrollBar" 
+                                          Cursor="Arrow" 
+                                          Grid.Column="0" 
+                                          Maximum="{TemplateBinding ScrollableWidth}" 
+                                          Minimum="0" 
+                                          Orientation="Horizontal" 
+                                          Grid.Row="1" 
+                                          Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
+                                          Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                          ViewportSize="{TemplateBinding ViewportWidth}" />
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <EventTrigger RoutedEvent="MouseEnter">
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                            <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar"
+                                                           Storyboard.TargetProperty="Opacity"
+                                                           To="1"
+                                                           Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar"
+                                                           Storyboard.TargetProperty="Opacity"
                                                            To="1"
                                                            Duration="0:0:0.2"/>
                                         </Storyboard>
@@ -151,9 +391,14 @@
                                 <EventTrigger RoutedEvent="MouseLeave">
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                            <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar"
+                                                           Storyboard.TargetProperty="Opacity"
                                                            To="0"
-                                                           Duration="0:0:0.2"/>
+                                                           Duration="0:0:0.5"/>
+                                            <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar"
+                                                           Storyboard.TargetProperty="Opacity"
+                                                           To="0"
+                                                           Duration="0:0:0.5"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </EventTrigger>
@@ -162,48 +407,272 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
-            <!-- 自动隐藏滚动条的ScrollViewer样式 -->
-            <Style x:Key="AutoHideScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
+            
+            <!-- 全局滚动条样式 -->
+            <Style TargetType="{x:Type ScrollBar}">
+                <Setter Property="Width" Value="8" />
+                <Setter Property="MinWidth" Value="8" />
+                <Setter Property="Height" Value="8" />
+                <Setter Property="MinHeight" Value="8" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource GlobalAccentBrush}" />
                 <Setter Property="Template">
                     <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type ScrollViewer}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <ScrollContentPresenter Grid.Column="0" Grid.Row="0"
-                                                      CanContentScroll="{TemplateBinding CanContentScroll}"
-                                                      Margin="{TemplateBinding Padding}"/>
-                                <ScrollBar x:Name="PART_VerticalScrollBar" 
-                                         Grid.Column="1" 
-                                         Grid.Row="0" 
-                                         Value="{TemplateBinding VerticalOffset}" 
-                                         Maximum="{TemplateBinding ScrollableHeight}" 
-                                         ViewportSize="{TemplateBinding ViewportHeight}" 
-                                         Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
-                                         Style="{StaticResource AutoHideScrollBarStyle}" 
-                                         Opacity="0"
-                                         Orientation="Vertical"/>
-                                <ScrollBar x:Name="PART_HorizontalScrollBar" 
-                                         Grid.Column="0" 
-                                         Grid.Row="1" 
-                                         Value="{TemplateBinding HorizontalOffset}" 
-                                         Maximum="{TemplateBinding ScrollableWidth}" 
-                                         ViewportSize="{TemplateBinding ViewportWidth}" 
-                                         Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
-                                         Style="{StaticResource AutoHideScrollBarStyle}" 
-                                         Opacity="0"
-                                         Orientation="Horizontal"/>
+                        <ControlTemplate TargetType="{x:Type ScrollBar}">
+                            <Grid x:Name="GridRoot" Width="Auto" Background="{TemplateBinding Background}">
+                                <Track x:Name="PART_Track" Grid.Row="0" IsDirectionReversed="False" ViewportSize="{TemplateBinding ViewportSize}">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton x:Name="PageDecreaseRepeatButton" Command="{x:Static ScrollBar.PageUpCommand}" Opacity="0" Focusable="False" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton x:Name="PageIncreaseRepeatButton" Command="{x:Static ScrollBar.PageDownCommand}" Opacity="0" Focusable="False" />
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb x:Name="Thumb" Background="{TemplateBinding Foreground}" Style="{DynamicResource MaterialDesignScrollBarThumb}" />
+                                    </Track.Thumb>
+                                </Track>
                             </Grid>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+                <Style.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter Property="Width" Value="Auto" />
+                        <Setter Property="MinWidth" Value="0" />
+                        <Setter Property="Height" Value="8" />
+                        <Setter Property="MinHeight" Value="8" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="MaterialDesignScrollBarThumb" TargetType="{x:Type Thumb}">
+                <Setter Property="OverridesDefaultStyle" Value="true" />
+                <Setter Property="IsTabStop" Value="false" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Thumb}">
+                            <Border x:Name="ThumbBorder" 
+                                    CornerRadius="4" 
+                                    Background="{TemplateBinding Background}" 
+                                    Opacity="0.6" />
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="ThumbBorder" Property="Opacity" Value="1" />
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="true">
+                                    <Setter TargetName="ThumbBorder" Property="Opacity" Value="1" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- 全局ScrollViewer样式 -->
+            <Style TargetType="{x:Type ScrollViewer}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                            <Grid x:Name="Grid" Background="{TemplateBinding Background}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Rectangle x:Name="Corner" Grid.Column="1" Fill="{DynamicResource MaterialDesignPaper}" Grid.Row="1" />
+                                <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" 
+                                                       CanContentScroll="{TemplateBinding CanContentScroll}" 
+                                                       CanHorizontallyScroll="False" 
+                                                       CanVerticallyScroll="False" 
+                                                       ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                                       Content="{TemplateBinding Content}" 
+                                                       Grid.Column="0" 
+                                                       Margin="{TemplateBinding Padding}" 
+                                                       Grid.Row="0" />
+                                <ScrollBar x:Name="PART_VerticalScrollBar" 
+                                          Style="{StaticResource DataGridScrollBarStyle}"
+                                          AutomationProperties.AutomationId="VerticalScrollBar" 
+                                          Cursor="Arrow" 
+                                          Grid.Column="1" 
+                                          Maximum="{TemplateBinding ScrollableHeight}" 
+                                          Minimum="0" 
+                                          Grid.Row="0" 
+                                          Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
+                                          Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                          ViewportSize="{TemplateBinding ViewportHeight}" />
+                                <ScrollBar x:Name="PART_HorizontalScrollBar" 
+                                          AutomationProperties.AutomationId="HorizontalScrollBar" 
+                                          Cursor="Arrow" 
+                                          Grid.Column="0" 
+                                          Maximum="{TemplateBinding ScrollableWidth}" 
+                                          Minimum="0" 
+                                          Orientation="Horizontal" 
+                                          Grid.Row="1" 
+                                          Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
+                                          Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                          ViewportSize="{TemplateBinding ViewportWidth}" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            
+            <!-- 分页控件样式 -->
+            <Style x:Key="MaterialDesignPaginationButton" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                <Setter Property="MinWidth" Value="36" />
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="2" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource MaterialDesignDivider}" />
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" Value="0.5" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            
+            <Style x:Key="MaterialDesignPaginationActiveButton" TargetType="{x:Type Button}" BasedOn="{StaticResource MaterialDesignPaginationButton}">
+                <Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
+            </Style>
+            
+            <Style x:Key="MaterialDesignPaginationComboBox" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource MaterialDesignComboBox}">
+                <Setter Property="MinWidth" Value="60" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="Margin" Value="8,0" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+            </Style>
+            
+            <Style x:Key="MaterialDesignPaginationTextBlock" TargetType="{x:Type TextBlock}">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="8,0" />
+                <Setter Property="FontFamily" Value="Microsoft YaHei" />
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+            </Style>
+            
+            <!-- 自定义加载指示器样式 -->
+            <Style x:Key="CustomCircularProgressBar" TargetType="{x:Type ProgressBar}" BasedOn="{StaticResource MaterialDesignCircularProgressBar}">
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="IsIndeterminate" Value="True" />
+                <Setter Property="Width" Value="60" />
+                <Setter Property="Height" Value="60" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ProgressBar}">
+                            <Grid x:Name="TemplateRoot" Background="Transparent">
+                                <Ellipse x:Name="PART_Track" 
+                                         Fill="Transparent" 
+                                         Stroke="{TemplateBinding Foreground}" 
+                                         StrokeThickness="4" 
+                                         Opacity="0.3" />
+                                <Ellipse x:Name="PART_Indicator" 
+                                         Fill="Transparent" 
+                                         Stroke="{TemplateBinding Foreground}" 
+                                         StrokeThickness="4" 
+                                         StrokeDashArray="0,1.97" 
+                                         StrokeDashCap="Round" 
+                                         StrokeStartLineCap="Round" 
+                                         StrokeEndLineCap="Round" 
+                                         RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <RotateTransform x:Name="RotateTransform" Angle="0" />
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsIndeterminate" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="RotateTransform" 
+                                                                 Storyboard.TargetProperty="Angle" 
+                                                                 From="0" 
+                                                                 To="360" 
+                                                                 Duration="0:0:2" 
+                                                                 RepeatBehavior="Forever" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- MaterialDesign文本框样式 -->
+            <Style x:Key="MaterialDesignCustomTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="Padding" Value="8,8,8,8"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
+                <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.8"/>
+                <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-15"/>
+                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="True"/>
+                <Setter Property="materialDesign:TextFieldAssist.TextBoxViewMargin" Value="1,0,1,0"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+                <Setter Property="Background" Value="Transparent"/>
+            </Style>
+            
+            <!-- MaterialDesign数字输入框样式 -->
+            <Style x:Key="MaterialDesignCustomNumberTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
+                <Setter Property="materialDesign:TextFieldAssist.PrefixText" Value=""/>
+                <Setter Property="materialDesign:TextFieldAssist.SuffixText" Value=""/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="False"/>
+                <Setter Property="materialDesign:TextFieldAssist.RippleOnFocusEnabled" Value="True"/>
+                <Setter Property="materialDesign:TextFieldAssist.TextBoxViewMargin" Value="1,0,1,0"/>
+                <Setter Property="Padding" Value="8,8,4,8"/>
+                <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
+            </Style>
+            
+            <!-- MaterialDesign只读文本框样式 -->
+            <Style x:Key="MaterialDesignCustomReadOnlyTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
+                <Setter Property="IsReadOnly" Value="True"/>
+                <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="False"/>
+                <Setter Property="Background" Value="{DynamicResource MaterialDesignTextFieldBoxBackground}"/>
+                <Setter Property="Opacity" Value="0.8"/>
+            </Style>
+            
+            <!-- MaterialDesign搜索框样式 -->
+            <Style x:Key="MaterialDesignCustomSearchTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
+                <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="True"/>
+                <Setter Property="materialDesign:TextFieldAssist.PrefixText" Value="🔍"/>
+                <Setter Property="materialDesign:HintAssist.Hint" Value="搜索..."/>
+            </Style>
+            
+            <!-- MaterialDesign紧凑型文本框样式 -->
+            <Style x:Key="MaterialDesignCompactTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+                <Setter Property="Margin" Value="0,4,0,4"/>
+                <Setter Property="Padding" Value="4,2,4,2"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="materialDesign:HintAssist.IsFloating" Value="False"/>
+                <Setter Property="materialDesign:HintAssist.HintOpacity" Value="0.7"/>
+                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="False"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+                <Setter Property="Background" Value="Transparent"/>
             </Style>
         </ResourceDictionary>
     </Application.Resources>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <ResourceDictionary.MergedDictionaries>
+        <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- 主题相关资源 -->
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <system:Boolean x:Key="Theme.Dark">False</system:Boolean>
+    <system:Boolean x:Key="Theme.Light">True</system:Boolean>
+
+    <!-- 全局字体设置 -->
+    <Style TargetType="{x:Type Control}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+    <Style TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+    <Style TargetType="{x:Type DataGrid}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+
+    <!-- 添加全局DataGridColumnHeader样式 -->
+    <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+
+    <!-- 添加全局DataGridCell样式 -->
+    <Style TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+    </Style>
+
+    <Style TargetType="{x:Type TextBox}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+    <Style TargetType="{x:Type ComboBox}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+
+    <!-- MaterialDesign样式资源 -->
+    <Style x:Key="MaterialDesignHeadline6TextBlock" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignHeadline6TextBlock}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+    
+    <Style x:Key="MaterialDesignTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+    
+    <Style x:Key="MaterialDesignOutlinedButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+    
+    <Style x:Key="MaterialDesignRaisedButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+        <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+    </Style>
+
+    <!-- 深色模式下的颜色调整 -->
+    <SolidColorBrush x:Key="DarkModeTextBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="DarkModeBackgroundBrush" Color="#303030" />
+    <SolidColorBrush x:Key="DarkModeBorderBrush" Color="#505050" />
+    <SolidColorBrush x:Key="DarkModeHighlightBrush" Color="#673AB7" />
+
+    <!-- 浅色模式下的颜色调整 -->
+    <SolidColorBrush x:Key="LightModeTextBrush" Color="#212121" />
+    <SolidColorBrush x:Key="LightModeBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="LightModeBorderBrush" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="LightModeHighlightBrush" Color="#673AB7" />
+</ResourceDictionary> 

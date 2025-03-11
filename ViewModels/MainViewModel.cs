@@ -15,6 +15,7 @@ using TA_WPF.Utils;
 using TA_WPF.Views;
 using System.Globalization;
 using System.Windows.Threading;
+using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -75,8 +76,47 @@ namespace TA_WPF.ViewModels
                 // 初始化页大小选项
                 PageSizeOptions = new[] { 25, 50, 75, 100 };
                 
-                // 检查当前主题
-                _isDarkMode = IsDarkThemeActive();
+                // 从配置文件加载主题设置
+                try
+                {
+                    var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    if (config.AppSettings.Settings["IsDarkMode"] != null)
+                    {
+                        if (bool.TryParse(config.AppSettings.Settings["IsDarkMode"].Value, out bool isDarkMode))
+                        {
+                            _isDarkMode = isDarkMode;
+                            // 应用保存的主题
+                            ApplyTheme(_isDarkMode);
+                            Console.WriteLine($"已从配置文件加载主题设置: {(_isDarkMode ? "深色" : "浅色")}");
+                        }
+                    }
+                    else
+                    {
+                        // 如果配置文件中没有主题设置，检查当前主题
+                        _isDarkMode = IsDarkThemeActive();
+                        // 保存当前主题设置到配置文件
+                        if (config.AppSettings.Settings["IsDarkMode"] == null)
+                        {
+                            config.AppSettings.Settings.Add("IsDarkMode", _isDarkMode.ToString());
+                        }
+                        else
+                        {
+                            config.AppSettings.Settings["IsDarkMode"].Value = _isDarkMode.ToString();
+                        }
+                        config.Save(ConfigurationSaveMode.Modified);
+                        ConfigurationManager.RefreshSection("appSettings");
+                        Console.WriteLine($"已保存默认主题设置: {(_isDarkMode ? "深色" : "浅色")}");
+                        
+                        // 确保应用主题
+                        ApplyTheme(_isDarkMode);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"加载主题设置时出错: {ex.Message}");
+                    // 如果出错，检查当前主题
+                    _isDarkMode = IsDarkThemeActive();
+                }
                 
                 // 检查必要的表是否存在
                 CheckRequiredTablesAsync();
@@ -467,17 +507,105 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        private void ApplyTheme(bool isDarkMode)
+        /// <summary>
+        /// 应用主题设置
+        /// </summary>
+        /// <param name="isDarkMode">是否为深色模式</param>
+        public void ApplyTheme(bool isDarkMode)
         {
-            // 获取当前资源字典
-            var paletteHelper = new PaletteHelper();
-            var theme = paletteHelper.GetTheme();
-            
-            // 设置深色/浅色模式
-            theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
-            
-            // 应用主题
-            paletteHelper.SetTheme(theme);
+            try
+            {
+                // 获取当前资源字典
+                var paletteHelper = new PaletteHelper();
+                var theme = paletteHelper.GetTheme();
+                
+                // 设置深色/浅色模式
+                theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
+                
+                // 应用主题
+                paletteHelper.SetTheme(theme);
+                
+                // 更新资源字典中的BaseTheme
+                if (Application.Current?.Resources != null)
+                {
+                    // 更新MaterialDesignTheme的BaseTheme
+                    var bundledTheme = Application.Current.Resources.MergedDictionaries
+                        .OfType<MaterialDesignThemes.Wpf.BundledTheme>()
+                        .FirstOrDefault();
+                    
+                    if (bundledTheme != null)
+                    {
+                        bundledTheme.BaseTheme = isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light;
+                    }
+                    
+                    // 更新Theme.Dark和Theme.Light资源
+                    Application.Current.Resources["Theme.Dark"] = isDarkMode;
+                    Application.Current.Resources["Theme.Light"] = !isDarkMode;
+                    
+                    // 更新全局颜色资源
+                    if (isDarkMode)
+                    {
+                        // 深色模式下稍微调亮主色调
+                        Application.Current.Resources["PrimaryHueLightBrush"] = new SolidColorBrush(Color.FromRgb(156, 100, 255)); // #9C64FF
+                        Application.Current.Resources["PrimaryHueMidBrush"] = new SolidColorBrush(Color.FromRgb(124, 77, 255));   // #7C4DFF
+                        Application.Current.Resources["PrimaryHueDarkBrush"] = new SolidColorBrush(Color.FromRgb(94, 53, 177));   // #5E35B1
+                        
+                        Application.Current.Resources["GlobalAccentBrush"] = new SolidColorBrush(Color.FromRgb(124, 77, 255));    // #7C4DFF
+                        Application.Current.Resources["GlobalAccentLightBrush"] = new SolidColorBrush(Color.FromRgb(156, 100, 255)); // #9C64FF
+                        Application.Current.Resources["GlobalAccentDarkBrush"] = new SolidColorBrush(Color.FromRgb(94, 53, 177));  // #5E35B1
+                    }
+                    
+                    // 应用主题到所有打开的窗口
+                    foreach (Window window in Application.Current.Windows)
+                    {
+                        if (window != null && window.IsLoaded)
+                        {
+                            // 更新窗口的ThemeAssist.Theme属性
+                            MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(window, isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
+                            
+                            // 刷新窗口
+                            window.UpdateLayout();
+                        }
+                    }
+                    
+                    // 触发全局主题更新
+                    FrameworkElement.StyleProperty.OverrideMetadata(
+                        typeof(Window),
+                        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+                }
+                
+                Console.WriteLine($"已应用{(isDarkMode ? "深色" : "浅色")}主题");
+                
+                // 触发主题变更事件
+                OnPropertyChanged(nameof(IsDarkMode));
+                
+                // 保存主题设置到配置文件
+                try
+                {
+                    var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    if (config.AppSettings.Settings["IsDarkMode"] == null)
+                    {
+                        config.AppSettings.Settings.Add("IsDarkMode", isDarkMode.ToString());
+                    }
+                    else
+                    {
+                        config.AppSettings.Settings["IsDarkMode"].Value = isDarkMode.ToString();
+                    }
+                    config.Save(ConfigurationSaveMode.Modified);
+                    ConfigurationManager.RefreshSection("appSettings");
+                    
+                    Console.WriteLine($"已保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"保存主题设置时出错: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"应用主题时出错: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
         }
 
         private bool IsDarkThemeActive()
