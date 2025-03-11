@@ -1,0 +1,89 @@
+<Window x:Class="TA_WPF.Views.MessageDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TA_WPF.Views"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Title="提示" 
+        SizeToContent="WidthAndHeight"
+        MinWidth="350"
+        MinHeight="180"
+        MaxWidth="500"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="Microsoft YaHei">
+    
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- 图标 -->
+        <materialDesign:PackIcon Grid.Row="0" Grid.Column="0"
+                                 Kind="{Binding IconKind}"
+                                 Width="40" Height="40"
+                                 VerticalAlignment="Top"
+                                 Margin="0,0,20,0"
+                                 Foreground="{Binding IconBrush}"/>
+        
+        <!-- 消息内容 -->
+        <TextBlock Grid.Row="0" Grid.Column="1"
+                   Text="{Binding Message}"
+                   TextWrapping="Wrap"
+                   FontSize="15"
+                   FontFamily="Microsoft YaHei"
+                   Margin="0,0,0,28"/>
+        
+        <!-- 按钮区域 -->
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button x:Name="OkButton"
+                    Content="确定"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    FontFamily="Microsoft YaHei"
+                    Padding="16,8"
+                    Click="OkButton_Click"
+                    Margin="0,0,16,0"
+                    Visibility="{Binding IsOkButtonVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <Button x:Name="YesButton"
+                    Content="是"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    FontFamily="Microsoft YaHei"
+                    Padding="16,8"
+                    Click="YesButton_Click"
+                    Margin="0,0,16,0"
+                    Visibility="{Binding IsYesNoButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <Button x:Name="NoButton"
+                    Content="否"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    FontFamily="Microsoft YaHei"
+                    Padding="16,8"
+                    Click="NoButton_Click"
+                    Margin="0,0,16,0"
+                    Visibility="{Binding IsYesNoButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <Button x:Name="CancelButton"
+                    Content="取消"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    FontFamily="Microsoft YaHei"
+                    Padding="16,8"
+                    Click="CancelButton_Click"
+                    Visibility="{Binding IsCancelButtonVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </StackPanel>
+    </Grid>
+</Window> 

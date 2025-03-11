@@ -1,0 +1,247 @@
+<UserControl x:Class="TA_WPF.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TA_WPF.Views"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 标题 -->
+        <TextBlock Text="系统设置" 
+                   Grid.Row="0"
+                   FontSize="24" 
+                   FontWeight="Bold" 
+                   Margin="0,0,0,20"/>
+        
+        <!-- 设置内容 -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- 外观设置 -->
+                <materialDesign:Card Margin="0,0,0,16" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="外观设置" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Margin="0,0,0,16"/>
+                        
+                        <!-- 主题设置 -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="深色模式" 
+                                           FontSize="16" 
+                                           FontWeight="Medium"/>
+                                <TextBlock Text="切换应用的深色/浅色主题" 
+                                           Opacity="0.6" 
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            
+                            <ToggleButton Grid.Column="1" 
+                                          IsChecked="{Binding IsDarkMode}"
+                                          Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                          VerticalAlignment="Center"/>
+                        </Grid>
+                        
+                        <!-- 字体大小设置 -->
+                        <Grid Margin="0,16,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="字体大小" 
+                                           FontSize="16" 
+                                           FontWeight="Medium"/>
+                                <TextBlock Text="调整应用的字体大小" 
+                                           Opacity="0.6" 
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Slider x:Name="FontSizeSlider" 
+                                       Width="150"
+                                       Minimum="12" 
+                                       Maximum="20" 
+                                       Value="{Binding FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       TickFrequency="1"
+                                       IsSnapToTickEnabled="True"
+                                       VerticalAlignment="Center"/>
+                                <TextBlock x:Name="FontSizeText"
+                                          Text="{Binding FontSize, StringFormat={}{0:N0}pt}" 
+                                          Margin="8,0,0,0" 
+                                          VerticalAlignment="Center" 
+                                          MinWidth="40"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+                
+                <!-- 数据库设置 -->
+                <materialDesign:Card Margin="0,0,0,16" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="数据库设置" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Margin="0,0,0,16"/>
+                        
+                        <!-- 连接信息 -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="数据库连接" 
+                                           FontSize="16" 
+                                           FontWeight="Medium"/>
+                                <TextBlock Text="当前连接的数据库信息" 
+                                           Opacity="0.6" 
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <!-- 数据库连接详情 -->
+                        <Grid Margin="0,8,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="服务器地址:" 
+                                       FontWeight="Medium"
+                                       Margin="0,0,16,8"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" 
+                                       Text="{Binding ServerAddress}"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="用户名:" 
+                                       FontWeight="Medium"
+                                       Margin="0,0,16,8"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                       Text="{Binding Username}"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                       Text="密码:" 
+                                       FontWeight="Medium"
+                                       Margin="0,0,16,8"/>
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                                <TextBlock Text="{Binding DisplayPassword}" Margin="0,0,8,0"/>
+                                <ToggleButton x:Name="ShowPasswordToggle" 
+                                              IsChecked="{Binding ShowPassword}" 
+                                              Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                              ToolTip="显示/隐藏密码"
+                                              VerticalAlignment="Center"
+                                              Margin="0,-4,0,0"/>
+                            </StackPanel>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                       Text="修改数据库:" 
+                                       FontWeight="Medium"
+                                       Margin="0,0,16,8"/>
+                            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+                                <TextBox Text="{Binding NewDatabaseName}" 
+                                         Width="300"
+                                         materialDesign:HintAssist.Hint="输入新的数据库名称"/>
+                                <Button Content="确定" 
+                                        Command="{Binding UpdateDatabaseCommand}"
+                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                        Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <!-- 日志设置 -->
+                        <Grid Margin="0,16,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="导出日志" 
+                                           FontSize="16" 
+                                           FontWeight="Medium"/>
+                                <TextBlock Text="导出系统操作日志" 
+                                           Opacity="0.6" 
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            
+                            <Button Grid.Column="1" 
+                                    Content="导出日志"
+                                    Command="{Binding ExportLogCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+                
+                <!-- 系统信息 -->
+                <materialDesign:Card Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="系统信息" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Margin="0,0,0,16"/>
+                        
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="应用版本:" 
+                                       FontWeight="Medium"
+                                       Margin="0,0,16,8"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" 
+                                       Text="1.0.0"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="数据库版本:" 
+                                       FontWeight="Medium"
+                                       Margin="0,0,16,8"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                       Text="MySQL 8.0"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                       Text="最后更新:" 
+                                       FontWeight="Medium"
+                                       Margin="0,0,16,8"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" 
+                                       Text="2024-03-10"/>
+                        </Grid>
+                        
+                        <Button Content="检查更新" 
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                HorizontalAlignment="Right"
+                                Margin="0,16,0,0"/>
+                    </StackPanel>
+                </materialDesign:Card>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl> 

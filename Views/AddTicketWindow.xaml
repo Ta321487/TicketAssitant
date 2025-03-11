@@ -1,0 +1,500 @@
+<Window x:Class="TA_WPF.Views.AddTicketWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TA_WPF.Views"
+        xmlns:utils="clr-namespace:TA_WPF.Utils"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels" xmlns:converters="clr-namespace:TA_WPF.Converters" d:DataContext="{d:DesignInstance Type=viewmodels:AddTicketViewModel}"
+        mc:Ignorable="d"
+        Title="添加车票" Height="1050" Width="900"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResizeWithGrip"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="{DynamicResource MaterialDesignFontSize}"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="Microsoft YaHei"
+        SizeToContent="Manual">
+    
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:StationNameConverter x:Key="StationNameConverter" />
+        <Style x:Key="FormLabelStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+            <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+        </Style>
+        <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+            <Setter Property="Margin" Value="0,8,0,8"/>
+            <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
+            <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="True"/>
+            <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+            <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+            <Setter Property="Height" Value="Auto"/>
+            <Setter Property="MinHeight" Value="45"/>
+        </Style>
+        <Style x:Key="FormComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
+            <Setter Property="Margin" Value="0,8,0,8"/>
+            <Setter Property="Height" Value="Auto"/>
+            <Setter Property="MinHeight" Value="45"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
+            <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
+            <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
+        </Style>
+        <Style x:Key="FormComboBoxItemStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Height" Value="Auto"/>
+            <Setter Property="MinHeight" Value="35"/>
+            <Setter Property="Padding" Value="16,8"/>
+        </Style>
+    </Window.Resources>
+    
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 标题 -->
+        <TextBlock Grid.Row="0" 
+                   Text="添加车票" 
+                   Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                   Margin="0,0,0,16"/>
+        
+        <!-- 表单内容 -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- 第一行：取票号、检票位置 -->
+                <TextBlock Grid.Row="0" Grid.Column="0" 
+                           Text="取票号:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" 
+                         Text="{Binding TicketNumber, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource FormTextBoxStyle}"
+                         materialDesign:HintAssist.Hint="取票号"
+                         Margin="0,8,16,8"/>
+                
+                <TextBlock Grid.Row="0" Grid.Column="2" 
+                           Text="检票位置:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <TextBox Grid.Row="0" Grid.Column="3" 
+                         Text="{Binding CheckInLocation, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource FormTextBoxStyle}"
+                         materialDesign:HintAssist.Hint="检票位置"
+                         Margin="0,8,0,8"/>
+                
+                <!-- 第二行：出发站、到达站 -->
+                <TextBlock Grid.Row="1" Grid.Column="0" 
+                           Text="出发站:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="1" Grid.Column="1" Margin="0,8,16,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <TextBox 
+                             Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             materialDesign:HintAssist.Hint="出发站"
+                             Tag="Depart"
+                             Margin="0"/>
+                        <Popup IsOpen="{Binding IsDepartStationDropdownOpen}" 
+                               PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                               Width="{Binding ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                               StaysOpen="False">
+                            <Border Background="{DynamicResource MaterialDesignPaper}" 
+                                    BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                    BorderThickness="1" 
+                                    MaxHeight="200">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding DepartStationSuggestions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Command="{Binding DataContext.SelectDepartStationCommand, 
+                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{Binding StationName, Converter={StaticResource StationNameConverter}}"
+                                                        HorizontalContentAlignment="Center"
+                                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                                        Width="{Binding ActualWidth, 
+                                                                RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                AncestorType=ScrollViewer}}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <TextBlock Grid.Column="1" 
+                               Text="站" 
+                               VerticalAlignment="Center" 
+                               Margin="4,0,0,0"/>
+                </Grid>
+                
+                <TextBlock Grid.Row="1" Grid.Column="2" 
+                           Text="到达站:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="1" Grid.Column="3" Margin="0,8,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <TextBox 
+                             Text="{Binding ArriveStationSearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             materialDesign:HintAssist.Hint="到达站"
+                             Tag="Arrive"
+                             Margin="0"/>
+                        <Popup IsOpen="{Binding IsArriveStationDropdownOpen}" 
+                               PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                               Width="{Binding ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                               StaysOpen="False">
+                            <Border Background="{DynamicResource MaterialDesignPaper}" 
+                                    BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                    BorderThickness="1" 
+                                    MaxHeight="200">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding ArriveStationSuggestions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Command="{Binding DataContext.SelectArriveStationCommand, 
+                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{Binding StationName, Converter={StaticResource StationNameConverter}}"
+                                                        HorizontalContentAlignment="Center"
+                                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                                        Width="{Binding ActualWidth, 
+                                                                RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                AncestorType=ScrollViewer}}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <TextBlock Grid.Column="1" 
+                               Text="站" 
+                               VerticalAlignment="Center" 
+                               Margin="4,0,0,0"/>
+                </Grid>
+                
+                <!-- 第三行：出发站拼音、到达站拼音 -->
+                <TextBlock Grid.Row="2" Grid.Column="0" 
+                           Text="出发站拼音:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <TextBox Grid.Row="2" Grid.Column="1" 
+                         Text="{Binding DepartStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource FormTextBoxStyle}"
+                         materialDesign:HintAssist.Hint="出发站拼音"
+                         Margin="0,8,16,8"/>
+                
+                <TextBlock Grid.Row="2" Grid.Column="2" 
+                           Text="到达站拼音:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <TextBox Grid.Row="2" Grid.Column="3" 
+                         Text="{Binding ArriveStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource FormTextBoxStyle}"
+                         materialDesign:HintAssist.Hint="到达站拼音"
+                         Margin="0,8,0,8"/>
+                
+                <!-- 第四行：金额、出发站代码 -->
+                <TextBlock Grid.Row="3" Grid.Column="0" 
+                           Text="金额:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="3" Grid.Column="1" Margin="0,8,16,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="¥" 
+                             VerticalAlignment="Center" 
+                             Margin="0,0,4,0"
+                             FontFamily="Microsoft YaHei"
+                             Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                    <TextBox Grid.Column="1"
+                         Text="{Binding Money, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
+                         Style="{StaticResource FormTextBoxStyle}"
+                         materialDesign:HintAssist.Hint="金额"
+                         PreviewTextInput="MoneyTextBox_PreviewTextInput"
+                         LostFocus="MoneyTextBox_LostFocus"
+                         materialDesign:TextFieldAssist.HasClearButton="False"/>
+                </Grid>
+                
+                <TextBlock Grid.Row="3" Grid.Column="2" 
+                           Text="出发站代码:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <TextBox Grid.Row="3" Grid.Column="3" 
+                         Text="{Binding DepartStationCode, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource FormTextBoxStyle}"
+                         materialDesign:HintAssist.Hint="出发站代码"
+                         Margin="0,8,0,8"/>
+                
+                <!-- 第五行：到达站代码、出发日期 -->
+                <TextBlock Grid.Row="4" Grid.Column="0" 
+                           Text="到达站代码:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <TextBox Grid.Row="4" Grid.Column="1" 
+                         Text="{Binding ArriveStationCode, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource FormTextBoxStyle}"
+                         materialDesign:HintAssist.Hint="到达站代码"
+                         Margin="0,8,16,8"/>
+                
+                <TextBlock Grid.Row="4" Grid.Column="2" 
+                           Text="出发日期:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <DatePicker Grid.Row="4" Grid.Column="3" 
+                           SelectedDate="{Binding DepartDate}" 
+                           Language="zh-CN"
+                           SelectedDateFormat="Short"
+                           materialDesign:HintAssist.Hint="出发日期"
+                           Margin="0,8,0,8"
+                           Height="Auto"
+                           MinHeight="45"/>
+                
+                <!-- 第六行：车次、出发时间 -->
+                <TextBlock Grid.Row="5" Grid.Column="0" 
+                           Text="车次:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="5" Grid.Column="1" Margin="0,8,16,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox Grid.Column="0" 
+                              ItemsSource="{Binding TrainTypes}" 
+                              SelectedItem="{Binding SelectedTrainType}" 
+                              Width="90" 
+                              Style="{StaticResource FormComboBoxStyle}"
+                              Margin="0,0,8,0"
+                              materialDesign:HintAssist.Hint="车型">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
+                    <TextBox Grid.Column="1" 
+                             Text="{Binding TrainNumber, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             materialDesign:HintAssist.Hint="车次号"
+                             Margin="0"/>
+                </Grid>
+                
+                <TextBlock Grid.Row="5" Grid.Column="2" 
+                           Text="出发时间:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="5" Grid.Column="3" Margin="0,8,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox Grid.Column="0" 
+                              ItemsSource="{Binding HourOptions}" 
+                              SelectedIndex="{Binding DepartHour}" 
+                              Width="60" 
+                              Style="{StaticResource FormComboBoxStyle}"
+                              Margin="0,0,4,0"
+                              materialDesign:HintAssist.Hint="时">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
+                    <ComboBox Grid.Column="1" 
+                              ItemsSource="{Binding MinuteOptions}" 
+                              SelectedIndex="{Binding DepartMinute}" 
+                              Width="60" 
+                              Style="{StaticResource FormComboBoxStyle}"
+                              Margin="0,0,4,0"
+                              materialDesign:HintAssist.Hint="分">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
+                    <TextBlock Grid.Column="2" 
+                               Text="开" 
+                               VerticalAlignment="Center"/>
+                </Grid>
+                
+                <!-- 第七行：车厢号 -->
+                <TextBlock Grid.Row="6" Grid.Column="0" 
+                           Text="车厢号:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="6" Grid.Column="1" Margin="0,8,16,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0" 
+                             Text="{Binding CoachNo, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             materialDesign:HintAssist.Hint="车厢号"
+                             Margin="0"/>
+                    <TextBlock Grid.Column="1" 
+                               Text="车" 
+                               VerticalAlignment="Center" 
+                               Margin="4,0,8,0"/>
+                    <CheckBox Grid.Column="2" 
+                              Content="加车" 
+                              IsChecked="{Binding IsExtraCoach}"
+                              VerticalAlignment="Center"/>
+                </Grid>
+                
+                <!-- 第八行：座位号 -->
+                <TextBlock Grid.Row="7" Grid.Column="0" 
+                           Text="座位号:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" 
+                                 Text="{Binding SeatNo, UpdateSourceTrigger=PropertyChanged}" 
+                                 IsEnabled="{Binding IsSeatInputEnabled}"
+                                 Style="{StaticResource FormTextBoxStyle}"
+                                 materialDesign:HintAssist.Hint="座位号"
+                                 Margin="0"/>
+                        <ComboBox Grid.Column="1" 
+                                  ItemsSource="{Binding SeatPositions}" 
+                                  SelectedItem="{Binding SelectedSeatPosition}" 
+                                  Width="60" 
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  Margin="8,0,0,0" 
+                                  IsEnabled="{Binding IsSeatInputEnabled}" 
+                                  Visibility="{Binding IsSeatPositionVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                  materialDesign:HintAssist.Hint="位置">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                    </Grid>
+                    <CheckBox Grid.Column="2" 
+                              Content="无座" 
+                              IsChecked="{Binding IsNoSeat}" 
+                              Margin="16,0,0,0"
+                              VerticalAlignment="Center"/>
+                </Grid>
+                
+                <!-- 第九行：座位类型 -->
+                <TextBlock Grid.Row="8" Grid.Column="0" 
+                           Text="座位类型:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <ComboBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" 
+                          ItemsSource="{Binding SeatTypes}" 
+                          SelectedItem="{Binding SelectedSeatType}" 
+                          Style="{StaticResource FormComboBoxStyle}"
+                          materialDesign:HintAssist.Hint="座位类型"
+                          Margin="0,8,0,8">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
+                
+                <!-- 第十行：附加信息 -->
+                <TextBlock Grid.Row="9" Grid.Column="0" 
+                           Text="附加信息:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <ComboBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="3" 
+                          ItemsSource="{Binding AdditionalInfoOptions}" 
+                          SelectedItem="{Binding SelectedAdditionalInfo}" 
+                          Style="{StaticResource FormComboBoxStyle}"
+                          materialDesign:HintAssist.Hint="附加信息"
+                          Margin="0,8,0,8">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
+                
+                <!-- 第十一行：车票用途 -->
+                <TextBlock Grid.Row="10" Grid.Column="0" 
+                           Text="车票用途:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <ComboBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="3" 
+                          ItemsSource="{Binding TicketPurposeOptions}" 
+                          SelectedItem="{Binding SelectedTicketPurpose}" 
+                          Style="{StaticResource FormComboBoxStyle}"
+                          materialDesign:HintAssist.Hint="车票用途"
+                          Margin="0,8,0,8">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
+                
+                <!-- 第十二行：提示信息 -->
+                <TextBlock Grid.Row="11" Grid.Column="0" 
+                           Text="提示信息:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <ComboBox Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="3" 
+                          ItemsSource="{Binding HintOptions}" 
+                          SelectedItem="{Binding SelectedHint}" 
+                          Style="{StaticResource FormComboBoxStyle}"
+                          materialDesign:HintAssist.Hint="提示信息"
+                          Margin="0,8,0,8">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
+            </Grid>
+        </ScrollViewer>
+        
+        <!-- 底部按钮 -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,16,0,0">
+            <Button Content="重置" 
+                    Command="{Binding ResetCommand}" 
+                    Style="{StaticResource MaterialDesignOutlinedButton}" 
+                    Margin="0,0,16,0"
+                    Height="Auto"
+                    MinHeight="36"
+                    Padding="16,8"/>
+            <Button Content="保存" 
+                    Command="{Binding SaveCommand}" 
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Height="Auto"
+                    MinHeight="36"
+                    Padding="16,8"/>
+        </StackPanel>
+    </Grid>
+</Window> 

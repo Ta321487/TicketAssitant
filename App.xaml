@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Application x:Class="TA_WPF.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TA_WPF"
+             xmlns:converters="clr-namespace:TA_WPF.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 应用程序图标 -->
+            <DrawingImage x:Key="AppIconDrawing">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <DrawingGroup.Children>
+                            <ImageDrawing ImageSource="/Assets/Icons/app_icon.ico" Rect="0,0,16,16" />
+                        </DrawingGroup.Children>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+
+            <!-- 主题设置 -->
+            <materialDesign:BaseTheme x:Key="MaterialDesignTheme.BaseTheme">Light</materialDesign:BaseTheme>
+
+            <!-- 转换器 -->
+            <converters:FontSizeIncreaseConverter x:Key="FontSizeIncreaseConverter" />
+
+            <!-- 全局字体设置 -->
+            <Style TargetType="{x:Type Control}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+            </Style>
+            <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+            </Style>
+            <Style TargetType="{x:Type DataGrid}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+            </Style>
+            
+            <!-- 添加全局DataGridColumnHeader样式 -->
+            <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignSubtitle1FontSize}" />
+                <Setter Property="Padding" Value="12,10" />
+                <Setter Property="BorderThickness" Value="0,0,0,1" />
+            </Style>
+            
+            <!-- 添加全局DataGridCell样式 -->
+            <Style TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}" />
+            </Style>
+            
+            <Style TargetType="{x:Type TextBox}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+            </Style>
+            <Style TargetType="{x:Type ComboBox}">
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+            </Style>
+            
+            <!-- 深色模式下的颜色调整 -->
+            <SolidColorBrush x:Key="DarkModeTextBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DarkModeBackgroundBrush" Color="#303030" />
+            <SolidColorBrush x:Key="DarkModeBorderBrush" Color="#505050" />
+            <SolidColorBrush x:Key="DarkModeHighlightBrush" Color="#673AB7" />
+            
+            <!-- 浅色模式下的颜色调整 -->
+            <SolidColorBrush x:Key="LightModeTextBrush" Color="#212121" />
+            <SolidColorBrush x:Key="LightModeBackgroundBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="LightModeBorderBrush" Color="#E0E0E0" />
+            <SolidColorBrush x:Key="LightModeHighlightBrush" Color="#673AB7" />
+            
+            <!-- 字体大小设置 -->
+            <system:Double x:Key="MaterialDesignFontSize">13</system:Double>
+            <system:Double x:Key="MaterialDesignSubtitle1FontSize">15</system:Double>
+            <system:Double x:Key="MaterialDesignSubtitle2FontSize">14</system:Double>
+            <system:Double x:Key="MaterialDesignHeadline6FontSize">17</system:Double>
+            <system:Double x:Key="MaterialDesignHeadline5FontSize">19</system:Double>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
