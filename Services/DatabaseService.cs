@@ -185,6 +185,9 @@ namespace TA_WPF.Services
         {
             var items = new List<TrainRideInfo>();
 
+            // 添加一个小延迟，确保加载动画能够显示
+            await Task.Delay(300);
+
             using (var connection = new MySqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -224,6 +227,9 @@ namespace TA_WPF.Services
         {
             try
             {
+                // 添加一个小延迟，确保加载动画能够显示
+                await Task.Delay(200);
+                
                 using (var connection = new MySqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();

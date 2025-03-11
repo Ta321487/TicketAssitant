@@ -11,6 +11,7 @@
     <EnableComServices>true</EnableComServices>
     <ApplicationIcon>Assets\Icons\app_icon.ico</ApplicationIcon>
     <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Properties\" />
     <Folder Include="Styles\" />
     <Folder Include="Views\" />
   </ItemGroup>
@@ -39,6 +39,21 @@
     <Page Include="App.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="Views\*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

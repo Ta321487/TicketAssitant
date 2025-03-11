@@ -67,5 +67,30 @@ namespace TA_WPF.Views
         {
 
         }
+        
+        /// <summary>
+        /// 字体大小滑块值变化事件处理
+        /// </summary>
+        private void FontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (FontSizeText != null)
+            {
+                // 四舍五入到整数
+                int fontSize = (int)Math.Round(e.NewValue);
+                
+                // 直接更新显示值，确保实时反馈
+                FontSizeText.Text = $"{fontSize}pt";
+                
+                // 如果DataContext已设置，更新ViewModel中的FontSize属性
+                if (DataContext is MainViewModel viewModel)
+                {
+                    // 确保值已经四舍五入为整数
+                    if (Math.Abs(viewModel.FontSize - fontSize) > 0.01)
+                    {
+                        viewModel.FontSize = fontSize;
+                    }
+                }
+            }
+        }
     }
 } 

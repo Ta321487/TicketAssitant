@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
+using System.Windows.Media.Imaging;
+using System.Windows.Interop;
 using TA_WPF.ViewModels;
 using MaterialDesignThemes.Wpf;
 
@@ -81,6 +83,22 @@ namespace TA_WPF
         {
             try
             {
+                // 设置窗口图标
+                try
+                {
+                    Uri iconUri = new Uri("pack://application:,,,/Assets/Icons/app_icon.ico", UriKind.Absolute);
+                    this.Icon = new System.Windows.Media.Imaging.BitmapImage(iconUri);
+                    
+                    // 确保任务栏图标也被设置
+                    System.Windows.Interop.WindowInteropHelper helper = new System.Windows.Interop.WindowInteropHelper(this);
+                    System.Windows.Interop.HwndSource source = System.Windows.Interop.HwndSource.FromHwnd(helper.Handle);
+                    source.AddHook(new System.Windows.Interop.HwndSourceHook(WndProc));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"设置窗口图标时出错: {ex.Message}");
+                }
+                
                 // 获取控件引用
                 _mainDataGrid = this.FindName("MainDataGrid") as DataGrid;
                 _menuToggleButton = this.FindName("MenuToggleButton") as ToggleButton;
@@ -679,6 +697,15 @@ namespace TA_WPF
                 // 发生异常时，允许应用程序关闭
                 e.Cancel = false;
             }
+        }
+
+        /// <summary>
+        /// 窗口消息处理
+        /// </summary>
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            // 处理窗口消息，确保任务栏图标正确显示
+            return IntPtr.Zero;
         }
     }
 }

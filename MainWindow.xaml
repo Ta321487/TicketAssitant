@@ -234,15 +234,15 @@
                             Background="White"
                             BorderThickness="0"
                             RowBackground="White"
-                            EnableRowVirtualization="False"
-                            EnableColumnVirtualization="False"
-                            VirtualizingPanel.IsVirtualizing="False"
-                            VirtualizingPanel.VirtualizationMode="Standard"
+                            EnableRowVirtualization="True"
+                            EnableColumnVirtualization="True"
+                            VirtualizingPanel.IsVirtualizing="True"
+                            VirtualizingPanel.VirtualizationMode="Recycling"
                             VirtualizingPanel.ScrollUnit="Pixel"
-                            VirtualizingPanel.CacheLength="10"
+                            VirtualizingPanel.CacheLength="1,1"
                             VirtualizingPanel.CacheLengthUnit="Page"
-                            ScrollViewer.IsDeferredScrollingEnabled="False"
-                            ScrollViewer.CanContentScroll="False"
+                            ScrollViewer.IsDeferredScrollingEnabled="True"
+                            ScrollViewer.CanContentScroll="True"
                             Visibility="{Binding ShowDataGrid, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <DataGrid.Resources>
                             <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
@@ -527,19 +527,23 @@
                                         HorizontalAlignment="Center" 
                                         VerticalAlignment="Center" 
                                         Padding="32"
-                                        Background="Transparent"
-                                        materialDesign:ShadowAssist.ShadowDepth="Depth0"
-                                        UniformCornerRadius="0"
+                                        Background="#80000000"
+                                        materialDesign:ShadowAssist.ShadowDepth="Depth3"
+                                        UniformCornerRadius="8"
+                                        Panel.ZIndex="9999"
                                         Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="24">
                             <ProgressBar 
-                                Style="{StaticResource CustomCircularProgressBar}"
+                                IsIndeterminate="True"
+                                Style="{StaticResource MaterialDesignCircularProgressBar}"
                                 Width="60"
-                                Height="60" />
+                                Height="60"
+                                Foreground="White"
+                                Margin="0,0,0,16" />
                             <TextBlock Text="正在加载数据..." 
-                                    Margin="0,16,0,0" 
+                                    Margin="0,8,0,0" 
                                     FontSize="16"
-                                    Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                    Foreground="White"
                                     HorizontalAlignment="Center" />
                         </StackPanel>
                     </materialDesign:Card>
