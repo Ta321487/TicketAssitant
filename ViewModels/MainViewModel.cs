@@ -1135,6 +1135,9 @@ namespace TA_WPF.ViewModels
                         // 隐藏加载动画
                         IsLoading = false;
                         
+                        // 获取当前主窗口
+                        var mainWindow = Application.Current.MainWindow;
+                        
                         // 创建并显示登录窗口
                         var loginWindow = new Views.LoginWindow();
                         
@@ -1145,14 +1148,24 @@ namespace TA_WPF.ViewModels
                             loginWindow.SetDatabaseName(databaseName);
                         }
                         
+                        // 设置登录窗口为主窗口
+                        Application.Current.MainWindow = loginWindow;
+                        
                         // 显示登录窗口
                         loginWindow.Show();
                         
+                        // 清理资源
+                        ClearResources();
+                        
                         // 关闭当前主窗口
-                        if (Application.Current.MainWindow != null)
-                        {
-                            Application.Current.MainWindow.Close();
-                        }
+                        mainWindow?.Close();
+                        
+                        // 强制垃圾回收
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                        
+                        // 记录日志
+                        LogHelper.LogInfo("已返回登录界面，之前的MainViewModel已销毁");
                     });
                 });
             }
@@ -1247,19 +1260,87 @@ namespace TA_WPF.ViewModels
                 if (result == true)
                 {
                     // 显示成功消息
-                    MessageBoxHelper.ShowInfo("已注销连接信息，应用程序将重新启动");
+                    MessageBoxHelper.ShowInfo("已更新数据库连接信息，应用程序将返回登录界面");
                     
                     // 记录日志
-                    LogHelper.LogInfo($"用户更新了数据库名称为: {NewDatabaseName}，应用程序将重新启动");
+                    LogHelper.LogInfo($"用户更新了数据库名称为: {NewDatabaseName}，应用程序将返回登录界面");
                     
-                    // 使用重启应用程序的方式来实现注销
-                    RestartApplication();
+                    // 强制垃圾回收
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    
+                    // 关闭当前主窗口，返回登录窗口
+                    CloseMainWindowAndShowLogin();
                 }
             }
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"更新数据库名称时出错: {ex.Message}");
                 LogHelper.LogError($"更新数据库名称时出错: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 关闭主窗口并显示登录窗口
+        /// </summary>
+        private void CloseMainWindowAndShowLogin()
+        {
+            try
+            {
+                // 获取当前主窗口
+                var mainWindow = Application.Current.MainWindow;
+                
+                // 创建新的登录窗口
+                var loginWindow = new Views.LoginWindow();
+                
+                // 设置登录窗口为主窗口
+                Application.Current.MainWindow = loginWindow;
+                
+                // 显示登录窗口
+                loginWindow.Show();
+                
+                // 清理资源
+                ClearResources();
+                
+                // 关闭当前主窗口
+                mainWindow?.Close();
+                
+                // 强制垃圾回收
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                
+                // 记录日志
+                LogHelper.LogInfo("已返回登录界面，之前的MainViewModel已销毁");
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"返回登录界面时出错: {ex.Message}");
+                LogHelper.LogError($"返回登录界面时出错: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 清理资源
+        /// </summary>
+        private void ClearResources()
+        {
+            try
+            {
+                // 清空集合
+                TrainRideInfos.Clear();
+                allTickets.Clear();
+                _pageCache.Clear();
+                
+                // 取消事件订阅
+                PropertyChanged = null;
+                
+                // 记录日志
+                LogHelper.LogInfo("已清理MainViewModel资源");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"清理资源时出错: {ex.Message}");
+                LogHelper.LogError($"清理资源时出错: {ex.Message}");
             }
         }
         
@@ -1341,28 +1422,6 @@ namespace TA_WPF.ViewModels
             {
                 Console.WriteLine($"保存数据库名称时出错: {ex.Message}");
                 LogHelper.LogError($"保存数据库名称时出错: {ex.Message}");
-            }
-        }
-        
-        private void RestartApplication()
-        {
-            try
-            {
-                // 获取应用程序路径
-                string appPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-                
-                // 启动新的进程
-                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo(appPath);
-                startInfo.UseShellExecute = true;
-                System.Diagnostics.Process.Start(startInfo);
-                
-                // 关闭当前应用程序
-                Application.Current.Shutdown();
-            }
-            catch (Exception ex)
-            {
-                MessageBoxHelper.ShowError($"重启应用程序时出错: {ex.Message}");
-                LogHelper.LogError($"重启应用程序时出错: {ex.Message}");
             }
         }
 

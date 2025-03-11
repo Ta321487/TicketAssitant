@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 using TA_WPF.ViewModels;
+using MaterialDesignThemes.Wpf;
 
 namespace TA_WPF
 {
@@ -58,6 +59,9 @@ namespace TA_WPF
                 
                 // 注册窗口状态变化事件
                 this.StateChanged += Window_StateChanged;
+                
+                // 注册窗口关闭事件
+                this.Closing += MainWindow_Closing;
                 
                 // 等待UI完全加载后再获取控件引用
                 this.Loaded += MainWindow_Loaded;
@@ -314,7 +318,7 @@ namespace TA_WPF
                 {
                     foreach (var column in _mainDataGrid.Columns)
                     {
-                        if (column != null && column is DataGridTextColumn textColumn)
+                        if (column != null && column is System.Windows.Controls.DataGridTextColumn textColumn)
                         {
                             textColumn.Width = DataGridLength.Auto;
                         }
@@ -328,7 +332,7 @@ namespace TA_WPF
                     // 为每列分配固定宽度，但确保最小宽度
                     foreach (var column in _mainDataGrid.Columns)
                     {
-                        if (column != null && column is DataGridTextColumn textColumn)
+                        if (column != null && column is System.Windows.Controls.DataGridTextColumn textColumn)
                         {
                             double minWidth = textColumn.MinWidth;
                             // 使用较小的固定宽度
@@ -345,7 +349,7 @@ namespace TA_WPF
                 // 为每列分配平均宽度，但考虑最小宽度
                 foreach (var column in _mainDataGrid.Columns)
                 {
-                    if (column != null && column is DataGridTextColumn textColumn)
+                    if (column != null && column is System.Windows.Controls.DataGridTextColumn textColumn)
                     {
                         double minWidth = textColumn.MinWidth;
                         double finalWidth = Math.Max(minWidth, avgColumnWidth);
@@ -578,6 +582,102 @@ namespace TA_WPF
             {
                 _pageInfoPanel.Visibility = Visibility.Visible;
                 _pageNumberInput.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        /// <summary>
+        /// 窗口关闭事件处理
+        /// </summary>
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
+            {
+                // 检查是否是用户手动关闭窗口
+                if (Application.Current.MainWindow == this && Owner == null)
+                {
+                    // 取消当前关闭操作
+                    e.Cancel = true;
+                    
+                    // 创建对话框内容
+                    var dialogContent = new StackPanel
+                    {
+                        Margin = new Thickness(16)
+                    };
+                    
+                    // 添加标题和消息
+                    dialogContent.Children.Add(new TextBlock
+                    {
+                        Text = "确认退出",
+                        FontSize = 18,
+                        FontWeight = FontWeights.Bold,
+                        Margin = new Thickness(0, 0, 0, 8)
+                    });
+                    
+                    dialogContent.Children.Add(new TextBlock
+                    {
+                        Text = "确定要退出应用程序吗？",
+                        Margin = new Thickness(0, 0, 0, 16)
+                    });
+                    
+                    // 创建按钮面板
+                    var buttonPanel = new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        HorizontalAlignment = HorizontalAlignment.Right
+                    };
+                    
+                    // 创建对话框按钮
+                    var noButton = new Button
+                    {
+                        Content = "否",
+                        Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand,
+                        CommandParameter = false,
+                        Style = TryFindResource("MaterialDesignFlatButton") as Style,
+                        Margin = new Thickness(8, 0, 0, 0)
+                    };
+                    
+                    var yesButton = new Button
+                    {
+                        Content = "是",
+                        Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand,
+                        CommandParameter = true,
+                        Style = TryFindResource("MaterialDesignFlatButton") as Style,
+                        Margin = new Thickness(8, 0, 0, 0)
+                    };
+                    
+                    // 添加按钮到按钮面板
+                    buttonPanel.Children.Add(noButton);
+                    buttonPanel.Children.Add(yesButton);
+                    
+                    // 添加按钮面板到对话框内容
+                    dialogContent.Children.Add(buttonPanel);
+                    
+                    // 显示对话框并等待结果
+                    MaterialDesignThemes.Wpf.DialogHost.Show(dialogContent, "RootDialog", (sender, args) =>
+                    {
+                        // 检查用户选择
+                        if (args.Parameter is bool result && result)
+                        {
+                            // 用户确认退出，清理资源
+                            if (DataContext is MainViewModel viewModel)
+                            {
+                                // 记录日志
+                                TA_WPF.Utils.LogHelper.LogInfo("用户手动关闭了主窗口，应用程序将退出");
+                            }
+                            
+                            // 关闭应用程序
+                            Application.Current.Shutdown();
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"处理窗口关闭事件时出错: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                
+                // 发生异常时，允许应用程序关闭
+                e.Cancel = false;
             }
         }
     }

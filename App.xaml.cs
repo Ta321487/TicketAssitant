@@ -144,6 +144,11 @@ namespace TA_WPF
 
                 // 创建并显示登录窗口
                 _loginWindow = new LoginWindow();
+                
+                // 设置登录窗口为主窗口
+                Current.MainWindow = _loginWindow;
+                
+                // 显示登录窗口
                 _loginWindow.Show();
 
                 // 监听登录窗口的关闭事件
@@ -153,6 +158,15 @@ namespace TA_WPF
                     if (!_loginWindow.LoginSuccessful)
                     {
                         Shutdown();
+                    }
+                    else
+                    {
+                        // 登录成功后，将_loginWindow设为null，以便垃圾回收
+                        _loginWindow = null;
+                        
+                        // 强制垃圾回收
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
                     }
                 };
             }

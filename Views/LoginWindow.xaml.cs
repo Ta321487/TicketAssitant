@@ -884,9 +884,37 @@ namespace TA_WPF.Views
                     // 登录成功
                     LoginSuccessful = true;
                     
-                    // 打开主窗口
+                    // 确保之前的MainViewModel被销毁
+                    if (_mainWindow != null)
+                    {
+                        try
+                        {
+                            // 关闭之前的主窗口
+                            _mainWindow.Close();
+                            _mainWindow = null;
+                            
+                            // 强制垃圾回收
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"关闭之前的主窗口时出错: {ex.Message}");
+                            LogHelper.LogError($"关闭之前的主窗口时出错: {ex.Message}");
+                        }
+                    }
+                    
+                    // 创建新的主窗口和MainViewModel
                     _mainWindow = new MainWindow(ConnectionString);
+                    
+                    // 设置主窗口
+                    Application.Current.MainWindow = _mainWindow;
+                    
+                    // 显示主窗口
                     _mainWindow.Show();
+                    
+                    // 记录日志
+                    LogHelper.LogInfo("用户登录成功，已创建新的MainViewModel");
                     
                     // 关闭登录窗口
                     this.Close();
