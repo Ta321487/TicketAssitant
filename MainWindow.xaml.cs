@@ -86,8 +86,40 @@ namespace TA_WPF
                 // 设置窗口图标
                 try
                 {
-                    Uri iconUri = new Uri("pack://application:,,,/Assets/Icons/app_icon.ico", UriKind.Absolute);
-                    this.Icon = new System.Windows.Media.Imaging.BitmapImage(iconUri);
+                    // 尝试多种方式加载图标
+                    try
+                    {
+                        // 方式1：从资源加载
+                        Uri iconUri = new Uri("pack://application:,,,/Assets/Icons/app_icon.ico", UriKind.Absolute);
+                        this.Icon = BitmapFrame.Create(iconUri);
+                    }
+                    catch (Exception ex1)
+                    {
+                        Console.WriteLine($"方式1加载图标失败: {ex1.Message}");
+                        try
+                        {
+                            // 方式2：从应用程序目录加载
+                            string iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Icons", "app_icon.ico");
+                            if (System.IO.File.Exists(iconPath))
+                            {
+                                this.Icon = BitmapFrame.Create(new Uri(iconPath));
+                            }
+                        }
+                        catch (Exception ex2)
+                        {
+                            Console.WriteLine($"方式2加载图标失败: {ex2.Message}");
+                            try
+                            {
+                                // 方式3：使用相对路径
+                                Uri iconUri = new Uri("/Assets/Icons/app_icon.ico", UriKind.Relative);
+                                this.Icon = new BitmapImage(iconUri);
+                            }
+                            catch (Exception ex3)
+                            {
+                                Console.WriteLine($"方式3加载图标失败: {ex3.Message}");
+                            }
+                        }
+                    }
                     
                     // 确保任务栏图标也被设置
                     System.Windows.Interop.WindowInteropHelper helper = new System.Windows.Interop.WindowInteropHelper(this);
@@ -97,6 +129,7 @@ namespace TA_WPF
                 catch (Exception ex)
                 {
                     Console.WriteLine($"设置窗口图标时出错: {ex.Message}");
+                    Console.WriteLine($"异常堆栈: {ex.StackTrace}");
                 }
                 
                 // 获取控件引用
