@@ -31,10 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Icons\app_icon.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Page Include="DesignTimeResources.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

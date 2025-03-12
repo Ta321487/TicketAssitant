@@ -93,11 +93,7 @@
                 <DrawingImage.Drawing>
                     <DrawingGroup>
                         <DrawingGroup.Children>
-                            <GeometryDrawing>
-                                <GeometryDrawing.Geometry>
-                                    <ImageDrawing ImageSource="/Assets/Icons/app_icon.ico" Rect="0,0,16,16" />
-                                </GeometryDrawing.Geometry>
-                            </GeometryDrawing>
+                            <ImageDrawing ImageSource="/Assets/Icons/app_icon.ico" Rect="0,0,16,16" />
                         </DrawingGroup.Children>
                     </DrawingGroup>
                 </DrawingImage.Drawing>
