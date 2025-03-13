@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc5.4" />
     <PackageReference Include="MaterialDesignColors" Version="2.1.4" />
     <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
     <PackageReference Include="MySql.Data" Version="8.0.33" />
@@ -23,7 +24,6 @@
 
   <ItemGroup>
     <Folder Include="Styles\" />
-    <Folder Include="Views\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,7 +38,10 @@
     </Page>
     <Page Include="App.xaml" />
     <Page Include="MainWindow.xaml" />
-    <Page Include="Views\*.xaml" />
+    <Page Include="Views\*.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

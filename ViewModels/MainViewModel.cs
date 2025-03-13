@@ -1,43 +1,32 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Configuration;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
-using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using TA_WPF.Views;
-using System.Globalization;
-using System.Windows.Threading;
-using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
     /// <summary>
     /// 主视图模型，负责管理主窗口的数据和操作
     /// </summary>
-    public class MainViewModel : INotifyPropertyChanged
+    public class MainViewModel : BaseViewModel
     {
         private readonly DatabaseService _databaseService;
-        private readonly ThemeService _themeService;
         private readonly ConfigurationService _configurationService;
         private readonly UIService _uiService;
         private readonly NavigationService _navigationService;
         private readonly DatabaseCheckService _databaseCheckService;
         
-        private readonly PaginationViewModel _paginationViewModel;
         private readonly TicketViewModel _ticketViewModel;
         private readonly SettingsViewModel _settingsViewModel;
+        private readonly QueryAllTicketsViewModel _queryAllTicketsViewModel;
         
         private bool _showWelcome = true;
         private bool _showSettings = false;
-        private bool _showDataGrid = false;
+        private bool _showQueryAllTickets = false;
         private string _connectionString;
 
         /// <summary>
@@ -52,46 +41,23 @@ namespace TA_WPF.ViewModels
                 
                 // 初始化服务
                 _databaseService = new DatabaseService(connectionString);
-                _themeService = new ThemeService();
                 _configurationService = new ConfigurationService();
                 _uiService = new UIService();
                 _navigationService = new NavigationService();
                 _databaseCheckService = new DatabaseCheckService(_databaseService);
                 
-                // 初始化分页视图模型
-                _paginationViewModel = new PaginationViewModel();
-                
-                // 订阅分页视图模型的属性变更事件
-                _paginationViewModel.PropertyChanged += (sender, e) =>
-                {
-                    // 当分页相关属性变更时，通知UI更新
-                    if (e.PropertyName == nameof(PaginationViewModel.CurrentPage) ||
-                        e.PropertyName == nameof(PaginationViewModel.TotalPages) ||
-                        e.PropertyName == nameof(PaginationViewModel.TotalItems) ||
-                        e.PropertyName == nameof(PaginationViewModel.PageSize) ||
-                        e.PropertyName == nameof(PaginationViewModel.CanNavigateToFirstPage) ||
-                        e.PropertyName == nameof(PaginationViewModel.CanNavigateToPreviousPage) ||
-                        e.PropertyName == nameof(PaginationViewModel.CanNavigateToNextPage) ||
-                        e.PropertyName == nameof(PaginationViewModel.CanNavigateToLastPage))
-                    {
-                        OnPropertyChanged(e.PropertyName);
-                    }
-                };
-                
                 // 初始化设置视图模型
-                _settingsViewModel = new SettingsViewModel(_themeService, _configurationService, _uiService, _navigationService, _databaseService, connectionString);
+                _settingsViewModel = new SettingsViewModel(_configurationService, _uiService, _navigationService, _databaseService, connectionString);
+                
+                // 初始化查询全部车票视图模型
+                _queryAllTicketsViewModel = new QueryAllTicketsViewModel(_databaseService, new PaginationViewModel(), this);
                 
                 // 初始化车票视图模型，传入this作为MainViewModel引用
-                _ticketViewModel = new TicketViewModel(_databaseService, _navigationService, _paginationViewModel, this);
+                _ticketViewModel = new TicketViewModel(_databaseService, _navigationService, new PaginationViewModel(), this);
                 
                 // 初始化命令
                 ShowHomeCommand = new RelayCommand(ShowHome);
-                
-                // 从配置文件加载主题设置
-                bool isDarkMode = _themeService.LoadThemeFromConfig();
-                
-                // 应用主题
-                _themeService.ApplyTheme(isDarkMode);
+                QueryAllCommand = new RelayCommand(async () => await QueryAllAsync());
                 
                 // 检查必要的表是否存在
                 _databaseCheckService.CheckRequiredTablesAsync();
@@ -103,11 +69,6 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 分页视图模型
-        /// </summary>
-        public PaginationViewModel PaginationViewModel => _paginationViewModel;
-
-        /// <summary>
         /// 车票视图模型
         /// </summary>
         public TicketViewModel TicketViewModel => _ticketViewModel;
@@ -116,6 +77,11 @@ namespace TA_WPF.ViewModels
         /// 设置视图模型
         /// </summary>
         public SettingsViewModel SettingsViewModel => _settingsViewModel;
+
+        /// <summary>
+        /// 查询全部车票视图模型
+        /// </summary>
+        public QueryAllTicketsViewModel QueryAllTicketsViewModel => _queryAllTicketsViewModel;
 
         /// <summary>
         /// 是否显示欢迎页
@@ -134,7 +100,7 @@ namespace TA_WPF.ViewModels
                     if (value)
                     {
                         ShowSettings = false;
-                        ShowDataGrid = false;
+                        ShowQueryAllTickets = false;
                     }
                 }
             }
@@ -157,26 +123,26 @@ namespace TA_WPF.ViewModels
                     if (value)
                     {
                         ShowWelcome = false;
-                        ShowDataGrid = false;
+                        ShowQueryAllTickets = false;
                     }
                 }
             }
         }
 
         /// <summary>
-        /// 是否显示数据表格
+        /// 是否显示查询全部车票页面
         /// </summary>
-        public bool ShowDataGrid
+        public bool ShowQueryAllTickets
         {
-            get => _showDataGrid;
+            get => _showQueryAllTickets;
             set
             {
-                if (_showDataGrid != value)
+                if (_showQueryAllTickets != value)
                 {
-                    _showDataGrid = value;
-                    OnPropertyChanged(nameof(ShowDataGrid));
+                    _showQueryAllTickets = value;
+                    OnPropertyChanged(nameof(ShowQueryAllTickets));
                     
-                    // 如果显示数据表格，则隐藏其他页面
+                    // 如果显示查询全部车票页面，则隐藏其他页面
                     if (value)
                     {
                         ShowWelcome = false;
@@ -185,68 +151,6 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-
-        /// <summary>
-        /// 是否正在加载
-        /// </summary>
-        public bool IsLoading
-        {
-            get => _paginationViewModel.IsLoading;
-            set => _paginationViewModel.IsLoading = value;
-        }
-
-        /// <summary>
-        /// 当前页码
-        /// </summary>
-        public int CurrentPage
-        {
-            get => _paginationViewModel.CurrentPage;
-            set => _paginationViewModel.CurrentPage = value;
-        }
-
-        /// <summary>
-        /// 总页数
-        /// </summary>
-        public int TotalPages => _paginationViewModel.TotalPages;
-
-        /// <summary>
-        /// 总记录数
-        /// </summary>
-        public int TotalItems => _paginationViewModel.TotalItems;
-
-        /// <summary>
-        /// 每页记录数
-        /// </summary>
-        public int PageSize
-        {
-            get => _paginationViewModel.PageSize;
-            set => _paginationViewModel.PageSize = value;
-        }
-
-        /// <summary>
-        /// 页大小选项
-        /// </summary>
-        public int[] PageSizeOptions => _paginationViewModel.PageSizeOptions;
-
-        /// <summary>
-        /// 是否可以导航到首页
-        /// </summary>
-        public bool CanNavigateToFirstPage => _paginationViewModel.CanNavigateToFirstPage;
-
-        /// <summary>
-        /// 是否可以导航到上一页
-        /// </summary>
-        public bool CanNavigateToPreviousPage => _paginationViewModel.CanNavigateToPreviousPage;
-
-        /// <summary>
-        /// 是否可以导航到下一页
-        /// </summary>
-        public bool CanNavigateToNextPage => _paginationViewModel.CanNavigateToNextPage;
-
-        /// <summary>
-        /// 是否可以导航到末页
-        /// </summary>
-        public bool CanNavigateToLastPage => _paginationViewModel.CanNavigateToLastPage;
 
         /// <summary>
         /// 数据表格行高
@@ -264,44 +168,9 @@ namespace TA_WPF.ViewModels
         public double DataGridCellFontSize => _uiService.CalculateDataGridCellFontSize(_settingsViewModel.FontSize);
 
         /// <summary>
-        /// 车票数据
+        /// 查询全部车票命令
         /// </summary>
-        public System.Collections.ObjectModel.ObservableCollection<Models.TrainRideInfo> TrainRideInfos => _paginationViewModel.Items;
-
-        /// <summary>
-        /// 首页命令
-        /// </summary>
-        public ICommand FirstPageCommand => _paginationViewModel.FirstPageCommand;
-
-        /// <summary>
-        /// 上一页命令
-        /// </summary>
-        public ICommand PreviousPageCommand => _paginationViewModel.PreviousPageCommand;
-
-        /// <summary>
-        /// 下一页命令
-        /// </summary>
-        public ICommand NextPageCommand => _paginationViewModel.NextPageCommand;
-
-        /// <summary>
-        /// 末页命令
-        /// </summary>
-        public ICommand LastPageCommand => _paginationViewModel.LastPageCommand;
-
-        /// <summary>
-        /// 加载数据命令
-        /// </summary>
-        public ICommand LoadDataCommand => _ticketViewModel.LoadDataCommand;
-
-        /// <summary>
-        /// 添加车票命令
-        /// </summary>
-        public ICommand AddTicketCommand => _ticketViewModel.AddTicketCommand;
-
-        /// <summary>
-        /// 查询所有车票命令
-        /// </summary>
-        public ICommand QueryAllCommand => _ticketViewModel.QueryAllCommand;
+        public ICommand QueryAllCommand { get; }
 
         /// <summary>
         /// 显示首页命令
@@ -331,10 +200,18 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 是否为深色模式
         /// </summary>
-        public bool IsDarkMode
+        public override bool IsDarkMode
         {
-            get => _settingsViewModel.IsDarkMode;
-            set => _settingsViewModel.IsDarkMode = value;
+            get => base.IsDarkMode;
+            set 
+            { 
+                base.IsDarkMode = value;
+                // 同步设置视图模型的主题状态
+                if (_settingsViewModel != null)
+                {
+                    _settingsViewModel.UpdateThemeState();
+                }
+            }
         }
 
         /// <summary>
@@ -415,12 +292,12 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 应用主题设置
+        /// 查询所有车票
         /// </summary>
-        /// <param name="isDarkMode">是否为深色模式</param>
-        public void ApplyTheme(bool isDarkMode)
+        private async Task QueryAllAsync()
         {
-            _themeService.ApplyTheme(isDarkMode);
+            ShowQueryAllTickets = true;
+            await _queryAllTicketsViewModel.QueryAllAsync();
         }
 
         /// <summary>
@@ -430,24 +307,7 @@ namespace TA_WPF.ViewModels
         {
             ShowWelcome = true;
             ShowSettings = false;
-            ShowDataGrid = false;
-            
-            // 重置分页
-            _paginationViewModel.Reset();
-        }
-        
-        /// <summary>
-        /// 属性变更事件
-        /// </summary>
-        public event PropertyChangedEventHandler? PropertyChanged;
-        
-        /// <summary>
-        /// 触发属性变更事件
-        /// </summary>
-        /// <param name="propertyName">属性名称</param>
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            ShowQueryAllTickets = false;
         }
     }
 

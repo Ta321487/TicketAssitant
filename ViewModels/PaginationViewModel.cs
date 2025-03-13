@@ -12,7 +12,7 @@ namespace TA_WPF.ViewModels
     /// <summary>
     /// 分页视图模型，负责管理分页相关的数据和操作
     /// </summary>
-    public class PaginationViewModel : INotifyPropertyChanged
+    public class PaginationViewModel : BaseViewModel
     {
         private int _currentPage = 1;
         private int _totalPages;
@@ -107,6 +107,16 @@ namespace TA_WPF.ViewModels
                     
                     // 重新计算总页数
                     CalculateTotalPages();
+                    
+                    // 通知UI更新相关属性
+                    OnPropertyChanged(nameof(TotalPages));
+                    OnPropertyChanged(nameof(CanNavigateToFirstPage));
+                    OnPropertyChanged(nameof(CanNavigateToPreviousPage));
+                    OnPropertyChanged(nameof(CanNavigateToNextPage));
+                    OnPropertyChanged(nameof(CanNavigateToLastPage));
+                    
+                    // 通知命令状态可能已更改
+                    CommandManager.InvalidateRequerySuggested();
                 }
             }
         }
@@ -121,6 +131,10 @@ namespace TA_WPF.ViewModels
             {
                 if (_pageSize != value)
                 {
+                    // 记录旧的页码和总页数
+                    int oldCurrentPage = _currentPage;
+                    int oldTotalPages = _totalPages;
+                    
                     // 设置加载状态
                     IsLoading = true;
                     
@@ -134,11 +148,37 @@ namespace TA_WPF.ViewModels
                     // 重新计算总页数
                     CalculateTotalPages();
                     
-                    // 确保当前页在有效范围内
-                    if (CurrentPage > TotalPages)
+                    // 计算新的当前页，尽量保持在相同的数据区域
+                    // 例如：如果在第2页，每页25条，现在改为每页50条，应该保持在第1页
+                    if (oldTotalPages > 0 && _totalPages > 0)
                     {
-                        CurrentPage = TotalPages;
+                        // 计算当前页在总数据中的位置比例
+                        double positionRatio = (double)(oldCurrentPage - 1) / oldTotalPages;
+                        // 根据比例计算新的页码
+                        int newPage = Math.Max(1, (int)Math.Ceiling(positionRatio * _totalPages) + 1);
+                        // 确保不超过总页数
+                        newPage = Math.Min(newPage, _totalPages);
+                        // 设置新的当前页
+                        _currentPage = newPage;
                     }
+                    else
+                    {
+                        // 如果没有足够信息计算，则设为第一页
+                        _currentPage = 1;
+                    }
+                    
+                    // 通知UI更新相关属性
+                    OnPropertyChanged(nameof(TotalPages));
+                    OnPropertyChanged(nameof(CurrentPage));
+                    
+                    // 通知导航按钮状态可能已更改
+                    OnPropertyChanged(nameof(CanNavigateToFirstPage));
+                    OnPropertyChanged(nameof(CanNavigateToPreviousPage));
+                    OnPropertyChanged(nameof(CanNavigateToNextPage));
+                    OnPropertyChanged(nameof(CanNavigateToLastPage));
+                    
+                    // 通知命令状态可能已更改
+                    CommandManager.InvalidateRequerySuggested();
                     
                     // 通知页大小已更改
                     PageSizeChanged?.Invoke(this, EventArgs.Empty);
@@ -164,11 +204,11 @@ namespace TA_WPF.ViewModels
                     _isLoading = value;
                     OnPropertyChanged(nameof(IsLoading));
                     
-                    // 不再触发导航按钮状态更新，允许在加载过程中点击分页按钮
-                    // OnPropertyChanged(nameof(CanNavigateToFirstPage));
-                    // OnPropertyChanged(nameof(CanNavigateToPreviousPage));
-                    // OnPropertyChanged(nameof(CanNavigateToNextPage));
-                    // OnPropertyChanged(nameof(CanNavigateToLastPage));
+                    // 注意：我们不再在这里更新导航按钮状态
+                    // 因为我们修改了导航按钮的启用条件
+                    
+                    // 刷新命令状态
+                    CommandManager.InvalidateRequerySuggested();
                 }
             }
         }
@@ -357,12 +397,17 @@ namespace TA_WPF.ViewModels
                 return;
             }
 
-            int pages = TotalItems / PageSize;
-            if (TotalItems % PageSize > 0)
+            // 确保TotalItems不为负数
+            int itemCount = Math.Max(0, TotalItems);
+            
+            // 计算总页数
+            int pages = itemCount / PageSize;
+            if (itemCount % PageSize > 0)
             {
                 pages++;
             }
 
+            // 确保至少有一页
             TotalPages = Math.Max(1, pages);
             
             // 确保当前页在有效范围内
@@ -370,11 +415,17 @@ namespace TA_WPF.ViewModels
             {
                 CurrentPage = TotalPages;
             }
+            else if (CurrentPage < 1)
+            {
+                CurrentPage = 1;
+            }
             
             // 通知UI更新
             OnPropertyChanged(nameof(TotalPages));
             
             // 通知导航按钮状态可能已更改
+            OnPropertyChanged(nameof(CanNavigateToFirstPage));
+            OnPropertyChanged(nameof(CanNavigateToPreviousPage));
             OnPropertyChanged(nameof(CanNavigateToNextPage));
             OnPropertyChanged(nameof(CanNavigateToLastPage));
             
@@ -402,20 +453,6 @@ namespace TA_WPF.ViewModels
             IsInitialized = false;
             ClearCache();
             Items.Clear();
-        }
-
-        /// <summary>
-        /// 属性变更事件
-        /// </summary>
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        /// <summary>
-        /// 触发属性变更事件
-        /// </summary>
-        /// <param name="propertyName">属性名称</param>
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 } 

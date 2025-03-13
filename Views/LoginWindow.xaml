@@ -7,8 +7,8 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         d:DesignHeight="890" d:DesignWidth="450"
-        Title="登录" Height="890" Width="450"
-        MinHeight="890" MinWidth="450"
+        Title="登录" Height="750" Width="450"
+        MinHeight="750" MinWidth="450"
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
@@ -17,7 +17,7 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="Microsoft YaHei"
-        ResizeMode="CanResize"
+        ResizeMode="CanMinimize"
         KeyDown="Window_KeyDown"
         materialDesign:ThemeAssist.Theme="{Binding Source={StaticResource Theme.Dark}, Converter={StaticResource BooleanToThemeConverter}}"
         Loaded="Window_Loaded">
@@ -211,15 +211,6 @@
                                  Margin="0"
                                  HorizontalAlignment="Right"/>
                     </Grid>
-
-                    <!-- 错误消息区域 -->
-                    <Border BorderThickness="0" 
-                            Margin="0,0,0,8" 
-                            MinHeight="36">
-                        <TextBlock x:Name="ErrorMessageTextBlock"
-                                   Foreground="Red"
-                                   Style="{StaticResource ResponsiveTextBlock}"/>
-                    </Border>
                 </StackPanel>
             </materialDesign:Card>
 

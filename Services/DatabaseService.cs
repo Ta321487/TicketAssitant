@@ -240,15 +240,29 @@ namespace TA_WPF.Services
                         // 设置命令超时
                         countCommand.CommandTimeout = 30; // 30秒
                         
+                        // 执行查询并获取结果
                         var result = await countCommand.ExecuteScalarAsync();
-                        return result != null ? Convert.ToInt32(result) : 0;
+                        
+                        // 确保结果不为null，并转换为整数
+                        if (result != null && result != DBNull.Value)
+                        {
+                            return Convert.ToInt32(result);
+                        }
+                        
+                        // 如果结果为null，返回0
+                        return 0;
                     }
                 }
             }
             catch (Exception ex)
             {
+                // 记录错误
                 Console.WriteLine($"获取总记录数时出错: {ex.Message}");
-                // 出错时返回0，避免应用程序崩溃
+                
+                // 在生产环境中，可能需要记录到日志文件
+                // Logger.LogError($"获取总记录数时出错: {ex.Message}", ex);
+                
+                // 返回0，表示没有记录
                 return 0;
             }
         }

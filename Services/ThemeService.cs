@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
 using TA_WPF.Utils;
+using System.ComponentModel;
 
 namespace TA_WPF.Services
 {
@@ -13,6 +14,11 @@ namespace TA_WPF.Services
     /// </summary>
     public class ThemeService
     {
+        /// <summary>
+        /// 主题变更事件
+        /// </summary>
+        public event EventHandler<bool> ThemeChanged;
+
         /// <summary>
         /// 应用主题设置
         /// </summary>
@@ -44,7 +50,7 @@ namespace TA_WPF.Services
                         bundledTheme.BaseTheme = isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light;
                     }
                     
-                    // 更新Theme.Dark和Theme.Light资源
+                    // 更新Theme.Dark和Theme.Light资源 - 确保这些值立即更新
                     Application.Current.Resources["Theme.Dark"] = isDarkMode;
                     Application.Current.Resources["Theme.Light"] = !isDarkMode;
                     
@@ -69,7 +75,18 @@ namespace TA_WPF.Services
                             // 更新窗口的ThemeAssist.Theme属性
                             MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(window, isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
                             
-                            // 刷新窗口
+                            // 如果窗口的DataContext实现了INotifyPropertyChanged接口，尝试更新其IsDarkMode属性
+                            if (window.DataContext is INotifyPropertyChanged viewModel)
+                            {
+                                // 使用反射查找并设置IsDarkMode属性
+                                var property = viewModel.GetType().GetProperty("IsDarkMode");
+                                if (property != null && property.CanWrite && property.PropertyType == typeof(bool))
+                                {
+                                    property.SetValue(viewModel, isDarkMode);
+                                }
+                            }
+                            
+                            // 强制刷新窗口
                             window.UpdateLayout();
                         }
                     }
@@ -84,6 +101,9 @@ namespace TA_WPF.Services
                 
                 // 保存主题设置到配置文件
                 SaveThemeToConfig(isDarkMode);
+                
+                // 触发主题变更事件
+                ThemeChanged?.Invoke(this, isDarkMode);
             }
             catch (Exception ex)
             {

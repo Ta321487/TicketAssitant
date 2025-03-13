@@ -9,15 +9,13 @@ namespace TA_WPF.ViewModels
     /// <summary>
     /// 设置视图模型，负责管理设置页面的数据
     /// </summary>
-    public class SettingsViewModel : INotifyPropertyChanged
+    public class SettingsViewModel : BaseViewModel
     {
-        private readonly ThemeService _themeService;
         private readonly ConfigurationService _configurationService;
         private readonly UIService _uiService;
         private readonly NavigationService _navigationService;
         private readonly DatabaseService _databaseService;
         
-        private bool _isDarkMode;
         private double _fontSize = 13; // 默认字体大小
         private string _serverAddress = "localhost";
         private string _username = "root";
@@ -31,21 +29,18 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 构造函数
         /// </summary>
-        /// <param name="themeService">主题服务</param>
         /// <param name="configurationService">配置服务</param>
         /// <param name="uiService">UI服务</param>
         /// <param name="navigationService">导航服务</param>
         /// <param name="databaseService">数据库服务</param>
         /// <param name="connectionString">数据库连接字符串</param>
         public SettingsViewModel(
-            ThemeService themeService,
             ConfigurationService configurationService,
             UIService uiService,
             NavigationService navigationService,
             DatabaseService databaseService,
-            string connectionString)
+            string connectionString) : base()
         {
-            _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _uiService = uiService ?? throw new ArgumentNullException(nameof(uiService));
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
@@ -57,9 +52,6 @@ namespace TA_WPF.ViewModels
             _username = connectionInfo.Username;
             _password = connectionInfo.Password;
             
-            // 从配置文件加载主题设置
-            _isDarkMode = _themeService.LoadThemeFromConfig();
-            
             // 从配置文件加载字体大小
             _fontSize = _configurationService.LoadFontSizeFromConfig();
             
@@ -68,23 +60,6 @@ namespace TA_WPF.ViewModels
             UpdateConnectionCommand = new RelayCommand(UpdateConnection);
             UpdateDatabaseCommand = new RelayCommand(UpdateDatabase);
             ExportLogCommand = new RelayCommand(ExportLog);
-        }
-
-        /// <summary>
-        /// 是否为深色模式
-        /// </summary>
-        public bool IsDarkMode
-        {
-            get => _isDarkMode;
-            set
-            {
-                if (_isDarkMode != value)
-                {
-                    _isDarkMode = value;
-                    OnPropertyChanged(nameof(IsDarkMode));
-                    _themeService.ApplyTheme(value);
-                }
-            }
         }
 
         /// <summary>
@@ -259,6 +234,15 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 重写IsDarkMode属性，确保与BaseViewModel同步
+        /// </summary>
+        public override bool IsDarkMode
+        {
+            get => base.IsDarkMode;
+            set => base.IsDarkMode = value;
+        }
+
+        /// <summary>
         /// 修改连接命令
         /// </summary>
         public ICommand ModifyConnectionCommand { get; }
@@ -419,20 +403,6 @@ namespace TA_WPF.ViewModels
                 LogHelper.LogError($"导出日志时出错: {ex.Message}");
                 IsLoading = false;
             }
-        }
-
-        /// <summary>
-        /// 属性变更事件
-        /// </summary>
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        /// <summary>
-        /// 触发属性变更事件
-        /// </summary>
-        /// <param name="propertyName">属性名称</param>
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

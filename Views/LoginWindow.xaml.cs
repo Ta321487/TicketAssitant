@@ -47,6 +47,12 @@ namespace TA_WPF.Views
             try
             {
                 InitializeComponent();
+                
+                // 设置窗口属性
+                this.ResizeMode = ResizeMode.CanMinimize; // 禁用最大化，只允许最小化
+                this.SizeToContent = SizeToContent.Height; // 根据内容自动调整高度
+                this.MaxHeight = 950; // 设置最大高度
+                
                 UsernameTextBox.Focus();
                 
                 // 初始化登录信息服务
@@ -574,9 +580,6 @@ namespace TA_WPF.Views
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            // 清除错误消息
-            ErrorMessageTextBlock.Text = string.Empty;
-            
             // 获取输入值
             string serverAddress = ServerAddressTextBox.Text.Trim();
             string databaseName = DatabaseNameComboBox.Text.Trim();
@@ -1072,6 +1075,17 @@ namespace TA_WPF.Views
                     // 创建新的主窗口和MainViewModel
                     _mainWindow = new MainWindow(ConnectionString);
                     
+                    // 确保主题设置同步到主窗口
+                    var paletteHelper = new PaletteHelper();
+                    var theme = paletteHelper.GetTheme();
+                    bool isDarkMode = theme.GetBaseTheme() == BaseTheme.Dark;
+                    
+                    // 如果MainViewModel已初始化，设置其主题
+                    if (_mainWindow.DataContext is MainViewModel mainViewModel)
+                    {
+                        mainViewModel.IsDarkMode = isDarkMode;
+                    }
+                    
                     // 设置主窗口
                     Application.Current.MainWindow = _mainWindow;
                     
@@ -1158,9 +1172,6 @@ namespace TA_WPF.Views
             // 解析错误消息，提供更友好的提示
             string userFriendlyMessage = GetUserFriendlyErrorMessage(message);
             
-            ErrorMessageTextBlock.Text = userFriendlyMessage;
-            ErrorMessageTextBlock.Visibility = Visibility.Visible;
-
             // 使用MaterialDesign对话框替代MessageBox
             var dialogContent = new StackPanel { Margin = new Thickness(16) };
             
@@ -1188,7 +1199,7 @@ namespace TA_WPF.Views
             
             dialogContent.Children.Add(messageTextBlock);
             
-            // 如果是认证方式错误，添加一个复制SQL命令的按钮
+            // 如果是认证方式错误，添加复制SQL命令的按钮
             if (userFriendlyMessage.Contains("认证方式不兼容"))
             {
                 var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 16) };
@@ -1266,12 +1277,24 @@ namespace TA_WPF.Views
             
             dialogContent.Children.Add(okButton);
             
+            // 显示对话框
             MaterialDesignThemes.Wpf.DialogHost.Show(dialogContent, "LoginDialogHost");
         }
 
         // 获取用户友好的错误消息
         private string GetUserFriendlyErrorMessage(string originalMessage)
         {
+            // 数据库不存在错误
+            if (originalMessage.Contains("Unknown database") || originalMessage.Contains("Unknown schema"))
+            {
+                string dbName = DatabaseNameComboBox.Text.Trim();
+                return $"数据库 '{dbName}' 不存在，请检查数据库名称是否正确。\n" +
+                       "如果确认数据库名称正确，您可以：\n" +
+                       "1. 检查数据库是否已创建\n" +
+                       "2. 使用正确的数据库名称\n" +
+                       "3. 点击\"创建数据库\"按钮创建新数据库";
+            }
+            
             // 认证方法错误 - 增强处理
             if (originalMessage.Contains("Authentication to host") || 
                 originalMessage.Contains("using method 'caching_sha2_password'") || 
@@ -1279,6 +1302,18 @@ namespace TA_WPF.Views
                 originalMessage.Contains("Authentication plugin") ||
                 originalMessage.Contains("is not supported"))
             {
+                // 首先检查是否是访问被拒绝的错误
+                if (originalMessage.Contains("Access denied for user"))
+                {
+                    string username = UsernameTextBox.Text.Trim();
+                    return $"登录失败：用户'{username}'的用户名或密码错误。\n" +
+                           "请检查：\n" +
+                           "1. 用户名拼写是否正确\n" +
+                           "2. 密码是否正确\n" +
+                           "3. 该用户是否有权限访问MySQL服务器\n" +
+                           "4. 如果确认用户名密码无误，请联系数据库管理员检查用户权限";
+                }
+                
                 return "认证方式不兼容，请尝试以下解决方案：\n" +
                        "1. 在MySQL中修改用户认证方式为mysql_native_password\n" +
                        "   执行SQL: ALTER USER '用户名'@'%' IDENTIFIED WITH mysql_native_password BY '密码';\n" +
@@ -1290,7 +1325,13 @@ namespace TA_WPF.Views
             // 用户名或密码错误
             if (originalMessage.Contains("Access denied for user") && originalMessage.Contains("using password"))
             {
-                return "用户名或密码错误，请检查输入是否正确。";
+                string username = UsernameTextBox.Text.Trim();
+                return $"登录失败：用户'{username}'的用户名或密码错误。\n" +
+                       "请检查：\n" +
+                       "1. 用户名拼写是否正确\n" +
+                       "2. 密码是否正确\n" +
+                       "3. 该用户是否有权限访问MySQL服务器\n" +
+                       "4. 如果确认用户名密码无误，请联系数据库管理员检查用户权限";
             }
             
             // 连接超时
@@ -1320,13 +1361,6 @@ namespace TA_WPF.Views
             {
                 string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306";
                 return $"连接被拒绝，请检查端口号({port})是否正确或MySQL服务是否已在该端口启动。";
-            }
-            
-            // 数据库不存在
-            if (originalMessage.Contains("Unknown database") || originalMessage.Contains("Database") && originalMessage.Contains("doesn't exist"))
-            {
-                string dbName = DatabaseNameComboBox.Text.Trim();
-                return $"数据库'{dbName}'不存在，请检查数据库名称或创建新数据库。";
             }
             
             // 主机名解析错误

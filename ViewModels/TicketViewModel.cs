@@ -15,7 +15,7 @@ namespace TA_WPF.ViewModels
     /// <summary>
     /// 车票视图模型，负责管理车票数据
     /// </summary>
-    public class TicketViewModel : INotifyPropertyChanged
+    public class TicketViewModel : BaseViewModel
     {
         private readonly DatabaseService _databaseService;
         private readonly NavigationService _navigationService;
@@ -30,7 +30,7 @@ namespace TA_WPF.ViewModels
         /// <param name="navigationService">导航服务</param>
         /// <param name="paginationViewModel">分页视图模型</param>
         /// <param name="mainViewModel">主视图模型</param>
-        public TicketViewModel(DatabaseService databaseService, NavigationService navigationService, PaginationViewModel paginationViewModel, MainViewModel mainViewModel)
+        public TicketViewModel(DatabaseService databaseService, NavigationService navigationService, PaginationViewModel paginationViewModel, MainViewModel mainViewModel) : base()
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
@@ -139,7 +139,7 @@ namespace TA_WPF.ViewModels
                 _paginationViewModel.IsInitialized = true;
                 
                 // 显示数据表格
-                _mainViewModel.ShowDataGrid = true;
+                _mainViewModel.ShowQueryAllTickets = true;
             }
             catch (Exception ex)
             {
@@ -176,7 +176,7 @@ namespace TA_WPF.ViewModels
                     await LoadPageDataAsync();
                     
                     // 显示数据表格
-                    _mainViewModel.ShowDataGrid = true;
+                    _mainViewModel.ShowQueryAllTickets = true;
                 }
                 
                 // 标记为已初始化
@@ -296,7 +296,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 页大小变更事件处理
+        /// 页面大小变更事件处理
         /// </summary>
         private void OnPageSizeChanged(object sender, EventArgs e)
         {
@@ -305,20 +305,6 @@ namespace TA_WPF.ViewModels
             
             // 直接加载页面数据，不需要额外的Dispatcher调用
             _ = LoadPageDataAsync();
-        }
-
-        /// <summary>
-        /// 属性变更事件
-        /// </summary>
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        /// <summary>
-        /// 触发属性变更事件
-        /// </summary>
-        /// <param name="propertyName">属性名称</param>
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 } 

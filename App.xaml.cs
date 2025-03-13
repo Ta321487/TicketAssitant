@@ -62,6 +62,20 @@ namespace TA_WPF
                 CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("zh-CN");
                 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("zh-CN");
                 
+                // 初始化主题服务并应用主题设置
+                try
+                {
+                    var themeService = new Services.ThemeService();
+                    bool isDarkMode = themeService.LoadThemeFromConfig();
+                    themeService.ApplyTheme(isDarkMode);
+                    LogHelper.LogInfo($"已应用{(isDarkMode ? "深色" : "浅色")}主题");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"初始化主题服务时出错: {ex.Message}");
+                    LogHelper.LogError($"初始化主题服务时出错: {ex.Message}");
+                }
+                
                 // 从配置文件加载字体大小设置
                 try
                 {
