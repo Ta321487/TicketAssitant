@@ -15,14 +15,14 @@ namespace TA_WPF.Views
     {
         private readonly AddTicketViewModel _viewModel;
         
-        public AddTicketWindow(DatabaseService databaseService)
+        public AddTicketWindow(DatabaseService databaseService, MainViewModel mainViewModel)
         {
             try
             {
-                InitializeComponent();
+                    InitializeComponent();
                 
                 // 创建ViewModel并设置为DataContext
-                _viewModel = new AddTicketViewModel(databaseService);
+                _viewModel = new AddTicketViewModel(databaseService, mainViewModel);
                 DataContext = _viewModel;
                 
                 // 订阅窗口关闭事件
@@ -59,8 +59,6 @@ namespace TA_WPF.Views
                 // 设置窗口初始大小
                 AdjustWindowSize();
                 
-                // 其他加载逻辑
-                // ...
             }
             catch (Exception ex)
             {

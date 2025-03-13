@@ -153,6 +153,9 @@
                              Style="{StaticResource FormSearchTextBoxStyle}"
                              materialDesign:HintAssist.Hint="出发站"
                              Tag="Depart"
+                             InputMethod.IsInputMethodEnabled="True"
+                             InputMethod.PreferredImeState="On"
+                             InputMethod.PreferredImeConversionMode="Native"
                              Margin="0"/>
                         <Popup IsOpen="{Binding IsDepartStationDropdownOpen}" 
                                PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
@@ -164,7 +167,14 @@
                                     MaxHeight="200">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                                             Style="{StaticResource AutoHideScrollViewerStyle}">
-                                    <ItemsControl ItemsSource="{Binding DepartStationSuggestions}">
+                                    <ItemsControl ItemsSource="{Binding DepartStationSuggestions}"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                KeyboardNavigation.TabNavigation="Cycle">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Button Command="{Binding DataContext.SelectDepartStationCommand, 
@@ -175,7 +185,8 @@
                                                         Style="{StaticResource MaterialDesignFlatButton}"
                                                         Width="{Binding ActualWidth, 
                                                                 RelativeSource={RelativeSource Mode=FindAncestor, 
-                                                                AncestorType=ScrollViewer}}"/>
+                                                                AncestorType=ScrollViewer}}"
+                                                        FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -203,6 +214,9 @@
                              Style="{StaticResource FormSearchTextBoxStyle}"
                              materialDesign:HintAssist.Hint="到达站"
                              Tag="Arrive"
+                             InputMethod.IsInputMethodEnabled="True"
+                             InputMethod.PreferredImeState="On"
+                             InputMethod.PreferredImeConversionMode="Native"
                              Margin="0"/>
                         <Popup IsOpen="{Binding IsArriveStationDropdownOpen}" 
                                PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
@@ -214,7 +228,14 @@
                                     MaxHeight="200">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                                             Style="{StaticResource AutoHideScrollViewerStyle}">
-                                    <ItemsControl ItemsSource="{Binding ArriveStationSuggestions}">
+                                    <ItemsControl ItemsSource="{Binding ArriveStationSuggestions}"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                KeyboardNavigation.TabNavigation="Cycle">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Button Command="{Binding DataContext.SelectArriveStationCommand, 
@@ -225,7 +246,8 @@
                                                         Style="{StaticResource MaterialDesignFlatButton}"
                                                         Width="{Binding ActualWidth, 
                                                                 RelativeSource={RelativeSource Mode=FindAncestor, 
-                                                                AncestorType=ScrollViewer}}"/>
+                                                                AncestorType=ScrollViewer}}"
+                                                        FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -533,7 +555,7 @@
                     MinHeight="36"
                     FontSize="{DynamicResource MaterialDesignFontSize}"
                     Padding="16,8"/>
-            <Button Content="保存" 
+            <Button Content="确定" 
                     Command="{Binding SaveCommand}" 
                     Style="{StaticResource MaterialDesignFlatButton}"
                     materialDesign:ButtonAssist.CornerRadius="4"
@@ -541,7 +563,8 @@
                     Height="48"
                     MinHeight="36"
                     FontSize="{DynamicResource MaterialDesignFontSize}"
-                    Padding="16,8"/>
+                    Padding="16,8"
+                    IsDefault="True"/>
         </StackPanel>
     </Grid>
 </Window> 

@@ -98,6 +98,29 @@
                                         </Button>
                                     </TreeViewItem.Header>
                                 </TreeViewItem>
+                                
+                                <!-- 仪表盘菜单项 - 移动到主页下方 -->
+                                <TreeViewItem>
+                                    <TreeViewItem.Header>
+                                        <Button Content="仪表盘" 
+                                                Command="{Binding ShowDashboardCommand}" 
+                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                HorizontalContentAlignment="Left"
+                                                Width="200"
+                                                Margin="0"
+                                                Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                            <Button.ContentTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <materialDesign:PackIcon Kind="ViewDashboard" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="{Binding}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </Button.ContentTemplate>
+                                        </Button>
+                                    </TreeViewItem.Header>
+                                </TreeViewItem>
+                                
                                 <TreeViewItem IsExpanded="True">
                                     <TreeViewItem.Header>
                                         <StackPanel Orientation="Horizontal">
@@ -164,14 +187,6 @@
                                 </TreeViewItem>
                                 <TreeViewItem>
                                     <TreeViewItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="ChartBar" Margin="0,0,8,0"/>
-                                            <TextBlock Text="统计分析"/>
-                                        </StackPanel>
-                                    </TreeViewItem.Header>
-                                </TreeViewItem>
-                                <TreeViewItem>
-                                    <TreeViewItem.Header>
                                         <Button x:Name="SettingsButton"
                                                 Style="{StaticResource MaterialDesignFlatButton}"
                                                 HorizontalContentAlignment="Left"
@@ -206,17 +221,21 @@
                             <TextBlock Text="请使用左侧菜单进行操作" FontSize="16" Margin="0,0,0,20" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
-
+                    
                     <!-- 查询全部车票页面 -->
-                    <views:QueryAllTicketsPage 
-                        DataContext="{Binding QueryAllTicketsViewModel}"
-                        Visibility="{Binding DataContext.ShowQueryAllTickets, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
+                    <views:QueryAllTicketsPage Grid.Column="1" 
+                                              DataContext="{Binding QueryAllTicketsViewModel}"
+                                              Visibility="{Binding DataContext.ShowQueryAllTickets, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    
                     <!-- 设置页面 -->
-                    <views:SettingsPage 
-                                        x:Name="SettingsPageControl"
-                                        Visibility="{Binding ShowSettings, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        DataContext="{Binding}"/>
+                    <views:SettingsPage Grid.Column="1" 
+                                        DataContext="{Binding SettingsViewModel}"
+                                        Visibility="{Binding DataContext.ShowSettings, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    
+                    <!-- 仪表盘页面 -->
+                    <views:DashboardView Grid.Column="1" 
+                                        DataContext="{Binding DashboardViewModel}"
+                                        Visibility="{Binding DataContext.ShowDashboardView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </Grid>
             </Grid>
     </Grid>

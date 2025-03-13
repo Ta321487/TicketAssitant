@@ -70,6 +70,8 @@
                   CanUserDeleteRows="False"
                   CanUserResizeRows="False"
                   CanUserResizeColumns="True"
+                  CanUserSortColumns="False"
+                  CanUserReorderColumns="False"
                   IsReadOnly="True"
                   RowHeight="{Binding DataGridRowHeight}"
                   HeadersVisibility="Column"

@@ -70,7 +70,7 @@ namespace TA_WPF.ViewModels
             try
             {
                 // 打开添加车票窗口
-                bool result = _navigationService.OpenAddTicketWindow(_databaseService);
+                bool result = _navigationService.OpenAddTicketWindow(_databaseService, _mainViewModel);
                 
                 // 如果用户保存了车票，在后台刷新数据，但不改变当前视图
                 if (result)

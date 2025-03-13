@@ -23,10 +23,12 @@ namespace TA_WPF.ViewModels
         private readonly TicketViewModel _ticketViewModel;
         private readonly SettingsViewModel _settingsViewModel;
         private readonly QueryAllTicketsViewModel _queryAllTicketsViewModel;
+        private readonly DashboardViewModel _dashboardViewModel;
         
         private bool _showWelcome = true;
         private bool _showSettings = false;
         private bool _showQueryAllTickets = false;
+        private bool _showDashboardView = false;
         private string _connectionString;
 
         /// <summary>
@@ -55,9 +57,13 @@ namespace TA_WPF.ViewModels
                 // 初始化车票视图模型，传入this作为MainViewModel引用
                 _ticketViewModel = new TicketViewModel(_databaseService, _navigationService, new PaginationViewModel(), this);
                 
+                // 初始化仪表盘视图模型
+                _dashboardViewModel = new DashboardViewModel(_databaseService);
+                
                 // 初始化命令
                 ShowHomeCommand = new RelayCommand(ShowHome);
                 QueryAllCommand = new RelayCommand(async () => await QueryAllAsync());
+                ShowDashboardCommand = new RelayCommand(ShowDashboard);
                 
                 // 检查必要的表是否存在
                 _databaseCheckService.CheckRequiredTablesAsync();
@@ -84,6 +90,11 @@ namespace TA_WPF.ViewModels
         public QueryAllTicketsViewModel QueryAllTicketsViewModel => _queryAllTicketsViewModel;
 
         /// <summary>
+        /// 仪表盘视图模型
+        /// </summary>
+        public DashboardViewModel DashboardViewModel => _dashboardViewModel;
+
+        /// <summary>
         /// 是否显示欢迎页
         /// </summary>
         public bool ShowWelcome
@@ -101,6 +112,7 @@ namespace TA_WPF.ViewModels
                     {
                         ShowSettings = false;
                         ShowQueryAllTickets = false;
+                        ShowDashboardView = false;
                     }
                 }
             }
@@ -124,6 +136,7 @@ namespace TA_WPF.ViewModels
                     {
                         ShowWelcome = false;
                         ShowQueryAllTickets = false;
+                        ShowDashboardView = false;
                     }
                 }
             }
@@ -147,6 +160,31 @@ namespace TA_WPF.ViewModels
                     {
                         ShowWelcome = false;
                         ShowSettings = false;
+                        ShowDashboardView = false;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否显示仪表盘页面
+        /// </summary>
+        public bool ShowDashboardView
+        {
+            get => _showDashboardView;
+            set
+            {
+                if (_showDashboardView != value)
+                {
+                    _showDashboardView = value;
+                    OnPropertyChanged(nameof(ShowDashboardView));
+                    
+                    // 如果显示仪表盘页面，则隐藏其他页面
+                    if (value)
+                    {
+                        ShowWelcome = false;
+                        ShowSettings = false;
+                        ShowQueryAllTickets = false;
                     }
                 }
             }
@@ -178,6 +216,11 @@ namespace TA_WPF.ViewModels
         public ICommand ShowHomeCommand { get; }
 
         /// <summary>
+        /// 显示仪表盘命令
+        /// </summary>
+        public ICommand ShowDashboardCommand { get; }
+
+        /// <summary>
         /// 修改连接命令
         /// </summary>
         public ICommand ModifyConnectionCommand => _settingsViewModel.ModifyConnectionCommand;
@@ -203,13 +246,12 @@ namespace TA_WPF.ViewModels
         public override bool IsDarkMode
         {
             get => base.IsDarkMode;
-            set 
-            { 
-                base.IsDarkMode = value;
-                // 同步设置视图模型的主题状态
-                if (_settingsViewModel != null)
+            set
+            {
+                if (base.IsDarkMode != value)
                 {
-                    _settingsViewModel.UpdateThemeState();
+                    base.IsDarkMode = value;
+                    OnPropertyChanged(nameof(IsDarkMode));
                 }
             }
         }
@@ -306,8 +348,14 @@ namespace TA_WPF.ViewModels
         private void ShowHome()
         {
             ShowWelcome = true;
-            ShowSettings = false;
-            ShowQueryAllTickets = false;
+        }
+
+        /// <summary>
+        /// 显示仪表盘
+        /// </summary>
+        private void ShowDashboard()
+        {
+            ShowDashboardView = true;
         }
     }
 

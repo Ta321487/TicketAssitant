@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using TA_WPF.Utils;
+using TA_WPF.ViewModels;
 using TA_WPF.Views;
 
 namespace TA_WPF.Services
@@ -57,12 +58,13 @@ namespace TA_WPF.Services
         /// 打开添加车票窗口
         /// </summary>
         /// <param name="databaseService">数据库服务</param>
+        /// <param name="mainViewModel">主视图模型</param>
         /// <returns>是否成功添加车票</returns>
-        public bool OpenAddTicketWindow(DatabaseService databaseService)
+        public bool OpenAddTicketWindow(DatabaseService databaseService, MainViewModel mainViewModel)
         {
             try
             {
-                var addTicketWindow = new AddTicketWindow(databaseService);
+                var addTicketWindow = new AddTicketWindow(databaseService, mainViewModel);
                 
                 // 确保主窗口已初始化并且可见
                 if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)

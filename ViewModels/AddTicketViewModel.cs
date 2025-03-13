@@ -19,6 +19,7 @@ namespace TA_WPF.ViewModels
     {
         private readonly DatabaseService _databaseService;
         private readonly List<string> _validationErrors = new List<string>();
+        private readonly MainViewModel _mainViewModel;
 
         // 添加字体大小变化监听
         private readonly FontSizeChangeListener _fontSizeChangeListener;
@@ -78,11 +79,12 @@ namespace TA_WPF.ViewModels
         private bool _isUpdatingDepartStation = false;
         private bool _isUpdatingArriveStation = false;
 
-        public AddTicketViewModel(DatabaseService databaseService)
+        public AddTicketViewModel(DatabaseService databaseService, MainViewModel mainViewModel)
         {
             try
             {
                 _databaseService = databaseService;
+                _mainViewModel = mainViewModel;
                 
                 // 初始化字体大小监听器
                 _fontSizeChangeListener = new FontSizeChangeListener();
@@ -120,7 +122,8 @@ namespace TA_WPF.ViewModels
                     "欢度国庆 祝福祖国|中国铁路祝您旅途愉快",
                     "奋斗百年路 启航新征程|热烈庆祝中国共产党成立100周年",
                     "锦州银行欢迎您",
-                    "自定义"
+                    "中国铁路沈阳局集团公司|团体订票电话024-12306",
+                    "自定义……"
                 };
                 
                 // 初始化车站搜索相关集合
@@ -178,7 +181,15 @@ namespace TA_WPF.ViewModels
             {
                 if (_ticketNumber != value)
                 {
-                    _ticketNumber = value;
+                    // 如果输入不为空，将首字母转换为大写
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        _ticketNumber = char.ToUpper(value[0]) + value.Substring(1);
+                    }
+                    else
+                    {
+                        _ticketNumber = value;
+                    }
                     OnPropertyChanged(nameof(TicketNumber));
                 }
             }
@@ -1027,14 +1038,25 @@ namespace TA_WPF.ViewModels
                 _validationErrors.Add("金额不能超过9999.99");
 
             // 验证车次号格式
-            if (!string.IsNullOrWhiteSpace(TrainNumber) && !Regex.IsMatch(TrainNumber, @"^\d{1,4}$"))
-                _validationErrors.Add("车次号必须为1-4位数字");
+            if (!string.IsNullOrWhiteSpace(TrainNumber))
+            {
+                if (!Regex.IsMatch(TrainNumber, @"^\d{1,4}$"))
+                    _validationErrors.Add("车次号必须为1-4位数字");
+                
+                // 车次号不能以0开头或只有0
+                if (TrainNumber.StartsWith("0") || TrainNumber.All(c => c == '0'))
+                    _validationErrors.Add("车次号不能以0开头或只有0");
+            }
 
             // 验证车厢号格式
             if (!string.IsNullOrWhiteSpace(CoachNo))
             {
                 if (!Regex.IsMatch(CoachNo, @"^\d+$"))
                     _validationErrors.Add("车厢号必须为数字");
+                
+                // 车厢号不能只有0
+                if (CoachNo.All(c => c == '0'))
+                    _validationErrors.Add("车厢号不能只有0");
                 
                 // 车厢号只能是00~99
                 if (Regex.IsMatch(CoachNo, @"^\d+$"))
@@ -1054,9 +1076,9 @@ namespace TA_WPF.ViewModels
                 if (!Regex.IsMatch(SeatNo, @"^\d+$"))
                     _validationErrors.Add("座位号必须为数字");
                 
-                // 座位号不能以0开头
-                if (SeatNo.StartsWith("0"))
-                    _validationErrors.Add("座位号不能以0开头");
+                // 座位号不能只有0
+                if (SeatNo.All(c => c == '0'))
+                    _validationErrors.Add("座位号不能只有0");
             }
 
             return _validationErrors.Count == 0;
@@ -1102,7 +1124,11 @@ namespace TA_WPF.ViewModels
 
                 // 处理车厢号
                 if (IsExtraCoach)
-                    ticket.CoachNo = $"加{CoachNo}车";
+                {
+                    // 去掉前导零并添加"加"和"车"
+                    int coachNum = int.Parse(CoachNo);
+                    ticket.CoachNo = $"加{coachNum}车";
+                }
                 else
                     ticket.CoachNo = $"{CoachNo}车";
 
@@ -1144,6 +1170,22 @@ namespace TA_WPF.ViewModels
                 await saveTask;
                 
                 MessageBoxHelper.ShowInformation("车票添加成功！", "成功");
+                
+                // 刷新仪表盘和查询全部数据
+                if (_mainViewModel != null)
+                {
+                    // 刷新仪表盘数据
+                    if (_mainViewModel.DashboardViewModel != null)
+                    {
+                        await _mainViewModel.DashboardViewModel.RefreshDataAsync();
+                    }
+                    
+                    // 刷新查询全部数据
+                    if (_mainViewModel.QueryAllTicketsViewModel != null)
+                    {
+                        await _mainViewModel.QueryAllTicketsViewModel.QueryAllAsync();
+                    }
+                }
                 
                 // 安全地关闭窗口
                 try
