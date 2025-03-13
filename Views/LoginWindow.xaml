@@ -212,15 +212,6 @@
                                  HorizontalAlignment="Right"/>
                     </Grid>
 
-                    <!-- 导入SQL文件按钮 -->
-                    <Button x:Name="ImportSqlButton"
-                            Content="导入SQL文件"
-                            Style="{StaticResource MaterialDesignFlatButton}"
-                            Height="Auto"
-                            MinHeight="36"
-                            Margin="0,0,0,8"
-                            Click="ImportSqlButton_Click"/>
-
                     <!-- 错误消息区域 -->
                     <Border BorderThickness="0" 
                             Margin="0,0,0,8" 

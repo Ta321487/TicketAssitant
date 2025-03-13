@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using MaterialDesignThemes.Wpf;
 using MySql.Data.MySqlClient;
 using Microsoft.Win32;
@@ -24,6 +25,7 @@ using BaseTheme = MaterialDesignThemes.Wpf.BaseTheme;
 using System.Windows.Threading;
 using MaterialDesignThemes.Wpf.Converters;
 using ITheme = MaterialDesignThemes.Wpf.ITheme;
+using TA_WPF.Services;
 
 namespace TA_WPF.Views
 {
@@ -38,6 +40,7 @@ namespace TA_WPF.Views
         private string _lastDatabaseName = "otherbackup"; // 默认数据库名称
         private string _lastServerAddress = "localhost"; // 默认服务器地址
         private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info" }; // 必要的表
+        private readonly LoginInfoService _loginInfoService;
 
         public LoginWindow()
         {
@@ -45,6 +48,9 @@ namespace TA_WPF.Views
             {
                 InitializeComponent();
                 UsernameTextBox.Focus();
+                
+                // 初始化登录信息服务
+                _loginInfoService = new LoginInfoService();
                 
                 // 确保端口号文本框的清空按钮初始状态是禁用的
                 MaterialDesignThemes.Wpf.TextFieldAssist.SetHasClearButton(PortTextBox, false);
@@ -557,95 +563,7 @@ namespace TA_WPF.Views
         {
             PortTextBox.IsEnabled = false;
             PortTextBox.Text = "3306";
-            // 禁用清空按钮
             MaterialDesignThemes.Wpf.TextFieldAssist.SetHasClearButton(PortTextBox, false);
-        }
-
-        private async void ImportSqlButton_Click(object sender, RoutedEventArgs e)
-        {
-            // 检查是否已填写必要的连接信息
-            if (string.IsNullOrEmpty(DatabaseNameComboBox.Text) || 
-                string.IsNullOrEmpty(UsernameTextBox.Text) || 
-                string.IsNullOrEmpty(PasswordBox.Password))
-            {
-                ShowError("请先填写数据库名称、用户名和密码");
-                return;
-            }
-
-            var openFileDialog = new OpenFileDialog
-            {
-                Filter = "SQL文件|*.sql|所有文件|*.*",
-                Title = "选择SQL文件"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    ImportSqlButton.IsEnabled = false;
-                    LoginButton.IsEnabled = false;
-                    CancelButton.IsEnabled = false;
-
-                    // 构建连接字符串
-                    string serverAddress = ServerAddressTextBox.Text.Trim();
-                    string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text : "3306";
-                    string connectionString = $"Server={serverAddress};Port={port};Database={DatabaseNameComboBox.Text};User ID={UsernameTextBox.Text};Password={PasswordBox.Password};CharSet=utf8;Connect Timeout=10;";
-
-                    // 读取SQL文件
-                    string sqlScript = await File.ReadAllTextAsync(openFileDialog.FileName, Encoding.UTF8);
-                    
-                    Exception importException = null;
-
-                    // 执行SQL脚本
-                    await Task.Run(() => {
-                        try
-                        {
-                            using (var connection = new MySqlConnection(connectionString))
-                            {
-                                connection.Open();
-                                using (var command = new MySqlCommand(sqlScript, connection))
-                                {
-                                    command.ExecuteNonQuery();
-                                }
-                            }
-                        }
-                        catch (MySqlException ex)
-                        {
-                            importException = new Exception($"导入SQL文件时出错: {ex.Message}", ex);
-                        }
-                        catch (Exception ex)
-                        {
-                            importException = new Exception($"导入SQL文件时出错: {ex.Message}", ex);
-                        }
-                    });
-                    
-                    // 如果导入过程中发生异常，抛出异常
-                    if (importException != null)
-                    {
-                        throw importException;
-                    }
-
-                    LoginSnackbar.MessageQueue?.Enqueue("SQL文件导入成功", null, null, null, false, true, TimeSpan.FromSeconds(3));
-                    
-                    // 保存数据库名称到历史记录
-                    SaveDatabaseNameToHistory(DatabaseNameComboBox.Text);
-                }
-                catch (MySqlException ex)
-                {
-                    // 特殊处理MySQL异常
-                    ShowError($"导入SQL文件时出错: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    ShowError(ex.Message);
-                }
-                finally
-                {
-                    ImportSqlButton.IsEnabled = true;
-                    LoginButton.IsEnabled = true;
-                    CancelButton.IsEnabled = true;
-                }
-            }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -715,10 +633,12 @@ namespace TA_WPF.Views
             }
             
             // 处理本地连接地址
-            if (serverAddress.ToLower() == "localhost" || serverAddress == "127.0.0.1")
+            bool isLocalConnection = false;
+            if (serverAddress.ToLower() == "localhost" || serverAddress == "127.0.0.1" || serverAddress == "::1")
             {
                 // 统一使用localhost作为本地连接地址
                 serverAddress = "localhost";
+                isLocalConnection = true;
             }
             
             // 禁用登录按钮，防止重复点击
@@ -734,26 +654,37 @@ namespace TA_WPF.Views
                 Height = 60,
                 Margin = new Thickness(0, 0, 0, 16)
             });
-            loadingContent.Children.Add(new TextBlock 
+            
+            var loadingTextBlock = new TextBlock 
             { 
                 Text = "正在连接数据库...", 
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 8, 0, 0)
-            });
+            };
+            loadingContent.Children.Add(loadingTextBlock);
             
-            // 创建一个计时器，如果连接超过500ms，则显示加载动画
+            // 创建一个计时器，如果连接超过300ms，则显示加载动画
             var loadingTimer = new System.Threading.Timer(async (state) => {
                 await Dispatcher.InvokeAsync(() => {
                     MaterialDesignThemes.Wpf.DialogHost.Show(loadingContent, "LoginDialogHost");
                 });
-            }, null, 500, System.Threading.Timeout.Infinite);
+            }, null, 300, System.Threading.Timeout.Infinite);
             
             try
             {
-                // 先检查服务器是否可达
-                if (serverAddress != "localhost" && serverAddress != "127.0.0.1")
+                // 检查服务器是否可达（仅对非本地连接进行Ping测试）
+                bool serverReachable = true;
+                if (!isLocalConnection)
                 {
-                    bool isReachable = await Task.Run(() => {
+                    // 更新加载文本
+                    await Dispatcher.InvokeAsync(() => {
+                        if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                        {
+                            loadingTextBlock.Text = $"正在检测服务器 {serverAddress} 是否可达...";
+                        }
+                    });
+                    
+                    serverReachable = await Task.Run(() => {
                         try
                         {
                             using (Ping ping = new Ping())
@@ -768,14 +699,61 @@ namespace TA_WPF.Views
                         }
                     });
                     
-                    if (!isReachable)
+                    if (!serverReachable)
                     {
                         throw new Exception($"无法连接到服务器 {serverAddress}，请检查服务器地址是否正确或网络连接是否正常。");
                     }
                 }
+                else
+                {
+                    // 更新加载文本
+                    await Dispatcher.InvokeAsync(() => {
+                        if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                        {
+                            loadingTextBlock.Text = "正在检测本地MySQL服务...";
+                        }
+                    });
+                    
+                    // 对于本地连接，检查MySQL服务是否在运行
+                    bool mysqlServiceRunning = await Task.Run(() => {
+                        try
+                        {
+                            // 尝试连接到MySQL默认端口
+                            using (var client = new System.Net.Sockets.TcpClient())
+                            {
+                                // 设置较短的超时时间
+                                var connectTask = client.ConnectAsync("127.0.0.1", int.Parse(port));
+                                var timeoutTask = Task.Delay(500); // 500ms超时
+                                
+                                // 等待连接或超时
+                                var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
+                                
+                                // 如果连接任务完成且客户端已连接，则MySQL服务正在运行
+                                return completedTask == connectTask && client.Connected;
+                            }
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                    });
+                    
+                    if (!mysqlServiceRunning)
+                    {
+                        throw new Exception($"无法连接到本地MySQL服务，请确认MySQL服务是否已启动，以及端口{port}是否正确。");
+                    }
+                }
+                
+                // 更新加载文本
+                await Dispatcher.InvokeAsync(() => {
+                    if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                    {
+                        loadingTextBlock.Text = $"正在连接到数据库 {databaseName}...";
+                    }
+                });
                 
                 // 构建连接字符串
-                string connectionString = $"Server={serverAddress};Port={port};Database={databaseName};User ID={username};Password={password};CharSet=utf8;Connect Timeout=10;";
+                string connectionString = $"Server={serverAddress};Port={port};Database={databaseName};User ID={username};Password={password};CharSet=utf8;Connect Timeout=10;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Old Guids=true;";
                 
                 // 尝试连接数据库
                 bool connected = false;
@@ -829,10 +807,76 @@ namespace TA_WPF.Views
                     SaveLastServerAddress(serverAddress);
                     SaveDatabaseNameToHistory(databaseName);
                     
-                    // 如果必要的表不存在，提示用户导入SQL文件
+                    // 如果必要的表不存在，检查SQL文件夹中是否有对应的SQL文件
                     if (!tablesExist)
                     {
-                        // 使用MaterialDesign对话框替代MessageBox
+                        // 检查SqlData文件夹是否存在
+                        string sqlDataFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SqlData");
+                        
+                        // 如果在应用程序目录中找不到SqlData文件夹，尝试在当前目录中查找
+                        if (!Directory.Exists(sqlDataFolderPath))
+                        {
+                            sqlDataFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "SqlData");
+                        }
+                        
+                        // 如果仍然找不到，尝试在上级目录中查找
+                        if (!Directory.Exists(sqlDataFolderPath))
+                        {
+                            string parentDir = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
+                            if (parentDir != null)
+                            {
+                                sqlDataFolderPath = Path.Combine(parentDir, "SqlData");
+                            }
+                        }
+                        
+                        // 如果仍然找不到，尝试在项目根目录中查找
+                        if (!Directory.Exists(sqlDataFolderPath))
+                        {
+                            // 尝试查找解决方案文件所在的目录
+                            string currentDir = Directory.GetCurrentDirectory();
+                            string[] solutionFiles = Directory.GetFiles(currentDir, "*.sln", SearchOption.AllDirectories);
+                            
+                            if (solutionFiles.Length > 0)
+                            {
+                                string solutionDir = Path.GetDirectoryName(solutionFiles[0]);
+                                if (solutionDir != null)
+                                {
+                                    sqlDataFolderPath = Path.Combine(solutionDir, "SqlData");
+                                }
+                            }
+                        }
+                        
+                        if (!Directory.Exists(sqlDataFolderPath))
+                        {
+                            throw new Exception($"数据库中缺少必要的表结构（{string.Join(", ", _requiredTables)}），且未找到SqlData文件夹。请确保SqlData文件夹存在于应用程序目录中。");
+                        }
+                        
+                        Console.WriteLine($"找到SqlData文件夹: {sqlDataFolderPath}");
+                        
+                        // 检查必要的SQL文件是否存在
+                        bool allSqlFilesExist = true;
+                        List<string> missingSqlFiles = new List<string>();
+                        
+                        foreach (string requiredTable in _requiredTables)
+                        {
+                            string sqlFilePath = Path.Combine(sqlDataFolderPath, $"{requiredTable}.sql");
+                            if (!File.Exists(sqlFilePath))
+                            {
+                                allSqlFilesExist = false;
+                                missingSqlFiles.Add($"{requiredTable}.sql");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"找到SQL文件: {sqlFilePath}");
+                            }
+                        }
+                        
+                        if (!allSqlFilesExist)
+                        {
+                            throw new Exception($"数据库中缺少必要的表结构（{string.Join(", ", _requiredTables)}），且SqlData文件夹中缺少以下SQL文件：{string.Join(", ", missingSqlFiles)}");
+                        }
+                        
+                        // 显示导入确认对话框
                         var dialogContent = new StackPanel { Margin = new Thickness(16) };
                         
                         dialogContent.Children.Add(new TextBlock 
@@ -845,7 +889,7 @@ namespace TA_WPF.Views
                         
                         dialogContent.Children.Add(new TextBlock 
                         { 
-                            Text = "数据库中缺少必要的表结构（station_info, train_ride_info）。是否现在导入SQL文件？", 
+                            Text = $"数据库中缺少必要的表结构（{string.Join(", ", _requiredTables)}）。是否从SqlData文件夹导入表结构？", 
                             TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(0, 0, 0, 16)
                         });
@@ -875,14 +919,135 @@ namespace TA_WPF.Views
                         
                         if (result != null && result.Equals(yesButton))
                         {
-                            // 调用导入SQL文件的方法
-                            ImportSqlButton_Click(sender, e);
-                            return;
+                            // 显示导入中的加载动画
+                            var importingContent = new StackPanel { Margin = new Thickness(24) };
+                            importingContent.Children.Add(new ProgressBar 
+                            { 
+                                IsIndeterminate = true, 
+                                Style = (Style)Application.Current.Resources["MaterialDesignCircularProgressBar"],
+                                Width = 60,
+                                Height = 60,
+                                Margin = new Thickness(0, 0, 0, 16)
+                            });
+                            
+                            var importingTextBlock = new TextBlock 
+                            { 
+                                Text = "正在准备导入表结构...", 
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                                Margin = new Thickness(0, 8, 0, 0)
+                            };
+                            importingContent.Children.Add(importingTextBlock);
+                            
+                            await Dispatcher.InvokeAsync(() => {
+                                MaterialDesignThemes.Wpf.DialogHost.Show(importingContent, "LoginDialogHost");
+                            });
+                            
+                            // 导入SQL文件
+                            Exception importException = null;
+                            
+                            await Task.Run(async () => {
+                                try
+                                {
+                                    using (var connection = new MySqlConnection(connectionString))
+                                    {
+                                        connection.Open();
+                                        
+                                        // 导入每个SQL文件
+                                        foreach (string requiredTable in _requiredTables)
+                                        {
+                                            // 更新导入状态
+                                            await Dispatcher.InvokeAsync(() => {
+                                                if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                                                {
+                                                    importingTextBlock.Text = $"正在导入表 {requiredTable}...";
+                                                }
+                                            });
+                                            
+                                            string sqlFilePath = Path.Combine(sqlDataFolderPath, $"{requiredTable}.sql");
+                                            string sqlScript = File.ReadAllText(sqlFilePath, Encoding.UTF8);
+                                            
+                                            // 分割SQL脚本为多个语句
+                                            string[] sqlStatements = SplitSqlStatements(sqlScript);
+                                            
+                                            foreach (string statement in sqlStatements)
+                                            {
+                                                if (!string.IsNullOrWhiteSpace(statement))
+                                                {
+                                                    using (var command = new MySqlCommand(statement, connection))
+                                                    {
+                                                        try
+                                                        {
+                                                            command.ExecuteNonQuery();
+                                                        }
+                                                        catch (MySqlException ex)
+                                                        {
+                                                            // 记录错误但继续执行其他语句
+                                                            Console.WriteLine($"执行SQL语句时出错: {ex.Message}");
+                                                            Console.WriteLine($"有问题的SQL语句: {statement}");
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // 短暂延迟，确保UI更新
+                                            await Task.Delay(100);
+                                        }
+                                        
+                                        // 更新导入状态
+                                        await Dispatcher.InvokeAsync(() => {
+                                            if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                                            {
+                                                importingTextBlock.Text = "表结构导入完成，正在验证...";
+                                            }
+                                        });
+                                        
+                                        // 验证表是否已成功导入
+                                        bool tablesImported = CheckRequiredTables(connection);
+                                        if (!tablesImported)
+                                        {
+                                            importException = new Exception("表结构导入后验证失败，请检查SQL文件是否正确。");
+                                        }
+                                    }
+                                }
+                                catch (MySqlException ex)
+                                {
+                                    importException = new Exception($"导入SQL文件时出错: {ex.Message}", ex);
+                                }
+                                catch (Exception ex)
+                                {
+                                    importException = new Exception($"导入SQL文件时出错: {ex.Message}", ex);
+                                }
+                            });
+                            
+                            // 关闭导入中的加载动画
+                            await Dispatcher.InvokeAsync(() => {
+                                if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                                {
+                                    MaterialDesignThemes.Wpf.DialogHost.Close("LoginDialogHost");
+                                }
+                            });
+                            
+                            // 如果导入过程中发生异常，抛出异常
+                            if (importException != null)
+                            {
+                                throw importException;
+                            }
+                            
+                            // 显示导入成功消息
+                            LoginSnackbar.MessageQueue?.Enqueue("表结构导入成功", null, null, null, false, true, TimeSpan.FromSeconds(3));
+                        }
+                        else
+                        {
+                            // 用户选择不导入，提示无法继续
+                            throw new Exception($"数据库中缺少必要的表结构（{string.Join(", ", _requiredTables)}），无法继续。");
                         }
                     }
                     
                     // 登录成功
                     LoginSuccessful = true;
+                    
+                    // 保存登录时间
+                    _loginInfoService.SaveLastLoginTime();
                     
                     // 确保之前的MainViewModel被销毁
                     if (_mainWindow != null)
@@ -912,6 +1077,9 @@ namespace TA_WPF.Views
                     
                     // 显示主窗口
                     _mainWindow.Show();
+                    
+                    // 显示登录成功提示
+                    _mainWindow.ShowLoginSuccessNotification();
                     
                     // 记录日志
                     LogHelper.LogInfo("用户登录成功，已创建新的MainViewModel");
@@ -1004,12 +1172,88 @@ namespace TA_WPF.Views
                 Margin = new Thickness(0, 0, 0, 16)
             });
             
-            dialogContent.Children.Add(new TextBlock 
+            // 创建一个支持多行显示的TextBlock
+            var messageTextBlock = new TextBlock 
             { 
                 Text = userFriendlyMessage, 
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 16)
-            });
+            };
+            
+            // 如果消息包含换行符，设置行高以改善可读性
+            if (userFriendlyMessage.Contains("\n"))
+            {
+                messageTextBlock.LineHeight = 24;
+            }
+            
+            dialogContent.Children.Add(messageTextBlock);
+            
+            // 如果是认证方式错误，添加一个复制SQL命令的按钮
+            if (userFriendlyMessage.Contains("认证方式不兼容"))
+            {
+                var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 16) };
+                
+                var copyLocalButton = new Button
+                {
+                    Content = "复制localhost命令",
+                    Style = (Style)Application.Current.Resources["MaterialDesignFlatButton"],
+                    Margin = new Thickness(0, 0, 8, 0)
+                };
+                
+                copyLocalButton.Click += (s, e) => {
+                    try
+                    {
+                        string username = UsernameTextBox.Text.Trim();
+                        string password = PasswordBox.Password;
+                        string sqlCommand = $"ALTER USER '{username}'@'localhost' IDENTIFIED WITH mysql_native_password BY '{password}';";
+                        Clipboard.SetText(sqlCommand);
+                        
+                        // 显示复制成功提示
+                        LoginSnackbar.MessageQueue?.Enqueue("localhost SQL命令已复制到剪贴板", null, null, null, false, true, TimeSpan.FromSeconds(2));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"复制SQL命令时出错: {ex.Message}");
+                    }
+                };
+                
+                var copyAnyButton = new Button
+                {
+                    Content = "复制通配符命令",
+                    Style = (Style)Application.Current.Resources["MaterialDesignFlatButton"]
+                };
+                
+                copyAnyButton.Click += (s, e) => {
+                    try
+                    {
+                        string username = UsernameTextBox.Text.Trim();
+                        string password = PasswordBox.Password;
+                        string sqlCommand = $"ALTER USER '{username}'@'%' IDENTIFIED WITH mysql_native_password BY '{password}';";
+                        Clipboard.SetText(sqlCommand);
+                        
+                        // 显示复制成功提示
+                        LoginSnackbar.MessageQueue?.Enqueue("通配符SQL命令已复制到剪贴板", null, null, null, false, true, TimeSpan.FromSeconds(2));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"复制SQL命令时出错: {ex.Message}");
+                    }
+                };
+                
+                buttonPanel.Children.Add(copyLocalButton);
+                buttonPanel.Children.Add(copyAnyButton);
+                dialogContent.Children.Add(buttonPanel);
+                
+                // 添加说明文本
+                dialogContent.Children.Add(new TextBlock
+                {
+                    Text = "注意: 如果不确定用户的主机模式，可以尝试两种命令。通配符命令适用于远程连接，localhost命令适用于本地连接。",
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 16),
+                    FontStyle = FontStyles.Italic,
+                    Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                });
+            }
             
             var okButton = new Button 
             { 
@@ -1028,21 +1272,25 @@ namespace TA_WPF.Views
         // 获取用户友好的错误消息
         private string GetUserFriendlyErrorMessage(string originalMessage)
         {
+            // 认证方法错误 - 增强处理
+            if (originalMessage.Contains("Authentication to host") || 
+                originalMessage.Contains("using method 'caching_sha2_password'") || 
+                originalMessage.Contains("using method 'sha256_password'") ||
+                originalMessage.Contains("Authentication plugin") ||
+                originalMessage.Contains("is not supported"))
+            {
+                return "认证方式不兼容，请尝试以下解决方案：\n" +
+                       "1. 在MySQL中修改用户认证方式为mysql_native_password\n" +
+                       "   执行SQL: ALTER USER '用户名'@'%' IDENTIFIED WITH mysql_native_password BY '密码';\n" +
+                       "   或者: ALTER USER '用户名'@'localhost' IDENTIFIED WITH mysql_native_password BY '密码';\n" +
+                       "2. 在MySQL配置文件中添加default_authentication_plugin=mysql_native_password\n" +
+                       "3. 重启MySQL服务";
+            }
+            
             // 用户名或密码错误
             if (originalMessage.Contains("Access denied for user") && originalMessage.Contains("using password"))
             {
                 return "用户名或密码错误，请检查输入是否正确。";
-            }
-            
-            // 认证方法错误
-            if (originalMessage.Contains("Authentication to host") && 
-                (originalMessage.Contains("using method 'caching_sha2_password'") || 
-                 originalMessage.Contains("using method 'sha256_password'")))
-            {
-                return "认证方式不兼容，请尝试以下解决方案：\n" +
-                       "1. 在MySQL中修改用户认证方式为mysql_native_password\n" +
-                       "2. 更新MySQL连接器版本\n" +
-                       "3. 在MySQL配置文件中添加default_authentication_plugin=mysql_native_password";
             }
             
             // 连接超时
@@ -1110,6 +1358,12 @@ namespace TA_WPF.Views
             if (originalMessage.Contains("server has gone away") || originalMessage.Contains("Connection closed"))
             {
                 return "服务器已关闭连接，可能是网络不稳定或服务器超时设置过短。";
+            }
+            
+            // 公钥检索错误
+            if (originalMessage.Contains("AllowPublicKeyRetrieval"))
+            {
+                return "需要启用公钥检索，请在连接字符串中添加AllowPublicKeyRetrieval=true参数。";
             }
             
             // 输入验证错误
@@ -1329,7 +1583,7 @@ namespace TA_WPF.Views
                 }
                 
                 // 构建连接字符串（不包含数据库名称）
-                string connectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=10;";
+                string connectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=10;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Old Guids=true;";
                 
                 // 创建数据库
                 Exception createException = null;
@@ -1446,6 +1700,43 @@ namespace TA_WPF.Views
             {
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        // 分割SQL脚本为多个语句
+        private string[] SplitSqlStatements(string sqlScript)
+        {
+            // 移除注释
+            sqlScript = RemoveSqlComments(sqlScript);
+            
+            // 按分号分割SQL语句
+            List<string> statements = new List<string>();
+            
+            // 使用正则表达式分割SQL语句，考虑到分号可能出现在字符串中
+            string pattern = @";(?=(?:[^']*'[^']*')*[^']*$)";
+            string[] parts = System.Text.RegularExpressions.Regex.Split(sqlScript, pattern);
+            
+            foreach (string part in parts)
+            {
+                string trimmedPart = part.Trim();
+                if (!string.IsNullOrEmpty(trimmedPart))
+                {
+                    statements.Add(trimmedPart);
+                }
+            }
+            
+            return statements.ToArray();
+        }
+        
+        // 移除SQL注释
+        private string RemoveSqlComments(string sql)
+        {
+            // 移除单行注释 (-- 开头的行)
+            sql = System.Text.RegularExpressions.Regex.Replace(sql, @"--.*?$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+            
+            // 移除多行注释 (/* ... */)
+            sql = System.Text.RegularExpressions.Regex.Replace(sql, @"/\*[\s\S]*?\*/", "");
+            
+            return sql;
         }
     }
 } 

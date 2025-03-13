@@ -1,12 +1,16 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 using System.Windows.Media.Imaging;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using TA_WPF.ViewModels;
 using MaterialDesignThemes.Wpf;
+using TA_WPF.Services;
+using TA_WPF.Utils;
 
 namespace TA_WPF
 {
@@ -30,11 +34,22 @@ namespace TA_WPF
         private StackPanel _pageInfoPanel;
         private TextBox _pageNumberInput;
         
+        // 登录信息服务
+        private readonly LoginInfoService _loginInfoService;
+        // 连接字符串
+        private readonly string _connectionString;
+        
         public MainWindow(string connectionString)
         {
             try
             {
                 InitializeComponent();
+                
+                // 保存连接字符串
+                _connectionString = connectionString;
+                
+                // 初始化登录信息服务
+                _loginInfoService = new LoginInfoService();
                 
                 // 设置DataContext
                 DataContext = new MainViewModel(connectionString);
@@ -706,6 +721,304 @@ namespace TA_WPF
         {
             // 处理窗口消息，确保任务栏图标正确显示
             return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// 显示登录成功提示
+        /// </summary>
+        public void ShowLoginSuccessNotification()
+        {
+            try
+            {
+                Console.WriteLine("MainWindow.ShowLoginSuccessNotification 被调用");
+                
+                // 使用Dispatcher.BeginInvoke确保在主窗口完全加载后显示提示框
+                this.Dispatcher.BeginInvoke(new Action(() => {
+                    try
+                    {
+                        // 获取登录信息
+                        string loginIP = NetworkHelper.GetLocalIPAddress();
+                        string databaseIP = NetworkHelper.GetDatabaseServerIP(_connectionString);
+                        string lastLoginTime = _loginInfoService.GetLastLoginTime();
+                        string databaseName = _loginInfoService.GetDatabaseName(_connectionString);
+                        
+                        Console.WriteLine($"登录信息: IP={loginIP}, 数据库={databaseName}, 上次登录={lastLoginTime}");
+                        
+                        // 构建提示内容
+                        string message = $"登录IP：{loginIP}\n上次登录时间：{lastLoginTime}\n登录数据库：{databaseName}";
+                        
+                        // 获取当前主题
+                        bool isDarkMode = false;
+                        if (DataContext is ViewModels.MainViewModel viewModel)
+                        {
+                            isDarkMode = Application.Current.Resources["Theme.Dark"] as bool? == true;
+                        }
+                        
+                        // 创建通知卡片
+                        var card = new MaterialDesignThemes.Wpf.Card
+                        {
+                            Padding = new Thickness(16),
+                            Margin = new Thickness(8),
+                            UniformCornerRadius = 8,
+                            Width = 380, // 增加宽度
+                            Background = isDarkMode ? 
+                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2D2D2D")) : 
+                                System.Windows.Media.Brushes.White,
+                            RenderTransform = new ScaleTransform(0.9, 0.9), // 初始缩放比例
+                            Opacity = 0 // 初始透明度为0
+                        };
+                        
+                        // 设置阴影深度
+                        MaterialDesignThemes.Wpf.ShadowAssist.SetShadowDepth(card, MaterialDesignThemes.Wpf.ShadowDepth.Depth3);
+                        
+                        // 创建内容面板
+                        var panel = new StackPanel
+                        {
+                            Margin = new Thickness(8)
+                        };
+                        
+                        // 添加标题
+                        panel.Children.Add(new Grid
+                        {
+                            Margin = new Thickness(0, 0, 0, 12) // 增加下边距
+                        });
+                        
+                        // 获取标题面板
+                        var titleGrid = panel.Children[0] as Grid;
+                        
+                        // 添加列定义
+                        titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                        titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                        titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                        
+                        // 添加成功图标
+                        var successIcon = new PackIcon
+                        {
+                            Kind = PackIconKind.CheckCircle,
+                            Width = 24,
+                            Height = 24,
+                            Foreground = isDarkMode ? 
+                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#4CAF50")) : 
+                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#4CAF50")),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(0, 0, 8, 0)
+                        };
+                        Grid.SetColumn(successIcon, 0);
+                        titleGrid.Children.Add(successIcon);
+                        
+                        // 添加标题文本
+                        var titleText = new TextBlock
+                        {
+                            Text = "登录成功",
+                            FontWeight = FontWeights.Bold,
+                            FontSize = 16,
+                            Foreground = isDarkMode ? System.Windows.Media.Brushes.White : System.Windows.Media.Brushes.Black,
+                            VerticalAlignment = VerticalAlignment.Center
+                        };
+                        Grid.SetColumn(titleText, 1);
+                        titleGrid.Children.Add(titleText);
+                        
+                        // 添加关闭按钮
+                        var closeButton = new Button
+                        {
+                            Style = (Style)FindResource("MaterialDesignIconButton"),
+                            Content = new PackIcon { Kind = PackIconKind.Close, Width = 16, Height = 16 },
+                            Padding = new Thickness(4),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Right,
+                            Foreground = isDarkMode ? System.Windows.Media.Brushes.White : System.Windows.Media.Brushes.Black
+                        };
+                        Grid.SetColumn(closeButton, 2);
+                        titleGrid.Children.Add(closeButton);
+                        
+                        // 添加分隔线
+                        panel.Children.Add(new Separator
+                        {
+                            Margin = new Thickness(0, 0, 0, 12), // 增加下边距
+                            Background = isDarkMode ? 
+                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#666666")) : 
+                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E0E0E0"))
+                        });
+                        
+                        // 添加消息内容
+                        var messageLines = message.Split('\n');
+                        foreach (var line in messageLines)
+                        {
+                            var parts = line.Split('：');
+                            if (parts.Length == 2)
+                            {
+                                var contentGrid = new Grid { Margin = new Thickness(0, 4, 0, 4) };
+                                contentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                                contentGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                                
+                                // 添加标签
+                                var label = new TextBlock
+                                {
+                                    Text = parts[0] + "：",
+                                    FontWeight = FontWeights.SemiBold,
+                                    Foreground = isDarkMode ? 
+                                        new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#BBBBBB")) : 
+                                        new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#666666")),
+                                    FontSize = 13,
+                                    Margin = new Thickness(0, 0, 8, 0),
+                                    VerticalAlignment = VerticalAlignment.Center
+                                };
+                                Grid.SetColumn(label, 0);
+                                contentGrid.Children.Add(label);
+                                
+                                // 添加值
+                                var value = new TextBlock
+                                {
+                                    Text = parts[1],
+                                    TextWrapping = TextWrapping.Wrap,
+                                    Foreground = isDarkMode ? System.Windows.Media.Brushes.White : System.Windows.Media.Brushes.Black,
+                                    FontSize = 13,
+                                    VerticalAlignment = VerticalAlignment.Center
+                                };
+                                Grid.SetColumn(value, 1);
+                                contentGrid.Children.Add(value);
+                                
+                                panel.Children.Add(contentGrid);
+                            }
+                            else
+                            {
+                                panel.Children.Add(new TextBlock
+                                {
+                                    Text = line,
+                                    TextWrapping = TextWrapping.Wrap,
+                                    Margin = new Thickness(0, 4, 0, 4),
+                                    FontSize = 13,
+                                    Foreground = isDarkMode ? System.Windows.Media.Brushes.White : System.Windows.Media.Brushes.Black
+                                });
+                            }
+                        }
+                        
+                        // 将面板添加到卡片
+                        card.Content = panel;
+                        
+                        // 创建弹出窗口
+                        var popup = new Popup
+                        {
+                            Child = card,
+                            Placement = PlacementMode.Center,
+                            HorizontalOffset = 0,
+                            VerticalOffset = 0,
+                            AllowsTransparency = true,
+                            PopupAnimation = PopupAnimation.None, // 禁用默认动画，使用自定义动画
+                            IsOpen = true,
+                            StaysOpen = true,
+                            PlacementTarget = this
+                        };
+                        
+                        Console.WriteLine("Popup已创建并设置为打开状态");
+                        
+                        // 设置关闭按钮的点击事件
+                        closeButton.Click += (s, e) => 
+                        {
+                            // 创建关闭动画
+                            var fadeOutAnimation = new DoubleAnimation
+                            {
+                                From = 1,
+                                To = 0,
+                                Duration = TimeSpan.FromMilliseconds(300),
+                                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                            };
+                            
+                            var scaleOutAnimation = new DoubleAnimation
+                            {
+                                From = 1,
+                                To = 0.9,
+                                Duration = TimeSpan.FromMilliseconds(300),
+                                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                            };
+                            
+                            fadeOutAnimation.Completed += (sender, args) => 
+                            {
+                                popup.IsOpen = false;
+                            };
+                            
+                            // 应用动画
+                            card.BeginAnimation(UIElement.OpacityProperty, fadeOutAnimation);
+                            (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleOutAnimation);
+                            (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleOutAnimation);
+                        };
+                        
+                        // 创建进入动画
+                        var fadeInAnimation = new DoubleAnimation
+                        {
+                            From = 0,
+                            To = 1,
+                            Duration = TimeSpan.FromMilliseconds(400),
+                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                        };
+                        
+                        var scaleInAnimation = new DoubleAnimation
+                        {
+                            From = 0.9,
+                            To = 1,
+                            Duration = TimeSpan.FromMilliseconds(400),
+                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                        };
+                        
+                        // 应用进入动画
+                        card.BeginAnimation(UIElement.OpacityProperty, fadeInAnimation);
+                        (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleInAnimation);
+                        (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleInAnimation);
+                        
+                        // 2秒后自动关闭
+                        var timer = new DispatcherTimer
+                        {
+                            Interval = TimeSpan.FromSeconds(2)
+                        };
+                        
+                        timer.Tick += (s, e) =>
+                        {
+                            timer.Stop();
+                            
+                            // 创建关闭动画
+                            var fadeOutAnimation = new DoubleAnimation
+                            {
+                                From = 1,
+                                To = 0,
+                                Duration = TimeSpan.FromMilliseconds(300),
+                                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                            };
+                            
+                            var scaleOutAnimation = new DoubleAnimation
+                            {
+                                From = 1,
+                                To = 0.9,
+                                Duration = TimeSpan.FromMilliseconds(300),
+                                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                            };
+                            
+                            fadeOutAnimation.Completed += (sender, args) => 
+                            {
+                                popup.IsOpen = false;
+                            };
+                            
+                            // 应用动画
+                            card.BeginAnimation(UIElement.OpacityProperty, fadeOutAnimation);
+                            (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleOutAnimation);
+                            (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleOutAnimation);
+                        };
+                        
+                        timer.Start();
+                        
+                        Console.WriteLine("登录成功提示显示完成");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"显示登录成功提示时出错: {ex.Message}");
+                        Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                    }
+                }), DispatcherPriority.Loaded);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"准备显示登录成功提示时出错: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
         }
     }
 }
