@@ -1,11 +1,20 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Threading;
-using System.Windows.Media.Imaging;
-using System.Windows.Interop;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Windows.Threading;
+using System.Windows.Controls.Primitives;
+using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using TA_WPF.ViewModels;
 using MaterialDesignThemes.Wpf;
@@ -121,22 +130,62 @@ namespace TA_WPF
                 // 确保窗口加载时应用正确的主题
                 if (DataContext is ViewModels.MainViewModel viewModel)
                 {
-                    // 获取当前主题设置
-                    var themeService = new TA_WPF.Services.ThemeService();
-                    bool isDarkMode = themeService.LoadThemeFromConfig();
+                    // 获取主题服务实例
+                    var themeService = TA_WPF.Services.ThemeService.Instance;
+                    
+                    // 获取当前主题状态
+                    bool isDarkMode = themeService.IsDarkThemeActive();
                     
                     // 确保视图模型的IsDarkMode属性与当前主题同步
                     viewModel.IsDarkMode = isDarkMode;
                     
-                    // 立即应用主题
-                    themeService.ApplyTheme(isDarkMode);
+                    // 显式设置窗口的ThemeAssist.Theme属性
+                    MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(this, 
+                        isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
+                    
+                    // 强制刷新窗口
+                    this.UpdateLayout();
                     
                     Console.WriteLine($"窗口加载时应用了{(isDarkMode ? "深色" : "浅色")}主题");
+                }
+
+                // 添加键盘事件处理
+                this.KeyDown += MainWindow_KeyDown;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"MainWindow_Loaded异常: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
+        }
+        
+        /// <summary>
+        /// 处理键盘按键事件
+        /// </summary>
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                // 获取视图模型
+                if (DataContext is MainViewModel mainViewModel && 
+                    mainViewModel.DashboardViewModel != null)
+                {
+                    // 如果按下ESC键且当前处于全屏模式，则退出全屏模式
+                    if (e.Key == Key.Escape && mainViewModel.DashboardViewModel.IsFullScreen)
+                    {
+                        Console.WriteLine("检测到ESC键，退出全屏模式");
+                        
+                        // 使用命令切换全屏模式
+                        mainViewModel.DashboardViewModel.ToggleFullScreenCommand.Execute(null);
+                        
+                        // 标记事件已处理
+                        e.Handled = true;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"MainWindow.Loaded异常: {ex.Message}");
+                Console.WriteLine($"MainWindow_KeyDown异常: {ex.Message}");
                 Console.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
@@ -201,6 +250,26 @@ namespace TA_WPF
                 {
                     _resizeTimer.Stop();
                     _resizeTimer.Start();
+                }
+                
+                // 获取视图模型
+                if (DataContext is MainViewModel mainViewModel && 
+                    mainViewModel.DashboardViewModel != null)
+                {
+                    // 记录窗口状态变化
+                    Console.WriteLine($"窗口状态变化: {this.WindowState}, 窗口样式: {this.WindowStyle}, 全屏模式: {mainViewModel.DashboardViewModel.IsFullScreen}");
+                    
+                    // 如果不是全屏模式，保存窗口状态
+                    if (!mainViewModel.DashboardViewModel.IsFullScreen)
+                    {
+                        // 只有在窗口不是最小化的情况下才保存状态
+                        if (this.WindowState != WindowState.Minimized)
+                        {
+                            mainViewModel.DashboardViewModel.PreviousWindowState = this.WindowState;
+                            Console.WriteLine($"保存窗口状态: {this.WindowState}");
+                        }
+                    }
+                    // 不要在这里处理全屏模式的情况，让 ToggleFullScreen 方法完全控制全屏模式
                 }
             }
             catch (Exception ex)

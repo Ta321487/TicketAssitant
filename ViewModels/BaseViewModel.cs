@@ -11,21 +11,18 @@ namespace TA_WPF.ViewModels
     public abstract class BaseViewModel : INotifyPropertyChanged
     {
         private bool _isDarkMode;
-        private ThemeService _themeService;
+        protected ThemeService ThemeService => ThemeService.Instance;
 
         /// <summary>
         /// 构造函数
         /// </summary>
         protected BaseViewModel()
         {
-            // 初始化主题服务
-            _themeService = new ThemeService();
-            
             // 从配置文件加载主题设置
-            _isDarkMode = _themeService.LoadThemeFromConfig();
+            _isDarkMode = ThemeService.LoadThemeFromConfig();
             
             // 订阅主题变更事件
-            _themeService.ThemeChanged += OnThemeChanged;
+            ThemeService.ThemeChanged += OnThemeChanged;
             
             // 初始化时同步主题状态
             if (Application.Current != null)
@@ -34,6 +31,13 @@ namespace TA_WPF.ViewModels
                 PaletteHelper paletteHelper = new PaletteHelper();
                 var theme = paletteHelper.GetTheme();
                 _isDarkMode = theme.GetBaseTheme() == BaseTheme.Dark;
+                
+                // 确保资源字典中的主题标志与当前主题同步
+                if (Application.Current.Resources != null)
+                {
+                    Application.Current.Resources["Theme.Dark"] = _isDarkMode;
+                    Application.Current.Resources["Theme.Light"] = !_isDarkMode;
+                }
                 
                 // 订阅应用程序退出事件，以便在应用程序退出时取消订阅
                 Application.Current.Exit += (s, e) => UnsubscribeFromEvents();
@@ -54,7 +58,7 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(IsDarkMode));
                     
                     // 应用主题
-                    _themeService.ApplyTheme(value);
+                    ThemeService.ApplyTheme(value);
                 }
             }
         }
@@ -94,9 +98,9 @@ namespace TA_WPF.ViewModels
         private void UnsubscribeFromEvents()
         {
             // 取消订阅ThemeChanged事件
-            if (_themeService != null)
+            if (ThemeService != null)
             {
-                _themeService.ThemeChanged -= OnThemeChanged;
+                ThemeService.ThemeChanged -= OnThemeChanged;
             }
         }
 

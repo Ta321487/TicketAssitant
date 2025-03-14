@@ -20,7 +20,8 @@
         FontFamily="Microsoft YaHei"
         StateChanged="Window_StateChanged"
         Loaded="MainWindow_Loaded"
-        materialDesign:ThemeAssist.Theme="{Binding IsDarkMode, Converter={StaticResource BooleanToThemeConverter}}">
+        Closing="MainWindow_Closing"
+        materialDesign:ThemeAssist.Theme="{Binding IsDarkMode, Converter={StaticResource BooleanToThemeConverter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
     
     <Window.Resources>
         <ResourceDictionary>
@@ -30,6 +31,9 @@
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+            <converters:FullScreenWindowStyleConverter x:Key="FullScreenWindowStyleConverter" />
+            <converters:FullScreenWindowStateConverter x:Key="FullScreenWindowStateConverter" />
+            <converters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
         </ResourceDictionary>
     </Window.Resources>
     

@@ -192,21 +192,113 @@
                             </Grid.ColumnDefinitions>
                             
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="导出日志" 
+                                <TextBlock Text="日志管理" 
                                            FontSize="16" 
                                            FontWeight="Medium"/>
-                                <TextBlock Text="导出系统操作日志" 
+                                <TextBlock Text="导出和管理系统日志" 
                                            Opacity="0.6" 
                                            Margin="0,4,0,0"/>
                             </StackPanel>
                             
+                            <!-- 一键导出所有日志按钮 -->
                             <Button Grid.Column="1" 
-                                    Content="导出日志"
-                                    Command="{Binding ExportLogCommand}"
-                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                    Content="一键导出所有日志"
+                                    Command="{Binding ExportAllLogsCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
                                     materialDesign:ButtonAssist.CornerRadius="4"
-                                    Foreground="{DynamicResource GlobalAccentBrush}"
-                                    Margin="0,0,0,0"/>
+                                    Background="{DynamicResource GlobalAccentBrush}"
+                                    Foreground="White"
+                                    Margin="0,0,0,0"
+                                    ToolTip="导出所有日志和系统信息，用于问题反馈"/>
+                        </Grid>
+                        
+                        <!-- 日志导出选项 -->
+                        <Grid Margin="0,8,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                                       Text="遇到问题？使用'一键导出所有日志'功能，将所有必要的信息打包发送给开发人员，帮助我们更快地解决您的问题。"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,16"
+                                       Foreground="{DynamicResource GlobalAccentBrush}"
+                                       FontWeight="Medium"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="应用程序日志:" 
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,16,8"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                       Text="导出应用程序操作日志（用于问题排查）"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"/>
+                            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal">
+                                <Button Content="导出"
+                                        Command="{Binding ExportLogCommand}"
+                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                        materialDesign:ButtonAssist.CornerRadius="4"
+                                        Foreground="{DynamicResource GlobalAccentBrush}"
+                                        Margin="8,0,0,0"/>
+                                <Button Content="打开目录"
+                                        Command="{Binding OpenAppLogDirCommand}"
+                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                        materialDesign:ButtonAssist.CornerRadius="4"
+                                        Foreground="{DynamicResource GlobalAccentBrush}"
+                                        Margin="8,0,0,0"/>
+                            </StackPanel>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                       Text="系统日志:" 
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Margin="0,8,16,8"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" 
+                                       Text="导出系统级别日志（自动保存在系统目录）"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0"/>
+                            <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal">
+                                <Button Content="导出"
+                                        Command="{Binding ExportSystemLogCommand}"
+                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                        materialDesign:ButtonAssist.CornerRadius="4"
+                                        Foreground="{DynamicResource GlobalAccentBrush}"
+                                        Margin="8,8,0,0"/>
+                                <Button Content="打开目录"
+                                        Command="{Binding OpenSystemLogDirCommand}"
+                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                        materialDesign:ButtonAssist.CornerRadius="4"
+                                        Foreground="{DynamicResource GlobalAccentBrush}"
+                                        Margin="8,8,0,0"/>
+                            </StackPanel>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                       Text="系统日志位置:" 
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Margin="0,8,16,8"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
+                                       Text="{Binding SystemLogLocation}"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0"/>
+                            
+                            <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" 
+                                       Text="注意：系统日志会自动保存并轮换，超过50MB时会自动归档，保留最近30天的记录"
+                                       FontStyle="Italic"
+                                       Opacity="0.7"
+                                       Margin="0,8,0,0"/>
                         </Grid>
                     </StackPanel>
                 </materialDesign:Card>

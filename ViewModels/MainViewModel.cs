@@ -58,7 +58,7 @@ namespace TA_WPF.ViewModels
                 _ticketViewModel = new TicketViewModel(_databaseService, _navigationService, new PaginationViewModel(), this);
                 
                 // 初始化仪表盘视图模型
-                _dashboardViewModel = new DashboardViewModel(_databaseService);
+                _dashboardViewModel = new DashboardViewModel(_databaseService, _configurationService); 
                 
                 // 初始化命令
                 ShowHomeCommand = new RelayCommand(ShowHome);

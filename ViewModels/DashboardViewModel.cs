@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Windows.Media;
+using System.Windows;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
@@ -20,7 +21,9 @@ namespace TA_WPF.ViewModels
     public class DashboardViewModel : BaseViewModel
     {
         private readonly DatabaseService _databaseService;
+        private readonly ConfigurationService _configurationService;
         private readonly DispatcherTimer _timer;
+        private List<TrainRideInfo> _allTickets; // 所有车票数据缓存
         
         private int _totalTickets;
         private int _currentRangeTickets;
@@ -36,7 +39,7 @@ namespace TA_WPF.ViewModels
         private ObservableCollection<RouteData> _topRouteData;
         private ObservableCollection<TrainRideInfo> _recentActivities;
         private bool _isLoading;
-        private double _budgetAmount = 2000;
+        private double _budgetAmount;
         
         // 图表相关属性
         private SeriesCollection _monthlyTicketSeries;
@@ -49,13 +52,37 @@ namespace TA_WPF.ViewModels
         private string[] _expenseLabels;
         private Func<double, string> _expenseYFormatter;
         
+        private string _selectedAnalysisType = "支出趋势";
+        private string _selectedTrendIndicator = "支出金额";
+        private string _selectedStructureDimension = "座位类型";
+        private SeriesCollection _expenseStructureSeries;
+        private bool _hasExpenseStructureData;
+        private string _expenseYTitle = "金额";
+        
+        private bool _isFullScreen;
+        private WindowState _previousWindowState = WindowState.Normal;
+        
+        // 保存窗口的位置和大小信息
+        private double _savedLeft;
+        private double _savedTop;
+        private double _savedWidth;
+        private double _savedHeight;
+        
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="databaseService">数据库服务</param>
-        public DashboardViewModel(DatabaseService databaseService)
+        /// <param name="configurationService">配置服务</param>
+        public DashboardViewModel(DatabaseService databaseService, ConfigurationService configurationService)
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
+            _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
+            
+            // 初始化所有车票数据缓存
+            _allTickets = new List<TrainRideInfo>();
+            
+            // 从配置加载预算金额
+            _budgetAmount = _configurationService.LoadBudgetAmountFromConfig();
             
             // 初始化时间
             _currentDateTime = DateTime.Now;
@@ -70,6 +97,14 @@ namespace TA_WPF.ViewModels
             // 设置默认时间范围为今日
             SetTimeRange(_selectedTimeRange);
             
+            // 设置默认分析类型和指标
+            _selectedAnalysisType = "支出趋势";
+            _selectedTrendIndicator = "支出金额";
+            _selectedStructureDimension = "座位类型";
+            
+            // 更新Y轴标题
+            UpdateExpenseYTitle();
+            
             // 创建并启动计时器，每秒更新一次时间
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromSeconds(1);
@@ -80,6 +115,10 @@ namespace TA_WPF.ViewModels
             RefreshCommand = new RelayCommand(async () => await RefreshDataAsync());
             TimeRangeCommand = new RelayCommand<string>(SetTimeRange);
             ShowTicketTypeDetailsCommand = new RelayCommand<TicketTypeData>(ShowTicketTypeDetails);
+            AnalysisTypeCommand = new RelayCommand<string>(SetAnalysisType);
+            SelectTrendIndicatorCommand = new RelayCommand<string>(SetTrendIndicator);
+            SelectStructureDimensionCommand = new RelayCommand<string>(SetStructureDimension);
+            ToggleFullScreenCommand = new RelayCommand(ToggleFullScreen);
             
             // 加载仪表盘数据
             LoadDashboardDataAsync();
@@ -492,6 +531,149 @@ namespace TA_WPF.ViewModels
         public bool HasTopRouteData => TopRouteData != null && TopRouteData.Any();
         
         /// <summary>
+        /// 选中的分析类型
+        /// </summary>
+        public string SelectedAnalysisType
+        {
+            get => _selectedAnalysisType;
+            set
+            {
+                if (_selectedAnalysisType != value)
+                {
+                    _selectedAnalysisType = value;
+                    OnPropertyChanged(nameof(SelectedAnalysisType));
+                    OnPropertyChanged(nameof(IsTrendAnalysis));
+                    OnPropertyChanged(nameof(IsStructureAnalysis));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选中的趋势指标
+        /// </summary>
+        public string SelectedTrendIndicator
+        {
+            get => _selectedTrendIndicator;
+            set
+            {
+                if (_selectedTrendIndicator != value)
+                {
+                    _selectedTrendIndicator = value;
+                    OnPropertyChanged(nameof(SelectedTrendIndicator));
+                    UpdateExpenseYTitle();
+                    RefreshDataAsync();
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选中的结构维度
+        /// </summary>
+        public string SelectedStructureDimension
+        {
+            get => _selectedStructureDimension;
+            set
+            {
+                if (_selectedStructureDimension != value)
+                {
+                    _selectedStructureDimension = value;
+                    OnPropertyChanged(nameof(SelectedStructureDimension));
+                    RefreshDataAsync();
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否为趋势分析
+        /// </summary>
+        public bool IsTrendAnalysis => SelectedAnalysisType == "支出趋势";
+        
+        /// <summary>
+        /// 是否为结构分析
+        /// </summary>
+        public bool IsStructureAnalysis => SelectedAnalysisType == "消费结构";
+        
+        /// <summary>
+        /// 费用支出结构数据图表
+        /// </summary>
+        public SeriesCollection ExpenseStructureSeries
+        {
+            get => _expenseStructureSeries;
+            set
+            {
+                if (_expenseStructureSeries != value)
+                {
+                    _expenseStructureSeries = value;
+                    OnPropertyChanged(nameof(ExpenseStructureSeries));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否有费用结构数据
+        /// </summary>
+        public bool HasExpenseStructureData
+        {
+            get => _hasExpenseStructureData;
+            set
+            {
+                if (_hasExpenseStructureData != value)
+                {
+                    _hasExpenseStructureData = value;
+                    OnPropertyChanged(nameof(HasExpenseStructureData));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 费用Y轴标题
+        /// </summary>
+        public string ExpenseYTitle
+        {
+            get => _expenseYTitle;
+            set
+            {
+                if (_expenseYTitle != value)
+                {
+                    _expenseYTitle = value;
+                    OnPropertyChanged(nameof(ExpenseYTitle));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否全屏
+        /// </summary>
+        public bool IsFullScreen
+        {
+            get => _isFullScreen;
+            set
+            {
+                if (_isFullScreen != value)
+                {
+                    _isFullScreen = value;
+                    OnPropertyChanged(nameof(IsFullScreen));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 之前的窗口状态
+        /// </summary>
+        public WindowState PreviousWindowState
+        {
+            get => _previousWindowState;
+            set
+            {
+                if (_previousWindowState != value)
+                {
+                    _previousWindowState = value;
+                    OnPropertyChanged(nameof(PreviousWindowState));
+                }
+            }
+        }
+        
+        /// <summary>
         /// 刷新命令
         /// </summary>
         public ICommand RefreshCommand { get; }
@@ -505,6 +687,26 @@ namespace TA_WPF.ViewModels
         /// 显示车票类型详情命令
         /// </summary>
         public ICommand ShowTicketTypeDetailsCommand { get; }
+        
+        /// <summary>
+        /// 分析类型命令
+        /// </summary>
+        public ICommand AnalysisTypeCommand { get; private set; }
+        
+        /// <summary>
+        /// 趋势指标选择命令
+        /// </summary>
+        public ICommand SelectTrendIndicatorCommand { get; private set; }
+        
+        /// <summary>
+        /// 结构维度选择命令
+        /// </summary>
+        public ICommand SelectStructureDimensionCommand { get; private set; }
+        
+        /// <summary>
+        /// 切换全屏命令
+        /// </summary>
+        public ICommand ToggleFullScreenCommand { get; }
         
         /// <summary>
         /// 设置时间范围
@@ -564,52 +766,49 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 获取所有车票数据
-                var allTickets = await _databaseService.GetAllTrainRideInfosAsync();
+                IsLoading = true;
                 
-                // 计算总车票数
-                TotalTickets = allTickets.Count;
+                // 从数据库加载所有车票数据
+                _allTickets = await _databaseService.GetAllTrainRideInfosAsync();
                 
-                // 计算当前时间范围内的车票数
-                CurrentRangeTickets = allTickets.Count(t => t.DepartDate >= StartDate && t.DepartDate <= EndDate);
+                // 更新总票数
+                TotalTickets = _allTickets.Count;
                 
-                // 计算最经常出发的车站
-                if (allTickets.Any())
-                {
-                    var stationGroups = allTickets
-                        .Where(t => !string.IsNullOrEmpty(t.DepartStation))
-                        .GroupBy(t => t.DepartStation)
-                        .OrderByDescending(g => g.Count());
-                    
-                    MostFrequentDepartureStation = stationGroups.FirstOrDefault()?.Key ?? "无数据";
-                    
-                    // 获取最后一次出发的车站（按出发日期排序）
-                    var lastTicket = allTickets
-                        .Where(t => t.DepartDate.HasValue && !string.IsNullOrEmpty(t.DepartStation))
-                        .OrderByDescending(t => t.DepartDate)
-                        .FirstOrDefault();
-                    
-                    LastDepartureStation = lastTicket?.DepartStation ?? "无数据";
-                    
-                    // 加载图表数据
-                    await LoadChartDataAsync(allTickets);
-                    
-                    // 加载最近活动
-                    LoadRecentActivities(allTickets);
-                }
-                else
-                {
-                    MostFrequentDepartureStation = "无数据";
-                    LastDepartureStation = "无数据";
-                }
+                // 更新当前范围内的票数
+                CurrentRangeTickets = _allTickets.Count(t => t.DepartDate.HasValue && 
+                                                         t.DepartDate.Value >= StartDate && 
+                                                         t.DepartDate.Value <= EndDate);
+                
+                // 更新最常用出发站
+                var departStationGroups = _allTickets
+                    .Where(t => !string.IsNullOrEmpty(t.DepartStation))
+                    .GroupBy(t => t.DepartStation)
+                    .OrderByDescending(g => g.Count());
+                
+                MostFrequentDepartureStation = departStationGroups.Any() ? departStationGroups.First().Key : "无数据";
+                
+                // 更新最近出发站
+                var lastTicket = _allTickets
+                    .Where(t => t.DepartDate.HasValue && !string.IsNullOrEmpty(t.DepartStation))
+                    .OrderByDescending(t => t.DepartDate)
+                    .FirstOrDefault();
+                
+                LastDepartureStation = lastTicket != null ? lastTicket.DepartStation : "无数据";
+                
+                // 加载图表数据
+                await LoadChartDataAsync(_allTickets);
+                
+                // 加载最近活动
+                LoadRecentActivities(_allTickets);
             }
             catch (Exception ex)
             {
-                // 处理异常
                 System.Diagnostics.Debug.WriteLine($"加载仪表盘数据时出错: {ex.Message}");
-                MostFrequentDepartureStation = "加载失败";
-                LastDepartureStation = "加载失败";
-                throw; // 重新抛出异常，让上层处理
+                // 可以在这里添加错误提示逻辑
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
         
@@ -813,7 +1012,6 @@ namespace TA_WPF.ViewModels
         private void LoadMonthlyExpenseData(List<TrainRideInfo> tickets)
         {
             MonthlyExpenseData.Clear();
-            OnPropertyChanged(nameof(HasExpenseData));
             
             // 获取最近12个月的数据
             var endMonth = DateTime.Today;
@@ -825,27 +1023,214 @@ namespace TA_WPF.ViewModels
                 var year = date.Year;
                 var month = date.Month;
                 
+                // 当月车票
+                var monthTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                                   t.DepartDate.Value.Year == year && 
+                                                   t.DepartDate.Value.Month == month).ToList();
+                
                 // 当月支出
-                var expense = tickets.Where(t => t.DepartDate.HasValue && 
-                                              t.DepartDate.Value.Year == year && 
-                                              t.DepartDate.Value.Month == month && 
-                                              t.Money.HasValue)
-                                   .Sum(t => t.Money.Value);
+                var expense = monthTickets.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
                 
-                var monthData = new MonthlyExpenseData
+                // 当月平均票价
+                var avgPrice = monthTickets.Count > 0 && monthTickets.Any(t => t.Money.HasValue) 
+                    ? monthTickets.Where(t => t.Money.HasValue).Average(t => t.Money.Value) 
+                    : 0;
+                
+                // 去年同期支出
+                var lastYearTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                                      t.DepartDate.Value.Year == year - 1 && 
+                                                      t.DepartDate.Value.Month == month).ToList();
+                var lastYearExpense = lastYearTickets.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
+                
+                // 计算同比增长
+                var yearOnYearGrowth = lastYearExpense > 0 
+                    ? ((double)expense / (double)lastYearExpense - 1) * 100 
+                    : 0;
+                
+                // 上月支出
+                var lastMonth = date.AddMonths(-1);
+                var lastMonthTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                                      t.DepartDate.Value.Year == lastMonth.Year && 
+                                                      t.DepartDate.Value.Month == lastMonth.Month).ToList();
+                var lastMonthExpense = lastMonthTickets.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
+                
+                // 计算环比增长
+                var monthOnMonthGrowth = lastMonthExpense > 0 
+                    ? ((double)expense / (double)lastMonthExpense - 1) * 100 
+                    : 0;
+                
+                MonthlyExpenseData.Add(new MonthlyExpenseData
                 {
-                    Month = $"{year}/{month}",
+                    Month = $"{year}/{month:D2}",
                     Expense = expense,
-                    Budget = BudgetAmount
-                };
-                
-                MonthlyExpenseData.Add(monthData);
+                    Budget = BudgetAmount,
+                    AvgPrice = avgPrice,
+                    YearOnYearGrowth = yearOnYearGrowth,
+                    MonthOnMonthGrowth = monthOnMonthGrowth,
+                    TicketCount = monthTickets.Count
+                });
             }
             
-            // 更新支出图表
-            UpdateExpenseChart();
-            
             OnPropertyChanged(nameof(HasExpenseData));
+            
+            // 更新图表
+            UpdateExpenseChart();
+        }
+        
+        /// <summary>
+        /// 加载消费结构数据
+        /// </summary>
+        /// <param name="tickets">车票数据</param>
+        private void LoadExpenseStructureData(List<TrainRideInfo> tickets)
+        {
+            // 筛选有效票
+            var validTickets = tickets.Where(t => t.Money.HasValue && 
+                                               t.DepartDate.HasValue && 
+                                               t.DepartDate.Value >= StartDate && 
+                                               t.DepartDate.Value <= EndDate).ToList();
+            
+            HasExpenseStructureData = validTickets.Any();
+            
+            if (!HasExpenseStructureData)
+                return;
+                
+            // 定义饼图颜色
+            var colors = new[]
+            {
+                Color.FromRgb(124, 77, 255),   // 主色调紫色 #7C4DFF
+                Color.FromRgb(0, 176, 255),    // 天蓝色 #00B0FF
+                Color.FromRgb(156, 100, 255),  // 浅紫色 #9C64FF
+                Color.FromRgb(94, 53, 177),    // 深紫色 #5E35B1
+                Color.FromRgb(3, 169, 244),    // 蓝色 #03A9F4
+                Color.FromRgb(179, 136, 255),  // 淡紫色 #B388FF
+                Color.FromRgb(0, 137, 123),    // 青色 #00897B
+                Color.FromRgb(255, 87, 34),    // 橙色 #FF5722
+                Color.FromRgb(255, 193, 7),    // 琥珀色 #FFC107
+                Color.FromRgb(139, 195, 74)    // 浅绿色 #8BC34A
+            };
+            
+            ExpenseStructureSeries = new SeriesCollection();
+            
+            // 按座位类型分组
+            var seatGroups = validTickets
+                .GroupBy(t => string.IsNullOrEmpty(t.SeatType) ? "未知" : t.SeatType)
+                .Select(g => new
+                {
+                    SeatType = g.Key,
+                    TotalExpense = g.Sum(t => t.Money.Value),
+                    Count = g.Count()
+                })
+                .OrderByDescending(g => g.TotalExpense)
+                .ToList();
+            
+            // 计算总支出
+            var totalExpense = seatGroups.Sum(g => g.TotalExpense);
+            
+            // 添加饼图数据
+            for (int i = 0; i < seatGroups.Count; i++)
+            {
+                var group = seatGroups[i];
+                var percentage = totalExpense > 0 ? group.TotalExpense * 100 / totalExpense : 0;
+                
+                ExpenseStructureSeries.Add(new PieSeries
+                {
+                    Title = group.SeatType,
+                    Values = new ChartValues<decimal> { group.TotalExpense },
+                    DataLabels = false,
+                    LabelPoint = chartPoint => $"{group.SeatType}\n¥{group.TotalExpense:N2} ({(int)percentage}%)",
+                    Fill = new SolidColorBrush(colors[i % colors.Length])
+                });
+            }
+        }
+        
+        /// <summary>
+        /// 更新支出图表
+        /// </summary>
+        private void UpdateExpenseChart()
+        {
+            if (MonthlyExpenseData == null || !MonthlyExpenseData.Any())
+            {
+                ExpenseSeries = new SeriesCollection();
+                ExpenseLabels = new string[0];
+                OnPropertyChanged(nameof(ExpenseSeries));
+                OnPropertyChanged(nameof(ExpenseLabels));
+                return;
+            }
+
+            var orderedData = MonthlyExpenseData
+                .OrderBy(d => DateTime.ParseExact(d.Month, "yyyy/MM", null))
+                .ToList();
+                
+            ExpenseLabels = orderedData.Select(d => d.Month).ToArray();
+            
+            var newSeries = new SeriesCollection();
+            
+            switch (SelectedTrendIndicator)
+            {
+                case "支出金额":
+                    var expenseData = orderedData.Select(d => (double)d.Expense).ToList();
+                    var budgetLine = Enumerable.Repeat(BudgetAmount, expenseData.Count).ToList();
+                    
+                    newSeries.Add(new ColumnSeries
+                    {
+                        Title = "实际支出",
+                        Values = new ChartValues<double>(expenseData),
+                        Fill = new SolidColorBrush(Color.FromRgb(124, 77, 255)), // #7C4DFF
+                        DataLabels = true,
+                        LabelPoint = point => $"¥{point.Y:N0}"
+                    });
+                    
+                    newSeries.Add(new LineSeries
+                    {
+                        Title = "预算线",
+                        Values = new ChartValues<double>(budgetLine),
+                        Stroke = new SolidColorBrush(Color.FromRgb(255, 82, 82)), // #FF5252
+                        PointGeometry = null,
+                        LineSmoothness = 0
+                    });
+                    
+                    ExpenseYFormatter = value => $"¥{value:N0}";
+                    break;
+                    
+                case "同比增长":
+                    var yearGrowthData = orderedData.Select(d => d.YearOnYearGrowth).ToList();
+                    
+                    newSeries.Add(new LineSeries
+                    {
+                        Title = "同比增长",
+                        Values = new ChartValues<double>(yearGrowthData),
+                        Fill = new SolidColorBrush(Color.FromArgb(32, 124, 77, 255)),
+                        Stroke = new SolidColorBrush(Color.FromRgb(124, 77, 255)),
+                        DataLabels = true,
+                        LabelPoint = point => $"{point.Y:N1}%"
+                    });
+                    
+                    ExpenseYFormatter = value => $"{value:N1}%";
+                    break;
+                    
+                case "环比增长":
+                    var monthGrowthData = orderedData.Select(d => d.MonthOnMonthGrowth).ToList();
+                    
+                    newSeries.Add(new LineSeries
+                    {
+                        Title = "环比增长",
+                        Values = new ChartValues<double>(monthGrowthData),
+                        Fill = new SolidColorBrush(Color.FromArgb(32, 124, 77, 255)),
+                        Stroke = new SolidColorBrush(Color.FromRgb(124, 77, 255)),
+                        DataLabels = true,
+                        LabelPoint = point => $"{point.Y:N1}%"
+                    });
+                    
+                    ExpenseYFormatter = value => $"{value:N1}%";
+                    break;
+            }
+            
+            ExpenseSeries = newSeries;
+            
+            // 触发属性变更通知
+            OnPropertyChanged(nameof(ExpenseSeries));
+            OnPropertyChanged(nameof(ExpenseLabels));
+            OnPropertyChanged(nameof(ExpenseYFormatter));
         }
         
         /// <summary>
@@ -857,30 +1242,38 @@ namespace TA_WPF.ViewModels
             TopRouteData.Clear();
             OnPropertyChanged(nameof(HasTopRouteData));
             
-            // 按路线分组统计
-            var routeGroups = tickets.Where(t => !string.IsNullOrEmpty(t.DepartStation) && 
-                                               !string.IsNullOrEmpty(t.ArriveStation))
-                                   .GroupBy(t => new { From = t.DepartStation, To = t.ArriveStation })
-                                   .Select(g => new
-                                   {
-                                       From = g.Key.From,
-                                       To = g.Key.To,
-                                       Count = g.Count(),
-                                       TotalExpense = g.Where(t => t.Money.HasValue).Sum(t => t.Money.Value)
-                                   })
-                                   .OrderByDescending(g => g.Count)
-                                   .Take(5);
-            
-            // 添加数据
-            foreach (var route in routeGroups)
+            try
             {
-                TopRouteData.Add(new RouteData
+                // 使用所有车票数据，不受时间筛选影响
+                var routeGroups = _allTickets
+                    .Where(t => !string.IsNullOrEmpty(t.DepartStation) && 
+                               !string.IsNullOrEmpty(t.ArriveStation))
+                    .GroupBy(t => new { From = t.DepartStation, To = t.ArriveStation })
+                    .Select(g => new
+                    {
+                        From = g.Key.From,
+                        To = g.Key.To,
+                        Count = g.Count(),
+                        TotalExpense = g.Where(t => t.Money.HasValue).Sum(t => t.Money.Value)
+                    })
+                    .OrderByDescending(g => g.Count)
+                    .Take(5);
+                
+                // 添加数据
+                foreach (var route in routeGroups)
                 {
-                    From = route.From,
-                    To = route.To,
-                    Count = route.Count,
-                    TotalExpense = route.TotalExpense
-                });
+                    TopRouteData.Add(new RouteData
+                    {
+                        From = route.From,
+                        To = route.To,
+                        Count = route.Count,
+                        TotalExpense = route.TotalExpense
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"加载热门路线数据时出错: {ex.Message}");
             }
             
             OnPropertyChanged(nameof(HasTopRouteData));
@@ -919,7 +1312,6 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                // 处理异常
                 System.Diagnostics.Debug.WriteLine($"刷新数据时出错: {ex.Message}");
                 // 可以在这里添加错误提示逻辑
             }
@@ -939,38 +1331,178 @@ namespace TA_WPF.ViewModels
         }
         
         /// <summary>
-        /// 更新支出图表
+        /// 设置分析类型
         /// </summary>
-        private void UpdateExpenseChart()
+        /// <param name="type">分析类型</param>
+        private void SetAnalysisType(string type)
         {
-            if (MonthlyExpenseData == null || !MonthlyExpenseData.Any() || ExpenseSeries == null || ExpenseSeries.Count < 2)
+            if (SelectedAnalysisType == type)
                 return;
-
-            var expenseData = MonthlyExpenseData
-                .OrderBy(d => int.Parse(d.Month.Split('/')[1]))
-                .Select(d => d.Expense)
-                .ToList();
-
-            var budgetLine = Enumerable.Repeat(BudgetAmount, expenseData.Count()).ToList();
-
-            ExpenseSeries = new SeriesCollection
+                
+            SelectedAnalysisType = type;
+            OnPropertyChanged(nameof(IsTrendAnalysis));
+            OnPropertyChanged(nameof(IsStructureAnalysis));
+            
+            // 更新图表
+            if (IsTrendAnalysis)
             {
-                new ColumnSeries
+                UpdateExpenseChart();
+            }
+            else if (IsStructureAnalysis)
+            {
+                // 加载消费结构数据
+                Task.Run(async () => {
+                    var tickets = await _databaseService.GetAllTrainRideInfosAsync();
+                    LoadExpenseStructureData(tickets);
+                });
+            }
+        }
+        
+        /// <summary>
+        /// 设置趋势指标
+        /// </summary>
+        /// <param name="indicator">趋势指标</param>
+        private void SetTrendIndicator(string indicator)
+        {
+            if (SelectedTrendIndicator == indicator)
+                return;
+                
+            SelectedTrendIndicator = indicator;
+            
+            // 更新Y轴标题
+            UpdateExpenseYTitle();
+            
+            // 更新图表
+            UpdateExpenseChart();
+        }
+        
+        /// <summary>
+        /// 设置结构维度
+        /// </summary>
+        /// <param name="dimension">结构维度</param>
+        private void SetStructureDimension(string dimension)
+        {
+            if (SelectedStructureDimension == dimension)
+                return;
+                
+            SelectedStructureDimension = dimension;
+            
+            // 更新消费结构数据
+            Task.Run(async () => {
+                var tickets = await _databaseService.GetAllTrainRideInfosAsync();
+                LoadExpenseStructureData(tickets);
+            });
+        }
+        
+        /// <summary>
+        /// 更新费用Y轴标题
+        /// </summary>
+        private void UpdateExpenseYTitle()
+        {
+            ExpenseYTitle = SelectedTrendIndicator == "支出金额" || SelectedTrendIndicator == "平均票价" ? "金额" : "百分比";
+        }
+        
+        /// <summary>
+        /// 切换全屏状态
+        /// </summary>
+        private void ToggleFullScreen()
+        {
+            try
+            {
+                // 获取主窗口引用
+                Window mainWindow = Application.Current.MainWindow;
+                if (mainWindow == null)
                 {
-                    Title = "实际支出",
-                    Values = new ChartValues<decimal>(expenseData),
-                    Fill = new SolidColorBrush(Color.FromRgb(124, 77, 255)), // #7C4DFF
-                },
-                new LineSeries
-                {
-                    Title = "预算线",
-                    Values = new ChartValues<double>(budgetLine),
-                    PointGeometry = DefaultGeometries.Square,
-                    PointGeometrySize = 8,
-                    Stroke = new SolidColorBrush(Color.FromRgb(156, 100, 255)), // #9C64FF
-                    Fill = new SolidColorBrush(Color.FromArgb(30, 156, 100, 255))
+                    Console.WriteLine("无法获取主窗口引用");
+                    return;
                 }
-            };
+                
+                // 切换全屏状态
+                IsFullScreen = !IsFullScreen;
+                
+                if (IsFullScreen)
+                {
+                    // 进入全屏模式
+                    
+                    // 保存当前窗口状态（如果不是最小化）
+                    if (mainWindow.WindowState != WindowState.Minimized)
+                    {
+                        PreviousWindowState = mainWindow.WindowState;
+                    }
+                    
+                    // 保存当前窗口位置和大小
+                    _savedLeft = mainWindow.RestoreBounds.Left;
+                    _savedTop = mainWindow.RestoreBounds.Top;
+                    _savedWidth = mainWindow.RestoreBounds.Width;
+                    _savedHeight = mainWindow.RestoreBounds.Height;
+                    
+                    Console.WriteLine($"进入全屏模式：保存之前的窗口状态 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
+                    
+                    // 设置为全屏模式（无标题栏，最大化）
+                    mainWindow.WindowStyle = WindowStyle.None; // 无边框
+                    mainWindow.ResizeMode = ResizeMode.NoResize; // 禁止调整大小
+                    mainWindow.Topmost = true; // 置顶显示
+                    
+                    // 获取屏幕尺寸
+                    double screenWidth = SystemParameters.PrimaryScreenWidth;
+                    double screenHeight = SystemParameters.PrimaryScreenHeight;
+                    
+                    // 设置窗口位置和大小为整个屏幕
+                    mainWindow.WindowState = WindowState.Normal; // 先设为普通状态
+                    mainWindow.Left = 0;
+                    mainWindow.Top = 0;
+                    mainWindow.Width = screenWidth;
+                    mainWindow.Height = screenHeight;
+                    
+                    Console.WriteLine($"设置窗口为完全全屏模式：宽度={screenWidth}, 高度={screenHeight}");
+                }
+                else
+                {
+                    // 退出全屏模式
+                    Console.WriteLine($"退出全屏模式：恢复窗口状态为 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
+                    
+                    // 恢复窗口样式和状态
+                    mainWindow.WindowStyle = WindowStyle.SingleBorderWindow; // 显示标题栏
+                    mainWindow.ResizeMode = ResizeMode.CanResize; // 允许调整大小
+                    mainWindow.Topmost = false; // 取消置顶
+                    
+                    // 根据之前的窗口状态决定如何恢复
+                    if (PreviousWindowState == WindowState.Maximized)
+                    {
+                        // 如果之前是最大化状态，直接设置为最大化，避免闪烁
+                        mainWindow.WindowState = WindowState.Maximized;
+                        Console.WriteLine("直接恢复到最大化状态，避免闪烁");
+                    }
+                    else
+                    {
+                        // 如果之前不是最大化状态，恢复到之前的位置和大小
+                        mainWindow.WindowState = WindowState.Normal; // 先设为普通状态
+                        
+                        // 使用 Dispatcher 延迟设置窗口位置和大小，确保 WindowStyle 更改已应用
+                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            try
+                            {
+                                mainWindow.Left = _savedLeft;
+                                mainWindow.Top = _savedTop;
+                                mainWindow.Width = _savedWidth;
+                                mainWindow.Height = _savedHeight;
+                                
+                                Console.WriteLine($"完成恢复窗口位置和大小：({mainWindow.Left}, {mainWindow.Top}), {mainWindow.Width}x{mainWindow.Height}, 状态: {mainWindow.WindowState}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"恢复窗口位置和大小时出错: {ex.Message}");
+                            }
+                        }), DispatcherPriority.Render);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ToggleFullScreen异常: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
         }
     }
     
@@ -1050,6 +1582,26 @@ namespace TA_WPF.ViewModels
         /// 预算金额
         /// </summary>
         public double Budget { get; set; }
+        
+        /// <summary>
+        /// 平均票价
+        /// </summary>
+        public decimal AvgPrice { get; set; }
+        
+        /// <summary>
+        /// 同比增长率
+        /// </summary>
+        public double YearOnYearGrowth { get; set; }
+        
+        /// <summary>
+        /// 环比增长率
+        /// </summary>
+        public double MonthOnMonthGrowth { get; set; }
+        
+        /// <summary>
+        /// 车票数量
+        /// </summary>
+        public int TicketCount { get; set; }
     }
     
     /// <summary>

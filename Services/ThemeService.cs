@@ -14,6 +14,37 @@ namespace TA_WPF.Services
     /// </summary>
     public class ThemeService
     {
+        private static ThemeService _instance;
+        private static readonly object _lock = new object();
+
+        /// <summary>
+        /// 获取 ThemeService 的单例实例
+        /// </summary>
+        public static ThemeService Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    lock (_lock)
+                    {
+                        if (_instance == null)
+                        {
+                            _instance = new ThemeService();
+                        }
+                    }
+                }
+                return _instance;
+            }
+        }
+
+        /// <summary>
+        /// 私有构造函数，防止外部创建实例
+        /// </summary>
+        private ThemeService()
+        {
+        }
+
         /// <summary>
         /// 主题变更事件
         /// </summary>
@@ -30,6 +61,12 @@ namespace TA_WPF.Services
                 // 获取当前资源字典
                 var paletteHelper = new PaletteHelper();
                 var theme = paletteHelper.GetTheme();
+                
+                // 如果当前主题状态与要设置的状态相同，则不做任何改变
+                if (theme.GetBaseTheme() == (isDarkMode ? BaseTheme.Dark : BaseTheme.Light))
+                {
+                    return;
+                }
                 
                 // 设置深色/浅色模式
                 theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
@@ -48,6 +85,11 @@ namespace TA_WPF.Services
                     if (bundledTheme != null)
                     {
                         bundledTheme.BaseTheme = isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light;
+                        Console.WriteLine($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("警告: 未找到BundledTheme");
                     }
                     
                     // 更新Theme.Dark和Theme.Light资源 - 确保这些值立即更新
@@ -132,6 +174,13 @@ namespace TA_WPF.Services
                 config.Save(ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
                 
+                // 同时更新资源字典中的主题标志
+                if (Application.Current?.Resources != null)
+                {
+                    Application.Current.Resources["Theme.Dark"] = isDarkMode;
+                    Application.Current.Resources["Theme.Light"] = !isDarkMode;
+                }
+                
                 Console.WriteLine($"已保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
             }
             catch (Exception ex)
@@ -154,6 +203,13 @@ namespace TA_WPF.Services
                 {
                     if (bool.TryParse(config.AppSettings.Settings["IsDarkMode"].Value, out bool isDarkMode))
                     {
+                        // 同时更新资源字典中的主题标志
+                        if (Application.Current?.Resources != null)
+                        {
+                            Application.Current.Resources["Theme.Dark"] = isDarkMode;
+                            Application.Current.Resources["Theme.Light"] = !isDarkMode;
+                        }
+                        
                         Console.WriteLine($"已从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
                         return isDarkMode;
                     }
@@ -162,10 +218,20 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"加载主题设置时出错: {ex.Message}");
+                LogHelper.LogError($"加载主题设置时出错: {ex.Message}");
             }
             
             // 如果配置文件中没有主题设置或加载失败，检查当前主题
-            return IsDarkThemeActive();
+            bool currentTheme = IsDarkThemeActive();
+            
+            // 同时更新资源字典中的主题标志
+            if (Application.Current?.Resources != null)
+            {
+                Application.Current.Resources["Theme.Dark"] = currentTheme;
+                Application.Current.Resources["Theme.Light"] = !currentTheme;
+            }
+            
+            return currentTheme;
         }
 
         /// <summary>

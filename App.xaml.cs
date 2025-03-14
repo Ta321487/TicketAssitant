@@ -65,8 +65,17 @@ namespace TA_WPF
                 // 初始化主题服务并应用主题设置
                 try
                 {
-                    var themeService = new Services.ThemeService();
+                    var themeService = Services.ThemeService.Instance;
                     bool isDarkMode = themeService.LoadThemeFromConfig();
+                    
+                    // 确保资源字典中的主题标志被正确设置
+                    if (Resources != null)
+                    {
+                        Resources["Theme.Dark"] = isDarkMode;
+                        Resources["Theme.Light"] = !isDarkMode;
+                    }
+                    
+                    // 应用主题
                     themeService.ApplyTheme(isDarkMode);
                     LogHelper.LogInfo($"已应用{(isDarkMode ? "深色" : "浅色")}主题");
                 }

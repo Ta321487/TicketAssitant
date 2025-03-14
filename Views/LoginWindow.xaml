@@ -19,7 +19,6 @@
         FontFamily="Microsoft YaHei"
         ResizeMode="CanMinimize"
         KeyDown="Window_KeyDown"
-        materialDesign:ThemeAssist.Theme="{Binding Source={StaticResource Theme.Dark}, Converter={StaticResource BooleanToThemeConverter}}"
         Loaded="Window_Loaded">
     
     <Window.Resources>
@@ -90,7 +89,7 @@
             </StackPanel>
 
             <!-- 主要内容区域 -->
-            <materialDesign:Card Grid.Row="1" Padding="16,12" Margin="16,8,16,16">
+            <materialDesign:Card x:Name="MainCard" Grid.Row="1" Padding="16,12" Margin="16,8,16,16" Background="{DynamicResource MaterialDesignPaper}">
                 <StackPanel>
                     <!-- 标题和图标 -->
                     <TextBlock Text="车票管理系统" 

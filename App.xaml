@@ -15,18 +15,24 @@
             <ResourceDictionary.MergedDictionaries>
                 <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
+            
+            <!-- 深色/浅色主题标志 -->
+            <system:Boolean x:Key="Theme.Dark">False</system:Boolean>
+            <system:Boolean x:Key="Theme.Light">True</system:Boolean>
+            
+            <!-- 转换器 -->
+            <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+            
             <!-- 主题相关资源 -->
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <SolidColorBrush x:Key="PrimaryHueLightBrush" Color="#9C64FF"/>
             <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#7C4DFF"/>
             <SolidColorBrush x:Key="PrimaryHueDarkBrush" Color="#5E35B1"/>
             <SolidColorBrush x:Key="SecondaryHueMidBrush" Color="#CDDC39"/>
-            
-            <!-- 深色/浅色主题标志 -->
-            <system:Boolean x:Key="Theme.Dark">False</system:Boolean>
-            <system:Boolean x:Key="Theme.Light">True</system:Boolean>
             
             <!-- 深色模式下的额外样式 -->
             <SolidColorBrush x:Key="DarkModeTextBrush" Color="#FFFFFF" />
@@ -104,8 +110,10 @@
             <converters:StationNameConverter x:Key="StationNameConverter" />
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-            <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
             <converters:StringEqualityToBooleanConverter x:Key="StringEqualityToBooleanConverter" />
+            <converters:FullScreenWindowStyleConverter x:Key="FullScreenWindowStyleConverter" />
+            <converters:FullScreenWindowStateConverter x:Key="FullScreenWindowStateConverter" />
+            <converters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
 
             <!-- 数据表格样式 -->
             <Style TargetType="{x:Type DataGrid}">

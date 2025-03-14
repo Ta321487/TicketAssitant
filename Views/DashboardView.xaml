@@ -7,6 +7,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels"
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:converters="clr-namespace:TA_WPF.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800">
     
@@ -15,6 +16,11 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Card.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- 转换器 -->
+            <converters:FullScreenWindowStyleConverter x:Key="FullScreenWindowStyleConverter"/>
+            <converters:FullScreenWindowStateConverter x:Key="FullScreenWindowStateConverter"/>
+            <converters:BooleanToStringConverter x:Key="BooleanToStringConverter"/>
             
             <!-- 数据模板 -->
             <DataTemplate x:Key="RecentActivityTemplate">
@@ -114,9 +120,22 @@
         </ResourceDictionary>
     </UserControl.Resources>
     
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="UserControl.Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="MainGrid" 
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0" To="1" Duration="0:0:0.5"/>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </UserControl.Triggers>
+    
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="16">
+        <Grid x:Name="MainGrid" Margin="16" Opacity="1">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -140,40 +159,48 @@
                            VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- 刷新按钮 -->
-                <Button Grid.Column="1"
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="刷新数据"
-                        Command="{Binding RefreshCommand}"
-                        HorizontalAlignment="Left"
-                        Margin="16,0,0,0">
-                    <materialDesign:PackIcon Kind="Refresh" Height="24" Width="24">
-                        <materialDesign:PackIcon.RenderTransform>
-                            <RotateTransform x:Name="RefreshButtonRotation" CenterX="12" CenterY="12"/>
-                        </materialDesign:PackIcon.RenderTransform>
-                        <materialDesign:PackIcon.Style>
-                            <Style TargetType="materialDesign:PackIcon">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsLoading}" Value="True">
-                                        <DataTrigger.EnterActions>
-                                            <BeginStoryboard Name="RotateStoryboard">
-                                                <Storyboard>
-                                                    <DoubleAnimation
-                                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                                        From="0" To="360" Duration="0:0:1"
-                                                        RepeatBehavior="Forever"/>
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </DataTrigger.EnterActions>
-                                        <DataTrigger.ExitActions>
-                                            <StopStoryboard BeginStoryboardName="RotateStoryboard"/>
-                                        </DataTrigger.ExitActions>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </materialDesign:PackIcon.Style>
-                    </materialDesign:PackIcon>
-                </Button>
+                <!-- 刷新按钮和全屏按钮 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="刷新数据"
+                            Command="{Binding RefreshCommand}"
+                            Margin="16,0,8,0">
+                        <materialDesign:PackIcon Kind="Refresh" Height="24" Width="24">
+                            <materialDesign:PackIcon.RenderTransform>
+                                <RotateTransform x:Name="RefreshButtonRotation" CenterX="12" CenterY="12"/>
+                            </materialDesign:PackIcon.RenderTransform>
+                            <materialDesign:PackIcon.Style>
+                                <Style TargetType="materialDesign:PackIcon">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="RotateStoryboard">
+                                                    <Storyboard>
+                                                        <DoubleAnimation
+                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                            From="0" To="360" Duration="0:0:1"
+                                                            RepeatBehavior="Forever"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="RotateStoryboard"/>
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </materialDesign:PackIcon.Style>
+                        </materialDesign:PackIcon>
+                    </Button>
+                    
+                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="{Binding IsFullScreen, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='退出全屏|全屏'}"
+                            Command="{Binding ToggleFullScreenCommand}"
+                            Margin="8,0,0,0">
+                        <materialDesign:PackIcon Kind="{Binding IsFullScreen, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='FullscreenExit|Fullscreen'}" 
+                                               Height="24" Width="24"/>
+                    </Button>
+                </StackPanel>
                 
                 <!-- 加载提示 -->
                 <TextBlock Grid.Column="1"
@@ -370,8 +397,92 @@
                 </WrapPanel>
             </Grid>
             
-            <!-- 图表分析区域 -->
+            <!-- 常用线路TOP5和最近活动 -->
             <Grid Grid.Row="3" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 最近活动区域 -->
+                <materialDesign:Card Grid.Column="0" Margin="0,0,8,0" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                            <materialDesign:PackIcon Kind="History" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="最近活动" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <ListView Grid.Row="1" 
+                                  ItemsSource="{Binding RecentActivities}"
+                                  ItemTemplate="{StaticResource RecentActivityTemplate}"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  MaxHeight="300">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                                    <Setter Property="Margin" Value="0,4"/>
+                                    <Setter Property="Padding" Value="8"/>
+                                    <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+                    </Grid>
+                </materialDesign:Card>
+
+                <!-- 常用线路TOP5 -->
+                <materialDesign:Card Grid.Column="1" Margin="8,0,0,0" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                            <materialDesign:PackIcon Kind="Routes" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="常用线路TOP5" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <Grid Grid.Row="1">
+                            <ListView ItemsSource="{Binding TopRouteData}" 
+                                     ItemTemplate="{StaticResource RouteTemplate}" 
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     MaxHeight="300">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                                        <Setter Property="Margin" Value="0,4"/>
+                                        <Setter Property="Padding" Value="8"/>
+                                        <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                            </ListView>
+                            
+                            <!-- 空数据提示 -->
+                            <TextBlock Text="暂无数据" 
+                                      Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                                      HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"
+                                      Visibility="{Binding HasTopRouteData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+                    </Grid>
+                </materialDesign:Card>
+            </Grid>
+            
+            <!-- 图表分析区域 -->
+            <Grid Grid.Row="4" Margin="0,0,0,16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -417,8 +528,30 @@
                     </Grid>
                 </materialDesign:Card>
                 
-                <!-- 车票类型分布 -->
+                <!-- 路线相关区域 -->
                 <materialDesign:Card Grid.Row="0" Grid.Column="1" Margin="8" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="300"/>
+                        </Grid.RowDefinitions>
+                        
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                            <materialDesign:PackIcon Kind="Routes" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="路线相关" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <TextBlock Grid.Row="1" 
+                                 Text="维护中" 
+                                 Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                                 HorizontalAlignment="Center" 
+                                 VerticalAlignment="Center"
+                                 Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                    </Grid>
+                </materialDesign:Card>
+                
+                <!-- 车票类型分布 -->
+                <materialDesign:Card Grid.Row="1" Grid.Column="0" Margin="8" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -473,21 +606,46 @@
                 </materialDesign:Card>
                 
                 <!-- 费用支出分析 -->
-                <materialDesign:Card Grid.Row="1" Grid.Column="0" Margin="8" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                <materialDesign:Card Grid.Row="1" Grid.Column="1" Margin="8" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                     <Grid>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="250"/>
                         </Grid.RowDefinitions>
                         
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                            <materialDesign:PackIcon Kind="CurrencyCny" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="费用支出分析" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
-                        </StackPanel>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                <materialDesign:PackIcon Kind="CurrencyCny" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="费用支出分析" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <!-- 分析类型切换 -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <RadioButton Content="支出趋势" 
+                                           Style="{StaticResource MaterialDesignTabRadioButton}"
+                                           Margin="4,0" 
+                                           IsChecked="{Binding SelectedAnalysisType, ConverterParameter=支出趋势, Converter={StaticResource StringEqualityToBooleanConverter}}"
+                                           Command="{Binding AnalysisTypeCommand}" 
+                                           CommandParameter="支出趋势"/>
+                                <RadioButton Content="消费结构" 
+                                           Style="{StaticResource MaterialDesignTabRadioButton}"
+                                           Margin="4,0" 
+                                           IsChecked="{Binding SelectedAnalysisType, ConverterParameter=消费结构, Converter={StaticResource StringEqualityToBooleanConverter}}"
+                                           Command="{Binding AnalysisTypeCommand}" 
+                                           CommandParameter="消费结构"/>
+                            </StackPanel>
+                        </Grid>
                         
                         <!-- 预算调整区域 -->
-                        <Grid Grid.Row="1" Margin="0,0,0,16">
+                        <Grid Grid.Row="1" Margin="0,0,0,16" Visibility="{Binding IsTrendAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
@@ -516,20 +674,76 @@
                                      PreviewTextInput="NumberValidationTextBox"/>
                         </Grid>
                         
-                        <Grid Grid.Row="2">
+                        <!-- 分析指标选择区域 -->
+                        <Grid Grid.Row="2" Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Text="分析指标: " 
+                                     VerticalAlignment="Center" 
+                                     Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                     Visibility="{Binding IsTrendAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Visibility="{Binding IsTrendAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <RadioButton Content="支出金额" 
+                                           Style="{StaticResource MaterialDesignRadioButton}"
+                                           Margin="8,0" 
+                                           IsChecked="{Binding SelectedTrendIndicator, ConverterParameter=支出金额, Converter={StaticResource StringEqualityToBooleanConverter}}"
+                                           Command="{Binding SelectTrendIndicatorCommand}" 
+                                           CommandParameter="支出金额"/>
+                                <RadioButton Content="平均票价" 
+                                           Style="{StaticResource MaterialDesignRadioButton}"
+                                           Margin="8,0" 
+                                           IsChecked="{Binding SelectedTrendIndicator, ConverterParameter=平均票价, Converter={StaticResource StringEqualityToBooleanConverter}}"
+                                           Command="{Binding SelectTrendIndicatorCommand}" 
+                                           CommandParameter="平均票价"/>
+                                <RadioButton Content="同比增长" 
+                                           Style="{StaticResource MaterialDesignRadioButton}"
+                                           Margin="8,0" 
+                                           IsChecked="{Binding SelectedTrendIndicator, ConverterParameter=同比增长, Converter={StaticResource StringEqualityToBooleanConverter}}"
+                                           Command="{Binding SelectTrendIndicatorCommand}" 
+                                           CommandParameter="同比增长"/>
+                                <RadioButton Content="环比增长" 
+                                           Style="{StaticResource MaterialDesignRadioButton}"
+                                           Margin="8,0" 
+                                           IsChecked="{Binding SelectedTrendIndicator, ConverterParameter=环比增长, Converter={StaticResource StringEqualityToBooleanConverter}}"
+                                           Command="{Binding SelectTrendIndicatorCommand}" 
+                                           CommandParameter="环比增长"/>
+                            </StackPanel>
+                            
+                            <TextBlock Text="分析维度: " 
+                                     VerticalAlignment="Center" 
+                                     Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                     Visibility="{Binding IsStructureAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Visibility="{Binding IsStructureAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <RadioButton Content="座位类型" 
+                                           Style="{StaticResource MaterialDesignRadioButton}"
+                                           Margin="8,0" 
+                                           IsChecked="{Binding SelectedStructureDimension, ConverterParameter=座位类型, Converter={StaticResource StringEqualityToBooleanConverter}}"
+                                           Command="{Binding SelectStructureDimensionCommand}" 
+                                           CommandParameter="座位类型"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <!-- 支出趋势图表 -->
+                        <Grid Grid.Row="3" Visibility="{Binding IsTrendAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <lvc:CartesianChart Series="{Binding ExpenseSeries}" 
                                                LegendLocation="Right"
                                                DisableAnimations="False"
                                                Hoverable="True"
                                                DataTooltip="{x:Null}"
-                                               Background="Transparent">
+                                               Background="Transparent"
+                                               Visibility="{Binding HasExpenseData, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <lvc:CartesianChart.AxisX>
                                     <lvc:Axis Title="月份" 
                                              Labels="{Binding ExpenseLabels}"
                                              Foreground="{DynamicResource MaterialDesignBody}"/>
                                 </lvc:CartesianChart.AxisX>
                                 <lvc:CartesianChart.AxisY>
-                                    <lvc:Axis Title="金额" 
+                                    <lvc:Axis Title="{Binding ExpenseYTitle}" 
                                              MinValue="0"
                                              LabelFormatter="{Binding ExpenseYFormatter}"
                                              Foreground="{DynamicResource MaterialDesignBody}"/>
@@ -543,96 +757,47 @@
                                       VerticalAlignment="Center"
                                       Visibility="{Binding HasExpenseData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                         </Grid>
-                    </Grid>
-                </materialDesign:Card>
-            </Grid>
-            
-            <!-- 最近活动和常用线路区域 -->
-            <Grid Grid.Row="4" Margin="0,0,0,16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- 常用线路TOP5 -->
-                <materialDesign:Card Grid.Column="0" Margin="0,0,8,0" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
                         
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                            <materialDesign:PackIcon Kind="Routes" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="常用线路TOP5" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        
-                        <Grid Grid.Row="1">
-                            <ListView ItemsSource="{Binding TopRouteData}" 
-                                     ItemTemplate="{StaticResource RouteTemplate}" 
-                                     ScrollViewer.VerticalScrollBarVisibility="Auto" 
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     MaxHeight="300">
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                        <Setter Property="Margin" Value="0,4"/>
-                                        <Setter Property="Padding" Value="8"/>
-                                        <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1"/>
-                                    </Style>
-                                </ListView.ItemContainerStyle>
-                            </ListView>
+                        <!-- 消费结构图表 -->
+                        <Grid Grid.Row="3" Visibility="{Binding IsStructureAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <lvc:PieChart Series="{Binding ExpenseStructureSeries}" 
+                                         LegendLocation="Right" 
+                                         InnerRadius="0" 
+                                         Hoverable="True" 
+                                         DisableAnimations="False"
+                                         Background="Transparent"
+                                         Visibility="{Binding HasExpenseStructureData, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <lvc:PieChart.DataTooltip>
+                                    <lvc:DefaultTooltip SelectionMode="OnlySender"
+                                                      Background="{DynamicResource MaterialDesignPaper}"
+                                                      Foreground="{DynamicResource MaterialDesignBody}"
+                                                      ShowTitle="False"
+                                                      ShowSeries="False"
+                                                      BorderThickness="1"
+                                                      BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                                      Padding="8"
+                                                      CornerRadius="4"/>
+                                </lvc:PieChart.DataTooltip>
+                                <lvc:PieChart.ChartLegend>
+                                    <lvc:DefaultLegend Background="Transparent"
+                                                     Foreground="{DynamicResource MaterialDesignBody}"
+                                                     BulletSize="15"/>
+                                </lvc:PieChart.ChartLegend>
+                            </lvc:PieChart>
                             
                             <!-- 空数据提示 -->
                             <TextBlock Text="暂无数据" 
                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                                       HorizontalAlignment="Center" 
                                       VerticalAlignment="Center"
-                                      Visibility="{Binding HasTopRouteData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                      Visibility="{Binding HasExpenseStructureData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                         </Grid>
-                    </Grid>
-                </materialDesign:Card>
-
-                <!-- 最近活动区域 -->
-                <materialDesign:Card Grid.Column="1" Margin="8,0,0,0" Padding="16" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                            <materialDesign:PackIcon Kind="History" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="最近活动" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        
-                        <ListView Grid.Row="1" 
-                                 ItemsSource="{Binding RecentActivities}" 
-                                 ItemTemplate="{StaticResource RecentActivityTemplate}" 
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto" 
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 MaxHeight="300"
-                                 Background="Transparent"
-                                 BorderThickness="0">
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                    <Setter Property="Margin" Value="0,4"/>
-                                    <Setter Property="Padding" Value="8"/>
-                                    <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1"/>
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                        </ListView>
                     </Grid>
                 </materialDesign:Card>
             </Grid>
             
             <!-- 加载指示器 -->
-            <Grid Grid.Row="0" Grid.RowSpan="5" 
+            <Grid Grid.Row="0" Grid.RowSpan="6" 
                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.Background>
                     <SolidColorBrush Color="#000000" Opacity="0.3"/>

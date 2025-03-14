@@ -334,5 +334,58 @@ namespace TA_WPF.Services
             
             return (serverAddress, username, password);
         }
+
+        /// <summary>
+        /// 保存预算金额到配置文件
+        /// </summary>
+        /// <param name="budgetAmount">预算金额</param>
+        public void SaveBudgetAmountToConfig(double budgetAmount)
+        {
+            try
+            {
+                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                
+                if (config.AppSettings.Settings["BudgetAmount"] == null)
+                {
+                    config.AppSettings.Settings.Add("BudgetAmount", budgetAmount.ToString(CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    config.AppSettings.Settings["BudgetAmount"].Value = budgetAmount.ToString(CultureInfo.InvariantCulture);
+                }
+                
+                config.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection("appSettings");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"保存预算金额时出错: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 从配置文件加载预算金额
+        /// </summary>
+        /// <returns>预算金额，如果未配置则返回默认值2000</returns>
+        public double LoadBudgetAmountFromConfig()
+        {
+            try
+            {
+                var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                var budgetSetting = config.AppSettings.Settings["BudgetAmount"];
+                
+                if (budgetSetting != null && 
+                    double.TryParse(budgetSetting.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double budget))
+                {
+                    return budget;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"加载预算金额时出错: {ex.Message}");
+            }
+            
+            return 2000; // 默认预算金额
+        }
     }
 } 
