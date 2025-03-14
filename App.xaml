@@ -105,6 +105,7 @@
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+            <converters:StringEqualityToBooleanConverter x:Key="StringEqualityToBooleanConverter" />
 
             <!-- 数据表格样式 -->
             <Style TargetType="{x:Type DataGrid}">

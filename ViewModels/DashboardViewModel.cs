@@ -564,8 +564,6 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                IsLoading = true;
-                
                 // 获取所有车票数据
                 var allTickets = await _databaseService.GetAllTrainRideInfosAsync();
                 
@@ -611,10 +609,7 @@ namespace TA_WPF.ViewModels
                 System.Diagnostics.Debug.WriteLine($"加载仪表盘数据时出错: {ex.Message}");
                 MostFrequentDepartureStation = "加载失败";
                 LastDepartureStation = "加载失败";
-            }
-            finally
-            {
-                IsLoading = false;
+                throw; // 重新抛出异常，让上层处理
             }
         }
         
@@ -746,6 +741,17 @@ namespace TA_WPF.ViewModels
             // 其他类型数量
             var otherCount = tickets.Count - highSpeedCount - regularCount;
             
+            // 定义饼图颜色
+            var colors = new[]
+            {
+                Color.FromRgb(124, 77, 255),  // 主色调紫色 #7C4DFF
+                Color.FromRgb(0, 176, 255),   // 天蓝色 #00B0FF
+                Color.FromRgb(156, 100, 255), // 浅紫色 #9C64FF
+                Color.FromRgb(94, 53, 177),   // 深紫色 #5E35B1
+                Color.FromRgb(3, 169, 244),   // 蓝色 #03A9F4
+                Color.FromRgb(179, 136, 255)  // 淡紫色 #B388FF
+            };
+            
             // 添加数据
             if (highSpeedCount > 0)
             {
@@ -754,7 +760,7 @@ namespace TA_WPF.ViewModels
                     TypeName = "高铁/动车",
                     Count = highSpeedCount,
                     Percentage = tickets.Count > 0 ? highSpeedCount * 100.0 / tickets.Count : 0,
-                    Color = new SolidColorBrush(Colors.Red)
+                    Color = new SolidColorBrush(colors[0])
                 });
             }
             
@@ -765,7 +771,7 @@ namespace TA_WPF.ViewModels
                     TypeName = "普速车",
                     Count = regularCount,
                     Percentage = tickets.Count > 0 ? regularCount * 100.0 / tickets.Count : 0,
-                    Color = new SolidColorBrush(Colors.Green)
+                    Color = new SolidColorBrush(colors[1])
                 });
             }
             
@@ -776,7 +782,7 @@ namespace TA_WPF.ViewModels
                     TypeName = "其他",
                     Count = otherCount,
                     Percentage = tickets.Count > 0 ? otherCount * 100.0 / tickets.Count : 0,
-                    Color = new SolidColorBrush(Colors.Gray)
+                    Color = new SolidColorBrush(colors[2])
                 });
             }
             
@@ -788,10 +794,10 @@ namespace TA_WPF.ViewModels
                 {
                     TicketTypeSeries.Add(new PieSeries
                     {
-                        Title = $"{data.TypeName} ({data.Count})",
+                        Title = $"{data.TypeName}",
                         Values = new ChartValues<int> { data.Count },
-                        DataLabels = true,
-                        LabelPoint = chartPoint => $"{data.TypeName}: {chartPoint.Y} ({data.Percentage:F1}%)",
+                        DataLabels = false,
+                        LabelPoint = chartPoint => $"{data.TypeName}\n{chartPoint.Y}张 ({(int)data.Percentage}%)",
                         Fill = data.Color
                     });
                 }
@@ -906,7 +912,21 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public async Task RefreshDataAsync()
         {
-            await LoadDashboardDataAsync();
+            try
+            {
+                IsLoading = true;
+                await LoadDashboardDataAsync();
+            }
+            catch (Exception ex)
+            {
+                // 处理异常
+                System.Diagnostics.Debug.WriteLine($"刷新数据时出错: {ex.Message}");
+                // 可以在这里添加错误提示逻辑
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
         
         /// <summary>
@@ -933,11 +953,24 @@ namespace TA_WPF.ViewModels
 
             var budgetLine = Enumerable.Repeat(BudgetAmount, expenseData.Count()).ToList();
 
-            ((ChartValues<decimal>)ExpenseSeries[0].Values).Clear();
-            ((ChartValues<decimal>)ExpenseSeries[0].Values).AddRange(expenseData);
-
-            ((ChartValues<double>)ExpenseSeries[1].Values).Clear();
-            ((ChartValues<double>)ExpenseSeries[1].Values).AddRange(budgetLine);
+            ExpenseSeries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "实际支出",
+                    Values = new ChartValues<decimal>(expenseData),
+                    Fill = new SolidColorBrush(Color.FromRgb(124, 77, 255)), // #7C4DFF
+                },
+                new LineSeries
+                {
+                    Title = "预算线",
+                    Values = new ChartValues<double>(budgetLine),
+                    PointGeometry = DefaultGeometries.Square,
+                    PointGeometrySize = 8,
+                    Stroke = new SolidColorBrush(Color.FromRgb(156, 100, 255)), // #9C64FF
+                    Fill = new SolidColorBrush(Color.FromArgb(30, 156, 100, 255))
+                }
+            };
         }
     }
     
