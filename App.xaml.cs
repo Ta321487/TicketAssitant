@@ -68,6 +68,9 @@ namespace TA_WPF
                     var themeService = Services.ThemeService.Instance;
                     bool isDarkMode = themeService.LoadThemeFromConfig();
                     
+                    Console.WriteLine($"应用程序启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                    LogHelper.LogInfo($"应用程序启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                    
                     // 确保资源字典中的主题标志被正确设置
                     if (Resources != null)
                     {
@@ -77,6 +80,19 @@ namespace TA_WPF
                     
                     // 应用主题
                     themeService.ApplyTheme(isDarkMode);
+                    
+                    // 验证主题是否已正确应用
+                    bool verifyIsDarkMode = themeService.IsDarkThemeActive();
+                    Console.WriteLine($"应用程序启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
+                    LogHelper.LogInfo($"应用程序启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
+                    
+                    if (isDarkMode != verifyIsDarkMode)
+                    {
+                        Console.WriteLine($"警告: 主题设置验证失败，重新应用主题");
+                        LogHelper.LogWarning($"警告: 主题设置验证失败，重新应用主题");
+                        themeService.ApplyTheme(isDarkMode);
+                    }
+                    
                     LogHelper.LogInfo($"已应用{(isDarkMode ? "深色" : "浅色")}主题");
                 }
                 catch (Exception ex)
@@ -202,6 +218,107 @@ namespace TA_WPF
 
         protected override void OnExit(ExitEventArgs e)
         {
+            try
+            {
+                // 确保在退出时保存当前主题设置
+                var themeService = Services.ThemeService.Instance;
+                bool isDarkMode = themeService.IsDarkThemeActive();
+                
+                Console.WriteLine($"应用程序退出时检测到的主题: {(isDarkMode ? "深色" : "浅色")}");
+                LogHelper.LogInfo($"应用程序退出时检测到的主题: {(isDarkMode ? "深色" : "浅色")}");
+                
+                // 保存主题设置
+                themeService.ApplyTheme(isDarkMode); // 这会触发保存配置
+                
+                // 强制保存一次主题设置
+                try
+                {
+                    // 获取可执行文件的配置文件路径
+                    string configPath = AppDomain.CurrentDomain.BaseDirectory + "TA_WPF.dll.config";
+                    Console.WriteLine($"应用程序退出时使用的配置文件路径: {configPath}");
+                    LogHelper.LogInfo($"应用程序退出时使用的配置文件路径: {configPath}");
+                    
+                    if (System.IO.File.Exists(configPath))
+                    {
+                        // 读取配置文件内容
+                        string content = System.IO.File.ReadAllText(configPath);
+                        Console.WriteLine($"应用程序退出时配置文件内容长度: {content.Length}字节");
+                        LogHelper.LogInfo($"应用程序退出时配置文件内容长度: {content.Length}字节");
+                        
+                        // 检查是否包含IsDarkMode设置
+                        bool containsIsDarkMode = content.Contains("IsDarkMode");
+                        Console.WriteLine($"应用程序退出时配置文件包含IsDarkMode: {containsIsDarkMode}");
+                        LogHelper.LogInfo($"应用程序退出时配置文件包含IsDarkMode: {containsIsDarkMode}");
+                        
+                        if (!containsIsDarkMode)
+                        {
+                            // 如果配置文件中不存在IsDarkMode设置，添加它
+                            int appSettingsEndIndex = content.IndexOf("</appSettings>");
+                            if (appSettingsEndIndex > 0)
+                            {
+                                string newContent = content.Substring(0, appSettingsEndIndex) +
+                                                   $"    <add key=\"IsDarkMode\" value=\"{isDarkMode.ToString().ToLower()}\" />\r\n" +
+                                                   content.Substring(appSettingsEndIndex);
+                                System.IO.File.WriteAllText(configPath, newContent);
+                                Console.WriteLine($"应用程序退出时已直接写入IsDarkMode设置到配置文件");
+                                LogHelper.LogInfo($"应用程序退出时已直接写入IsDarkMode设置到配置文件");
+                            }
+                        }
+                        else
+                        {
+                            // 如果配置文件中已存在IsDarkMode设置，更新它
+                            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex("key=\"IsDarkMode\"\\s+value=\"(true|false|True|False)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                            string newContent = regex.Replace(content, $"key=\"IsDarkMode\" value=\"{isDarkMode.ToString().ToLower()}\"");
+                            System.IO.File.WriteAllText(configPath, newContent);
+                            Console.WriteLine($"应用程序退出时已直接更新IsDarkMode设置在配置文件");
+                            LogHelper.LogInfo($"应用程序退出时已直接更新IsDarkMode设置在配置文件");
+                        }
+                        
+                        // 验证修改是否成功
+                        string verifyContent = System.IO.File.ReadAllText(configPath);
+                        bool verifyContainsIsDarkMode = verifyContent.Contains($"key=\"IsDarkMode\" value=\"{isDarkMode.ToString().ToLower()}\"");
+                        Console.WriteLine($"应用程序退出时验证配置文件包含正确的IsDarkMode设置: {verifyContainsIsDarkMode}");
+                        LogHelper.LogInfo($"应用程序退出时验证配置文件包含正确的IsDarkMode设置: {verifyContainsIsDarkMode}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"应用程序退出时配置文件不存在: {configPath}");
+                        LogHelper.LogWarning($"应用程序退出时配置文件不存在: {configPath}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"应用程序退出时直接操作配置文件出错: {ex.Message}");
+                    Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                    LogHelper.LogError($"应用程序退出时直接操作配置文件出错: {ex.Message}");
+                    LogHelper.LogError($"异常堆栈: {ex.StackTrace}");
+                }
+                
+                // 验证配置是否已保存
+                var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                if (config.AppSettings.Settings["IsDarkMode"] != null)
+                {
+                    string savedValue = config.AppSettings.Settings["IsDarkMode"].Value;
+                    Console.WriteLine($"应用程序退出时验证配置文件中的IsDarkMode值: {savedValue}");
+                    LogHelper.LogInfo($"应用程序退出时验证配置文件中的IsDarkMode值: {savedValue}");
+                }
+                else
+                {
+                    Console.WriteLine("应用程序退出时验证失败：配置文件中不存在IsDarkMode设置");
+                    LogHelper.LogWarning("应用程序退出时验证失败：配置文件中不存在IsDarkMode设置");
+                }
+                
+                Console.WriteLine($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                LogHelper.LogInfo($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"退出时保存主题设置出错: {ex.Message}");
+                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                LogHelper.LogError($"退出时保存主题设置出错: {ex.Message}");
+                LogHelper.LogError($"退出时保存主题设置出错: {ex.StackTrace}");
+            }
+            
             // 释放COM
             CoUninitialize();
             

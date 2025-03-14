@@ -1084,6 +1084,9 @@ namespace TA_WPF.Views
                         // 获取当前主题状态
                         var themeService = TA_WPF.Services.ThemeService.Instance;
                         bool isDarkMode = themeService.IsDarkThemeActive();
+                        
+                        // 确保主题设置已保存到配置文件
+                        themeService.ApplyTheme(isDarkMode);
 
                         // 创建新的主窗口和MainViewModel
                         _mainWindow = new MainWindow(ConnectionString);
@@ -1091,7 +1094,10 @@ namespace TA_WPF.Views
                         // 确保主题设置同步到主窗口
                         if (_mainWindow.DataContext is MainViewModel mainViewModel)
                         {
+                            // 显式设置主题模式
                             mainViewModel.IsDarkMode = isDarkMode;
+                            Console.WriteLine($"已设置MainViewModel.IsDarkMode = {isDarkMode}");
+                            LogHelper.LogInfo($"已设置MainViewModel.IsDarkMode = {isDarkMode}");
                         }
 
                         // 显式应用主题到主窗口
@@ -1100,6 +1106,9 @@ namespace TA_WPF.Views
 
                         // 强制应用主题
                         themeService.ApplyTheme(isDarkMode);
+                        
+                        // 强制刷新主窗口
+                        _mainWindow.UpdateLayout();
 
                         // 设置主窗口
                         Application.Current.MainWindow = _mainWindow;

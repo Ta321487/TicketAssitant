@@ -30,7 +30,17 @@ namespace TA_WPF.ViewModels
                 // 使用MaterialDesignThemes的主题状态
                 PaletteHelper paletteHelper = new PaletteHelper();
                 var theme = paletteHelper.GetTheme();
-                _isDarkMode = theme.GetBaseTheme() == BaseTheme.Dark;
+                bool currentIsDarkMode = theme.GetBaseTheme() == BaseTheme.Dark;
+                
+                // 如果当前主题状态与配置文件中的不一致，以当前主题状态为准
+                if (_isDarkMode != currentIsDarkMode)
+                {
+                    Console.WriteLine($"BaseViewModel: 主题状态不一致，配置文件中为{(_isDarkMode ? "深色" : "浅色")}，当前主题为{(currentIsDarkMode ? "深色" : "浅色")}");
+                    _isDarkMode = currentIsDarkMode;
+                    
+                    // 保存当前主题状态到配置文件
+                    ThemeService.ApplyTheme(_isDarkMode);
+                }
                 
                 // 确保资源字典中的主题标志与当前主题同步
                 if (Application.Current.Resources != null)

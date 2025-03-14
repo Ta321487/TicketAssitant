@@ -136,12 +136,22 @@ namespace TA_WPF
                     // 获取当前主题状态
                     bool isDarkMode = themeService.IsDarkThemeActive();
                     
+                    Console.WriteLine($"MainWindow_Loaded: 当前主题状态 isDarkMode = {isDarkMode}");
+                    Console.WriteLine($"MainWindow_Loaded: ViewModel.IsDarkMode = {viewModel.IsDarkMode}");
+                    
                     // 确保视图模型的IsDarkMode属性与当前主题同步
-                    viewModel.IsDarkMode = isDarkMode;
+                    if (viewModel.IsDarkMode != isDarkMode)
+                    {
+                        Console.WriteLine($"MainWindow_Loaded: 主题状态不一致，正在同步...");
+                        viewModel.IsDarkMode = isDarkMode;
+                    }
                     
                     // 显式设置窗口的ThemeAssist.Theme属性
                     MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(this, 
                         isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
+                    
+                    // 强制应用主题
+                    themeService.ApplyTheme(isDarkMode);
                     
                     // 强制刷新窗口
                     this.UpdateLayout();
