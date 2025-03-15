@@ -174,6 +174,9 @@ namespace TA_WPF.Views
         {
             if (viewModel.TicketTypeData == null || !viewModel.TicketTypeData.Any()) return;
 
+            // 根据当前主题选择适当的文本颜色
+            var textColor = viewModel.IsDarkMode ? System.Windows.Media.Colors.White : System.Windows.Media.Colors.Black;
+
             viewModel.TicketTypeSeries.Clear();
             foreach (var data in viewModel.TicketTypeData)
             {
@@ -182,6 +185,7 @@ namespace TA_WPF.Views
                     Title = data.TypeName,
                     Values = new ChartValues<int> { data.Count },
                     DataLabels = true,
+                    Foreground = new System.Windows.Media.SolidColorBrush(textColor),
                     LabelPoint = point => $"{data.TypeName}: {point.Y}张 ({point.Participation:P1})"
                 };
                 viewModel.TicketTypeSeries.Add(series);

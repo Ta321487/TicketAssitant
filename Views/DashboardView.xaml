@@ -21,6 +21,8 @@
             <converters:FullScreenWindowStyleConverter x:Key="FullScreenWindowStyleConverter"/>
             <converters:FullScreenWindowStateConverter x:Key="FullScreenWindowStateConverter"/>
             <converters:BooleanToStringConverter x:Key="BooleanToStringConverter"/>
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            <converters:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
             
             <!-- 数据模板 -->
             <DataTemplate x:Key="RecentActivityTemplate">
@@ -512,9 +514,10 @@
                                            DisableAnimations="False"
                                            Hoverable="True"
                                            DataTooltip="{x:Null}"
-                                           Background="Transparent">
+                                           Background="Transparent"
+                                           Visibility="{Binding ShowMonthlyTicketChart, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="月份" 
+                                <lvc:Axis Title="{Binding MonthlyTicketXTitle}" 
                                          Labels="{Binding MonthlyTicketLabels}"
                                          Foreground="{DynamicResource MaterialDesignBody}"/>
                             </lvc:CartesianChart.AxisX>
@@ -525,6 +528,17 @@
                                          Foreground="{DynamicResource MaterialDesignBody}"/>
                             </lvc:CartesianChart.AxisY>
                         </lvc:CartesianChart>
+                        
+                        <!-- 提示信息 -->
+                        <TextBlock Grid.Row="1" 
+                                  Text="{Binding MonthlyTicketChartMessage}" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                  HorizontalAlignment="Center" 
+                                  VerticalAlignment="Center"
+                                  TextWrapping="Wrap"
+                                  TextAlignment="Center"
+                                  Margin="20"
+                                  Visibility="{Binding ShowMonthlyTicketChart, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                     </Grid>
                 </materialDesign:Card>
                 
@@ -612,40 +626,17 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="250"/>
+                            <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         
-                        <Grid Grid.Row="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
-                                <materialDesign:PackIcon Kind="CurrencyCny" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="费用支出分析" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                            
-                            <!-- 分析类型切换 -->
-                            <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                <RadioButton Content="支出趋势" 
-                                           Style="{StaticResource MaterialDesignTabRadioButton}"
-                                           Margin="4,0" 
-                                           IsChecked="{Binding SelectedAnalysisType, ConverterParameter=支出趋势, Converter={StaticResource StringEqualityToBooleanConverter}}"
-                                           Command="{Binding AnalysisTypeCommand}" 
-                                           CommandParameter="支出趋势"/>
-                                <RadioButton Content="消费结构" 
-                                           Style="{StaticResource MaterialDesignTabRadioButton}"
-                                           Margin="4,0" 
-                                           IsChecked="{Binding SelectedAnalysisType, ConverterParameter=消费结构, Converter={StaticResource StringEqualityToBooleanConverter}}"
-                                           Command="{Binding AnalysisTypeCommand}" 
-                                           CommandParameter="消费结构"/>
-                            </StackPanel>
-                        </Grid>
+                        <!-- 标题区域 -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                            <materialDesign:PackIcon Kind="CurrencyCny" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="费用支出分析" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                        </StackPanel>
                         
                         <!-- 预算调整区域 -->
-                        <Grid Grid.Row="1" Margin="0,0,0,16" Visibility="{Binding IsTrendAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Grid.Row="1" Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
@@ -675,7 +666,7 @@
                         </Grid>
                         
                         <!-- 分析指标选择区域 -->
-                        <Grid Grid.Row="2" Margin="0,0,0,16">
+                        <Grid Grid.Row="2" Margin="0,0,0,16" Visibility="{Binding ShowExpenseChart, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
@@ -683,10 +674,9 @@
                             
                             <TextBlock Text="分析指标: " 
                                      VerticalAlignment="Center" 
-                                     Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                     Visibility="{Binding IsTrendAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                     Style="{StaticResource MaterialDesignBody1TextBlock}"/>
                             
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Visibility="{Binding IsTrendAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <RadioButton Content="支出金额" 
                                            Style="{StaticResource MaterialDesignRadioButton}"
                                            Margin="8,0" 
@@ -712,33 +702,20 @@
                                            Command="{Binding SelectTrendIndicatorCommand}" 
                                            CommandParameter="环比增长"/>
                             </StackPanel>
-                            
-                            <TextBlock Text="分析维度: " 
-                                     VerticalAlignment="Center" 
-                                     Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                     Visibility="{Binding IsStructureAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Visibility="{Binding IsStructureAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <RadioButton Content="座位类型" 
-                                           Style="{StaticResource MaterialDesignRadioButton}"
-                                           Margin="8,0" 
-                                           IsChecked="{Binding SelectedStructureDimension, ConverterParameter=座位类型, Converter={StaticResource StringEqualityToBooleanConverter}}"
-                                           Command="{Binding SelectStructureDimensionCommand}" 
-                                           CommandParameter="座位类型"/>
-                            </StackPanel>
                         </Grid>
                         
-                        <!-- 支出趋势图表 -->
-                        <Grid Grid.Row="3" Visibility="{Binding IsTrendAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <!-- 支出趋势图表区域 -->
+                        <Grid Grid.Row="3">
+                            <!-- 图表 -->
                             <lvc:CartesianChart Series="{Binding ExpenseSeries}" 
                                                LegendLocation="Right"
                                                DisableAnimations="False"
                                                Hoverable="True"
                                                DataTooltip="{x:Null}"
                                                Background="Transparent"
-                                               Visibility="{Binding HasExpenseData, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                               Visibility="{Binding ShowExpenseChart, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <lvc:CartesianChart.AxisX>
-                                    <lvc:Axis Title="月份" 
+                                    <lvc:Axis Title="{Binding ExpenseXTitle}" 
                                              Labels="{Binding ExpenseLabels}"
                                              Foreground="{DynamicResource MaterialDesignBody}"/>
                                 </lvc:CartesianChart.AxisX>
@@ -750,47 +727,28 @@
                                 </lvc:CartesianChart.AxisY>
                             </lvc:CartesianChart>
                             
-                            <!-- 空数据提示 -->
-                            <TextBlock Text="暂无数据" 
-                                      Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                            <!-- 提示信息 -->
+                            <TextBlock Text="{Binding ExpenseChartMessage}" 
+                                      Style="{StaticResource MaterialDesignHeadline6TextBlock}"
                                       HorizontalAlignment="Center" 
                                       VerticalAlignment="Center"
-                                      Visibility="{Binding HasExpenseData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                        </Grid>
-                        
-                        <!-- 消费结构图表 -->
-                        <Grid Grid.Row="3" Visibility="{Binding IsStructureAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <lvc:PieChart Series="{Binding ExpenseStructureSeries}" 
-                                         LegendLocation="Right" 
-                                         InnerRadius="0" 
-                                         Hoverable="True" 
-                                         DisableAnimations="False"
-                                         Background="Transparent"
-                                         Visibility="{Binding HasExpenseStructureData, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <lvc:PieChart.DataTooltip>
-                                    <lvc:DefaultTooltip SelectionMode="OnlySender"
-                                                      Background="{DynamicResource MaterialDesignPaper}"
-                                                      Foreground="{DynamicResource MaterialDesignBody}"
-                                                      ShowTitle="False"
-                                                      ShowSeries="False"
-                                                      BorderThickness="1"
-                                                      BorderBrush="{DynamicResource MaterialDesignDivider}"
-                                                      Padding="8"
-                                                      CornerRadius="4"/>
-                                </lvc:PieChart.DataTooltip>
-                                <lvc:PieChart.ChartLegend>
-                                    <lvc:DefaultLegend Background="Transparent"
-                                                     Foreground="{DynamicResource MaterialDesignBody}"
-                                                     BulletSize="15"/>
-                                </lvc:PieChart.ChartLegend>
-                            </lvc:PieChart>
+                                      TextWrapping="Wrap"
+                                      TextAlignment="Center"
+                                      Margin="20"
+                                      Visibility="{Binding ShowExpenseChart, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                             
-                            <!-- 空数据提示 -->
+                            <!-- 空数据提示 - 仅在ShowExpenseChart为true且HasExpenseData为false时显示 -->
                             <TextBlock Text="暂无数据" 
                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                                       HorizontalAlignment="Center" 
-                                      VerticalAlignment="Center"
-                                      Visibility="{Binding HasExpenseStructureData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                      VerticalAlignment="Center">
+                                <TextBlock.Visibility>
+                                    <MultiBinding Converter="{StaticResource MultiBooleanToVisibilityConverter}">
+                                        <Binding Path="ShowExpenseChart"/>
+                                        <Binding Path="HasExpenseData" Converter="{StaticResource InverseBooleanConverter}"/>
+                                    </MultiBinding>
+                                </TextBlock.Visibility>
+                            </TextBlock>
                         </Grid>
                     </Grid>
                 </materialDesign:Card>

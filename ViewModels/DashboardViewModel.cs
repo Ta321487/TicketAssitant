@@ -40,6 +40,7 @@ namespace TA_WPF.ViewModels
         private ObservableCollection<TrainRideInfo> _recentActivities;
         private bool _isLoading;
         private double _budgetAmount;
+        private bool _setTimeRangeInProgress; // 标记是否正在通过按钮设置时间范围
         
         // 图表相关属性
         private SeriesCollection _monthlyTicketSeries;
@@ -52,11 +53,7 @@ namespace TA_WPF.ViewModels
         private string[] _expenseLabels;
         private Func<double, string> _expenseYFormatter;
         
-        private string _selectedAnalysisType = "支出趋势";
         private string _selectedTrendIndicator = "支出金额";
-        private string _selectedStructureDimension = "座位类型";
-        private SeriesCollection _expenseStructureSeries;
-        private bool _hasExpenseStructureData;
         private string _expenseYTitle = "金额";
         
         private bool _isFullScreen;
@@ -68,8 +65,16 @@ namespace TA_WPF.ViewModels
         private double _savedWidth;
         private double _savedHeight;
         
+        private bool _showMonthlyTicketChart = true;
+        private bool _showRecentActivitiesChart = true;
+        private string _monthlyTicketChartMessage = "";
+        private string _recentActivitiesMessage = "";
+        
+        private string _expenseChartMessage = "";
+        private bool _showExpenseChart = true;
+        
         /// <summary>
-        /// 构造函数
+        /// 仪表盘视图模型，负责管理仪表盘数据
         /// </summary>
         /// <param name="databaseService">数据库服务</param>
         /// <param name="configurationService">配置服务</param>
@@ -94,16 +99,31 @@ namespace TA_WPF.ViewModels
             _topRouteData = new ObservableCollection<RouteData>();
             _recentActivities = new ObservableCollection<TrainRideInfo>();
             
+            // 添加初始的"暂无数据"项
+            _topRouteData.Add(new RouteData
+            {
+                From = "暂无数据",
+                To = "",
+                Count = 0,
+                TotalExpense = 0
+            });
+            
+            _recentActivities.Add(new TrainRideInfo
+            {
+                TrainNo = "提示",
+                DepartStation = "暂无数据",
+                ArriveStation = "请添加车票记录",
+                DepartDate = DateTime.Now
+            });
+            
             // 设置默认时间范围为今日
             SetTimeRange(_selectedTimeRange);
             
-            // 设置默认分析类型和指标
-            _selectedAnalysisType = "支出趋势";
-            _selectedTrendIndicator = "支出金额";
-            _selectedStructureDimension = "座位类型";
-            
             // 更新Y轴标题
             UpdateExpenseYTitle();
+            
+            // 确保最近活动和常用线路TOP5始终显示
+            _showRecentActivitiesChart = true;
             
             // 创建并启动计时器，每秒更新一次时间
             _timer = new DispatcherTimer();
@@ -115,9 +135,7 @@ namespace TA_WPF.ViewModels
             RefreshCommand = new RelayCommand(async () => await RefreshDataAsync());
             TimeRangeCommand = new RelayCommand<string>(SetTimeRange);
             ShowTicketTypeDetailsCommand = new RelayCommand<TicketTypeData>(ShowTicketTypeDetails);
-            AnalysisTypeCommand = new RelayCommand<string>(SetAnalysisType);
             SelectTrendIndicatorCommand = new RelayCommand<string>(SetTrendIndicator);
-            SelectStructureDimensionCommand = new RelayCommand<string>(SetStructureDimension);
             ToggleFullScreenCommand = new RelayCommand(ToggleFullScreen);
             
             // 加载仪表盘数据
@@ -218,6 +236,12 @@ namespace TA_WPF.ViewModels
                 {
                     _startDate = value;
                     OnPropertyChanged(nameof(StartDate));
+                    // 如果是通过日历控件手动设置日期，则更新SelectedTimeRange为自定义
+                    if (!SetTimeRangeInProgress)
+                    {
+                        SelectedTimeRange = "自定义";
+                        OnPropertyChanged(nameof(CurrentRangeText));
+                    }
                     RefreshDataAsync();
                 }
             }
@@ -235,6 +259,12 @@ namespace TA_WPF.ViewModels
                 {
                     _endDate = value;
                     OnPropertyChanged(nameof(EndDate));
+                    // 如果是通过日历控件手动设置日期，则更新SelectedTimeRange为自定义
+                    if (!SetTimeRangeInProgress)
+                    {
+                        SelectedTimeRange = "自定义";
+                        OnPropertyChanged(nameof(CurrentRangeText));
+                    }
                     RefreshDataAsync();
                 }
             }
@@ -509,6 +539,8 @@ namespace TA_WPF.ViewModels
                         return "本月车票";
                     case "本年":
                         return "本年车票";
+                    case "自定义":
+                        return "自定义时段车票";
                     default:
                         return "时段车票";
                 }
@@ -531,22 +563,9 @@ namespace TA_WPF.ViewModels
         public bool HasTopRouteData => TopRouteData != null && TopRouteData.Any();
         
         /// <summary>
-        /// 选中的分析类型
+        /// 是否有最近活动数据
         /// </summary>
-        public string SelectedAnalysisType
-        {
-            get => _selectedAnalysisType;
-            set
-            {
-                if (_selectedAnalysisType != value)
-                {
-                    _selectedAnalysisType = value;
-                    OnPropertyChanged(nameof(SelectedAnalysisType));
-                    OnPropertyChanged(nameof(IsTrendAnalysis));
-                    OnPropertyChanged(nameof(IsStructureAnalysis));
-                }
-            }
-        }
+        public bool HasRecentActivities => RecentActivities != null && RecentActivities.Any();
         
         /// <summary>
         /// 选中的趋势指标
@@ -567,65 +586,6 @@ namespace TA_WPF.ViewModels
         }
         
         /// <summary>
-        /// 选中的结构维度
-        /// </summary>
-        public string SelectedStructureDimension
-        {
-            get => _selectedStructureDimension;
-            set
-            {
-                if (_selectedStructureDimension != value)
-                {
-                    _selectedStructureDimension = value;
-                    OnPropertyChanged(nameof(SelectedStructureDimension));
-                    RefreshDataAsync();
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 是否为趋势分析
-        /// </summary>
-        public bool IsTrendAnalysis => SelectedAnalysisType == "支出趋势";
-        
-        /// <summary>
-        /// 是否为结构分析
-        /// </summary>
-        public bool IsStructureAnalysis => SelectedAnalysisType == "消费结构";
-        
-        /// <summary>
-        /// 费用支出结构数据图表
-        /// </summary>
-        public SeriesCollection ExpenseStructureSeries
-        {
-            get => _expenseStructureSeries;
-            set
-            {
-                if (_expenseStructureSeries != value)
-                {
-                    _expenseStructureSeries = value;
-                    OnPropertyChanged(nameof(ExpenseStructureSeries));
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 是否有费用结构数据
-        /// </summary>
-        public bool HasExpenseStructureData
-        {
-            get => _hasExpenseStructureData;
-            set
-            {
-                if (_hasExpenseStructureData != value)
-                {
-                    _hasExpenseStructureData = value;
-                    OnPropertyChanged(nameof(HasExpenseStructureData));
-                }
-            }
-        }
-        
-        /// <summary>
         /// 费用Y轴标题
         /// </summary>
         public string ExpenseYTitle
@@ -637,6 +597,69 @@ namespace TA_WPF.ViewModels
                 {
                     _expenseYTitle = value;
                     OnPropertyChanged(nameof(ExpenseYTitle));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 费用X轴标题
+        /// </summary>
+        public string ExpenseXTitle
+        {
+            get
+            {
+                switch (SelectedTimeRange)
+                {
+                    case "今日":
+                        return "小时";
+                    case "本周":
+                    case "本月":
+                        return "日期";
+                    case "本年":
+                        return "月份";
+                    case "自定义":
+                        // 根据时间跨度选择合适的标题
+                        TimeSpan span = EndDate - StartDate;
+                        if (span.TotalDays <= 1)
+                            return "小时";
+                        else if (span.TotalDays <= 31)
+                            return "日期";
+                        else
+                            return "月份";
+                    default:
+                        return "时间";
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 车票使用趋势X轴标题
+        /// </summary>
+        public string MonthlyTicketXTitle
+        {
+            get
+            {
+                // 使用与ExpenseXTitle相同的逻辑
+                switch (SelectedTimeRange)
+                {
+                    case "今日":
+                        return "小时";
+                    case "本周":
+                    case "本月":
+                        return "日期";
+                    case "本年":
+                        return "月份";
+                    case "自定义":
+                        // 根据时间跨度选择合适的标题
+                        TimeSpan span = EndDate - StartDate;
+                        if (span.TotalDays <= 1)
+                            return "小时";
+                        else if (span.TotalDays <= 31)
+                            return "日期";
+                        else
+                            return "月份";
+                    default:
+                        return "时间";
                 }
             }
         }
@@ -689,24 +712,71 @@ namespace TA_WPF.ViewModels
         public ICommand ShowTicketTypeDetailsCommand { get; }
         
         /// <summary>
-        /// 分析类型命令
-        /// </summary>
-        public ICommand AnalysisTypeCommand { get; private set; }
-        
-        /// <summary>
         /// 趋势指标选择命令
         /// </summary>
         public ICommand SelectTrendIndicatorCommand { get; private set; }
         
         /// <summary>
-        /// 结构维度选择命令
-        /// </summary>
-        public ICommand SelectStructureDimensionCommand { get; private set; }
-        
-        /// <summary>
         /// 切换全屏命令
         /// </summary>
         public ICommand ToggleFullScreenCommand { get; }
+        
+        /// <summary>
+        /// 费用图表消息
+        /// </summary>
+        public string ExpenseChartMessage
+        {
+            get => _expenseChartMessage;
+            set
+            {
+                if (_expenseChartMessage != value)
+                {
+                    _expenseChartMessage = value;
+                    OnPropertyChanged(nameof(ExpenseChartMessage));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否显示费用图表
+        /// </summary>
+        public bool ShowExpenseChart
+        {
+            get => _showExpenseChart;
+            set
+            {
+                if (_showExpenseChart != value)
+                {
+                    _showExpenseChart = value;
+                    OnPropertyChanged(nameof(ShowExpenseChart));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 获取是否正在设置时间范围
+        /// </summary>
+        public bool SetTimeRangeInProgress => _setTimeRangeInProgress;
+
+        /// <summary>
+        /// 是否显示车票使用趋势图表
+        /// </summary>
+        public bool ShowMonthlyTicketChart => _showMonthlyTicketChart;
+
+        /// <summary>
+        /// 是否显示最近活动图表
+        /// </summary>
+        public bool ShowRecentActivitiesChart => _showRecentActivitiesChart;
+
+        /// <summary>
+        /// 月度车票图表消息
+        /// </summary>
+        public string MonthlyTicketChartMessage => _monthlyTicketChartMessage;
+
+        /// <summary>
+        /// 最近活动图表消息
+        /// </summary>
+        public string RecentActivitiesMessage => _recentActivitiesMessage;
         
         /// <summary>
         /// 设置时间范围
@@ -719,11 +789,23 @@ namespace TA_WPF.ViewModels
                 
             SelectedTimeRange = range;
             
+            _setTimeRangeInProgress = true; // 标记开始设置时间范围
+            
             switch (range)
             {
                 case "今日":
                     StartDate = DateTime.Today;
                     EndDate = DateTime.Today.AddDays(1).AddSeconds(-1);
+                    // 设置车票使用趋势和费用支出分析的提示信息
+                    _showMonthlyTicketChart = false;
+                    _monthlyTicketChartMessage = "当前时间维度无法反映使用趋势，请选择\"本周\"、\"本月\"、\"自定义时间\"或\"本年\"查看使用趋势。";
+                    OnPropertyChanged(nameof(ShowMonthlyTicketChart));
+                    OnPropertyChanged(nameof(MonthlyTicketChartMessage));
+                    
+                    _showExpenseChart = false;
+                    _expenseChartMessage = "当前时间维度无法反映支出趋势，请选择\"本周\"、\"本月\"、\"自定义时间\"或\"本年\"查看支出分析。";
+                    OnPropertyChanged(nameof(ShowExpenseChart));
+                    OnPropertyChanged(nameof(ExpenseChartMessage));
                     break;
                 case "本周":
                     StartDate = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
@@ -738,12 +820,43 @@ namespace TA_WPF.ViewModels
                     EndDate = new DateTime(DateTime.Today.Year, 12, 31, 23, 59, 59);
                     break;
                 default:
-                    StartDate = DateTime.Today.AddMonths(-6);
-                    EndDate = DateTime.Today;
+                    // 自定义时间范围
+                    if (range == "自定义" && StartDate > EndDate)
+                    {
+                        // 如果开始日期大于结束日期，则交换
+                        var temp = StartDate;
+                        StartDate = EndDate;
+                        EndDate = temp;
+                    }
                     break;
             }
 
+            _setTimeRangeInProgress = false; // 标记结束设置时间范围
+            
+            // 更新图表显示状态
+            if (range != "今日") {
+                // 车票使用趋势在本周、本月、本年和自定义时间范围下显示
+                _showMonthlyTicketChart = (range == "本周" || range == "本月" || range == "本年" || range == "自定义");
+                OnPropertyChanged(nameof(ShowMonthlyTicketChart));
+                
+                // 费用支出分析在本周、本月、本年和自定义时间范围下显示
+                _showExpenseChart = true;
+                OnPropertyChanged(nameof(ShowExpenseChart));
+            }
+            
+            // 最近活动始终显示，不受时间范围约束
+            _showRecentActivitiesChart = true;
+            OnPropertyChanged(nameof(ShowRecentActivitiesChart));
+
             OnPropertyChanged(nameof(CurrentRangeText));
+            OnPropertyChanged(nameof(ExpenseXTitle));
+            OnPropertyChanged(nameof(MonthlyTicketXTitle));
+            
+            // 确保在时间范围变更后刷新数据
+            RefreshDataAsync();
+            
+            // 记录调试信息
+            System.Diagnostics.Debug.WriteLine($"时间范围已变更为：{range}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
         }
         
         /// <summary>
@@ -768,7 +881,15 @@ namespace TA_WPF.ViewModels
             {
                 IsLoading = true;
                 
-                // 从数据库加载所有车票数据
+                // 清空所有集合
+                MonthlyTicketData.Clear();
+                TicketTypeData.Clear();
+                MonthlyExpenseData.Clear();
+                
+                // 记录调试信息
+                System.Diagnostics.Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+                
+                // 重新加载所有车票数据
                 _allTickets = await _databaseService.GetAllTrainRideInfosAsync();
                 
                 // 更新总票数
@@ -798,12 +919,12 @@ namespace TA_WPF.ViewModels
                 // 加载图表数据
                 await LoadChartDataAsync(_allTickets);
                 
-                // 加载最近活动
-                LoadRecentActivities(_allTickets);
+                // 记录调试信息
+                System.Diagnostics.Debug.WriteLine($"数据刷新完成，总车票数：{TotalTickets}，当前范围车票数：{CurrentRangeTickets}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载仪表盘数据时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"刷新数据时出错: {ex.Message}");
                 // 可以在这里添加错误提示逻辑
             }
             finally
@@ -818,10 +939,15 @@ namespace TA_WPF.ViewModels
         /// <param name="tickets">车票数据</param>
         private async Task LoadChartDataAsync(List<TrainRideInfo> tickets)
         {
-            // 筛选时间范围内的车票
-            var filteredTickets = tickets.Where(t => t.DepartDate.HasValue && 
-                                                   t.DepartDate.Value >= StartDate && 
-                                                   t.DepartDate.Value <= EndDate).ToList();
+            // 记录调试信息
+            System.Diagnostics.Debug.WriteLine($"开始加载图表数据，当前时间范围：{SelectedTimeRange}");
+            
+            // 使用所有车票数据，不再根据时间范围筛选
+            var filteredTickets = tickets;
+            
+            // 先加载热门路线数据和最近活动
+            LoadTopRouteData(filteredTickets);
+            LoadRecentActivities(filteredTickets);
             
             // 加载月度车票数据
             LoadMonthlyTicketData(filteredTickets);
@@ -832,8 +958,8 @@ namespace TA_WPF.ViewModels
             // 加载月度支出数据
             LoadMonthlyExpenseData(filteredTickets);
             
-            // 加载热门路线数据
-            LoadTopRouteData(filteredTickets);
+            // 记录调试信息
+            System.Diagnostics.Debug.WriteLine($"图表数据加载完成，月度车票数据：{MonthlyTicketData.Count}条，月度支出数据：{MonthlyExpenseData.Count}条");
         }
         
         /// <summary>
@@ -842,42 +968,187 @@ namespace TA_WPF.ViewModels
         /// <param name="tickets">车票数据</param>
         private void LoadMonthlyTicketData(List<TrainRideInfo> tickets)
         {
+            // 清空集合
             MonthlyTicketData.Clear();
             
-            // 获取最近6个月的数据
-            var endMonth = DateTime.Today;
-            var startMonth = endMonth.AddMonths(-5);
+            // 记录调试信息
+            System.Diagnostics.Debug.WriteLine($"开始加载月度车票数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
             
-            // 按月份分组统计
-            for (var date = startMonth; date <= endMonth; date = date.AddMonths(1))
+            // 只在本周、本月、本年、自定义时间范围显示车票使用趋势
+            if (SelectedTimeRange == "今日")
             {
-                var year = date.Year;
-                var month = date.Month;
+                // 在今日时间范围下，不显示图表
+                // 提示信息已在SetTimeRange方法中设置
+                if (MonthlyTicketSeries != null && MonthlyTicketSeries.Count >= 2)
+                {
+                    ((LineSeries)MonthlyTicketSeries[0]).Values = new ChartValues<int> { 0 };
+                    ((LineSeries)MonthlyTicketSeries[1]).Values = new ChartValues<int> { 0 };
+                    MonthlyTicketLabels = new[] { "" };
+                    
+                    // 更新图表标题
+                    ((LineSeries)MonthlyTicketSeries[0]).Title = "当前";
+                    ((LineSeries)MonthlyTicketSeries[1]).Title = "对比";
+                }
+                System.Diagnostics.Debug.WriteLine($"车票使用趋势：今日时间范围下不显示图表");
+                return;
+            }
+            
+            // 显示图表
+            // 图表显示状态已在SetTimeRange方法中设置
+            
+            DateTime startDate, endDate;
+            string format;
+            Func<DateTime, DateTime> getNextStep;
+            
+            // 根据选择的时间范围确定开始日期、结束日期和日期格式
+            switch (SelectedTimeRange)
+            {
+                case "本周":
+                    // 本周数据按天显示
+                    startDate = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                    endDate = startDate.AddDays(7).AddSeconds(-1);
+                    format = "MM/dd";
+                    getNextStep = date => date.AddDays(1);
+                    break;
+                case "本月":
+                    // 本月数据按天显示，但可能需要适当跳过一些天
+                    startDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                    endDate = startDate.AddMonths(1).AddSeconds(-1);
+                    format = "MM/dd";
+                    // 如果天数超过15天，则每3天显示一次
+                    int daysInMonth = DateTime.DaysInMonth(startDate.Year, startDate.Month);
+                    getNextStep = daysInMonth > 15 ? (date => date.AddDays(3)) : (date => date.AddDays(1));
+                    break;
+                case "本年":
+                    // 本年数据按月显示
+                    startDate = new DateTime(DateTime.Today.Year, 1, 1);
+                    endDate = new DateTime(DateTime.Today.Year, 12, 31, 23, 59, 59);
+                    format = "yyyy/MM";
+                    getNextStep = date => date.AddMonths(1);
+                    break;
+                case "自定义":
+                    // 自定义时间范围，根据时间跨度选择合适的显示方式
+                    startDate = StartDate;
+                    endDate = EndDate;
+                    
+                    // 计算时间跨度
+                    TimeSpan span = endDate - startDate;
+                    
+                    if (span.TotalDays <= 1)
+                    {
+                        // 一天内按小时显示
+                        format = "HH:00";
+                        getNextStep = date => date.AddHours(1);
+                    }
+                    else if (span.TotalDays <= 31)
+                    {
+                        // 一个月内按天显示
+                        format = "MM/dd";
+                        // 如果天数超过15天，则每3天显示一次
+                        getNextStep = span.TotalDays > 15 ? (date => date.AddDays(3)) : (date => date.AddDays(1));
+                    }
+                    else if (span.TotalDays <= 365)
+                    {
+                        // 一年内按月显示
+                        format = "yyyy/MM";
+                        getNextStep = date => date.AddMonths(1);
+                    }
+                    else
+                    {
+                        // 超过一年按季度显示
+                        format = "yyyy/MM";
+                        getNextStep = date => date.AddMonths(3);
+                    }
+                    break;
+                default:
+                    // 默认显示最近6个月
+                    startDate = DateTime.Today.AddMonths(-6);
+                    endDate = DateTime.Today;
+                    format = "yyyy/MM";
+                    getNextStep = date => date.AddMonths(1);
+                    break;
+            }
+            
+            // 按时间间隔统计
+            for (DateTime date = startDate; date <= endDate; date = getNextStep(date))
+            {
+                DateTime periodStart = date;
+                DateTime periodEnd = getNextStep(date).AddSeconds(-1);
                 
-                // 当月车票数
-                var count = tickets.Count(t => t.DepartDate.HasValue && 
-                                             t.DepartDate.Value.Year == year && 
-                                             t.DepartDate.Value.Month == month);
+                // 如果结束日期超过了总的结束日期，则使用总的结束日期
+                if (periodEnd > endDate)
+                    periodEnd = endDate;
                 
-                // 去年同期车票数
-                var lastYearCount = tickets.Count(t => t.DepartDate.HasValue && 
-                                                    t.DepartDate.Value.Year == year - 1 && 
-                                                    t.DepartDate.Value.Month == month);
+                // 统计当前时间段内的车票数量
+                int count = tickets.Count(t => t.DepartDate.HasValue && 
+                                          t.DepartDate.Value >= periodStart && 
+                                          t.DepartDate.Value <= periodEnd);
                 
-                // 环比（与上个月相比）
-                var lastMonth = month == 1 ? 12 : month - 1;
-                var lastMonthYear = month == 1 ? year - 1 : year;
-                var lastMonthCount = tickets.Count(t => t.DepartDate.HasValue && 
-                                                     t.DepartDate.Value.Year == lastMonthYear && 
-                                                     t.DepartDate.Value.Month == lastMonth);
+                // 计算同比数据
+                DateTime comparisonPeriodStart = DateTime.MinValue;
+                DateTime comparisonPeriodEnd = DateTime.MinValue;
+                
+                if (SelectedTimeRange == "本周")
+                {
+                    // 上周同期
+                    comparisonPeriodStart = periodStart.AddDays(-7);
+                    comparisonPeriodEnd = periodEnd.AddDays(-7);
+                }
+                else if (SelectedTimeRange == "本月")
+                {
+                    // 上月同期
+                    comparisonPeriodStart = periodStart.AddMonths(-1);
+                    comparisonPeriodEnd = periodEnd.AddMonths(-1);
+                }
+                else if (SelectedTimeRange == "本年")
+                {
+                    // 去年同期
+                    comparisonPeriodStart = periodStart.AddYears(-1);
+                    comparisonPeriodEnd = periodEnd.AddYears(-1);
+                }
+                else if (SelectedTimeRange == "自定义")
+                {
+                    // 自定义时间范围，根据时间跨度选择合适的对比方式
+                    TimeSpan span = endDate - startDate;
+                    
+                    if (span.TotalDays <= 7)
+                    {
+                        // 一周内，对比上周同期
+                        comparisonPeriodStart = periodStart.AddDays(-7);
+                        comparisonPeriodEnd = periodEnd.AddDays(-7);
+                    }
+                    else if (span.TotalDays <= 31)
+                    {
+                        // 一个月内，对比上月同期
+                        comparisonPeriodStart = periodStart.AddMonths(-1);
+                        comparisonPeriodEnd = periodEnd.AddMonths(-1);
+                    }
+                    else
+                    {
+                        // 超过一个月，对比去年同期
+                        comparisonPeriodStart = periodStart.AddYears(-1);
+                        comparisonPeriodEnd = periodEnd.AddYears(-1);
+                    }
+                }
+                
+                var comparisonCount = tickets.Count(t => t.DepartDate.HasValue && 
+                                                    t.DepartDate.Value >= comparisonPeriodStart && 
+                                                    t.DepartDate.Value <= comparisonPeriodEnd);
+                
+                // 上一时间段
+                var lastPeriodStart = getNextStep(date.AddDays(-getNextStep(date).Subtract(date).TotalDays * 2));
+                var lastPeriodEnd = getNextStep(lastPeriodStart).AddSeconds(-1);
+                var lastPeriodCount = tickets.Count(t => t.DepartDate.HasValue && 
+                                                     t.DepartDate.Value >= lastPeriodStart && 
+                                                     t.DepartDate.Value <= lastPeriodEnd);
                 
                 var monthData = new MonthlyTicketData
                 {
-                    Month = $"{year}/{month}",
+                    Month = date.ToString(format),
                     Count = count,
-                    LastYearCount = lastYearCount,
-                    MonthOnMonthGrowth = lastMonthCount > 0 ? (count - lastMonthCount) * 100.0 / lastMonthCount : 0,
-                    YearOnYearGrowth = lastYearCount > 0 ? (count - lastYearCount) * 100.0 / lastYearCount : 0
+                    LastYearCount = comparisonCount,
+                    MonthOnMonthGrowth = lastPeriodCount > 0 ? (count - lastPeriodCount) * 100.0 / lastPeriodCount : 0,
+                    YearOnYearGrowth = comparisonCount > 0 ? (count - comparisonCount) * 100.0 / comparisonCount : 0
                 };
                 
                 MonthlyTicketData.Add(monthData);
@@ -901,6 +1172,31 @@ namespace TA_WPF.ViewModels
                 ((LineSeries)MonthlyTicketSeries[0]).Values = currentYearValues;
                 ((LineSeries)MonthlyTicketSeries[1]).Values = lastYearValues;
                 MonthlyTicketLabels = labels;
+                
+                // 更新图表标题
+                switch (SelectedTimeRange)
+                {
+                    case "本周":
+                        ((LineSeries)MonthlyTicketSeries[0]).Title = "本周";
+                        ((LineSeries)MonthlyTicketSeries[1]).Title = "上周";
+                        break;
+                    case "本月":
+                        ((LineSeries)MonthlyTicketSeries[0]).Title = "本月";
+                        ((LineSeries)MonthlyTicketSeries[1]).Title = "上月";
+                        break;
+                    case "本年":
+                        ((LineSeries)MonthlyTicketSeries[0]).Title = "今年";
+                        ((LineSeries)MonthlyTicketSeries[1]).Title = "去年";
+                        break;
+                    case "自定义":
+                        ((LineSeries)MonthlyTicketSeries[0]).Title = "当前";
+                        ((LineSeries)MonthlyTicketSeries[1]).Title = "对比";
+                        break;
+                    default:
+                        ((LineSeries)MonthlyTicketSeries[0]).Title = "当前";
+                        ((LineSeries)MonthlyTicketSeries[1]).Title = "对比";
+                        break;
+                }
             }
         }
         
@@ -1011,136 +1307,245 @@ namespace TA_WPF.ViewModels
         /// <param name="tickets">车票数据</param>
         private void LoadMonthlyExpenseData(List<TrainRideInfo> tickets)
         {
+            // 清空集合
             MonthlyExpenseData.Clear();
             
-            // 获取最近12个月的数据
-            var endMonth = DateTime.Today;
-            var startMonth = endMonth.AddMonths(-11);
+            // 记录调试信息
+            System.Diagnostics.Debug.WriteLine($"开始加载月度支出数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
             
-            // 按月份分组统计
-            for (var date = startMonth; date <= endMonth; date = date.AddMonths(1))
+            // 检查是否有数据
+            bool hasData = tickets != null && tickets.Any(t => t.Money > 0);
+            System.Diagnostics.Debug.WriteLine($"费用支出分析：总共有 {tickets?.Count ?? 0} 条车票数据，其中有费用的车票数量：{tickets?.Count(t => t.Money > 0) ?? 0}");
+            
+            // 只在本周、本月、本年、自定义时间范围显示支出趋势
+            if (SelectedTimeRange == "今日")
             {
-                var year = date.Year;
-                var month = date.Month;
+                // 在今日时间范围下，不显示图表
+                // 提示信息已在SetTimeRange方法中设置
+                if (ExpenseSeries != null && ExpenseSeries.Count >= 1)
+                {
+                    ((ColumnSeries)ExpenseSeries[0]).Values = new ChartValues<double> { 0 };
+                    ExpenseLabels = new[] { "" };
+                }
+                System.Diagnostics.Debug.WriteLine($"费用支出分析：今日时间范围下不显示图表");
+                return;
+            }
+            
+            // 显示图表
+            // 图表显示状态已在SetTimeRange方法中设置
+            
+            DateTime startDate, endDate;
+            string format;
+            Func<DateTime, DateTime> getNextStep;
+            
+            // 根据选择的时间范围确定开始日期、结束日期和日期格式
+            switch (SelectedTimeRange)
+            {
+                case "本周":
+                    // 本周数据按天显示
+                    startDate = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                    endDate = startDate.AddDays(7).AddSeconds(-1);
+                    format = "MM/dd";
+                    getNextStep = date => date.AddDays(1);
+                    break;
+                case "本月":
+                    // 本月数据按天显示，但可能需要适当跳过一些天
+                    startDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                    endDate = startDate.AddMonths(1).AddSeconds(-1);
+                    format = "MM/dd";
+                    // 如果天数超过15天，则每3天显示一次
+                    int daysInMonth = DateTime.DaysInMonth(startDate.Year, startDate.Month);
+                    getNextStep = daysInMonth > 15 ? (date => date.AddDays(3)) : (date => date.AddDays(1));
+                    break;
+                case "本年":
+                    // 本年数据按月显示
+                    startDate = new DateTime(DateTime.Today.Year, 1, 1);
+                    endDate = new DateTime(DateTime.Today.Year, 12, 31, 23, 59, 59);
+                    format = "yyyy/MM";
+                    getNextStep = date => date.AddMonths(1);
+                    break;
+                case "自定义":
+                    // 自定义时间范围，根据时间跨度选择合适的显示方式
+                    startDate = StartDate;
+                    endDate = EndDate;
+                    
+                    // 计算时间跨度
+                    TimeSpan span = endDate - startDate;
+                    
+                    if (span.TotalDays <= 1)
+                    {
+                        // 一天内按小时显示
+                        format = "HH:00";
+                        getNextStep = date => date.AddHours(1);
+                    }
+                    else if (span.TotalDays <= 31)
+                    {
+                        // 一个月内按天显示
+                        format = "MM/dd";
+                        // 如果天数超过15天，则每3天显示一次
+                        getNextStep = span.TotalDays > 15 ? (date => date.AddDays(3)) : (date => date.AddDays(1));
+                    }
+                    else if (span.TotalDays <= 365)
+                    {
+                        // 一年内按月显示
+                        format = "yyyy/MM";
+                        getNextStep = date => date.AddMonths(1);
+                    }
+                    else
+                    {
+                        // 超过一年按季度显示
+                        format = "yyyy/MM";
+                        getNextStep = date => date.AddMonths(3);
+                    }
+                    break;
+                default:
+                    // 默认显示最近6个月
+                    startDate = DateTime.Today.AddMonths(-6);
+                    endDate = DateTime.Today;
+                    format = "yyyy/MM";
+                    getNextStep = date => date.AddMonths(1);
+                    break;
+            }
+            
+            // 如果没有数据，设置HasExpenseData为false
+            if (!hasData)
+            {
+                System.Diagnostics.Debug.WriteLine($"费用支出分析：没有任何费用数据");
+                // 清空集合，确保HasExpenseData返回false
+                MonthlyExpenseData.Clear();
+                OnPropertyChanged(nameof(HasExpenseData));
+                return;
+            }
+            
+            // 检查当前时间范围内是否有数据
+            var ticketsInRange = tickets.Where(t => t.DepartDate.HasValue && 
+                                              t.DepartDate.Value >= startDate && 
+                                              t.DepartDate.Value <= endDate).ToList();
+            
+            System.Diagnostics.Debug.WriteLine($"费用支出分析：当前时间范围内有 {ticketsInRange.Count} 条数据");
+            System.Diagnostics.Debug.WriteLine($"费用支出分析：时间范围 {startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}");
+            
+            if (!ticketsInRange.Any())
+            {
+                System.Diagnostics.Debug.WriteLine($"费用支出分析：当前时间范围内没有数据");
+                // 清空集合，确保HasExpenseData返回false
+                MonthlyExpenseData.Clear();
+                OnPropertyChanged(nameof(HasExpenseData));
+                return;
+            }
+            
+            // 按时间间隔统计
+            for (DateTime date = startDate; date <= endDate; date = getNextStep(date))
+            {
+                DateTime periodStart = date;
+                DateTime periodEnd = getNextStep(date).AddSeconds(-1);
                 
-                // 当月车票
-                var monthTickets = tickets.Where(t => t.DepartDate.HasValue && 
-                                                   t.DepartDate.Value.Year == year && 
-                                                   t.DepartDate.Value.Month == month).ToList();
+                // 如果结束日期超过了总的结束日期，则使用总的结束日期
+                if (periodEnd > endDate)
+                    periodEnd = endDate;
                 
-                // 当月支出
-                var expense = monthTickets.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
+                // 统计当前时间段内的车票数量和支出
+                var ticketsInPeriod = tickets.Where(t => t.DepartDate.HasValue && 
+                                                   t.DepartDate.Value >= periodStart && 
+                                                   t.DepartDate.Value <= periodEnd).ToList();
                 
-                // 当月平均票价
-                var avgPrice = monthTickets.Count > 0 && monthTickets.Any(t => t.Money.HasValue) 
-                    ? monthTickets.Where(t => t.Money.HasValue).Average(t => t.Money.Value) 
-                    : 0;
+                int count = ticketsInPeriod.Count;
+                decimal expense = ticketsInPeriod.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
+                decimal avgPrice = count > 0 ? expense / count : 0;
                 
-                // 去年同期支出
-                var lastYearTickets = tickets.Where(t => t.DepartDate.HasValue && 
-                                                      t.DepartDate.Value.Year == year - 1 && 
-                                                      t.DepartDate.Value.Month == month).ToList();
-                var lastYearExpense = lastYearTickets.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
+                System.Diagnostics.Debug.WriteLine($"费用支出分析：时间段 {periodStart:yyyy-MM-dd} 到 {periodEnd:yyyy-MM-dd}，有 {count} 条数据，总支出 {expense}，平均票价 {avgPrice}");
                 
-                // 计算同比增长
-                var yearOnYearGrowth = lastYearExpense > 0 
-                    ? ((double)expense / (double)lastYearExpense - 1) * 100 
-                    : 0;
+                // 即使没有数据，也添加一个记录，确保图表显示完整
+                if (count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"费用支出分析：时间段 {periodStart:yyyy-MM-dd} 到 {periodEnd:yyyy-MM-dd} 没有数据，添加空记录");
+                }
                 
-                // 上月支出
-                var lastMonth = date.AddMonths(-1);
-                var lastMonthTickets = tickets.Where(t => t.DepartDate.HasValue && 
-                                                      t.DepartDate.Value.Year == lastMonth.Year && 
-                                                      t.DepartDate.Value.Month == lastMonth.Month).ToList();
-                var lastMonthExpense = lastMonthTickets.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
+                // 计算同比数据
+                DateTime comparisonPeriodStart = DateTime.MinValue;
+                DateTime comparisonPeriodEnd = DateTime.MinValue;
                 
-                // 计算环比增长
-                var monthOnMonthGrowth = lastMonthExpense > 0 
-                    ? ((double)expense / (double)lastMonthExpense - 1) * 100 
-                    : 0;
+                if (SelectedTimeRange == "本周")
+                {
+                    // 上周同期
+                    comparisonPeriodStart = periodStart.AddDays(-7);
+                    comparisonPeriodEnd = periodEnd.AddDays(-7);
+                }
+                else if (SelectedTimeRange == "本月")
+                {
+                    // 上月同期
+                    comparisonPeriodStart = periodStart.AddMonths(-1);
+                    comparisonPeriodEnd = periodEnd.AddMonths(-1);
+                }
+                else if (SelectedTimeRange == "本年")
+                {
+                    // 去年同期
+                    comparisonPeriodStart = periodStart.AddYears(-1);
+                    comparisonPeriodEnd = periodEnd.AddYears(-1);
+                }
+                else if (SelectedTimeRange == "自定义")
+                {
+                    // 自定义时间范围，根据时间跨度选择合适的对比方式
+                    TimeSpan span = endDate - startDate;
+                    
+                    if (span.TotalDays <= 7)
+                    {
+                        // 一周内，对比上周同期
+                        comparisonPeriodStart = periodStart.AddDays(-7);
+                        comparisonPeriodEnd = periodEnd.AddDays(-7);
+                    }
+                    else if (span.TotalDays <= 31)
+                    {
+                        // 一个月内，对比上月同期
+                        comparisonPeriodStart = periodStart.AddMonths(-1);
+                        comparisonPeriodEnd = periodEnd.AddMonths(-1);
+                    }
+                    else
+                    {
+                        // 超过一个月，对比去年同期
+                        comparisonPeriodStart = periodStart.AddYears(-1);
+                        comparisonPeriodEnd = periodEnd.AddYears(-1);
+                    }
+                }
                 
+                var comparisonTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                                     t.DepartDate.Value >= comparisonPeriodStart && 
+                                                     t.DepartDate.Value <= comparisonPeriodEnd).ToList();
+                
+                decimal comparisonExpense = comparisonTickets.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
+                
+                // 上一时间段
+                var lastPeriodStart = getNextStep(date.AddDays(-getNextStep(date).Subtract(date).TotalDays * 2));
+                var lastPeriodEnd = getNextStep(lastPeriodStart).AddSeconds(-1);
+                var lastPeriodTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                                      t.DepartDate.Value >= lastPeriodStart && 
+                                                      t.DepartDate.Value <= lastPeriodEnd).ToList();
+                
+                decimal lastPeriodExpense = lastPeriodTickets.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
+                
+                // 计算增长率
+                double yearOnYearGrowth = comparisonExpense > 0 ? (double)((expense - comparisonExpense) * 100 / comparisonExpense) : 0;
+                double monthOnMonthGrowth = lastPeriodExpense > 0 ? (double)((expense - lastPeriodExpense) * 100 / lastPeriodExpense) : 0;
+                
+                // 添加数据
                 MonthlyExpenseData.Add(new MonthlyExpenseData
                 {
-                    Month = $"{year}/{month:D2}",
+                    Month = date.ToString(format),
                     Expense = expense,
                     Budget = BudgetAmount,
                     AvgPrice = avgPrice,
                     YearOnYearGrowth = yearOnYearGrowth,
                     MonthOnMonthGrowth = monthOnMonthGrowth,
-                    TicketCount = monthTickets.Count
+                    TicketCount = count
                 });
             }
-            
-            OnPropertyChanged(nameof(HasExpenseData));
             
             // 更新图表
             UpdateExpenseChart();
-        }
-        
-        /// <summary>
-        /// 加载消费结构数据
-        /// </summary>
-        /// <param name="tickets">车票数据</param>
-        private void LoadExpenseStructureData(List<TrainRideInfo> tickets)
-        {
-            // 筛选有效票
-            var validTickets = tickets.Where(t => t.Money.HasValue && 
-                                               t.DepartDate.HasValue && 
-                                               t.DepartDate.Value >= StartDate && 
-                                               t.DepartDate.Value <= EndDate).ToList();
             
-            HasExpenseStructureData = validTickets.Any();
+            System.Diagnostics.Debug.WriteLine($"费用支出分析：共生成 {MonthlyExpenseData.Count} 条数据");
             
-            if (!HasExpenseStructureData)
-                return;
-                
-            // 定义饼图颜色
-            var colors = new[]
-            {
-                Color.FromRgb(124, 77, 255),   // 主色调紫色 #7C4DFF
-                Color.FromRgb(0, 176, 255),    // 天蓝色 #00B0FF
-                Color.FromRgb(156, 100, 255),  // 浅紫色 #9C64FF
-                Color.FromRgb(94, 53, 177),    // 深紫色 #5E35B1
-                Color.FromRgb(3, 169, 244),    // 蓝色 #03A9F4
-                Color.FromRgb(179, 136, 255),  // 淡紫色 #B388FF
-                Color.FromRgb(0, 137, 123),    // 青色 #00897B
-                Color.FromRgb(255, 87, 34),    // 橙色 #FF5722
-                Color.FromRgb(255, 193, 7),    // 琥珀色 #FFC107
-                Color.FromRgb(139, 195, 74)    // 浅绿色 #8BC34A
-            };
-            
-            ExpenseStructureSeries = new SeriesCollection();
-            
-            // 按座位类型分组
-            var seatGroups = validTickets
-                .GroupBy(t => string.IsNullOrEmpty(t.SeatType) ? "未知" : t.SeatType)
-                .Select(g => new
-                {
-                    SeatType = g.Key,
-                    TotalExpense = g.Sum(t => t.Money.Value),
-                    Count = g.Count()
-                })
-                .OrderByDescending(g => g.TotalExpense)
-                .ToList();
-            
-            // 计算总支出
-            var totalExpense = seatGroups.Sum(g => g.TotalExpense);
-            
-            // 添加饼图数据
-            for (int i = 0; i < seatGroups.Count; i++)
-            {
-                var group = seatGroups[i];
-                var percentage = totalExpense > 0 ? group.TotalExpense * 100 / totalExpense : 0;
-                
-                ExpenseStructureSeries.Add(new PieSeries
-                {
-                    Title = group.SeatType,
-                    Values = new ChartValues<decimal> { group.TotalExpense },
-                    DataLabels = false,
-                    LabelPoint = chartPoint => $"{group.SeatType}\n¥{group.TotalExpense:N2} ({(int)percentage}%)",
-                    Fill = new SolidColorBrush(colors[i % colors.Length])
-                });
-            }
+            OnPropertyChanged(nameof(HasExpenseData));
         }
         
         /// <summary>
@@ -1148,8 +1553,11 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void UpdateExpenseChart()
         {
+            System.Diagnostics.Debug.WriteLine($"开始更新支出图表，当前趋势指标：{SelectedTrendIndicator}");
+            
             if (MonthlyExpenseData == null || !MonthlyExpenseData.Any())
             {
+                System.Diagnostics.Debug.WriteLine($"支出图表更新：没有月度支出数据，清空图表");
                 ExpenseSeries = new SeriesCollection();
                 ExpenseLabels = new string[0];
                 OnPropertyChanged(nameof(ExpenseSeries));
@@ -1157,13 +1565,70 @@ namespace TA_WPF.ViewModels
                 return;
             }
 
-            var orderedData = MonthlyExpenseData
-                .OrderBy(d => DateTime.ParseExact(d.Month, "yyyy/MM", null))
-                .ToList();
+            System.Diagnostics.Debug.WriteLine($"支出图表更新：有 {MonthlyExpenseData.Count} 条月度支出数据");
+            
+            var orderedData = MonthlyExpenseData.ToList();
+            
+            // 根据不同的时间范围使用不同的排序逻辑
+            try
+            {
+                // 尝试按照yyyy/MM格式排序
+                if (orderedData.All(d => d.Month.Contains("/")))
+                {
+                    if (orderedData[0].Month.Length >= 7 && orderedData[0].Month.Contains("/"))
+                    {
+                        // 可能是yyyy/MM格式
+                        System.Diagnostics.Debug.WriteLine($"支出图表更新：使用yyyy/MM格式排序");
+                        orderedData = orderedData.OrderBy(d => d.Month).ToList();
+                    }
+                    else
+                    {
+                        // 可能是MM/dd格式
+                        System.Diagnostics.Debug.WriteLine($"支出图表更新：使用MM/dd格式排序");
+                        orderedData = orderedData.OrderBy(d => 
+                        {
+                            var parts = d.Month.Split('/');
+                            if (parts.Length == 2 && int.TryParse(parts[0], out int month) && int.TryParse(parts[1], out int day))
+                            {
+                                return new DateTime(DateTime.Now.Year, month, day);
+                            }
+                            return DateTime.MinValue;
+                        }).ToList();
+                    }
+                }
+                else if (orderedData.All(d => d.Month.Contains(":")))
+                {
+                    // 可能是HH:00格式
+                    System.Diagnostics.Debug.WriteLine($"支出图表更新：使用HH:00格式排序");
+                    orderedData = orderedData.OrderBy(d => 
+                    {
+                        var parts = d.Month.Split(':');
+                        if (parts.Length == 2 && int.TryParse(parts[0], out int hour))
+                        {
+                            return hour;
+                        }
+                        return -1;
+                    }).ToList();
+                }
+                else
+                {
+                    // 其他格式，直接按字符串排序
+                    System.Diagnostics.Debug.WriteLine($"支出图表更新：使用默认字符串排序");
+                    orderedData = orderedData.OrderBy(d => d.Month).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                // 如果排序出错，使用原始顺序
+                System.Diagnostics.Debug.WriteLine($"排序费用数据时出错，使用原始顺序: {ex.Message}");
+            }
                 
             ExpenseLabels = orderedData.Select(d => d.Month).ToArray();
             
             var newSeries = new SeriesCollection();
+            
+            // 根据当前主题选择适当的文本颜色
+            var textColor = IsDarkMode ? Colors.White : Colors.Black;
             
             switch (SelectedTrendIndicator)
             {
@@ -1177,6 +1642,7 @@ namespace TA_WPF.ViewModels
                         Values = new ChartValues<double>(expenseData),
                         Fill = new SolidColorBrush(Color.FromRgb(124, 77, 255)), // #7C4DFF
                         DataLabels = true,
+                        Foreground = new SolidColorBrush(textColor),
                         LabelPoint = point => $"¥{point.Y:N0}"
                     });
                     
@@ -1192,6 +1658,22 @@ namespace TA_WPF.ViewModels
                     ExpenseYFormatter = value => $"¥{value:N0}";
                     break;
                     
+                case "平均票价":
+                    var avgPriceData = orderedData.Select(d => (double)d.AvgPrice).ToList();
+                    
+                    newSeries.Add(new ColumnSeries
+                    {
+                        Title = "平均票价",
+                        Values = new ChartValues<double>(avgPriceData),
+                        Fill = new SolidColorBrush(Color.FromRgb(0, 176, 255)), // #00B0FF
+                        DataLabels = true,
+                        Foreground = new SolidColorBrush(textColor),
+                        LabelPoint = point => $"¥{point.Y:N2}"
+                    });
+                    
+                    ExpenseYFormatter = value => $"¥{value:N2}";
+                    break;
+                    
                 case "同比增长":
                     var yearGrowthData = orderedData.Select(d => d.YearOnYearGrowth).ToList();
                     
@@ -1202,6 +1684,7 @@ namespace TA_WPF.ViewModels
                         Fill = new SolidColorBrush(Color.FromArgb(32, 124, 77, 255)),
                         Stroke = new SolidColorBrush(Color.FromRgb(124, 77, 255)),
                         DataLabels = true,
+                        Foreground = new SolidColorBrush(textColor),
                         LabelPoint = point => $"{point.Y:N1}%"
                     });
                     
@@ -1218,6 +1701,7 @@ namespace TA_WPF.ViewModels
                         Fill = new SolidColorBrush(Color.FromArgb(32, 124, 77, 255)),
                         Stroke = new SolidColorBrush(Color.FromRgb(124, 77, 255)),
                         DataLabels = true,
+                        Foreground = new SolidColorBrush(textColor),
                         LabelPoint = point => $"{point.Y:N1}%"
                     });
                     
@@ -1231,6 +1715,8 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(ExpenseSeries));
             OnPropertyChanged(nameof(ExpenseLabels));
             OnPropertyChanged(nameof(ExpenseYFormatter));
+            
+            System.Diagnostics.Debug.WriteLine($"支出图表更新完成，X轴标签数量：{ExpenseLabels.Length}，数据系列数量：{ExpenseSeries.Count}");
         }
         
         /// <summary>
@@ -1240,7 +1726,6 @@ namespace TA_WPF.ViewModels
         private void LoadTopRouteData(List<TrainRideInfo> tickets)
         {
             TopRouteData.Clear();
-            OnPropertyChanged(nameof(HasTopRouteData));
             
             try
             {
@@ -1257,7 +1742,8 @@ namespace TA_WPF.ViewModels
                         TotalExpense = g.Where(t => t.Money.HasValue).Sum(t => t.Money.Value)
                     })
                     .OrderByDescending(g => g.Count)
-                    .Take(5);
+                    .Take(5)
+                    .ToList(); // 确保立即执行查询
                 
                 // 添加数据
                 foreach (var route in routeGroups)
@@ -1270,10 +1756,31 @@ namespace TA_WPF.ViewModels
                         TotalExpense = route.TotalExpense
                     });
                 }
+                
+                // 如果没有数据，添加提示信息
+                if (!TopRouteData.Any())
+                {
+                    TopRouteData.Add(new RouteData
+                    {
+                        From = "暂无数据",
+                        To = "",
+                        Count = 0,
+                        TotalExpense = 0
+                    });
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"加载热门路线数据时出错: {ex.Message}");
+                
+                // 出错时添加提示信息
+                TopRouteData.Add(new RouteData
+                {
+                    From = "数据加载出错",
+                    To = "",
+                    Count = 0,
+                    TotalExpense = 0
+                });
             }
             
             OnPropertyChanged(nameof(HasTopRouteData));
@@ -1287,16 +1794,35 @@ namespace TA_WPF.ViewModels
         {
             RecentActivities.Clear();
             
+            // 始终显示最近活动，不受时间范围约束
+            _showRecentActivitiesChart = true;
+            _recentActivitiesMessage = "";
+            OnPropertyChanged(nameof(ShowRecentActivitiesChart));
+            OnPropertyChanged(nameof(RecentActivitiesMessage));
+            
             // 获取最近10条记录
             var recentTickets = tickets.Where(t => t.DepartDate.HasValue)
                                      .OrderByDescending(t => t.DepartDate)
                                      .Take(10)
-                                     .ToList();
+                                     .ToList(); // 确保立即执行查询
             
             // 添加数据
             foreach (var ticket in recentTickets)
             {
                 RecentActivities.Add(ticket);
+            }
+            
+            // 如果没有数据，显示提示
+            if (!RecentActivities.Any())
+            {
+                var tipTicket = new TrainRideInfo
+                {
+                    TrainNo = "提示",
+                    DepartStation = "暂无数据",
+                    ArriveStation = "请添加车票记录",
+                    DepartDate = DateTime.Now
+                };
+                RecentActivities.Add(tipTicket);
             }
         }
         
@@ -1308,7 +1834,15 @@ namespace TA_WPF.ViewModels
             try
             {
                 IsLoading = true;
+                
+                // 记录调试信息
+                System.Diagnostics.Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+                
+                // 调用加载仪表盘数据方法
                 await LoadDashboardDataAsync();
+                
+                // 记录调试信息
+                System.Diagnostics.Debug.WriteLine($"数据刷新完成，总车票数：{TotalTickets}，当前范围车票数：{CurrentRangeTickets}");
             }
             catch (Exception ex)
             {
@@ -1331,34 +1865,6 @@ namespace TA_WPF.ViewModels
         }
         
         /// <summary>
-        /// 设置分析类型
-        /// </summary>
-        /// <param name="type">分析类型</param>
-        private void SetAnalysisType(string type)
-        {
-            if (SelectedAnalysisType == type)
-                return;
-                
-            SelectedAnalysisType = type;
-            OnPropertyChanged(nameof(IsTrendAnalysis));
-            OnPropertyChanged(nameof(IsStructureAnalysis));
-            
-            // 更新图表
-            if (IsTrendAnalysis)
-            {
-                UpdateExpenseChart();
-            }
-            else if (IsStructureAnalysis)
-            {
-                // 加载消费结构数据
-                Task.Run(async () => {
-                    var tickets = await _databaseService.GetAllTrainRideInfosAsync();
-                    LoadExpenseStructureData(tickets);
-                });
-            }
-        }
-        
-        /// <summary>
         /// 设置趋势指标
         /// </summary>
         /// <param name="indicator">趋势指标</param>
@@ -1374,24 +1880,6 @@ namespace TA_WPF.ViewModels
             
             // 更新图表
             UpdateExpenseChart();
-        }
-        
-        /// <summary>
-        /// 设置结构维度
-        /// </summary>
-        /// <param name="dimension">结构维度</param>
-        private void SetStructureDimension(string dimension)
-        {
-            if (SelectedStructureDimension == dimension)
-                return;
-                
-            SelectedStructureDimension = dimension;
-            
-            // 更新消费结构数据
-            Task.Run(async () => {
-                var tickets = await _databaseService.GetAllTrainRideInfosAsync();
-                LoadExpenseStructureData(tickets);
-            });
         }
         
         /// <summary>
@@ -1502,6 +1990,27 @@ namespace TA_WPF.ViewModels
             {
                 Console.WriteLine($"ToggleFullScreen异常: {ex.Message}");
                 Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// 重写OnPropertyChanged方法，在IsDarkMode属性变化时更新图表
+        /// </summary>
+        protected override void OnPropertyChanged(string propertyName)
+        {
+            base.OnPropertyChanged(propertyName);
+            
+            // 当主题变化时更新图表
+            if (propertyName == nameof(IsDarkMode))
+            {
+                UpdateExpenseChart();
+                
+                // 更新车票类型图表
+                if (TicketTypeData != null && TicketTypeData.Any())
+                {
+                    // 通知视图更新车票类型图表
+                    OnPropertyChanged(nameof(TicketTypeSeries));
+                }
             }
         }
     }
