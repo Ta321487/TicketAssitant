@@ -237,6 +237,73 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
+        /// 处理预算文本框文本变更事件
+        /// </summary>
+        private void BudgetTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                // 如果文本框为空，将滑块值设为0
+                if (DataContext is DashboardViewModel viewModel)
+                {
+                    viewModel.BudgetAmount = 0;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 处理预算文本框按键事件，允许删除和退格键
+        /// </summary>
+        private void BudgetTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            // 允许删除和退格键
+            if (e.Key == Key.Delete || e.Key == Key.Back)
+            {
+                // 不做任何处理，允许事件继续传递
+                return;
+            }
+        }
+
+        /// <summary>
+        /// 处理预算文本框失去焦点事件，确保值在有效范围内
+        /// </summary>
+        private void BudgetTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox != null)
+            {
+                if (string.IsNullOrWhiteSpace(textBox.Text))
+                {
+                    // 如果文本框为空，设置为0
+                    if (DataContext is DashboardViewModel viewModel)
+                    {
+                        viewModel.BudgetAmount = 0;
+                        textBox.Text = "0";
+                    }
+                }
+                else if (double.TryParse(textBox.Text.Replace(",", ""), out double value))
+                {
+                    // 确保值在0-10000范围内
+                    if (value < 0)
+                    {
+                        value = 0;
+                    }
+                    else if (value > 10000)
+                    {
+                        value = 10000;
+                    }
+
+                    if (DataContext is DashboardViewModel viewModel)
+                    {
+                        viewModel.BudgetAmount = value;
+                        textBox.Text = value.ToString("N0");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// 处理ListView的鼠标滚轮事件，将事件传递给父级ScrollViewer
         /// </summary>
         private void ListView_PreviewMouseWheel(object sender, MouseWheelEventArgs e)

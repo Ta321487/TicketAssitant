@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
+using TA_WPF.Services;
 
 namespace TA_WPF.Views
 {
@@ -27,6 +28,7 @@ namespace TA_WPF.Views
         private PackIconKind _iconKind;
         private Brush _iconBrush;
         private MessageButtons _buttons;
+        private ThemeService _themeService;
 
         public string Message
         {
@@ -96,6 +98,13 @@ namespace TA_WPF.Views
             Title = title;
             Buttons = buttons;
             
+            // 获取主题服务
+            _themeService = ThemeService.Instance;
+            
+            // 应用当前主题
+            bool isDarkMode = _themeService.IsDarkThemeActive();
+            ApplyTheme(isDarkMode);
+            
             // 设置图标和颜色
             switch (type)
             {
@@ -116,6 +125,39 @@ namespace TA_WPF.Views
                     IconBrush = new SolidColorBrush(Colors.DodgerBlue);
                     break;
             }
+            
+            // 订阅主题变更事件
+            _themeService.ThemeChanged += OnThemeChanged;
+            
+            // 窗口关闭时取消订阅事件
+            this.Closed += (s, e) => {
+                _themeService.ThemeChanged -= OnThemeChanged;
+            };
+        }
+        
+        private void ApplyTheme(bool isDarkMode)
+        {
+            // 设置窗口主题
+            ThemeAssist.SetTheme(this, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
+            
+            // 获取当前资源字典
+            var paletteHelper = new PaletteHelper();
+            var theme = paletteHelper.GetTheme();
+            
+            // 设置深色/浅色模式
+            theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
+            
+            // 应用主题到窗口
+            paletteHelper.SetTheme(theme);
+            
+            // 强制刷新窗口
+            this.UpdateLayout();
+        }
+        
+        private void OnThemeChanged(object sender, bool isDarkMode)
+        {
+            // 更新窗口主题
+            ApplyTheme(isDarkMode);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

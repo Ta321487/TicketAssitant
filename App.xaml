@@ -34,6 +34,11 @@
             <SolidColorBrush x:Key="PrimaryHueDarkBrush" Color="#5E35B1"/>
             <SolidColorBrush x:Key="SecondaryHueMidBrush" Color="#CDDC39"/>
             
+            <!-- 自定义字体大小资源 -->
+            <system:Double x:Key="LargeFontSize">48</system:Double>
+            <system:Double x:Key="MediumLargeFontSize">32</system:Double>
+            <system:Double x:Key="MediumFontSize">24</system:Double>
+            
             <!-- 深色模式下的额外样式 -->
             <SolidColorBrush x:Key="DarkModeTextBrush" Color="#FFFFFF" />
             <SolidColorBrush x:Key="DarkModeBackgroundBrush" Color="#303030" />

@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using MaterialDesignThemes.Wpf;
+using TA_WPF.Services;
 using TA_WPF.Utils;
 
 namespace TA_WPF.Views
@@ -12,6 +14,7 @@ namespace TA_WPF.Views
     {
         private string _promptText;
         private string _responseText;
+        private ThemeService _themeService;
 
         public string PromptText
         {
@@ -45,6 +48,13 @@ namespace TA_WPF.Views
             DataContext = this;
             PromptText = promptText;
             
+            // 获取主题服务
+            _themeService = ThemeService.Instance;
+            
+            // 应用当前主题
+            bool isDarkMode = _themeService.IsDarkThemeActive();
+            ApplyTheme(isDarkMode);
+            
             // 设置最小高度
             AdjustDialogSize();
             
@@ -56,6 +66,39 @@ namespace TA_WPF.Views
             
             // 禁止最大化
             this.SourceInitialized += InputDialog_SourceInitialized;
+            
+            // 订阅主题变更事件
+            _themeService.ThemeChanged += OnThemeChanged;
+            
+            // 窗口关闭时取消订阅事件
+            this.Closed += (s, e) => {
+                _themeService.ThemeChanged -= OnThemeChanged;
+            };
+        }
+        
+        private void ApplyTheme(bool isDarkMode)
+        {
+            // 设置窗口主题
+            ThemeAssist.SetTheme(this, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
+            
+            // 获取当前资源字典
+            var paletteHelper = new PaletteHelper();
+            var theme = paletteHelper.GetTheme();
+            
+            // 设置深色/浅色模式
+            theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
+            
+            // 应用主题到窗口
+            paletteHelper.SetTheme(theme);
+            
+            // 强制刷新窗口
+            this.UpdateLayout();
+        }
+        
+        private void OnThemeChanged(object sender, bool isDarkMode)
+        {
+            // 更新窗口主题
+            ApplyTheme(isDarkMode);
         }
 
         private void InputDialog_SourceInitialized(object sender, EventArgs e)

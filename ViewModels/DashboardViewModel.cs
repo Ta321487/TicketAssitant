@@ -798,12 +798,12 @@ namespace TA_WPF.ViewModels
                     EndDate = DateTime.Today.AddDays(1).AddSeconds(-1);
                     // 设置车票使用趋势和费用支出分析的提示信息
                     _showMonthlyTicketChart = false;
-                    _monthlyTicketChartMessage = "当前时间维度无法反映使用趋势，请选择\"本周\"、\"本月\"、\"自定义时间\"或\"本年\"查看使用趋势。";
+                    _monthlyTicketChartMessage = "当前时间维度无法反映使用趋势，请选择\"本周\"、\"本月\"、\"本年\"或\"自定义时间\"查看使用趋势。";
                     OnPropertyChanged(nameof(ShowMonthlyTicketChart));
                     OnPropertyChanged(nameof(MonthlyTicketChartMessage));
                     
                     _showExpenseChart = false;
-                    _expenseChartMessage = "当前时间维度无法反映支出趋势，请选择\"本周\"、\"本月\"、\"自定义时间\"或\"本年\"查看支出分析。";
+                    _expenseChartMessage = "当前时间维度无法反映支出趋势，请选择\"本周\"、\"本月\"、\"本年\"或\"自定义时间\"查看支出分析。";
                     OnPropertyChanged(nameof(ShowExpenseChart));
                     OnPropertyChanged(nameof(ExpenseChartMessage));
                     break;
@@ -942,17 +942,22 @@ namespace TA_WPF.ViewModels
             // 记录调试信息
             System.Diagnostics.Debug.WriteLine($"开始加载图表数据，当前时间范围：{SelectedTimeRange}");
             
-            // 使用所有车票数据，不再根据时间范围筛选
-            var filteredTickets = tickets;
+            // 先加载热门路线数据和最近活动（使用所有车票数据）
+            LoadTopRouteData(tickets);
+            LoadRecentActivities(tickets);
             
-            // 先加载热门路线数据和最近活动
-            LoadTopRouteData(filteredTickets);
-            LoadRecentActivities(filteredTickets);
+            // 根据时间范围筛选车票数据
+            var filteredTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                                t.DepartDate.Value >= StartDate && 
+                                                t.DepartDate.Value <= EndDate).ToList();
+            
+            // 记录调试信息
+            System.Diagnostics.Debug.WriteLine($"筛选后的车票数据：{filteredTickets.Count}条，时间范围：{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
             
             // 加载月度车票数据
             LoadMonthlyTicketData(filteredTickets);
             
-            // 加载车票类型数据
+            // 加载车票类型数据（使用筛选后的数据）
             LoadTicketTypeData(filteredTickets);
             
             // 加载月度支出数据

@@ -23,6 +23,8 @@
             <converters:BooleanToStringConverter x:Key="BooleanToStringConverter"/>
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <converters:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
+            <converters:ScreenWidthToFontSizeConverter x:Key="ScreenWidthToFontSizeConverter"/>
+            <converters:FontSizeIncreaseConverter x:Key="FontSizeIncreaseConverter"/>
             
             <!-- 数据模板 -->
             <DataTemplate x:Key="RecentActivityTemplate">
@@ -44,26 +46,31 @@
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="{Binding DepartDate, StringFormat='{}{0:yyyy-MM-dd}'}" 
                                      Style="{StaticResource MaterialDesignSubtitle2TextBlock}"
-                                     FontWeight="Medium"/>
+                                     FontWeight="Medium"
+                                     FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                 <TextBlock Text="{Binding TrainNo}" 
                                          Style="{StaticResource MaterialDesignBody2TextBlock}"
-                                         Margin="0,0,8,0"/>
+                                         Margin="0,0,8,0"
+                                         FontSize="{DynamicResource MaterialDesignFontSize}"/>
                                 <TextBlock Text="{Binding DepartStation}" 
                                          Style="{StaticResource MaterialDesignBody2TextBlock}"
-                                         Margin="0,0,4,0"/>
+                                         Margin="0,0,4,0"
+                                         FontSize="{DynamicResource MaterialDesignFontSize}"/>
                                 <materialDesign:PackIcon Kind="ArrowRight" 
                                                        Width="16" 
                                                        Height="16"
                                                        VerticalAlignment="Center"
                                                        Margin="0,0,4,0"/>
                                 <TextBlock Text="{Binding ArriveStation}" 
-                                         Style="{StaticResource MaterialDesignBody2TextBlock}"/>
+                                         Style="{StaticResource MaterialDesignBody2TextBlock}"
+                                         FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             </StackPanel>
                             <TextBlock Text="{Binding SeatType}" 
                                      Style="{StaticResource MaterialDesignCaptionTextBlock}"
                                      Margin="0,4,0,0"
-                                     Opacity="0.6"/>
+                                     Opacity="0.6"
+                                     FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         </StackPanel>
 
                         <TextBlock Grid.Column="2" 
@@ -71,7 +78,8 @@
                                  Style="{StaticResource MaterialDesignSubtitle2TextBlock}"
                                  FontWeight="Medium"
                                  VerticalAlignment="Center"
-                                 Margin="16,0,0,0"/>
+                                 Margin="16,0,0,0"
+                                 FontSize="{DynamicResource MaterialDesignFontSize}"/>
                     </Grid>
                 </materialDesign:Card>
             </DataTemplate>
@@ -97,10 +105,12 @@
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="{Binding RouteName}" 
                                      Style="{StaticResource MaterialDesignSubtitle2TextBlock}"
-                                     FontWeight="Medium"/>
+                                     FontWeight="Medium"
+                                     FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             <TextBlock Text="{Binding Count, StringFormat='乘坐次数: {0}次'}"
                                      Style="{StaticResource MaterialDesignCaptionTextBlock}"
-                                     Margin="0,4,0,0"/>
+                                     Margin="0,4,0,0"
+                                     FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         </StackPanel>
 
                         <TextBlock Grid.Column="2" 
@@ -108,7 +118,8 @@
                                  Style="{StaticResource MaterialDesignSubtitle2TextBlock}"
                                  FontWeight="Medium"
                                  Margin="16,0"
-                                 VerticalAlignment="Center"/>
+                                 VerticalAlignment="Center"
+                                 FontSize="{DynamicResource MaterialDesignFontSize}"/>
 
                         <materialDesign:PackIcon Grid.Column="3" 
                                                Kind="ChevronRight" 
@@ -241,7 +252,7 @@
                     
                     <StackPanel Grid.Column="0" Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Filter" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="时间筛选" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                        <TextBlock Text="时间筛选" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
                     </StackPanel>
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
@@ -250,25 +261,29 @@
                                    Margin="4,0" 
                                    IsChecked="{Binding SelectedTimeRange, ConverterParameter=今日, Converter={StaticResource StringEqualityToBooleanConverter}}"
                                    Command="{Binding TimeRangeCommand}" 
-                                   CommandParameter="今日"/>
+                                   CommandParameter="今日"
+                                   FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         <RadioButton Content="本周" 
                                    Style="{StaticResource MaterialDesignTabRadioButton}"
                                    Margin="4,0" 
                                    IsChecked="{Binding SelectedTimeRange, ConverterParameter=本周, Converter={StaticResource StringEqualityToBooleanConverter}}"
                                    Command="{Binding TimeRangeCommand}" 
-                                   CommandParameter="本周"/>
+                                   CommandParameter="本周"
+                                   FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         <RadioButton Content="本月" 
                                    Style="{StaticResource MaterialDesignTabRadioButton}"
                                    Margin="4,0" 
                                    IsChecked="{Binding SelectedTimeRange, ConverterParameter=本月, Converter={StaticResource StringEqualityToBooleanConverter}}"
                                    Command="{Binding TimeRangeCommand}" 
-                                   CommandParameter="本月"/>
+                                   CommandParameter="本月"
+                                   FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         <RadioButton Content="本年" 
                                    Style="{StaticResource MaterialDesignTabRadioButton}"
                                    Margin="4,0" 
                                    IsChecked="{Binding SelectedTimeRange, ConverterParameter=本年, Converter={StaticResource StringEqualityToBooleanConverter}}"
                                    Command="{Binding TimeRangeCommand}" 
-                                   CommandParameter="本年"/>
+                                   CommandParameter="本年"
+                                   FontSize="{DynamicResource MaterialDesignFontSize}"/>
                     </StackPanel>
                     
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -288,111 +303,135 @@
                 <!-- 数据卡片区域 -->
                 <WrapPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
                     <!-- 总车票数卡片 -->
-                    <materialDesign:Card Margin="8" Width="220" Height="120" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <materialDesign:Card Margin="8" Width="280" Height="180" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0">
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0" HorizontalAlignment="Center">
                                 <materialDesign:PackIcon Kind="TicketOutline" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="总车票数" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}" 
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             </StackPanel>
                             
                             <StackPanel Grid.Row="1" 
                                     VerticalAlignment="Center" 
                                     HorizontalAlignment="Center">
                                 <TextBlock Text="{Binding TotalTickets}" 
-                                       Style="{StaticResource MaterialDesignHeadline4TextBlock}" 
-                                       FontWeight="Bold"/>
+                                       Style="{StaticResource MaterialDesignHeadline1TextBlock}" 
+                                       FontWeight="Bold"
+                                       FontSize="{DynamicResource LargeFontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"/>
                                 <TextBlock Text="张" 
-                                       Style="{StaticResource MaterialDesignBody1TextBlock}" 
-                                       HorizontalAlignment="Center"/>
+                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                                       HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource MediumFontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       Margin="0,4,0,0"/>
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
                     
                     <!-- 本月车票卡片 -->
-                    <materialDesign:Card Margin="8" Width="220" Height="120" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <materialDesign:Card Margin="8" Width="280" Height="180" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0">
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0" HorizontalAlignment="Center">
                                 <materialDesign:PackIcon Kind="CalendarMonth" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="{Binding CurrentRangeText}" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}" 
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             </StackPanel>
                             
                             <StackPanel Grid.Row="1" 
                                     VerticalAlignment="Center" 
                                     HorizontalAlignment="Center">
                                 <TextBlock Text="{Binding CurrentRangeTickets}" 
-                                       Style="{StaticResource MaterialDesignHeadline4TextBlock}" 
-                                       FontWeight="Bold"/>
+                                       Style="{StaticResource MaterialDesignHeadline1TextBlock}" 
+                                       FontWeight="Bold"
+                                       FontSize="{DynamicResource LargeFontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"/>
                                 <TextBlock Text="张" 
-                                       Style="{StaticResource MaterialDesignBody1TextBlock}" 
-                                       HorizontalAlignment="Center"/>
+                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                                       HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource MediumFontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       Margin="0,4,0,0"/>
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
                     
                     <!-- 最经常出发的车站卡片 -->
-                    <materialDesign:Card Margin="8" Width="220" Height="120" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <materialDesign:Card Margin="8" Width="280" Height="180" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0">
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0" HorizontalAlignment="Center">
                                 <materialDesign:PackIcon Kind="Train" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="最经常出发的车站" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}" 
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             </StackPanel>
                             
                             <StackPanel Grid.Row="1" 
                                     VerticalAlignment="Center" 
-                                    HorizontalAlignment="Center">
+                                    HorizontalAlignment="Center"
+                                    Margin="16,0">
                                 <TextBlock Text="{Binding MostFrequentDepartureStation}" 
-                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                                       Style="{StaticResource MaterialDesignHeadline2TextBlock}" 
                                        FontWeight="Bold"
                                        TextWrapping="Wrap"
-                                       TextAlignment="Center"/>
+                                       TextAlignment="Center"
+                                       FontSize="{DynamicResource MediumLargeFontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"/>
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
                     
                     <!-- 最后一次出发的车站卡片 -->
-                    <materialDesign:Card Margin="8" Width="220" Height="120" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <materialDesign:Card Margin="8" Width="280" Height="180" materialDesign:ShadowAssist.ShadowDepth="Depth2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0">
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0" HorizontalAlignment="Center">
                                 <materialDesign:PackIcon Kind="TrainVariant" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="最后一次出发的车站" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}" 
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             </StackPanel>
                             
                             <StackPanel Grid.Row="1" 
                                     VerticalAlignment="Center" 
-                                    HorizontalAlignment="Center">
+                                    HorizontalAlignment="Center"
+                                    Margin="16,0">
                                 <TextBlock Text="{Binding LastDepartureStation}" 
-                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                                       Style="{StaticResource MaterialDesignHeadline2TextBlock}" 
                                        FontWeight="Bold"
                                        TextWrapping="Wrap"
-                                       TextAlignment="Center"/>
+                                       TextAlignment="Center"
+                                       FontSize="{DynamicResource MediumLargeFontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"/>
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
@@ -416,7 +455,7 @@
                         
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                             <materialDesign:PackIcon Kind="History" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="最近活动" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                            <TextBlock Text="最近活动" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         </StackPanel>
                         
                         <ListView Grid.Row="1" 
@@ -426,6 +465,7 @@
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                   Background="Transparent"
                                   BorderThickness="0"
+                                  MinHeight="200"
                                   MaxHeight="300">
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
@@ -450,7 +490,7 @@
                         
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                             <materialDesign:PackIcon Kind="Routes" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="常用线路TOP5" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                            <TextBlock Text="常用线路TOP5" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         </StackPanel>
                         
                         <Grid Grid.Row="1">
@@ -460,6 +500,7 @@
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                      Background="Transparent"
                                      BorderThickness="0"
+                                     MinHeight="200"
                                      MaxHeight="300">
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
@@ -477,6 +518,7 @@
                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                                       HorizontalAlignment="Center" 
                                       VerticalAlignment="Center"
+                                      FontSize="{DynamicResource MaterialDesignHeadline5FontSize}"
                                       Visibility="{Binding HasTopRouteData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                         </Grid>
                     </Grid>
@@ -500,17 +542,17 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="300"/>
+                            <RowDefinition Height="350"/>
                         </Grid.RowDefinitions>
                         
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                             <materialDesign:PackIcon Kind="ChartLine" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="车票使用趋势" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                            <TextBlock Text="车票使用趋势" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         </StackPanel>
                         
                         <lvc:CartesianChart Grid.Row="1" 
                                            Series="{Binding MonthlyTicketSeries}" 
-                                           LegendLocation="Right" 
+                                           LegendLocation="Top" 
                                            DisableAnimations="False"
                                            Hoverable="True"
                                            DataTooltip="{x:Null}"
@@ -519,14 +561,27 @@
                             <lvc:CartesianChart.AxisX>
                                 <lvc:Axis Title="{Binding MonthlyTicketXTitle}" 
                                          Labels="{Binding MonthlyTicketLabels}"
-                                         Foreground="{DynamicResource MaterialDesignBody}"/>
+                                         Foreground="{DynamicResource MaterialDesignBody}"
+                                         FontSize="{DynamicResource MaterialDesignFontSize}"
+                                         Separator="{x:Static lvc:DefaultAxes.CleanSeparator}"
+                                         LabelsRotation="0"
+                                         Margin="10"/>
                             </lvc:CartesianChart.AxisX>
                             <lvc:CartesianChart.AxisY>
                                 <lvc:Axis Title="车票数量" 
                                          MinValue="0"
                                          LabelFormatter="{Binding MonthlyTicketYFormatter}"
-                                         Foreground="{DynamicResource MaterialDesignBody}"/>
+                                         Foreground="{DynamicResource MaterialDesignBody}"
+                                         FontSize="{DynamicResource MaterialDesignFontSize}"
+                                         Separator="{x:Static lvc:DefaultAxes.CleanSeparator}"
+                                         Margin="10"/>
                             </lvc:CartesianChart.AxisY>
+                            <lvc:CartesianChart.ChartLegend>
+                                <lvc:DefaultLegend Background="Transparent"
+                                                 Foreground="{DynamicResource MaterialDesignBody}"
+                                                 FontSize="{DynamicResource MaterialDesignFontSize}"
+                                                 BulletSize="15"/>
+                            </lvc:CartesianChart.ChartLegend>
                         </lvc:CartesianChart>
                         
                         <!-- 提示信息 -->
@@ -538,6 +593,7 @@
                                   TextWrapping="Wrap"
                                   TextAlignment="Center"
                                   Margin="20"
+                                  FontSize="{DynamicResource MaterialDesignHeadline6FontSize}"
                                   Visibility="{Binding ShowMonthlyTicketChart, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                     </Grid>
                 </materialDesign:Card>
@@ -547,12 +603,12 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="300"/>
+                            <RowDefinition Height="350"/>
                         </Grid.RowDefinitions>
                         
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                             <materialDesign:PackIcon Kind="Routes" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="路线相关" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                            <TextBlock Text="路线相关" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         </StackPanel>
                         
                         <TextBlock Grid.Row="1" 
@@ -560,6 +616,7 @@
                                  Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                                  HorizontalAlignment="Center" 
                                  VerticalAlignment="Center"
+                                 FontSize="{DynamicResource MaterialDesignHeadline5FontSize}"
                                  Foreground="{DynamicResource PrimaryHueMidBrush}"/>
                     </Grid>
                 </materialDesign:Card>
@@ -569,7 +626,7 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="300"/>
+                            <RowDefinition Height="350"/>
                         </Grid.RowDefinitions>
                         
                         <Grid Grid.Row="0">
@@ -579,18 +636,19 @@
                             
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
                                 <materialDesign:PackIcon Kind="ChartPie" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="车票类型分布" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                                <TextBlock Text="车票类型分布" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             </StackPanel>
                         </Grid>
                         
                         <Grid Grid.Row="1">
                             <lvc:PieChart Series="{Binding TicketTypeSeries}" 
-                                         LegendLocation="Bottom" 
+                                         LegendLocation="Right" 
                                          InnerRadius="0" 
                                          Hoverable="True" 
                                          DataClick="PieChart_DataClick"
                                          DisableAnimations="False"
-                                         Background="Transparent">
+                                         Background="Transparent"
+                                         FontSize="{DynamicResource MaterialDesignFontSize}">
                                 <lvc:PieChart.DataTooltip>
                                     <lvc:DefaultTooltip SelectionMode="OnlySender"
                                                       Background="{DynamicResource MaterialDesignPaper}"
@@ -600,12 +658,15 @@
                                                       BorderThickness="1"
                                                       BorderBrush="{DynamicResource MaterialDesignDivider}"
                                                       Padding="8"
+                                                      FontSize="{DynamicResource MaterialDesignFontSize}"
                                                       CornerRadius="4"/>
                                 </lvc:PieChart.DataTooltip>
                                 <lvc:PieChart.ChartLegend>
                                     <lvc:DefaultLegend Background="Transparent"
                                                      Foreground="{DynamicResource MaterialDesignBody}"
-                                                     BulletSize="15"/>
+                                                     FontSize="{DynamicResource MaterialDesignFontSize}"
+                                                     BulletSize="15"
+                                                     Margin="0,10,0,0"/>
                                 </lvc:PieChart.ChartLegend>
                             </lvc:PieChart>
                             
@@ -614,6 +675,7 @@
                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                                       HorizontalAlignment="Center" 
                                       VerticalAlignment="Center"
+                                      FontSize="{DynamicResource MaterialDesignHeadline5FontSize}"
                                       Visibility="{Binding HasTicketTypeData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                         </Grid>
                     </Grid>
@@ -626,17 +688,17 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*" MinHeight="350"/>
                         </Grid.RowDefinitions>
                         
                         <!-- 标题区域 -->
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                             <materialDesign:PackIcon Kind="CurrencyCny" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="费用支出分析" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center"/>
+                            <TextBlock Text="费用支出分析" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         </StackPanel>
                         
                         <!-- 预算调整区域 -->
-                        <Grid Grid.Row="1" Margin="0,0,0,16">
+                        <Grid Grid.Row="1" Margin="0,0,0,24">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
@@ -645,86 +707,116 @@
                             
                             <TextBlock Text="月度预算: " 
                                       VerticalAlignment="Center" 
-                                      Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                                      Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                      FontSize="{DynamicResource MaterialDesignFontSize}"/>
                             
                             <Slider Grid.Column="1"
+                                    x:Name="BudgetSlider"
                                     Minimum="0"
                                     Maximum="10000"
-                                    Value="{Binding BudgetAmount}"
+                                    Value="{Binding BudgetAmount, Mode=TwoWay}"
                                     Style="{StaticResource MaterialDesignSlider}"
                                     TickFrequency="500"
                                     Margin="16,0"/>
                             
                             <TextBox Grid.Column="2"
-                                     Text="{Binding BudgetAmount, StringFormat='{}{0:N0}'}"
-                                     Width="120"
+                                     x:Name="BudgetTextBox"
+                                     Text="{Binding BudgetAmount, StringFormat='{}{0:N0}', Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="180"
+                                     Height="60"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:TextFieldAssist.PrefixText="¥"
-                                     materialDesign:HintAssist.Hint="预算金额"
-                                     materialDesign:HintAssist.HelperText="输入0-10000之间的数值"
-                                     PreviewTextInput="NumberValidationTextBox"/>
+                                     materialDesign:HintAssist.Hint="输入0-10000"
+                                     materialDesign:HintAssist.HelperText="预算范围：0-10000"
+                                     materialDesign:HintAssist.HelperTextFontSize="{DynamicResource MaterialDesignCaptionFontSize}"
+                                     FontSize="{DynamicResource MaterialDesignFontSize}"
+                                     Foreground="{DynamicResource MaterialDesignBody}"
+                                     PreviewTextInput="NumberValidationTextBox"
+                                     PreviewKeyDown="BudgetTextBox_PreviewKeyDown"
+                                     TextChanged="BudgetTextBox_TextChanged"
+                                     LostFocus="BudgetTextBox_LostFocus"/>
                         </Grid>
                         
                         <!-- 分析指标选择区域 -->
                         <Grid Grid.Row="2" Margin="0,0,0,16" Visibility="{Binding ShowExpenseChart, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
                             
-                            <TextBlock Text="分析指标: " 
-                                     VerticalAlignment="Center" 
-                                     Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                            <TextBlock Grid.Row="0" 
+                                     Text="分析指标: " 
+                                     Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                     FontSize="{DynamicResource MaterialDesignFontSize}"
+                                     Margin="0,0,0,8"/>
                             
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <WrapPanel Grid.Row="1" Orientation="Horizontal">
                                 <RadioButton Content="支出金额" 
                                            Style="{StaticResource MaterialDesignRadioButton}"
-                                           Margin="8,0" 
+                                           Margin="8,4" 
                                            IsChecked="{Binding SelectedTrendIndicator, ConverterParameter=支出金额, Converter={StaticResource StringEqualityToBooleanConverter}}"
                                            Command="{Binding SelectTrendIndicatorCommand}" 
-                                           CommandParameter="支出金额"/>
+                                           CommandParameter="支出金额"
+                                           FontSize="{DynamicResource MaterialDesignFontSize}"/>
                                 <RadioButton Content="平均票价" 
                                            Style="{StaticResource MaterialDesignRadioButton}"
-                                           Margin="8,0" 
+                                           Margin="8,4" 
                                            IsChecked="{Binding SelectedTrendIndicator, ConverterParameter=平均票价, Converter={StaticResource StringEqualityToBooleanConverter}}"
                                            Command="{Binding SelectTrendIndicatorCommand}" 
-                                           CommandParameter="平均票价"/>
+                                           CommandParameter="平均票价"
+                                           FontSize="{DynamicResource MaterialDesignFontSize}"/>
                                 <RadioButton Content="同比增长" 
                                            Style="{StaticResource MaterialDesignRadioButton}"
-                                           Margin="8,0" 
+                                           Margin="8,4" 
                                            IsChecked="{Binding SelectedTrendIndicator, ConverterParameter=同比增长, Converter={StaticResource StringEqualityToBooleanConverter}}"
                                            Command="{Binding SelectTrendIndicatorCommand}" 
-                                           CommandParameter="同比增长"/>
+                                           CommandParameter="同比增长"
+                                           FontSize="{DynamicResource MaterialDesignFontSize}"/>
                                 <RadioButton Content="环比增长" 
                                            Style="{StaticResource MaterialDesignRadioButton}"
-                                           Margin="8,0" 
+                                           Margin="8,4" 
                                            IsChecked="{Binding SelectedTrendIndicator, ConverterParameter=环比增长, Converter={StaticResource StringEqualityToBooleanConverter}}"
                                            Command="{Binding SelectTrendIndicatorCommand}" 
-                                           CommandParameter="环比增长"/>
-                            </StackPanel>
+                                           CommandParameter="环比增长"
+                                           FontSize="{DynamicResource MaterialDesignFontSize}"/>
+                            </WrapPanel>
                         </Grid>
                         
                         <!-- 支出趋势图表区域 -->
                         <Grid Grid.Row="3">
                             <!-- 图表 -->
                             <lvc:CartesianChart Series="{Binding ExpenseSeries}" 
-                                               LegendLocation="Right"
+                                               LegendLocation="Top"
                                                DisableAnimations="False"
                                                Hoverable="True"
                                                DataTooltip="{x:Null}"
                                                Background="Transparent"
+                                               FontSize="{DynamicResource MaterialDesignFontSize}"
                                                Visibility="{Binding ShowExpenseChart, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <lvc:CartesianChart.AxisX>
                                     <lvc:Axis Title="{Binding ExpenseXTitle}" 
                                              Labels="{Binding ExpenseLabels}"
-                                             Foreground="{DynamicResource MaterialDesignBody}"/>
+                                             Foreground="{DynamicResource MaterialDesignBody}"
+                                             FontSize="{DynamicResource MaterialDesignFontSize}"
+                                             Separator="{x:Static lvc:DefaultAxes.CleanSeparator}"
+                                             LabelsRotation="0"
+                                             Margin="10"/>
                                 </lvc:CartesianChart.AxisX>
                                 <lvc:CartesianChart.AxisY>
                                     <lvc:Axis Title="{Binding ExpenseYTitle}" 
                                              MinValue="0"
                                              LabelFormatter="{Binding ExpenseYFormatter}"
-                                             Foreground="{DynamicResource MaterialDesignBody}"/>
+                                             Foreground="{DynamicResource MaterialDesignBody}"
+                                             FontSize="{DynamicResource MaterialDesignFontSize}"
+                                             Separator="{x:Static lvc:DefaultAxes.CleanSeparator}"
+                                             Margin="10"/>
                                 </lvc:CartesianChart.AxisY>
+                                <lvc:CartesianChart.ChartLegend>
+                                    <lvc:DefaultLegend Background="Transparent"
+                                                     Foreground="{DynamicResource MaterialDesignBody}"
+                                                     FontSize="{DynamicResource MaterialDesignFontSize}"
+                                                     BulletSize="15"/>
+                                </lvc:CartesianChart.ChartLegend>
                             </lvc:CartesianChart>
                             
                             <!-- 提示信息 -->
@@ -735,13 +827,15 @@
                                       TextWrapping="Wrap"
                                       TextAlignment="Center"
                                       Margin="20"
+                                      FontSize="{DynamicResource MaterialDesignHeadline6FontSize}"
                                       Visibility="{Binding ShowExpenseChart, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                             
                             <!-- 空数据提示 - 仅在ShowExpenseChart为true且HasExpenseData为false时显示 -->
                             <TextBlock Text="暂无数据" 
                                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                                       HorizontalAlignment="Center" 
-                                      VerticalAlignment="Center">
+                                      VerticalAlignment="Center"
+                                      FontSize="{DynamicResource MaterialDesignHeadline5FontSize}">
                                 <TextBlock.Visibility>
                                     <MultiBinding Converter="{StaticResource MultiBooleanToVisibilityConverter}">
                                         <Binding Path="ShowExpenseChart"/>

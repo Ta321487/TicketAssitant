@@ -8,22 +8,36 @@ using TA_WPF.Utils;
 using System;
 using System.Globalization;
 using System.Windows.Interop;
+using MaterialDesignThemes.Wpf;
+using System.Windows.Media;
+using System.Collections.Generic;
 
 namespace TA_WPF.Views
 {
     public partial class AddTicketWindow : Window
     {
         private readonly AddTicketViewModel _viewModel;
+        private ThemeService _themeService;
         
         public AddTicketWindow(DatabaseService databaseService, MainViewModel mainViewModel)
         {
             try
             {
-                    InitializeComponent();
+                InitializeComponent();
                 
                 // 创建ViewModel并设置为DataContext
                 _viewModel = new AddTicketViewModel(databaseService, mainViewModel);
                 DataContext = _viewModel;
+                
+                // 获取主题服务
+                _themeService = ThemeService.Instance;
+                
+                // 应用当前主题
+                bool isDarkMode = _themeService.IsDarkThemeActive();
+                ApplyTheme(isDarkMode);
+                
+                // 订阅主题变更事件
+                _themeService.ThemeChanged += OnThemeChanged;
                 
                 // 订阅窗口关闭事件
                 _viewModel.CloseWindow += (s, e) => 
@@ -44,12 +58,97 @@ namespace TA_WPF.Views
                 
                 // 订阅字体大小变化事件
                 this.SizeChanged += AddTicketWindow_SizeChanged;
+                
+                // 窗口关闭时取消订阅事件
+                this.Closed += (s, e) => {
+                    _themeService.ThemeChanged -= OnThemeChanged;
+                };
             }
             catch (Exception ex)
             {
                 LogHelper.LogError("初始化添加车票窗口时出错", ex);
                 MessageBoxHelper.ShowError("初始化窗口时出错: " + ex.Message);
             }
+        }
+        
+        private void ApplyTheme(bool isDarkMode)
+        {
+            // 设置窗口主题
+            ThemeAssist.SetTheme(this, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
+            
+            // 获取当前资源字典
+            var paletteHelper = new PaletteHelper();
+            var theme = paletteHelper.GetTheme();
+            
+            // 设置深色/浅色模式
+            theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
+            
+            // 应用主题到窗口
+            paletteHelper.SetTheme(theme);
+            
+            // 获取主题前景色
+            var foregroundBrush = Application.Current.Resources["MaterialDesignBody"] as Brush;
+            
+            // 更新所有文本框的前景色
+            if (foregroundBrush != null)
+            {
+                // 查找所有TextBox并更新前景色
+                var textBoxes = FindVisualChildren<TextBox>(this);
+                foreach (var textBox in textBoxes)
+                {
+                    textBox.Foreground = foregroundBrush;
+                }
+                
+                // 查找所有ComboBox并更新前景色
+                var comboBoxes = FindVisualChildren<ComboBox>(this);
+                foreach (var comboBox in comboBoxes)
+                {
+                    comboBox.Foreground = foregroundBrush;
+                }
+                
+                // 查找所有TextBlock并更新前景色
+                var textBlocks = FindVisualChildren<TextBlock>(this);
+                foreach (var textBlock in textBlocks)
+                {
+                    // 只更新那些没有显式设置样式的TextBlock
+                    if (textBlock.Style == null || textBlock.Style.Equals(FindResource("MaterialDesignBody1TextBlock")))
+                    {
+                        textBlock.Foreground = foregroundBrush;
+                    }
+                }
+            }
+            
+            // 强制刷新窗口
+            this.UpdateLayout();
+        }
+        
+        /// <summary>
+        /// 查找指定类型的所有可视子元素
+        /// </summary>
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
+        {
+            if (depObj != null)
+            {
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+                {
+                    DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
+                    if (child != null && child is T)
+                    {
+                        yield return (T)child;
+                    }
+
+                    foreach (T childOfChild in FindVisualChildren<T>(child))
+                    {
+                        yield return childOfChild;
+                    }
+                }
+            }
+        }
+        
+        private void OnThemeChanged(object sender, bool isDarkMode)
+        {
+            // 更新窗口主题
+            ApplyTheme(isDarkMode);
         }
 
         private void AddTicketWindow_Loaded(object sender, RoutedEventArgs e)
@@ -187,6 +286,9 @@ namespace TA_WPF.Views
                 TextBox textBox = sender as TextBox;
                 if (textBox != null)
                 {
+                    // 保存当前前景色
+                    var foreground = textBox.Foreground;
+                    
                     // 尝试解析金额
                     if (double.TryParse(textBox.Text, out double amount))
                     {
@@ -204,6 +306,9 @@ namespace TA_WPF.Views
                         MessageBoxHelper.ShowWarning("请输入有效的金额数值");
                         textBox.Text = "0.00";
                     }
+                    
+                    // 确保前景色不变
+                    textBox.Foreground = foreground;
                 }
             }
             catch (Exception ex)
@@ -212,6 +317,8 @@ namespace TA_WPF.Views
                 if (sender is TextBox tb)
                 {
                     tb.Text = "0.00";
+                    // 确保前景色与主题一致
+                    tb.Foreground = Application.Current.Resources["MaterialDesignBody"] as Brush;
                 }
             }
         }

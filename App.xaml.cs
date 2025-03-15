@@ -126,8 +126,14 @@ namespace TA_WPF
                             Resources["MaterialDesignHeadline6FontSize"] = fontSize + 4;
                             Resources["MaterialDesignHeadline5FontSize"] = fontSize + 6;
                             
+                            // 设置自定义字体大小资源 - 使用动态缩放因子
+                            double scaleFactor = Math.Min(3.0, Math.Max(1.5, 4.0 - fontSize / 10.0)); // 字体越大，缩放因子越小
+                            Resources["LargeFontSize"] = fontSize * scaleFactor;
+                            Resources["MediumLargeFontSize"] = fontSize * (scaleFactor * 0.7);
+                            Resources["MediumFontSize"] = fontSize * (scaleFactor * 0.5);
+                            
                             // 记录日志
-                            LogHelper.LogInfo($"从配置文件加载字体大小: {fontSize}pt");
+                            LogHelper.LogInfo($"从配置文件加载字体大小: {fontSize}pt，缩放因子: {scaleFactor}");
                         }
                     }
                     else
@@ -152,7 +158,13 @@ namespace TA_WPF
                         Resources["MaterialDesignHeadline6FontSize"] = defaultFontSize + 4;
                         Resources["MaterialDesignHeadline5FontSize"] = defaultFontSize + 6;
                         
-                        LogHelper.LogInfo($"使用默认字体大小: {defaultFontSize}pt");
+                        // 设置自定义字体大小资源 - 使用动态缩放因子
+                        double scaleFactor = Math.Min(3.0, Math.Max(1.5, 4.0 - defaultFontSize / 10.0)); // 字体越大，缩放因子越小
+                        Resources["LargeFontSize"] = defaultFontSize * scaleFactor;
+                        Resources["MediumLargeFontSize"] = defaultFontSize * (scaleFactor * 0.7);
+                        Resources["MediumFontSize"] = defaultFontSize * (scaleFactor * 0.5);
+                        
+                        LogHelper.LogInfo($"使用默认字体大小: {defaultFontSize}pt，缩放因子: {scaleFactor}");
                     }
                     
                     // 确保App.xaml中的资源字典与配置文件一致
@@ -170,7 +182,13 @@ namespace TA_WPF
                                 Resources["MaterialDesignHeadline6FontSize"] = configFontSize + 4;
                                 Resources["MaterialDesignHeadline5FontSize"] = configFontSize + 6;
                                 
-                                LogHelper.LogInfo($"已同步字体大小设置: {configFontSize}pt");
+                                // 设置自定义字体大小资源 - 使用动态缩放因子
+                                double scaleFactor = Math.Min(3.0, Math.Max(1.5, 4.0 - configFontSize / 10.0)); // 字体越大，缩放因子越小
+                                Resources["LargeFontSize"] = configFontSize * scaleFactor;
+                                Resources["MediumLargeFontSize"] = configFontSize * (scaleFactor * 0.7);
+                                Resources["MediumFontSize"] = configFontSize * (scaleFactor * 0.5);
+                                
+                                LogHelper.LogInfo($"已同步字体大小设置: {configFontSize}pt，缩放因子: {scaleFactor}");
                             }
                         }
                     }
@@ -354,6 +372,27 @@ namespace TA_WPF
         {
             LogHelper.LogError($"未观察到的Task异常: {e.Exception.Message}", e.Exception);
             e.SetObserved(); // 标记为已观察，防止应用程序崩溃
+        }
+
+        /// <summary>
+        /// 同步字体大小设置
+        /// </summary>
+        /// <param name="configFontSize"></param>
+        public void SyncFontSizeSettings(double configFontSize)
+        {
+            Resources["MaterialDesignFontSize"] = configFontSize;
+            Resources["MaterialDesignSubtitle1FontSize"] = configFontSize + 2;
+            Resources["MaterialDesignSubtitle2FontSize"] = configFontSize + 1;
+            Resources["MaterialDesignHeadline6FontSize"] = configFontSize + 4;
+            Resources["MaterialDesignHeadline5FontSize"] = configFontSize + 6;
+
+            // 设置自定义字体大小资源 - 使用动态缩放因子
+            double scaleFactor = Math.Min(3.0, Math.Max(1.5, 4.0 - configFontSize / 10.0)); // 字体越大，缩放因子越小
+            Resources["LargeFontSize"] = configFontSize * scaleFactor;
+            Resources["MediumLargeFontSize"] = configFontSize * (scaleFactor * 0.7);
+            Resources["MediumFontSize"] = configFontSize * (scaleFactor * 0.5);
+
+            LogHelper.LogInfo($"同步字体大小设置: {configFontSize}pt，缩放因子: {scaleFactor}");
         }
     }
 }

@@ -21,7 +21,6 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="Microsoft YaHei"
-        materialDesign:ThemeAssist.Theme="{Binding Source={StaticResource Theme.Dark}, Converter={StaticResource BooleanToThemeConverter}}"
         SizeToContent="Manual">
     
     <Window.Resources>
@@ -40,24 +39,28 @@
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
             <Style x:Key="FormNumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomNumberTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
             <Style x:Key="FormReadOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomReadOnlyTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
             <Style x:Key="FormSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomSearchTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
             <Style x:Key="FormComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
@@ -68,6 +71,7 @@
                 <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
                 <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
                 <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
             <Style x:Key="FormComboBoxItemStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
                 <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -75,6 +79,7 @@
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="35"/>
                 <Setter Property="Padding" Value="16,8"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -295,6 +300,7 @@
                              VerticalAlignment="Center" 
                              Margin="0,0,4,0"
                              FontFamily="Microsoft YaHei"
+                             Foreground="{DynamicResource MaterialDesignBody}"
                              Style="{StaticResource MaterialDesignBody1TextBlock}"/>
                     <TextBox Grid.Column="1"
                          Text="{Binding Money, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
