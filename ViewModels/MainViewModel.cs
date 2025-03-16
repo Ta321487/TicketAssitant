@@ -51,7 +51,7 @@ namespace TA_WPF.ViewModels
                 // 初始化设置视图模型
                 _settingsViewModel = new SettingsViewModel(_configurationService, _uiService, _navigationService, _databaseService, connectionString);
                 
-                // 初始化查询全部车票视图模型
+                // 初始化车票中心视图模型
                 _queryAllTicketsViewModel = new QueryAllTicketsViewModel(_databaseService, new PaginationViewModel(), this);
                 
                 // 初始化车票视图模型，传入this作为MainViewModel引用
@@ -62,7 +62,7 @@ namespace TA_WPF.ViewModels
                 
                 // 初始化命令
                 ShowHomeCommand = new RelayCommand(ShowHome);
-                QueryAllCommand = new RelayCommand(async () => await QueryAllAsync());
+                TicketListCommand = new RelayCommand(async () => await QueryAllAsync());
                 ShowDashboardCommand = new RelayCommand(ShowDashboard);
                 
                 // 检查必要的表是否存在
@@ -85,7 +85,7 @@ namespace TA_WPF.ViewModels
         public SettingsViewModel SettingsViewModel => _settingsViewModel;
 
         /// <summary>
-        /// 查询全部车票视图模型
+        /// 车票中心视图模型
         /// </summary>
         public QueryAllTicketsViewModel QueryAllTicketsViewModel => _queryAllTicketsViewModel;
 
@@ -143,7 +143,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 是否显示查询全部车票页面
+        /// 是否显示车票中心页面
         /// </summary>
         public bool ShowQueryAllTickets
         {
@@ -155,7 +155,7 @@ namespace TA_WPF.ViewModels
                     _showQueryAllTickets = value;
                     OnPropertyChanged(nameof(ShowQueryAllTickets));
                     
-                    // 如果显示查询全部车票页面，则隐藏其他页面
+                    // 如果显示车票中心页面，则隐藏其他页面
                     if (value)
                     {
                         ShowWelcome = false;
@@ -206,9 +206,9 @@ namespace TA_WPF.ViewModels
         public double DataGridCellFontSize => _uiService.CalculateDataGridCellFontSize(_settingsViewModel.FontSize);
 
         /// <summary>
-        /// 查询全部车票命令
+        /// 车票中心命令
         /// </summary>
-        public ICommand QueryAllCommand { get; }
+        public ICommand TicketListCommand { get; }
 
         /// <summary>
         /// 显示首页命令

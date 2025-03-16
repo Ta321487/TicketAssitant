@@ -135,7 +135,7 @@
                                     <TreeViewItem>
                                         <TreeViewItem.Header>
                                             <Button Content="添加车票" 
-                                                    Command="{Binding TicketViewModel.AddTicketCommand}" 
+                                                    Command="{Binding QueryAllTicketsViewModel.AddTicketCommand}" 
                                                     Style="{StaticResource MaterialDesignFlatButton}"
                                                     HorizontalContentAlignment="Left"
                                                     Width="200"
@@ -152,18 +152,10 @@
                                             </Button>
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
-                                </TreeViewItem>
-                                <TreeViewItem IsExpanded="True">
-                                    <TreeViewItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="AccountSearch" Margin="0,0,8,0"/>
-                                            <TextBlock Text="查询"/>
-                                        </StackPanel>
-                                    </TreeViewItem.Header>
                                     <TreeViewItem>
                                         <TreeViewItem.Header>
-                                            <Button Content="查询全部" 
-                                                    Command="{Binding QueryAllCommand}" 
+                                            <Button Content="车票中心" 
+                                                    Command="{Binding TicketListCommand}" 
                                                     Style="{StaticResource MaterialDesignFlatButton}"
                                                     HorizontalContentAlignment="Left"
                                                     Width="200"
@@ -226,7 +218,7 @@
                         </StackPanel>
                     </Grid>
                     
-                    <!-- 查询全部车票页面 -->
+                    <!-- 车票中心页面 -->
                     <views:QueryAllTicketsPage Grid.Column="1" 
                                               DataContext="{Binding QueryAllTicketsViewModel}"
                                               Visibility="{Binding DataContext.ShowQueryAllTickets, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>

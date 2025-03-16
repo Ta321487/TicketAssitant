@@ -24,6 +24,7 @@ namespace TA_WPF.Models
         private string? _hint;
         private string? _departStationCode;
         private string? _arriveStationCode;
+        private bool _isSelected;
 
         public int Id 
         { 
@@ -270,6 +271,19 @@ namespace TA_WPF.Models
                     OnPropertyChanged(nameof(ArriveStationCode));
                 }
             } 
+        }
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (_isSelected != value)
+                {
+                    _isSelected = value;
+                    OnPropertyChanged(nameof(IsSelected));
+                }
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

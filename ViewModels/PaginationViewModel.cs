@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows;
 using System.Windows.Threading;
 using TA_WPF.Models;
+using System.Threading.Tasks;
 
 namespace TA_WPF.ViewModels
 {
@@ -453,6 +454,16 @@ namespace TA_WPF.ViewModels
             IsInitialized = false;
             ClearCache();
             Items.Clear();
+        }
+        
+        /// <summary>
+        /// 刷新总记录数
+        /// </summary>
+        /// <returns>异步任务</returns>
+        public virtual async Task RefreshTotalItemsAsync()
+        {
+            // 子类需要重写此方法以实现具体的刷新逻辑
+            await Task.CompletedTask;
         }
     }
 } 

@@ -8,6 +8,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels"
              xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:converters="clr-namespace:TA_WPF.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     
@@ -21,8 +22,17 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.DataGrid.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Button.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Shadows.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ToggleButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <!-- 自定义资源 -->
+            <SolidColorBrush x:Key="SelectedRowBrushLight" Color="#E3F2FD" />
+            <SolidColorBrush x:Key="SelectedRowBrushDark" Color="#3F51B5" Opacity="0.3" />
+            <SolidColorBrush x:Key="SelectedRowTextLight" Color="#1976D2" />
+            <SolidColorBrush x:Key="SelectedRowTextDark" Color="#FFFFFF" />
             <!-- 设计时属性 -->
             <system:Int32 x:Key="DesignTimeCurrentPage">1</system:Int32>
             <system:Int32 x:Key="DesignTimeTotalPages">10</system:Int32>
@@ -52,17 +62,164 @@
             <Style x:Key="MaterialDesignCompactTextBox" TargetType="TextBox">
                 <Setter Property="Padding" Value="4,2" />
             </Style>
+            
+            <!-- 数据表格行样式 -->
+            <Style x:Key="DataGridRowStyle" TargetType="DataGridRow">
+                <Setter Property="Height" Value="{Binding DataContext.DataGridRowHeight, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="BorderThickness" Value="4,0,0,0" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource MaterialDesignDivider}" />
+                    </Trigger>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.IsDarkMode}" Value="True">
+                        <Setter Property="Foreground" Value="White" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=AlternationIndex}" Value="0">
+                        <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=AlternationIndex}" Value="1">
+                        <Setter Property="Background" Value="{DynamicResource MaterialDesignAlternatingRowBackground}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            
+            <!-- 数据表格单元格样式 -->
+            <Style x:Key="DataGridCellStyle" TargetType="DataGridCell">
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.IsDarkMode}" Value="True">
+                        <Setter Property="Foreground" Value="White" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            
+            <!-- 数据表格列头样式 -->
+            <Style x:Key="DataGridColumnHeaderStyle" TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
+                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="MinHeight" Value="45" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+            </Style>
+            
+            <!-- 自定义ToolTip样式 -->
+            <Style x:Key="MaterialDesignDataGridCellToolTip" TargetType="ToolTip">
+                <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="MaxWidth" Value="400" />
+                <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+            </Style>
+            
+            <!-- 数据表格文本列样式 -->
+            <Style x:Key="DataGridTextColumnElementStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Center" />
+                <Setter Property="TextWrapping" Value="NoWrap" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="Padding" Value="4,2" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.IsDarkMode}" Value="True">
+                        <Setter Property="Foreground" Value="White" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
     
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- 控制菜单 -->
+        <Grid Grid.Row="0" Margin="10,10,10,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- 选择操作区域 -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Command="{Binding ToggleSelectionCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="{Binding SelectionToggleTooltip}"
+                        Margin="0,0,8,0"
+                        Height="36">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="{Binding SelectionToggleIcon}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="{Binding SelectionToggleText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding InvertSelectionCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="反选"
+                        Margin="0,0,8,0"
+                        Height="36">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CheckboxMultipleMarkedCircleOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="反选" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding ClearSelectionCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="清除选择"
+                        Margin="0,0,8,0"
+                        Height="36"
+                        Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CheckboxMultipleBlankOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="清除选择" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding DeleteTicketsCommand}" 
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        ToolTip="删除选中的车票"
+                        Margin="0,0,8,0"
+                        Height="36"
+                        Background="#F44336"
+                        Foreground="White"
+                        Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="删除" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            
+            <!-- 右侧操作区域 -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <!-- 这里可以添加其他操作按钮 -->
+            </StackPanel>
+        </Grid>
+
         <!-- 数据表格 -->
-        <DataGrid Grid.Row="0" 
+        <DataGrid Grid.Row="1" 
                   x:Name="TicketsDataGrid"
                   ItemsSource="{Binding TrainRideInfos}" 
                   AutoGenerateColumns="False"
@@ -73,6 +230,10 @@
                   CanUserSortColumns="False"
                   CanUserReorderColumns="False"
                   IsReadOnly="True"
+                  SelectionMode="Extended"
+                  SelectionUnit="FullRow"
+                  EnableRowVirtualization="True"
+                  EnableColumnVirtualization="True"
                   RowHeight="{Binding DataGridRowHeight}"
                   HeadersVisibility="Column"
                   materialDesign:DataGridAssist.CellPadding="12 6 12 6"
@@ -80,345 +241,208 @@
                   Margin="10"
                   HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto"
-                  GridLinesVisibility="Horizontal"
+                  GridLinesVisibility="None"
+                  HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                  VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
                   AlternatingRowBackground="{DynamicResource MaterialDesignAlternatingRowBackground}"
                   Background="{DynamicResource MaterialDesignPaper}"
+                  RowBackground="Transparent"
+                  Foreground="{DynamicResource MaterialDesignBody}"
+                  SelectionChanged="TicketsDataGrid_SelectionChanged"
                   BorderThickness="0"
-                  RowBackground="{DynamicResource MaterialDesignPaper}"
-                  EnableRowVirtualization="True"
-                  EnableColumnVirtualization="True"
-                  VirtualizingPanel.IsVirtualizing="True"
-                  VirtualizingPanel.VirtualizationMode="Recycling"
-                  VirtualizingPanel.ScrollUnit="Pixel"
-                  VirtualizingPanel.CacheLength="1,1"
-                  VirtualizingPanel.CacheLengthUnit="Page"
-                  ScrollViewer.IsDeferredScrollingEnabled="True"
-                  ScrollViewer.CanContentScroll="True">
+                  BorderBrush="{DynamicResource MaterialDesignDivider}"
+                  AlternationCount="2"
+                  ColumnWidth="*">
             
             <DataGrid.Resources>
-                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
-                    <Setter Property="HorizontalContentAlignment" Value="Center" />
-                    <Setter Property="FontWeight" Value="Bold" />
-                    <Setter Property="FontSize" Value="{DynamicResource MaterialDesignSubtitle1FontSize}" />
-                    <Setter Property="Padding" Value="12,10" />
-                    <Setter Property="BorderThickness" Value="0,0,0,1" />
-                    <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
-                    <Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
-                    <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
-                    <Setter Property="Height" Value="Auto" />
-                    <Setter Property="MinHeight" Value="45" />
-                </Style>
-                <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
-                    <Setter Property="HorizontalAlignment" Value="Center" />
-                    <Setter Property="VerticalAlignment" Value="Center" />
-                    <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}" />
-                    <Setter Property="Padding" Value="8,6" />
-                    <Setter Property="BorderThickness" Value="0" />
-                </Style>
-                <Style TargetType="DataGridRow">
-                    <Setter Property="BorderThickness" Value="0,0,0,1" />
-                    <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                <!-- 完全覆盖MaterialDesign默认的选中样式 -->
+                <SolidColorBrush x:Key="MaterialDesignSelection" Color="#00000000" />
+                
+                <!-- 重写单元格样式 -->
+                <Style x:Key="TransparentSelectionCellStyle" TargetType="DataGridCell">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderBrush" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Padding" Value="8,4"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type DataGridCell}">
+                                <Border Background="Transparent"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        SnapsToDevicePixels="True">
+                                    <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Trigger>
+                    </Style.Triggers>
                 </Style>
             </DataGrid.Resources>
             
-            <!-- 列定义 -->
+            <!-- 数据表格样式 -->
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
+                    <EventSetter Event="Selected" Handler="DataGridRow_Selected"/>
+                    <EventSetter Event="Unselected" Handler="DataGridRow_Unselected"/>
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.CellStyle>
+                <Style TargetType="DataGridCell" BasedOn="{StaticResource TransparentSelectionCellStyle}"/>
+            </DataGrid.CellStyle>
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeaderStyle}"/>
+            </DataGrid.ColumnHeaderStyle>
+            
+            <!-- 数据表格列 -->
             <DataGrid.Columns>
-                <DataGridTextColumn Header="取票号" Binding="{Binding TicketNumber}" Width="*" MinWidth="90">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding TicketNumber}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="检票位置" Binding="{Binding CheckInLocation}" Width="*" MinWidth="90">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding CheckInLocation}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="出发车站" Binding="{Binding DepartStation}" Width="*" MinWidth="90">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding DepartStation}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="出发站拼音" Binding="{Binding DepartStationPinyin}" Width="*" MinWidth="100">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding DepartStationPinyin}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="车次号" Binding="{Binding TrainNo}" Width="*" MinWidth="80">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding TrainNo}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="到达车站" Binding="{Binding ArriveStation}" Width="*" MinWidth="90">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding ArriveStation}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="到达站拼音" Binding="{Binding ArriveStationPinyin}" Width="*" MinWidth="100">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding ArriveStationPinyin}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="出发日期" Binding="{Binding DepartDate, StringFormat=yyyy-MM-dd}" Width="*" MinWidth="100">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="出发时间" Binding="{Binding DepartTime, StringFormat=hh\\:mm}" Width="*" MinWidth="80">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="车厢号" Binding="{Binding CoachNo}" Width="*" MinWidth="70">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding CoachNo}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="座位号" Binding="{Binding SeatNo}" Width="*" MinWidth="70">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding SeatNo}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="金额" Binding="{Binding Money, StringFormat={}{0:C}, ConverterCulture=zh-CN}" Width="*" MinWidth="80">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                            <Setter Property="Foreground" Value="#4CAF50" />
-                            <Setter Property="FontWeight" Value="SemiBold" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="席别" Binding="{Binding SeatType}" Width="*" MinWidth="80">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding SeatType}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="附加信息" Binding="{Binding AdditionalInfo}" Width="*" MinWidth="110">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding AdditionalInfo}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="车票用途" Binding="{Binding TicketPurpose}" Width="*" MinWidth="90">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding TicketPurpose}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="提示信息" Binding="{Binding Hint}" Width="*" MinWidth="150">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                            <Setter Property="ToolTip" Value="{Binding Hint}" />
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <!-- 其他列 -->
+                <DataGridTextColumn Header="取票号" Binding="{Binding TicketNumber}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="检票口" Binding="{Binding CheckInLocation}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="出发车站" Binding="{Binding DepartStation}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="出发拼音" Binding="{Binding DepartStationPinyin}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="车次号" Binding="{Binding TrainNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="到达车站" Binding="{Binding ArriveStation}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="到达拼音" Binding="{Binding ArriveStationPinyin}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="出发日期" Binding="{Binding DepartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="出发时间" Binding="{Binding DepartTime, StringFormat=\{0:hh\\:mm\}}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="车厢号" Binding="{Binding CoachNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="座位号" Binding="{Binding SeatNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="金额" Binding="{Binding Money, StringFormat=¥\{0:N2\}}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="座位类型" Binding="{Binding SeatType}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="附加信息" Binding="{Binding AdditionalInfo}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="车票用途" Binding="{Binding TicketPurpose}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                <DataGridTextColumn Header="提示" Binding="{Binding Hint}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
             </DataGrid.Columns>
         </DataGrid>
 
-        <!-- 加载指示器 -->
-        <materialDesign:Card Grid.Row="0" 
-                            HorizontalAlignment="Center" 
-                            VerticalAlignment="Center" 
-                            Padding="32"
-                            Background="{DynamicResource MaterialDesignDarkBackground}"
-                            materialDesign:ShadowAssist.ShadowDepth="Depth3"
-                            UniformCornerRadius="8"
-                            Panel.ZIndex="9999"
-                            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="24">
-                <ProgressBar 
-                    IsIndeterminate="True"
-                    Style="{StaticResource MaterialDesignCircularProgressBar}"
-                    Width="60"
-                    Height="60"
-                    Foreground="{DynamicResource PrimaryHueMidBrush}"
-                    Margin="0,0,0,16" />
-                <TextBlock Text="正在加载数据..." 
-                        Margin="0,8,0,0" 
-                        FontSize="16"
-                        Foreground="{DynamicResource MaterialDesignBody}"
-                        HorizontalAlignment="Center" />
-            </StackPanel>
-        </materialDesign:Card>
-
-        <!-- 分页控件 -->
-        <Grid Grid.Row="1" Margin="10,10,10,30">
+        <!-- 分页控制 -->
+        <Grid Grid.Row="2" Margin="10,0,10,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 页面大小选择 -->
-            <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="5,0">
-                <TextBlock Text="每页显示:" 
-                           Style="{StaticResource MaterialDesignBody2TextBlock}"
+            <!-- 左侧：页大小选择 -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="每页显示:" 
+                           Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                               VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                    <ComboBox ItemsSource="{Binding PageSizeOptions}"
+                              SelectedItem="{Binding PageSize}"
+                          Width="60"
+                          materialDesign:HintAssist.Hint="页大小"
+                          Style="{StaticResource MaterialDesignComboBox}"/>
+                
+                <!-- 总记录数和选中项数量 -->
+                <TextBlock Text="{Binding TotalItems, StringFormat=总记录数: {0}}" 
+                           Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
-                           Margin="0,0,4,0"/>
-                <ComboBox ItemsSource="{Binding PageSizeOptions}" 
-                          SelectedItem="{Binding PageSize}" 
-                          Style="{StaticResource MaterialDesignComboBox}"
-                          Width="50"
-                          Height="32"
-                          VerticalAlignment="Center"
-                          Margin="0,0,8,0"/>
-            </StackPanel>
+                           Margin="16,0,0,0"/>
+                
+                <!-- 选择状态指示器 -->
+                <TextBlock Text="{Binding SelectionSummary}" 
+                           Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                           VerticalAlignment="Center"
+                           Margin="16,0,0,0"
+                           Foreground="{DynamicResource MaterialDesignBodyLight}"
+                           FontWeight="Medium"
+                           Visibility="{Binding SelectionSummary, Converter={StaticResource StringToVisibilityConverter}}"/>
+                </StackPanel>
 
-            <!-- 分页导航 -->
-            <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Center" Margin="0,5,0,5">
-                <Button Command="{Binding FirstPageCommand}" 
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="首页"
-                        Width="36" Height="36"
-                        Margin="4,0"
-                        IsEnabled="{Binding CanNavigateToFirstPage}">
-                    <materialDesign:PackIcon Kind="PageFirst" Width="24" Height="24" />
-                </Button>
-                <Button Command="{Binding PreviousPageCommand}" 
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="上一页"
-                        Width="36" Height="36"
-                        Margin="4,0"
-                        IsEnabled="{Binding CanNavigateToPreviousPage}">
-                    <materialDesign:PackIcon Kind="ChevronLeft" Width="24" Height="24" />
-                </Button>
-                <Border Background="{DynamicResource MaterialDesignPaper}" 
-                        BorderBrush="{DynamicResource MaterialDesignDivider}" 
-                        BorderThickness="1" 
-                        CornerRadius="4"
-                        Padding="8,4"
-                        Margin="10,0"
-                        Height="36">
-                    <Grid>
-                        <StackPanel Orientation="Horizontal" x:Name="PageInfoPanel" MouseLeftButtonDown="PageInfoPanel_MouseLeftButtonDown">
-                            <TextBlock Text="{Binding CurrentPage}" 
-                                       Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                       FontWeight="SemiBold"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock Text=" / " 
-                                       Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding TotalPages}" 
-                                       Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBox x:Name="PageNumberInput"
-                                 Width="60"
-                                 Height="28"
-                                 Visibility="Collapsed"
-                                 Style="{StaticResource MaterialDesignTextBox}"
-                                 materialDesign:HintAssist.Hint="页码"
-                                 materialDesign:HintAssist.HintOpacity="0.7"
-                                 ToolTip="输入页码后按回车键跳转，按ESC取消"
-                                 BorderThickness="0"
-                                 HorizontalContentAlignment="Center"
-                                 VerticalContentAlignment="Center"
-                                 PreviewKeyDown="PageNumberInput_PreviewKeyDown"
-                                 PreviewTextInput="PageNumberInput_PreviewTextInput"
-                                 LostFocus="PageNumberInput_LostFocus">
-                            <TextBox.CommandBindings>
-                                <CommandBinding Command="ApplicationCommands.Paste" 
-                                              PreviewExecuted="PageNumberInput_PreviewExecuted" />
-                            </TextBox.CommandBindings>
-                            <TextBox.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="4"/>
-                                </Style>
-                            </TextBox.Resources>
-                        </TextBox>
-                    </Grid>
-                </Border>
-                <Button Command="{Binding NextPageCommand}" 
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="下一页"
-                        Width="36" Height="36"
-                        Margin="4,0"
-                        IsEnabled="{Binding CanNavigateToNextPage}">
-                    <materialDesign:PackIcon Kind="ChevronRight" Width="24" Height="24" />
-                </Button>
-                <Button Command="{Binding LastPageCommand}" 
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="末页"
-                        Width="36" Height="36"
-                        Margin="4,0"
-                        IsEnabled="{Binding CanNavigateToLastPage}">
-                    <materialDesign:PackIcon Kind="PageLast" Width="24" Height="24" />
-                </Button>
+            <!-- 右侧：分页导航 -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                    <Button Command="{Binding FirstPageCommand}" 
+                            Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="第一页"
+                            Margin="0,0,4,0"
+                            IsEnabled="{Binding CanNavigateToFirstPage}">
+                        <materialDesign:PackIcon Kind="PageFirst" />
+                    </Button>
+                    <Button Command="{Binding PreviousPageCommand}" 
+                            Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="上一页"
+                            Margin="0,0,4,0"
+                            IsEnabled="{Binding CanNavigateToPreviousPage}">
+                        <materialDesign:PackIcon Kind="ChevronLeft" />
+                    </Button>
+                    <Border Background="{DynamicResource MaterialDesignPaper}" 
+                            BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                            BorderThickness="1" 
+                            CornerRadius="4"
+                            Padding="8,4"
+                            Margin="4,0"
+                            Height="36">
+                        
+                            <StackPanel Orientation="Horizontal" x:Name="PageInfoPanel" MouseLeftButtonDown="PageInfoPanel_MouseLeftButtonDown">
+                                <TextBlock Text="{Binding CurrentPage}" 
+                                           Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text=" / " 
+                                           Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding TotalPages}" 
+                                           Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                    </Border>
+                            <TextBox x:Name="PageNumberInput"
+                                     Width="60"
+                             Height="36"
+                             Margin="4,0"
+                                     Style="{StaticResource MaterialDesignTextBox}"
+                                     materialDesign:HintAssist.Hint="页码"
+                             VerticalAlignment="Center"
+                                     HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center"
+                             Visibility="Collapsed"
+                             KeyDown="PageNumberInput_KeyDown"
+                             LostFocus="PageNumberInput_LostFocus"/>
+                    <Button Command="{Binding NextPageCommand}" 
+                            Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="下一页"
+                            Margin="4,0,0,0"
+                            IsEnabled="{Binding CanNavigateToNextPage}">
+                        <materialDesign:PackIcon Kind="ChevronRight" />
+                    </Button>
+                    <Button Command="{Binding LastPageCommand}" 
+                            Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="最后一页"
+                            Margin="4,0,0,0"
+                            IsEnabled="{Binding CanNavigateToLastPage}">
+                        <materialDesign:PackIcon Kind="PageLast" />
+                    </Button>
+                </StackPanel>
             </StackPanel>
-
-            <!-- 总记录数 -->
-            <TextBlock Grid.Column="2" 
-                       Text="{Binding TotalItems, StringFormat=总记录数: {0}}" 
-                       Style="{StaticResource MaterialDesignBody2TextBlock}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,16,0"/>
+        </Grid>
+        
+        <!-- 加载指示器 -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" 
+              Background="#80000000" 
+              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
+                         Value="0" 
+                         IsIndeterminate="True" 
+                         Width="48" 
+                         Height="48"/>
         </Grid>
     </Grid>
 </UserControl> 

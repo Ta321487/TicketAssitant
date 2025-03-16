@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using TA_WPF.Utils;
+using TA_WPF.Views;
 
 namespace TA_WPF.Services
 {
@@ -46,13 +47,13 @@ namespace TA_WPF.Services
                     message += "\n是否立即创建这些表？";
                     
                     // 显示确认对话框
-                    var result = MessageBox.Show(
+                    var result = TA_WPF.Views.MessageDialog.Show(
                         message,
                         "缺少必要的表",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
+                        TA_WPF.Views.MessageType.Question,
+                        TA_WPF.Views.MessageButtons.YesNo);
                     
-                    if (result == MessageBoxResult.Yes)
+                    if (result == true)
                     {
                         // 创建缺少的表
                         if (!stationTableExists)
@@ -64,11 +65,11 @@ namespace TA_WPF.Services
                             await _databaseService.CreateTrainRideInfoTableAsync();
                         }
                         
-                        MessageBox.Show(
+                        TA_WPF.Views.MessageDialog.Show(
                             "表创建成功！",
                             "操作成功",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
+                            TA_WPF.Views.MessageType.Information,
+                            TA_WPF.Views.MessageButtons.Ok);
                     }
                 }
             }
@@ -76,11 +77,11 @@ namespace TA_WPF.Services
             {
                 Console.WriteLine($"检查表时出错: {ex.Message}");
                 LogHelper.LogError($"检查表时出错: {ex.Message}");
-                MessageBox.Show(
+                TA_WPF.Views.MessageDialog.Show(
                     $"检查数据库表时出错: {ex.Message}",
                     "错误",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    TA_WPF.Views.MessageType.Error,
+                    TA_WPF.Views.MessageButtons.Ok);
             }
         }
     }

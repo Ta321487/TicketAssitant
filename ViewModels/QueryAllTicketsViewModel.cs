@@ -6,33 +6,21 @@ using System.Windows;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
+using System.Linq;
+using System.Windows.Input;
+using System.IO;
+using System.Text;
+using Microsoft.Win32;
+using System.Globalization;
 
 namespace TA_WPF.ViewModels
 {
-    public class QueryAllTicketsViewModel : BaseViewModel
+    public class QueryAllTicketsViewModel : TicketBaseViewModel
     {
-        private readonly DatabaseService _databaseService;
-        private readonly PaginationViewModel _paginationViewModel;
-        private readonly MainViewModel _mainViewModel;
-
         public QueryAllTicketsViewModel(DatabaseService databaseService, PaginationViewModel paginationViewModel, MainViewModel mainViewModel)
+            : base(databaseService, paginationViewModel, mainViewModel)
         {
-            _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
-            _paginationViewModel = paginationViewModel ?? throw new ArgumentNullException(nameof(paginationViewModel));
-            _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
-
-            // 订阅分页事件
-            _paginationViewModel.PageChanged += OnPageChanged;
-            _paginationViewModel.PageSizeChanged += OnPageSizeChanged;
-            
-            // 订阅MainViewModel的字体大小变更事件
-            _mainViewModel.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(MainViewModel.DataGridRowHeight))
-                {
-                    OnPropertyChanged(nameof(DataGridRowHeight));
-                }
-            };
+            // 基类已经初始化了所有选择相关命令
         }
 
         /// <summary>
@@ -90,7 +78,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 加载页面数据
         /// </summary>
-        private async Task LoadPageDataAsync()
+        protected override async Task LoadPageDataAsync()
         {
             try
             {
@@ -243,6 +231,31 @@ namespace TA_WPF.ViewModels
                 Console.WriteLine($"页大小变更处理出错: {ex.Message}");
                 // 确保加载状态被重置
                 _paginationViewModel.IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// 刷新总记录数
+        /// </summary>
+        /// <returns>异步任务</returns>
+        protected override async Task RefreshTotalItemsAsync()
+        {
+            try
+            {
+                // 获取总记录数
+                int totalCount = await _databaseService.GetTotalTrainRideInfoCountAsync();
+                
+                // 设置总记录数，这会触发TotalPages的重新计算
+                _paginationViewModel.TotalItems = totalCount;
+                
+                // 手动触发属性变更通知，确保UI更新
+                OnPropertyChanged(nameof(TotalItems));
+                OnPropertyChanged(nameof(TotalPages));
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"刷新总记录数时出错: {ex.Message}");
+                LogHelper.LogError($"刷新总记录数时出错", ex);
             }
         }
 

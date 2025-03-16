@@ -477,5 +477,35 @@ namespace TA_WPF.Services
                 }
             }
         }
+
+        /// <summary>
+        /// 删除车票
+        /// </summary>
+        /// <param name="ticketId">车票ID</param>
+        /// <returns>是否删除成功</returns>
+        public async Task<bool> DeleteTicketAsync(int ticketId)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string query = "DELETE FROM train_ride_info WHERE id = @TicketId";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@TicketId", ticketId);
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"删除车票时出错: {ex.Message}");
+                return false;
+            }
+        }
     }
 } 

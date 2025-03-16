@@ -51,6 +51,14 @@
             <SolidColorBrush x:Key="GlobalAccentDarkBrush" Color="#5E35B1" />
             <SolidColorBrush x:Key="GlobalSecondaryBrush" Color="#CDDC39" />
             
+            <!-- 选择相关资源 -->
+            <SolidColorBrush x:Key="MaterialDesignSelection" Color="#00000000" />
+            <SolidColorBrush x:Key="MaterialDesignSelectionForeground" Color="#000000" />
+            
+            <!-- 深色模式下的选择相关资源 -->
+            <SolidColorBrush x:Key="MaterialDesignSelectionDark" Color="#9C64FF" Opacity="0.7" />
+            <SolidColorBrush x:Key="MaterialDesignSelectionForegroundDark" Color="#FFFFFF" />
+            
             <!-- 自定义样式 -->
             <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer" BasedOn="{StaticResource {x:Type ScrollViewer}}">
                 <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
@@ -140,7 +148,6 @@
                                     Padding="{TemplateBinding Padding}" 
                                     SnapsToDevicePixels="True">
                                 <ScrollViewer x:Name="DG_ScrollViewer" 
-                                             Style="{StaticResource DataGridScrollViewerStyle}"
                                              Focusable="false">
                                     <ScrollViewer.Template>
                                         <ControlTemplate TargetType="{x:Type ScrollViewer}">
@@ -167,7 +174,6 @@
                                                                        Grid.Row="1" 
                                                                        CanContentScroll="{TemplateBinding CanContentScroll}"/>
                                                 <ScrollBar x:Name="PART_VerticalScrollBar" 
-                                                         Style="{StaticResource DataGridScrollBarStyle}"
                                                          Grid.Column="2" 
                                                          Grid.Row="1" 
                                                          Orientation="Vertical" 
@@ -181,7 +187,6 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <ScrollBar x:Name="PART_HorizontalScrollBar" 
-                                                             Style="{StaticResource DataGridScrollBarStyle}"
                                                              Grid.Column="1" 
                                                              Orientation="Horizontal" 
                                                              ViewportSize="{TemplateBinding ViewportWidth}" 
@@ -204,11 +209,13 @@
             <Style TargetType="{x:Type DataGridCell}">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderBrush" Value="Transparent"/>
-                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="8,4"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type DataGridCell}">
-                            <Border Background="{TemplateBinding Background}"
+                            <Border Background="Transparent"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     SnapsToDevicePixels="True">
@@ -221,9 +228,9 @@
                 </Setter>
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource MaterialDesignSelection}"/>
-                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
-                        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignSelectionForeground}"/>
+                        <Setter Property="BorderBrush" Value="Transparent"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -270,14 +277,18 @@
                                                                         RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
                                 </SelectiveScrollingGrid>
                             </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="BorderThickness" TargetName="DGR_Border" Value="4,0,0,0" />
+                                    <Setter Property="Background" TargetName="DGR_Border" Value="Transparent" />
+                                    <Setter Property="Foreground" Value="{DynamicResource MaterialDesignSelectionForeground}"/>
+                                    <Setter Property="BorderBrush" TargetName="DGR_Border" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
                 <Style.Triggers>
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource MaterialDesignSelection}"/>
-                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
-                    </Trigger>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="{DynamicResource MaterialDesignDivider}"/>
                     </Trigger>
@@ -305,7 +316,7 @@
             </Style>
             
             <!-- 数据表格滚动条样式 -->
-            <Style x:Key="DataGridScrollBarStyle" TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource {x:Type ScrollBar}}">
+            <!-- <Style x:Key="DataGridScrollBarStyle" TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource {x:Type ScrollBar}}">
                 <Setter Property="Width" Value="6" />
                 <Setter Property="MinWidth" Value="6" />
                 <Setter Property="Height" Value="6" />
@@ -337,90 +348,7 @@
                         <Setter Property="Opacity" Value="0.3" />
                     </DataTrigger>
                 </Style.Triggers>
-            </Style>
-            
-            <!-- 数据表格ScrollViewer样式 -->
-            <Style x:Key="DataGridScrollViewerStyle" TargetType="{x:Type ScrollViewer}" BasedOn="{StaticResource {x:Type ScrollViewer}}">
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type ScrollViewer}">
-                            <Grid x:Name="Grid" Background="{TemplateBinding Background}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Rectangle x:Name="Corner" Grid.Column="1" Fill="{DynamicResource MaterialDesignPaper}" Grid.Row="1" />
-                                <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" 
-                                                       CanContentScroll="{TemplateBinding CanContentScroll}" 
-                                                       CanHorizontallyScroll="False" 
-                                                       CanVerticallyScroll="False" 
-                                                       ContentTemplate="{TemplateBinding ContentTemplate}" 
-                                                       Content="{TemplateBinding Content}" 
-                                                       Grid.Column="0" 
-                                                       Margin="{TemplateBinding Padding}" 
-                                                       Grid.Row="0" />
-                                <ScrollBar x:Name="PART_VerticalScrollBar" 
-                                          Style="{StaticResource DataGridScrollBarStyle}"
-                                          AutomationProperties.AutomationId="VerticalScrollBar" 
-                                          Cursor="Arrow" 
-                                          Grid.Column="1" 
-                                          Maximum="{TemplateBinding ScrollableHeight}" 
-                                          Minimum="0" 
-                                          Grid.Row="0" 
-                                          Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
-                                          Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
-                                          ViewportSize="{TemplateBinding ViewportHeight}" />
-                                <ScrollBar x:Name="PART_HorizontalScrollBar" 
-                                          Style="{StaticResource DataGridScrollBarStyle}"
-                                          AutomationProperties.AutomationId="HorizontalScrollBar" 
-                                          Cursor="Arrow" 
-                                          Grid.Column="0" 
-                                          Maximum="{TemplateBinding ScrollableWidth}" 
-                                          Minimum="0" 
-                                          Orientation="Horizontal" 
-                                          Grid.Row="1" 
-                                          Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
-                                          Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
-                                          ViewportSize="{TemplateBinding ViewportWidth}" />
-                            </Grid>
-                            <ControlTemplate.Triggers>
-                                <EventTrigger RoutedEvent="MouseEnter">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar"
-                                                           Storyboard.TargetProperty="Opacity"
-                                                           To="1"
-                                                           Duration="0:0:0.2"/>
-                                            <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar"
-                                                           Storyboard.TargetProperty="Opacity"
-                                                           To="1"
-                                                           Duration="0:0:0.2"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                                <EventTrigger RoutedEvent="MouseLeave">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar"
-                                                           Storyboard.TargetProperty="Opacity"
-                                                           To="0"
-                                                           Duration="0:0:0.5"/>
-                                            <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar"
-                                                           Storyboard.TargetProperty="Opacity"
-                                                           To="0"
-                                                           Duration="0:0:0.5"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
+            </Style> -->
             
             <!-- 全局滚动条样式 -->
             <Style TargetType="{x:Type ScrollBar}">
@@ -430,6 +358,7 @@
                 <Setter Property="MinHeight" Value="8" />
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Foreground" Value="{DynamicResource GlobalAccentBrush}" />
+                <Setter Property="Opacity" Value="0" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type ScrollBar}">
@@ -446,6 +375,29 @@
                                     </Track.Thumb>
                                 </Track>
                             </Grid>
+                            <ControlTemplate.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                           To="1"
+                                                           Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                           To="0.3"
+                                                           Duration="0:0:0.5"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="1" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
@@ -496,7 +448,7 @@
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <Rectangle x:Name="Corner" Grid.Column="1" Fill="{DynamicResource MaterialDesignPaper}" Grid.Row="1" />
+                                <Rectangle x:Name="Corner" Grid.Column="1" Fill="Transparent" Grid.Row="1" />
                                 <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" 
                                                        CanContentScroll="{TemplateBinding CanContentScroll}" 
                                                        CanHorizontallyScroll="False" 
@@ -507,7 +459,6 @@
                                                        Margin="{TemplateBinding Padding}" 
                                                        Grid.Row="0" />
                                 <ScrollBar x:Name="PART_VerticalScrollBar" 
-                                          Style="{StaticResource DataGridScrollBarStyle}"
                                           AutomationProperties.AutomationId="VerticalScrollBar" 
                                           Cursor="Arrow" 
                                           Grid.Column="1" 
@@ -529,9 +480,43 @@
                                           Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
                                           ViewportSize="{TemplateBinding ViewportWidth}" />
                             </Grid>
+                            <ControlTemplate.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar"
+                                                           Storyboard.TargetProperty="Opacity"
+                                                           To="1"
+                                                           Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar"
+                                                           Storyboard.TargetProperty="Opacity"
+                                                           To="1"
+                                                           Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar"
+                                                           Storyboard.TargetProperty="Opacity"
+                                                           To="0.3"
+                                                           Duration="0:0:0.5"/>
+                                            <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar"
+                                                           Storyboard.TargetProperty="Opacity"
+                                                           To="0.3"
+                                                           Duration="0:0:0.5"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
+            
+            <!-- 数据表格ScrollViewer样式，现在基于全局样式 -->
+            <Style x:Key="DataGridScrollViewerStyle" TargetType="{x:Type ScrollViewer}" BasedOn="{StaticResource {x:Type ScrollViewer}}">
             </Style>
             
             <!-- 分页控件样式 -->

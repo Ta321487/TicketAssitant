@@ -2,6 +2,14 @@ using System.ComponentModel;
 using System.Windows;
 using TA_WPF.Services;
 using MaterialDesignThemes.Wpf;
+using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Input;
+using TA_WPF.Utils;
+using TA_WPF.Models;
+using System.IO;
+using System.Text;
 
 namespace TA_WPF.ViewModels
 {
@@ -11,6 +19,8 @@ namespace TA_WPF.ViewModels
     public abstract class BaseViewModel : INotifyPropertyChanged
     {
         private bool _isDarkMode;
+        private bool _isAllSelected;
+        private bool _isTicketQuery; // 标记是否为车票查询视图
         protected ThemeService ThemeService => ThemeService.Instance;
 
         /// <summary>
@@ -35,7 +45,7 @@ namespace TA_WPF.ViewModels
                 // 如果当前主题状态与配置文件中的不一致，以当前主题状态为准
                 if (_isDarkMode != currentIsDarkMode)
                 {
-                    Console.WriteLine($"BaseViewModel: 主题状态不一致，配置文件中为{(_isDarkMode ? "深色" : "浅色")}，当前主题为{(currentIsDarkMode ? "深色" : "浅色")}");
+                    System.Console.WriteLine($"BaseViewModel: 主题状态不一致，配置文件中为{(_isDarkMode ? "深色" : "浅色")}，当前主题为{(currentIsDarkMode ? "深色" : "浅色")}");
                     _isDarkMode = currentIsDarkMode;
                     
                     // 保存当前主题状态到配置文件
@@ -71,6 +81,61 @@ namespace TA_WPF.ViewModels
                     ThemeService.ApplyTheme(value);
                 }
             }
+        }
+
+        /// <summary>
+        /// 是否全选
+        /// </summary>
+        public virtual bool IsAllSelected
+        {
+            get => _isAllSelected;
+            set
+            {
+                if (_isAllSelected != value)
+                {
+                    _isAllSelected = value;
+                    OnPropertyChanged(nameof(IsAllSelected));
+                    
+                    // 应用全选状态到所有项
+                    ApplySelectionToAll(value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否为车票查询视图
+        /// </summary>
+        public virtual bool IsTicketQuery
+        {
+            get => _isTicketQuery;
+            protected set
+            {
+                if (_isTicketQuery != value)
+                {
+                    _isTicketQuery = value;
+                    OnPropertyChanged(nameof(IsTicketQuery));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取选中的项
+        /// </summary>
+        /// <typeparam name="T">项的类型</typeparam>
+        /// <param name="items">项集合</param>
+        /// <returns>选中的项集合</returns>
+        protected virtual IEnumerable<T> GetSelectedItems<T>(IEnumerable<T> items) where T : TrainRideInfo
+        {
+            return items?.Where(item => item.IsSelected) ?? Enumerable.Empty<T>();
+        }
+
+        /// <summary>
+        /// 应用选择状态到所有项
+        /// </summary>
+        /// <param name="isSelected">是否选中</param>
+        protected virtual void ApplySelectionToAll(bool isSelected)
+        {
+            // 此方法需要在子类中重写，以便应用选择状态到具体的项集合
         }
 
         /// <summary>

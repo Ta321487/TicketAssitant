@@ -6,6 +6,7 @@ using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
 using TA_WPF.Utils;
 using System.ComponentModel;
+using Theme = MaterialDesignThemes.Wpf.Theme;
 
 namespace TA_WPF.Services
 {
@@ -96,6 +97,30 @@ namespace TA_WPF.Services
                     Application.Current.Resources["Theme.Dark"] = isDarkMode;
                     Application.Current.Resources["Theme.Light"] = !isDarkMode;
                     
+                    // 更新选择相关资源
+                    if (isDarkMode)
+                    {
+                        // 深色模式下调整选择资源
+                        if (Application.Current.Resources.Contains("MaterialDesignSelection") && 
+                            Application.Current.Resources.Contains("MaterialDesignSelectionForeground"))
+                        {
+                            // 深色模式下使用更明显的选择背景和前景色
+                            Application.Current.Resources["MaterialDesignSelection"] = new SolidColorBrush(Color.FromArgb(100, 124, 77, 255)); // #7C4DFF with 0.4 opacity
+                            Application.Current.Resources["MaterialDesignSelectionForeground"] = new SolidColorBrush(Colors.White);
+                        }
+                    }
+                    else
+                    {
+                        // 浅色模式下恢复默认选择资源
+                        if (Application.Current.Resources.Contains("MaterialDesignSelection") && 
+                            Application.Current.Resources.Contains("MaterialDesignSelectionForeground"))
+                        {
+                            // 重新创建默认的选择资源
+                            Application.Current.Resources["MaterialDesignSelection"] = new SolidColorBrush(Color.FromArgb(77, 124, 77, 255)); // #7C4DFF with 0.3 opacity
+                            Application.Current.Resources["MaterialDesignSelectionForeground"] = new SolidColorBrush(Colors.Black);
+                        }
+                    }
+                    
                     // 更新全局颜色资源
                     if (isDarkMode)
                     {
@@ -107,6 +132,24 @@ namespace TA_WPF.Services
                         Application.Current.Resources["GlobalAccentBrush"] = new SolidColorBrush(Color.FromRgb(124, 77, 255));    // #7C4DFF
                         Application.Current.Resources["GlobalAccentLightBrush"] = new SolidColorBrush(Color.FromRgb(156, 100, 255)); // #9C64FF
                         Application.Current.Resources["GlobalAccentDarkBrush"] = new SolidColorBrush(Color.FromRgb(94, 53, 177));  // #5E35B1
+                        
+                        // 确保深色模式下文本颜色为白色
+                        Application.Current.Resources["MaterialDesignBody"] = new SolidColorBrush(Colors.White);
+                        Application.Current.Resources["MaterialDesignBodyLight"] = new SolidColorBrush(Color.FromRgb(220, 220, 220));
+                        
+                        // 设置DataGrid背景色为黑色
+                        Application.Current.Resources["MaterialDesignPaper"] = new SolidColorBrush(Color.FromRgb(33, 33, 33)); // #212121
+                        Application.Current.Resources["MaterialDesignAlternatingRowBackground"] = new SolidColorBrush(Color.FromRgb(55, 55, 55)); // 调整为更明显的深灰色
+                    }
+                    else
+                    {
+                        // 浅色模式下恢复默认文本颜色
+                        Application.Current.Resources["MaterialDesignBody"] = new SolidColorBrush(Color.FromRgb(33, 33, 33)); // #212121
+                        Application.Current.Resources["MaterialDesignBodyLight"] = new SolidColorBrush(Color.FromRgb(117, 117, 117)); // #757575
+                        
+                        // 恢复默认背景色
+                        Application.Current.Resources["MaterialDesignPaper"] = new SolidColorBrush(Colors.White);
+                        Application.Current.Resources["MaterialDesignAlternatingRowBackground"] = new SolidColorBrush(Color.FromRgb(245, 245, 245)); // #F5F5F5
                     }
                     
                     // 应用主题到所有打开的窗口
