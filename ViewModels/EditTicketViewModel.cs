@@ -22,6 +22,7 @@ namespace TA_WPF.ViewModels
         private bool _isUpdatingDepartStation = false;
         private bool _isUpdatingArriveStation = false;
         private bool _isInitialLoad = true;  // 添加初始加载标志
+        private bool _isInitializing = true;  // 添加初始化标志
 
         public EditTicketViewModel(DatabaseService databaseService, MainViewModel mainViewModel, TrainRideInfo ticket) 
             : base(databaseService, mainViewModel)
@@ -34,6 +35,9 @@ namespace TA_WPF.ViewModels
             
             // 初始加载完成
             _isInitialLoad = false;
+            
+            // 重置表单修改状态，因为这是初始加载，不应该被视为用户修改
+            ResetFormModifiedState();
         }
 
         /// <summary>
@@ -261,6 +265,9 @@ namespace TA_WPF.ViewModels
                         await _mainViewModel.QueryAllTicketsViewModel.QueryAllAsync();
                     }
                 }
+                
+                // 重置表单修改状态
+                ResetFormModifiedState();
                 
                 // 安全地关闭窗口
                 try

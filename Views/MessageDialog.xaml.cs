@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
 using TA_WPF.Services;
+using System.Windows.Input;
 
 namespace TA_WPF.Views
 {
@@ -133,6 +134,12 @@ namespace TA_WPF.Views
             this.Closed += (s, e) => {
                 _themeService.ThemeChanged -= OnThemeChanged;
             };
+            
+            // 添加键盘事件处理
+            this.KeyDown += MessageDialog_KeyDown;
+            
+            // 添加窗口加载事件处理
+            this.Loaded += MessageDialog_Loaded;
         }
         
         private void ApplyTheme(bool isDarkMode)
@@ -160,6 +167,44 @@ namespace TA_WPF.Views
             ApplyTheme(isDarkMode);
         }
 
+        private void MessageDialog_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                // 根据按钮类型执行相应操作
+                switch (Buttons)
+                {
+                    case MessageButtons.Ok:
+                        // 确定按钮
+                        DialogResult = true;
+                        break;
+                    case MessageButtons.YesNo:
+                    case MessageButtons.YesNoCancel:
+                        // 是按钮
+                        DialogResult = true;
+                        break;
+                }
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                // Escape键处理
+                switch (Buttons)
+                {
+                    case MessageButtons.Ok:
+                    case MessageButtons.YesNo:
+                        // 取消或否
+                        DialogResult = false;
+                        break;
+                    case MessageButtons.YesNoCancel:
+                        // 取消
+                        DialogResult = null;
+                        break;
+                }
+                e.Handled = true;
+            }
+        }
+
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
@@ -178,6 +223,21 @@ namespace TA_WPF.Views
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = null;
+        }
+
+        private void MessageDialog_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 根据按钮类型设置焦点
+            switch (Buttons)
+            {
+                case MessageButtons.Ok:
+                    OkButton.Focus();
+                    break;
+                case MessageButtons.YesNo:
+                case MessageButtons.YesNoCancel:
+                    YesButton.Focus();
+                    break;
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

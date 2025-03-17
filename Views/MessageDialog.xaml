@@ -70,6 +70,7 @@
                     Padding="16,8"
                     Click="OkButton_Click"
                     Margin="0,0,16,0"
+                    IsDefault="True"
                     Visibility="{Binding IsOkButtonVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <Button x:Name="YesButton"
                     Content="是"
@@ -78,6 +79,7 @@
                     Padding="16,8"
                     Click="YesButton_Click"
                     Margin="0,0,16,0"
+                    IsDefault="True"
                     Visibility="{Binding IsYesNoButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <Button x:Name="NoButton"
                     Content="否"
@@ -86,6 +88,7 @@
                     Padding="16,8"
                     Click="NoButton_Click"
                     Margin="0,0,16,0"
+                    IsCancel="True"
                     Visibility="{Binding IsYesNoButtonsVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <Button x:Name="CancelButton"
                     Content="取消"
@@ -93,6 +96,7 @@
                     FontFamily="Microsoft YaHei"
                     Padding="16,8"
                     Click="CancelButton_Click"
+                    IsCancel="True"
                     Visibility="{Binding IsCancelButtonVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </StackPanel>
     </Grid>

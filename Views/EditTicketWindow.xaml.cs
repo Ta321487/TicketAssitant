@@ -12,6 +12,8 @@ using MaterialDesignThemes.Wpf;
 using System.Windows.Media;
 using System.Collections.Generic;
 using TA_WPF.Models;
+using System.Linq;
+using System.ComponentModel;
 
 namespace TA_WPF.Views
 {
@@ -138,6 +140,12 @@ namespace TA_WPF.Views
                 // 设置窗口初始大小
                 AdjustWindowSize();
                 
+                // 自动设置焦点到第一个文本框
+                var firstTextBox = FindVisualChildren<TextBox>(this).FirstOrDefault();
+                if (firstTextBox != null)
+                {
+                    firstTextBox.Focus();
+                }
             }
             catch (Exception ex)
             {
@@ -244,6 +252,56 @@ namespace TA_WPF.Views
                     return IntPtr.Zero;
             }
             return IntPtr.Zero;
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            
+            try
+            {
+                // 如果DialogResult已设置，说明是通过保存按钮关闭的，不需要提示
+                if (this.DialogResult.HasValue)
+                    return;
+                
+                // 检查是否有未保存的修改
+                if (_viewModel.HasUnsavedChanges())
+                {
+                    // 显示确认对话框
+                    bool? result = MessageDialog.Show(
+                        "您有未保存的修改，是否保存？",
+                        "未保存的修改",
+                        MessageType.Question,
+                        MessageButtons.YesNoCancel,
+                        this);
+                    
+                    if (result == true) // 是
+                    {
+                        // 执行保存命令
+                        if (_viewModel.SaveCommand.CanExecute(null))
+                        {
+                            _viewModel.SaveCommand.Execute(null);
+                            
+                            // 如果保存命令执行后窗口仍然打开，说明保存失败，取消关闭
+                            if (this.IsVisible)
+                            {
+                                e.Cancel = true;
+                            }
+                        }
+                    }
+                    else if (result == null) // 取消
+                    {
+                        // 取消关闭
+                        e.Cancel = true;
+                    }
+                    // 否则 (result == false) 不保存，直接关闭
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("关闭修改车票窗口时出错", ex);
+                MessageBoxHelper.ShowError("关闭窗口时出错: " + ex.Message);
+            }
         }
     }
 } 

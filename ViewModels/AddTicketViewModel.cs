@@ -23,6 +23,10 @@ namespace TA_WPF.ViewModels
 
         // 添加字体大小变化监听
         private readonly FontSizeChangeListener _fontSizeChangeListener;
+        
+        // 添加表单修改状态跟踪
+        private bool _isFormModified = false;
+        private bool _isInitializing = true;
 
         /// <summary>
         /// 窗口关闭事件
@@ -175,10 +179,15 @@ namespace TA_WPF.ViewModels
                 
                 // 确保初始化字体大小相关属性
                 InitializeFontSizes();
+                
+                // 初始化完成后，重置表单修改状态
+                _isInitializing = false;
+                _isFormModified = false;
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.ShowError($"初始化添加车票视图模型时出错: {ex.Message}\n\n{ex.StackTrace}");
+                MessageBoxHelper.ShowError($"初始化添加车票视图模型时出错: {ex.Message}");
+                LogHelper.LogError($"初始化添加车票视图模型时出错", ex);
             }
         }
 
@@ -1073,7 +1082,7 @@ namespace TA_WPF.ViewModels
                     {
                         if (coachNumber < 0 || coachNumber > 99)
                             _validationErrors.Add("车厢号必须在00-99之间");
-            }
+                    }
                 }
             }
 
@@ -1198,6 +1207,9 @@ namespace TA_WPF.ViewModels
                     }
                 }
                 
+                // 重置表单修改状态
+                ResetFormModifiedState();
+                
                 // 安全地关闭窗口
                 try
                 {
@@ -1219,9 +1231,6 @@ namespace TA_WPF.ViewModels
                     // 尝试使用事件关闭
                     OnCloseWindow();
                 }
-                
-                // 重置表单
-                ResetForm();
             }
             catch (MySqlException sqlEx)
             {
@@ -1503,6 +1512,12 @@ namespace TA_WPF.ViewModels
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            
+            // 当属性变更时，如果不是初始化阶段且不是IsFormModified属性本身，则标记表单已修改
+            if (!_isInitializing && propertyName != nameof(IsFormModified))
+            {
+                IsFormModified = true;
+            }
         }
 
         #endregion
@@ -1514,6 +1529,38 @@ namespace TA_WPF.ViewModels
             {
                 _fontSizeChangeListener.FontSizeChanged -= OnFontSizeChanged;
             }
+        }
+
+        /// <summary>
+        /// 表单是否已修改
+        /// </summary>
+        public bool IsFormModified
+        {
+            get => _isFormModified;
+            protected set
+            {
+                if (_isFormModified != value)
+                {
+                    _isFormModified = value;
+                    OnPropertyChanged(nameof(IsFormModified));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 检查表单是否有未保存的修改
+        /// </summary>
+        public bool HasUnsavedChanges()
+        {
+            return IsFormModified;
+        }
+
+        /// <summary>
+        /// 重置表单修改状态
+        /// </summary>
+        protected void ResetFormModifiedState()
+        {
+            IsFormModified = false;
         }
     }
 
