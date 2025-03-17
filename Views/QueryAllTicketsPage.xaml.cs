@@ -491,7 +491,14 @@ namespace TA_WPF.Views
                 editWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                 
                 // 显示窗口
-                editWindow.ShowDialog();
+                bool? result = editWindow.ShowDialog();
+                
+                // 如果用户保存了修改，刷新数据
+                if (result == true)
+                {
+                    // 刷新数据
+                    _ = viewModel.RefreshDataAsync();
+                }
             }
             catch (Exception ex)
             {

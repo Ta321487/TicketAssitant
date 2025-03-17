@@ -259,6 +259,14 @@ namespace TA_WPF.ViewModels
             }
         }
 
+        /// <summary>
+        /// 刷新数据
+        /// </summary>
+        public async Task RefreshDataAsync()
+        {
+            await base.RefreshDataAsync();
+        }
+
         #region 属性
 
         /// <summary>
