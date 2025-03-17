@@ -10,7 +10,7 @@
              xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:converters="clr-namespace:TA_WPF.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="700" d:DesignWidth="1520">
     
     <!-- 设计时数据 -->
     <d:UserControl.DataContext>
@@ -197,6 +197,17 @@
                         <TextBlock Text="清除选择" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                <Button Command="{Binding EditTicketCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="修改选中的车票"
+                        Margin="0,0,8,0"
+                        Height="36"
+                        Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Edit" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="修改" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
                 <Button Command="{Binding DeleteTicketsCommand}" 
                         Style="{StaticResource MaterialDesignRaisedButton}"
                         ToolTip="删除选中的车票"
@@ -249,6 +260,7 @@
                   RowBackground="Transparent"
                   Foreground="{DynamicResource MaterialDesignBody}"
                   SelectionChanged="TicketsDataGrid_SelectionChanged"
+                  MouseDoubleClick="TicketsDataGrid_MouseDoubleClick"
                   BorderThickness="0"
                   BorderBrush="{DynamicResource MaterialDesignDivider}"
                   AlternationCount="2"

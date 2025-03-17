@@ -479,6 +479,84 @@ namespace TA_WPF.Services
         }
 
         /// <summary>
+        /// 更新车票信息
+        /// </summary>
+        /// <param name="ticket">要更新的车票信息</param>
+        /// <returns>更新是否成功</returns>
+        public async Task<bool> UpdateTicketAsync(TrainRideInfo ticket)
+        {
+            // 创建带有超时设置的连接字符串
+            var builder = new MySqlConnectionStringBuilder(_connectionString)
+            {
+                ConnectionTimeout = 10 // 设置连接超时为10秒
+            };
+            
+            using (var connection = new MySqlConnection(builder.ConnectionString))
+            {
+                try
+                {
+                    await connection.OpenAsync();
+
+                    string query = @"UPDATE train_ride_info 
+                                   SET ticket_number = @TicketNumber,
+                                       check_in_location = @CheckInLocation,
+                                       depart_station = @DepartStation,
+                                       train_no = @TrainNo,
+                                       arrive_station = @ArriveStation,
+                                       depart_station_pinyin = @DepartStationPinyin,
+                                       arrive_station_pinyin = @ArriveStationPinyin,
+                                       depart_date = @DepartDate,
+                                       depart_time = @DepartTime,
+                                       coach_no = @CoachNo,
+                                       seat_no = @SeatNo,
+                                       money = @Money,
+                                       seat_type = @SeatType,
+                                       additional_info = @AdditionalInfo,
+                                       ticket_purpose = @TicketPurpose,
+                                       hint = @Hint,
+                                       depart_station_code = @DepartStationCode,
+                                       arrive_station_code = @ArriveStationCode
+                                   WHERE id = @Id";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        // 设置命令超时为5秒
+                        command.CommandTimeout = 5;
+                        
+                        command.Parameters.AddWithValue("@Id", ticket.Id);
+                        command.Parameters.AddWithValue("@TicketNumber", ticket.TicketNumber);
+                        command.Parameters.AddWithValue("@CheckInLocation", ticket.CheckInLocation);
+                        command.Parameters.AddWithValue("@DepartStation", ticket.DepartStation);
+                        command.Parameters.AddWithValue("@TrainNo", ticket.TrainNo);
+                        command.Parameters.AddWithValue("@ArriveStation", ticket.ArriveStation);
+                        command.Parameters.AddWithValue("@DepartStationPinyin", ticket.DepartStationPinyin);
+                        command.Parameters.AddWithValue("@ArriveStationPinyin", ticket.ArriveStationPinyin);
+                        command.Parameters.AddWithValue("@DepartDate", ticket.DepartDate);
+                        command.Parameters.AddWithValue("@DepartTime", ticket.DepartTime);
+                        command.Parameters.AddWithValue("@CoachNo", ticket.CoachNo);
+                        command.Parameters.AddWithValue("@SeatNo", ticket.SeatNo);
+                        command.Parameters.AddWithValue("@Money", ticket.Money);
+                        command.Parameters.AddWithValue("@SeatType", ticket.SeatType);
+                        command.Parameters.AddWithValue("@AdditionalInfo", ticket.AdditionalInfo ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@TicketPurpose", ticket.TicketPurpose ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@Hint", ticket.Hint ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@DepartStationCode", ticket.DepartStationCode);
+                        command.Parameters.AddWithValue("@ArriveStationCode", ticket.ArriveStationCode);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+                catch (MySqlException ex)
+                {
+                    // 记录详细的数据库错误信息
+                    System.Diagnostics.Debug.WriteLine($"数据库错误: {ex.Message}, 错误代码: {ex.Number}");
+                    throw; // 重新抛出异常以便上层处理
+                }
+            }
+        }
+
+        /// <summary>
         /// 删除车票
         /// </summary>
         /// <param name="ticketId">车票ID</param>

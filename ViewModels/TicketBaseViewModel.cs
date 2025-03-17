@@ -73,6 +73,10 @@ namespace TA_WPF.ViewModels
             // 初始化删除车票命令
             DeleteTicketsCommand = new RelayCommand(DeleteTickets, () => SelectedItemsCount > 0);
             
+            // 初始化修改车票命令
+            EditTicketCommand = new RelayCommand(EditTicket, () => SelectedItemsCount == 1);
+            DoubleClickEditCommand = new RelayCommand<TrainRideInfo>(EditTicketByDoubleClick);
+            
             // 订阅TrainRideInfo的属性变更事件
             _paginationViewModel.Items.CollectionChanged += (s, e) =>
             {
@@ -111,6 +115,16 @@ namespace TA_WPF.ViewModels
         public ICommand AddTicketCommand { get; }
         
         /// <summary>
+        /// 修改车票命令
+        /// </summary>
+        public ICommand EditTicketCommand { get; }
+        
+        /// <summary>
+        /// 双击修改车票命令
+        /// </summary>
+        public ICommand DoubleClickEditCommand { get; }
+        
+        /// <summary>
         /// 添加车票
         /// </summary>
         protected virtual void AddTicket()
@@ -131,6 +145,54 @@ namespace TA_WPF.ViewModels
             {
                 MessageBoxHelper.ShowError($"打开添加车票窗口时出错: {ex.Message}");
                 LogHelper.LogError($"打开添加车票窗口时出错", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 修改车票
+        /// </summary>
+        protected virtual void EditTicket()
+        {
+            try
+            {
+                var selectedTicket = _paginationViewModel.Items.FirstOrDefault(t => t.IsSelected);
+                if (selectedTicket != null)
+                {
+                    EditTicketByDoubleClick(selectedTicket);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"修改车票时出错: {ex.Message}");
+                LogHelper.LogError($"修改车票时出错", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 通过双击修改车票
+        /// </summary>
+        /// <param name="ticket">要修改的车票</param>
+        protected virtual void EditTicketByDoubleClick(TrainRideInfo ticket)
+        {
+            try
+            {
+                if (ticket != null)
+                {
+                    // 打开修改车票窗口
+                    bool result = _navigationService.OpenEditTicketWindow(_databaseService, _mainViewModel, ticket);
+                    
+                    // 如果用户保存了修改，刷新数据
+                    if (result)
+                    {
+                        // 刷新数据
+                        _ = RefreshDataAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"修改车票时出错: {ex.Message}");
+                LogHelper.LogError($"修改车票时出错", ex);
             }
         }
         
@@ -719,6 +781,16 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
+
+        /// <summary>
+        /// 数据库服务
+        /// </summary>
+        public DatabaseService DatabaseService => _databaseService;
+
+        /// <summary>
+        /// 主视图模型
+        /// </summary>
+        public MainViewModel MainViewModel => _mainViewModel;
 
         #endregion
 

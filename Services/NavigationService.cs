@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using TA_WPF.Models;
 using TA_WPF.Utils;
 using TA_WPF.ViewModels;
 using TA_WPF.Views;
@@ -88,6 +89,45 @@ namespace TA_WPF.Services
             {
                 MessageBoxHelper.ShowError($"打开添加车票窗口时出错: {ex.Message}");
                 LogHelper.LogError($"打开添加车票窗口时出错: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 打开修改车票窗口
+        /// </summary>
+        /// <param name="databaseService">数据库服务</param>
+        /// <param name="mainViewModel">主视图模型</param>
+        /// <param name="ticket">要修改的车票</param>
+        /// <returns>是否成功修改车票</returns>
+        public bool OpenEditTicketWindow(DatabaseService databaseService, MainViewModel mainViewModel, TrainRideInfo ticket)
+        {
+            try
+            {
+                var editTicketWindow = new EditTicketWindow(databaseService, mainViewModel, ticket);
+                
+                // 确保主窗口已初始化并且可见
+                if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)
+                {
+                    editTicketWindow.Owner = Application.Current.MainWindow;
+                    editTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                }
+                else
+                {
+                    // 如果主窗口不可用，使用CenterScreen
+                    editTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                }
+                
+                // 显示窗口
+                bool? result = editTicketWindow.ShowDialog();
+                
+                // 返回是否成功修改车票
+                return result == true;
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"打开修改车票窗口时出错: {ex.Message}");
+                LogHelper.LogError($"打开修改车票窗口时出错: {ex.Message}");
                 return false;
             }
         }

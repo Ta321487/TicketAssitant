@@ -11,6 +11,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Controls;
 using System.Windows.Media.TextFormatting;
 using System.Linq;
+using TA_WPF.Utils;
 
 namespace TA_WPF.Views
 {
@@ -462,6 +463,40 @@ namespace TA_WPF.Views
                     
                 foreach (var grandChild in FindVisualChildren<T>(child))
                     yield return grandChild;
+            }
+        }
+
+        /// <summary>
+        /// 处理DataGrid的双击事件
+        /// </summary>
+        private void TicketsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            // 获取当前选中的行
+            var row = ItemsControl.ContainerFromElement((DataGrid)sender, e.OriginalSource as DependencyObject) as DataGridRow;
+            if (row == null) return;
+
+            // 获取选中的车票数据
+            var ticket = row.Item as TrainRideInfo;
+            if (ticket == null) return;
+
+            // 获取ViewModel
+            var viewModel = DataContext as QueryAllTicketsViewModel;
+            if (viewModel == null) return;
+
+            try
+            {
+                // 创建修改车票窗口
+                var editWindow = new EditTicketWindow(viewModel.DatabaseService, viewModel.MainViewModel, ticket);
+                editWindow.Owner = Window.GetWindow(this);
+                editWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                
+                // 显示窗口
+                editWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"打开修改车票窗口时出错: {ex.Message}");
+                LogHelper.LogError("打开修改车票窗口时出错", ex);
             }
         }
     }

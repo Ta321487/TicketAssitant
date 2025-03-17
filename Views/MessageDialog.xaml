@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:TA_WPF.Views"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        d:DesignHeight="250" d:DesignWidth="400"
+        d:DesignHeight="150" d:DesignWidth="400"
         Title="提示" 
         SizeToContent="WidthAndHeight"
         MinWidth="350"
