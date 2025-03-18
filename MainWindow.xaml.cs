@@ -1,20 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Windows.Controls.Primitives;
-using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using TA_WPF.ViewModels;
 using MaterialDesignThemes.Wpf;
@@ -44,7 +33,7 @@ namespace TA_WPF
         {
             try
             {
-                InitializeComponent();
+                    InitializeComponent();
                 
                 // 保存连接字符串
                 _connectionString = connectionString;
@@ -154,7 +143,7 @@ namespace TA_WPF
                     themeService.ApplyTheme(isDarkMode);
                     
                     // 强制刷新窗口
-                    this.UpdateLayout();
+                        this.UpdateLayout();
                     
                     Console.WriteLine($"窗口加载时应用了{(isDarkMode ? "深色" : "浅色")}主题");
                 }

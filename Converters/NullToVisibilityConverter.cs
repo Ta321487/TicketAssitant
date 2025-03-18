@@ -5,19 +5,13 @@ using System.Windows.Data;
 namespace TA_WPF.Converters
 {
     /// <summary>
-    /// 将字符串转换为可见性的转换器
-    /// 当字符串不为空时返回Visible，否则返回Collapsed
+    /// 将 null 值转换为 Visibility 的转换器
     /// </summary>
-    public class StringToVisibilityConverter : IValueConverter
+    public class NullToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string stringValue)
-            {
-                return string.IsNullOrEmpty(stringValue) ? Visibility.Collapsed : Visibility.Visible;
-            }
-            
-            return Visibility.Collapsed;
+            return value != null ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

@@ -1,18 +1,12 @@
-using System;
 using System.Windows;
-using System.Windows.Input;
-using System.Text.RegularExpressions;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
 using System.Windows.Controls;
 using TA_WPF.Utils;
-using System.Globalization;
 using System.Windows.Interop;
 using MaterialDesignThemes.Wpf;
 using System.Windows.Media;
-using System.Collections.Generic;
 using TA_WPF.Models;
-using System.Linq;
 using System.ComponentModel;
 
 namespace TA_WPF.Views
@@ -264,7 +258,7 @@ namespace TA_WPF.Views
                 if (this.DialogResult.HasValue)
                     return;
                 
-                // 检查是否有未保存的修改
+                // 只在用户实际修改过表单内容后才提示是否保存
                 if (_viewModel.HasUnsavedChanges())
                 {
                     // 显示确认对话框
@@ -277,16 +271,31 @@ namespace TA_WPF.Views
                     
                     if (result == true) // 是
                     {
+                        // 执行保存前先验证表单
+                        if (!_viewModel.ValidateForm())
+                        {
+                            // 显示验证错误信息
+                            string errorMessage = _viewModel.GetValidationErrors();
+                            MessageBoxHelper.ShowWarning(errorMessage, "表单验证失败");
+                            e.Cancel = true;
+                            return;
+                        }
+
                         // 执行保存命令
                         if (_viewModel.SaveCommand.CanExecute(null))
                         {
                             _viewModel.SaveCommand.Execute(null);
                             
-                            // 如果保存命令执行后窗口仍然打开，说明保存失败，取消关闭
+                            // 如果保存命令执行后窗口仍然打开，说明保存失败或表单验证未通过，取消关闭
                             if (this.IsVisible)
                             {
                                 e.Cancel = true;
                             }
+                        }
+                        else
+                        {
+                            // 如果保存命令无法执行，取消关闭
+                            e.Cancel = true;
                         }
                     }
                     else if (result == null) // 取消
@@ -296,6 +305,7 @@ namespace TA_WPF.Views
                     }
                     // 否则 (result == false) 不保存，直接关闭
                 }
+                // 如果没有修改，直接关闭窗口，不提示
             }
             catch (Exception ex)
             {

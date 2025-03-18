@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using MaterialDesignThemes.Wpf;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 

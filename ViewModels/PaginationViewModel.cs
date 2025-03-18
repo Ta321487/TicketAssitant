@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows;
 using System.Windows.Threading;
 using TA_WPF.Models;
-using System.Threading.Tasks;
 
 namespace TA_WPF.ViewModels
 {
@@ -310,7 +306,7 @@ namespace TA_WPF.ViewModels
         public bool CanNavigateToLastPage => CurrentPage < TotalPages;
 
         /// <summary>
-        /// 页码变更事件
+        /// 页面变化事件
         /// </summary>
         public event EventHandler PageChanged;
 
@@ -435,7 +431,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 清除缓存
+        /// 清除页面缓存
         /// </summary>
         public void ClearCache()
         {

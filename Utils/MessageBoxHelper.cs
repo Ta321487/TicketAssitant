@@ -3,6 +3,18 @@ using TA_WPF.Views;
 
 namespace TA_WPF.Utils
 {
+    public class InputDialogResult
+    {
+        public bool IsConfirmed { get; set; }
+        public string InputText { get; set; }
+
+        public InputDialogResult(bool isConfirmed, string inputText)
+        {
+            IsConfirmed = isConfirmed;
+            InputText = inputText;
+        }
+    }
+
     public static class MessageBoxHelper
     {
         public static bool? ShowInformation(string message, string title = "提示", Window owner = null)
@@ -33,6 +45,20 @@ namespace TA_WPF.Utils
         public static bool? ShowInfo(string message, string title = "提示", Window owner = null)
         {
             return ShowInformation(message, title, owner);
+        }
+
+        public static InputDialogResult ShowInputDialog(string title, string prompt, string initialValue = "", Window owner = null)
+        {
+            var dialog = new InputDialog(prompt)
+            {
+                Title = title,
+                ResponseText = initialValue,
+                Owner = owner ?? Application.Current.MainWindow,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+
+            bool? result = dialog.ShowDialog();
+            return new InputDialogResult(result == true, dialog.ResponseText);
         }
     }
 } 

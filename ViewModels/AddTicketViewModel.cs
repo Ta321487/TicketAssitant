@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using MySql.Data.MySqlClient;
@@ -1004,7 +1000,10 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        protected virtual bool ValidateForm()
+        /// <summary>
+        /// 验证表单并返回是否验证通过
+        /// </summary>
+        public virtual bool ValidateForm()
         {
             // 清空验证错误列表
             _validationErrors.Clear();
@@ -1561,6 +1560,15 @@ namespace TA_WPF.ViewModels
         protected void ResetFormModifiedState()
         {
             IsFormModified = false;
+        }
+
+        /// <summary>
+        /// 获取验证错误信息
+        /// </summary>
+        /// <returns>所有验证错误信息的字符串</returns>
+        public string GetValidationErrors()
+        {
+            return string.Join("\n", _validationErrors);
         }
     }
 

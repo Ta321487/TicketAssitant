@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -6,12 +5,8 @@ using TA_WPF.ViewModels;
 using System.Windows.Controls.Primitives;
 using TA_WPF.Models;
 using System.Windows.Media;
-using System.Collections.Generic;
-using System.Windows.Controls.Primitives;
-using System.Windows.Controls;
-using System.Windows.Media.TextFormatting;
-using System.Linq;
 using TA_WPF.Utils;
+using System.Text.RegularExpressions;
 
 namespace TA_WPF.Views
 {
@@ -41,6 +36,39 @@ namespace TA_WPF.Views
             
             // 添加DataGrid的单元格工具提示事件处理
             TicketsDataGrid.LoadingRow += TicketsDataGrid_LoadingRow;
+        }
+        
+        /// <summary>
+        /// 验证车次号输入，只允许输入数字且不能以0开头
+        /// </summary>
+        private void TrainNumber_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            
+            // 使用正则表达式验证输入
+            Regex regex = new Regex("[^0-9]+");
+            bool isNotNumber = regex.IsMatch(e.Text);
+            
+            // 检查是否是数字
+            if (isNotNumber)
+            {
+                e.Handled = true;
+                return;
+            }
+            
+            // 如果是第一个字符且为0，则拒绝输入
+            if (textBox.Text.Length == 0 && e.Text == "0")
+            {
+                e.Handled = true;
+                return;
+            }
+            
+            // 确保长度不超过4位
+            if (textBox.Text.Length >= 4)
+            {
+                e.Handled = true;
+                return;
+            }
         }
         
         /// <summary>

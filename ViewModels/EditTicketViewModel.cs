@@ -1,17 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Input;
 using MySql.Data.MySqlClient;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {

@@ -2,14 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using TA_WPF.Services;
 using MaterialDesignThemes.Wpf;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Input;
-using TA_WPF.Utils;
 using TA_WPF.Models;
-using System.IO;
-using System.Text;
 
 namespace TA_WPF.ViewModels
 {

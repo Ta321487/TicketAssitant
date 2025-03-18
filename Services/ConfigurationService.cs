@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
-using System.Linq;
 using TA_WPF.Utils;
 
 namespace TA_WPF.Services

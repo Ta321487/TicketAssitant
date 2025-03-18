@@ -25,9 +25,11 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Button.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Shadows.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ToggleButton.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ComboBox.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
             <!-- 自定义资源 -->
             <SolidColorBrush x:Key="SelectedRowBrushLight" Color="#E3F2FD" />
             <SolidColorBrush x:Key="SelectedRowBrushDark" Color="#3F51B5" Opacity="0.3" />
@@ -146,11 +148,41 @@
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
+            
+            <!-- ComboBox 样式 -->
+            <Style x:Key="MaterialDesignThemedComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsKeyboardFocused" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            
+            <Style x:Key="MaterialDesignThemedOutlinedComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsKeyboardFocused" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
     
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -225,125 +257,287 @@
             
             <!-- 右侧操作区域 -->
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <!-- 这里可以添加其他操作按钮 -->
+                <Button Command="{Binding ToggleQueryPanelCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="高级查询"
+                        Margin="0,0,8,0"
+                        Height="36">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Search" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="高级查询" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
 
-        <!-- 数据表格 -->
-        <DataGrid Grid.Row="1" 
-                  x:Name="TicketsDataGrid"
-                  ItemsSource="{Binding TrainRideInfos}" 
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  CanUserResizeRows="False"
-                  CanUserResizeColumns="True"
-                  CanUserSortColumns="False"
-                  CanUserReorderColumns="False"
-                  IsReadOnly="True"
-                  SelectionMode="Extended"
-                  SelectionUnit="FullRow"
-                  EnableRowVirtualization="True"
-                  EnableColumnVirtualization="True"
-                  RowHeight="{Binding DataGridRowHeight}"
-                  HeadersVisibility="Column"
-                  materialDesign:DataGridAssist.CellPadding="12 6 12 6"
-                  materialDesign:DataGridAssist.ColumnHeaderPadding="12 8 12 8"
-                  Margin="10"
-                  HorizontalScrollBarVisibility="Auto"
-                  VerticalScrollBarVisibility="Auto"
-                  GridLinesVisibility="None"
-                  HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-                  VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-                  AlternatingRowBackground="{DynamicResource MaterialDesignAlternatingRowBackground}"
-                  Background="{DynamicResource MaterialDesignPaper}"
-                  RowBackground="Transparent"
-                  Foreground="{DynamicResource MaterialDesignBody}"
-                  SelectionChanged="TicketsDataGrid_SelectionChanged"
-                  MouseDoubleClick="TicketsDataGrid_MouseDoubleClick"
-                  BorderThickness="0"
-                  BorderBrush="{DynamicResource MaterialDesignDivider}"
-                  AlternationCount="2"
-                  ColumnWidth="*">
-            
-            <DataGrid.Resources>
-                <!-- 完全覆盖MaterialDesign默认的选中样式 -->
-                <SolidColorBrush x:Key="MaterialDesignSelection" Color="#00000000" />
-                
-                <!-- 重写单元格样式 -->
-                <Style x:Key="TransparentSelectionCellStyle" TargetType="DataGridCell">
-                    <Setter Property="Background" Value="Transparent"/>
-                    <Setter Property="BorderBrush" Value="Transparent"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="Padding" Value="8,4"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="{x:Type DataGridCell}">
-                                <Border Background="Transparent"
-                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                        SnapsToDevicePixels="True">
-                                    <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                                    VerticalAlignment="Center"
-                                                    HorizontalAlignment="Center"/>
+        <!-- 高级查询面板 -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource MaterialDesignCardBackground}"
+                Margin="10,10,10,0"
+                CornerRadius="4"
+                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                BorderThickness="1"
+                Padding="16"
+                Visibility="{Binding IsQueryPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 查询条件 -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 出发站 -->
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="出发站" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
+                        <Grid>
+                            <TextBox Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="输入出发站"
+                                     InputMethod.IsInputMethodEnabled="True"
+                                     InputMethod.PreferredImeState="On"
+                                     InputMethod.PreferredImeConversionMode="Native"/>
+                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                    Command="{Binding ClearDepartStationCommand}"
+                                    ToolTip="清空出发站"
+                                    Width="32" Height="32"
+                                    Padding="4"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,8,0"
+                                    Visibility="{Binding SelectedDepartStation, Converter={StaticResource NullToVisibilityConverter}}">
+                                <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                            </Button>
+                            <Popup IsOpen="{Binding IsDepartStationDropdownOpen}" 
+                                   PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                                   Width="{Binding ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                                   StaysOpen="False">
+                                <Border Background="{DynamicResource MaterialDesignPaper}" 
+                                        BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                        BorderThickness="1" 
+                                        MaxHeight="200">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding DepartStationSuggestions}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Command="{Binding DataContext.SelectDepartStationCommand, 
+                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="{Binding StationName}"
+                                                            HorizontalContentAlignment="Left"
+                                                            HorizontalAlignment="Stretch"
+                                                            Style="{StaticResource MaterialDesignFlatButton}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
                                 </Border>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                    <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
-                            <Setter Property="BorderBrush" Value="Transparent"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.Resources>
+                            </Popup>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- 车次号 -->
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                        <TextBlock Text="车次号" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding TrainPrefixes}"
+                                      SelectedItem="{Binding SelectedTrainPrefix}"
+                                      Margin="0,0,8,0"
+                                      Style="{StaticResource MaterialDesignThemedOutlinedComboBox}"/>
+                            <Grid Grid.Column="1">
+                                <TextBox Text="{Binding TrainNumberFilter, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="输入车次号"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                <Button Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding ClearTrainNumberCommand}"
+                                        ToolTip="清空车次号"
+                                        Width="32" Height="32"
+                                        Padding="4"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,0,8,0"
+                                        Visibility="{Binding TrainNumberFilter, Converter={StaticResource StringToVisibilityConverter}}">
+                                    <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- 出发年份 -->
+                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                        <TextBlock Text="出发年份" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
+                        <Grid>
+                            <ComboBox ItemsSource="{Binding YearOptions}"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedItem="{Binding SelectedYearOption}"
+                                      materialDesign:HintAssist.Hint="选择年份"
+                                      Style="{StaticResource MaterialDesignThemedOutlinedComboBox}"/>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 查询条件类型选择 -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,0">
+                    <TextBlock Text="查询条件组合方式:" 
+                               Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                               VerticalAlignment="Center" 
+                               Margin="0,0,16,0"/>
+                    <RadioButton Content="AND (同时满足所有条件)" 
+                                 IsChecked="{Binding IsAndCondition}" 
+                                 GroupName="QueryConditionType" 
+                                 Margin="0,0,16,0"/>
+                    <RadioButton Content="OR (满足任一条件)" 
+                                 IsChecked="{Binding IsOrCondition}" 
+                                 GroupName="QueryConditionType"/>
+                </StackPanel>
+
+                <!-- 操作按钮 -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                    <Button Content="重置" 
+                            Command="{Binding ResetFilterCommand}" 
+                            Style="{StaticResource MaterialDesignOutlinedButton}" 
+                            Margin="0,0,16,0"/>
+                    <Button Content="{Binding QueryButtonText}" 
+                            Command="{Binding ApplyFilterCommand}" 
+                            Style="{StaticResource MaterialDesignRaisedButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 数据表格 -->
+        <Grid Grid.Row="2" Margin="10">
+            <!-- 暂无数据提示 -->
+            <TextBlock Text="暂无数据"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                       Foreground="{DynamicResource MaterialDesignBodyLight}"
+                       Visibility="{Binding HasNoData, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             
-            <!-- 数据表格样式 -->
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
-                    <EventSetter Event="Selected" Handler="DataGridRow_Selected"/>
-                    <EventSetter Event="Unselected" Handler="DataGridRow_Unselected"/>
-                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="Transparent"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.RowStyle>
-            <DataGrid.CellStyle>
-                <Style TargetType="DataGridCell" BasedOn="{StaticResource TransparentSelectionCellStyle}"/>
-            </DataGrid.CellStyle>
-            <DataGrid.ColumnHeaderStyle>
-                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeaderStyle}"/>
-            </DataGrid.ColumnHeaderStyle>
+            <DataGrid x:Name="TicketsDataGrid"
+                      ItemsSource="{Binding TrainRideInfos}" 
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="False"
+                      CanUserResizeColumns="True"
+                      CanUserSortColumns="False"
+                      CanUserReorderColumns="False"
+                      IsReadOnly="True"
+                      SelectionMode="Extended"
+                      SelectionUnit="FullRow"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      RowHeight="{Binding DataGridRowHeight}"
+                      HeadersVisibility="Column"
+                      materialDesign:DataGridAssist.CellPadding="12 6 12 6"
+                      materialDesign:DataGridAssist.ColumnHeaderPadding="12 8 12 8"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      GridLinesVisibility="None"
+                      HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                      VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                      AlternatingRowBackground="{DynamicResource MaterialDesignAlternatingRowBackground}"
+                      Background="{DynamicResource MaterialDesignPaper}"
+                      RowBackground="Transparent"
+                      Foreground="{DynamicResource MaterialDesignBody}"
+                      SelectionChanged="TicketsDataGrid_SelectionChanged"
+                      MouseDoubleClick="TicketsDataGrid_MouseDoubleClick"
+                      BorderThickness="0"
+                      BorderBrush="{DynamicResource MaterialDesignDivider}"
+                      AlternationCount="2"
+                      ColumnWidth="*"
+                      Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
             
-            <!-- 数据表格列 -->
-            <DataGrid.Columns>
-                <!-- 其他列 -->
-                <DataGridTextColumn Header="取票号" Binding="{Binding TicketNumber}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="检票口" Binding="{Binding CheckInLocation}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="出发车站" Binding="{Binding DepartStation}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="出发拼音" Binding="{Binding DepartStationPinyin}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="车次号" Binding="{Binding TrainNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="到达车站" Binding="{Binding ArriveStation}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="到达拼音" Binding="{Binding ArriveStationPinyin}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="出发日期" Binding="{Binding DepartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="出发时间" Binding="{Binding DepartTime, StringFormat=\{0:hh\\:mm\}}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="车厢号" Binding="{Binding CoachNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="座位号" Binding="{Binding SeatNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="金额" Binding="{Binding Money, StringFormat=¥\{0:N2\}}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="座位类型" Binding="{Binding SeatType}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="附加信息" Binding="{Binding AdditionalInfo}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="车票用途" Binding="{Binding TicketPurpose}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-                <DataGridTextColumn Header="提示" Binding="{Binding Hint}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
-            </DataGrid.Columns>
-        </DataGrid>
+                <DataGrid.Resources>
+                    <!-- 完全覆盖MaterialDesign默认的选中样式 -->
+                    <SolidColorBrush x:Key="MaterialDesignSelection" Color="#00000000" />
+                    
+                    <!-- 重写单元格样式 -->
+                    <Style x:Key="TransparentSelectionCellStyle" TargetType="DataGridCell">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderBrush" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Padding" Value="8,4"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type DataGridCell}">
+                                    <Border Background="Transparent"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            SnapsToDevicePixels="True">
+                                        <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Resources>
+                
+                <!-- 数据表格样式 -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
+                        <EventSetter Event="Selected" Handler="DataGridRow_Selected"/>
+                        <EventSetter Event="Unselected" Handler="DataGridRow_Unselected"/>
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell" BasedOn="{StaticResource TransparentSelectionCellStyle}"/>
+                </DataGrid.CellStyle>
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeaderStyle}"/>
+                </DataGrid.ColumnHeaderStyle>
+                
+                <!-- 数据表格列 -->
+                <DataGrid.Columns>
+                    <!-- 其他列 -->
+                    <DataGridTextColumn Header="取票号" Binding="{Binding TicketNumber}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="检票口" Binding="{Binding CheckInLocation}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="出发车站" Binding="{Binding DepartStation}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="出发拼音" Binding="{Binding DepartStationPinyin}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="车次号" Binding="{Binding TrainNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="到达车站" Binding="{Binding ArriveStation}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="到达拼音" Binding="{Binding ArriveStationPinyin}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="出发日期" Binding="{Binding DepartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="出发时间" Binding="{Binding DepartTime, StringFormat=\{0:hh\\:mm\}}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="车厢号" Binding="{Binding CoachNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="座位号" Binding="{Binding SeatNo}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="金额" Binding="{Binding Money, StringFormat=¥\{0:N2\}}" Width="*" MinWidth="80" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="座位类型" Binding="{Binding SeatType}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="附加信息" Binding="{Binding AdditionalInfo}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="车票用途" Binding="{Binding TicketPurpose}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="提示" Binding="{Binding Hint}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
 
         <!-- 分页控制 -->
-        <Grid Grid.Row="2" Margin="10,0,10,10">
+        <Grid Grid.Row="3" Margin="10,0,10,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -360,7 +554,7 @@
                               SelectedItem="{Binding PageSize}"
                           Width="60"
                           materialDesign:HintAssist.Hint="页大小"
-                          Style="{StaticResource MaterialDesignComboBox}"/>
+                          Style="{StaticResource MaterialDesignThemedComboBox}"/>
                 
                 <!-- 总记录数和选中项数量 -->
                 <TextBlock Text="{Binding TotalItems, StringFormat=总记录数: {0}}" 
@@ -447,7 +641,7 @@
         </Grid>
         
         <!-- 加载指示器 -->
-        <Grid Grid.Row="0" Grid.RowSpan="3" 
+        <Grid Grid.Row="0" Grid.RowSpan="4" 
               Background="#80000000" 
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 

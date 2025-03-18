@@ -1,8 +1,4 @@
-using System;
-using System.Threading.Tasks;
-using System.Windows;
 using TA_WPF.Utils;
-using TA_WPF.Views;
 
 namespace TA_WPF.Services
 {

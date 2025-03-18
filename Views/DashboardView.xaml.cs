@@ -2,12 +2,7 @@ using System.Windows.Controls;
 using System.Windows;
 using LiveCharts;
 using LiveCharts.Wpf;
-using LiveCharts.Wpf.Charts.Base;
 using TA_WPF.ViewModels;
-using System.Linq;
-using System.Collections.Generic;
-using System;
-using System.Text.RegularExpressions;
 using System.Windows.Input;
 using System.Windows.Media;
 

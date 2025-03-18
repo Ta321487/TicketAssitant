@@ -1,12 +1,9 @@
-using System;
-using System.ComponentModel;
 using System.Windows.Input;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using System.IO;
 using Microsoft.Win32;
 using System.Diagnostics;
-using System.IO.Compression;
 
 namespace TA_WPF.ViewModels
 {

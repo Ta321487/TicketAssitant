@@ -1,9 +1,7 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using TA_WPF.ViewModels;
 using System.Configuration;
-using System.Globalization;
 
 namespace TA_WPF.Views
 {

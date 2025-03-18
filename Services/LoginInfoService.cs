@@ -1,6 +1,4 @@
-using System;
 using System.Configuration;
-using System.Globalization;
 using TA_WPF.Utils;
 
 namespace TA_WPF.Services

@@ -1,10 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
-using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using TA_WPF.Models;
+using System.Text;
+using TA_WPF.Utils;
+using System.Diagnostics;
 
 namespace TA_WPF.Services
 {
@@ -234,36 +233,197 @@ namespace TA_WPF.Services
                 {
                     await connection.OpenAsync();
 
-                    // 获取总记录数，使用COUNT(id)而不是COUNT(*)以提高性能
-                    using (var countCommand = new MySqlCommand("SELECT COUNT(id) FROM train_ride_info", connection))
+                    using (var command = new MySqlCommand("SELECT COUNT(*) FROM train_ride_info", connection))
                     {
-                        // 设置命令超时
-                        countCommand.CommandTimeout = 30; // 30秒
-                        
-                        // 执行查询并获取结果
-                        var result = await countCommand.ExecuteScalarAsync();
-                        
-                        // 确保结果不为null，并转换为整数
-                        if (result != null && result != DBNull.Value)
-                        {
-                            return Convert.ToInt32(result);
-                        }
-                        
-                        // 如果结果为null，返回0
-                        return 0;
+                        return Convert.ToInt32(await command.ExecuteScalarAsync());
                     }
                 }
             }
             catch (Exception ex)
             {
-                // 记录错误
-                Console.WriteLine($"获取总记录数时出错: {ex.Message}");
+                throw new Exception($"获取车票总数时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 根据筛选条件获取车票总数
+        /// </summary>
+        /// <param name="departStation">出发站</param>
+        /// <param name="trainNo">车次号</param>
+        /// <param name="year">出发年份</param>
+        /// <param name="isAndCondition">是否使用AND条件</param>
+        /// <returns>符合条件的车票总数</returns>
+        public async Task<int> GetFilteredTrainRideInfoCountAsync(string departStation, string trainNo, int? year, bool isAndCondition)
+        {
+            try
+            {
+                // 添加一个小延迟，确保加载动画能够显示
+                await Task.Delay(200);
                 
-                // 在生产环境中，可能需要记录到日志文件
-                // Logger.LogError($"获取总记录数时出错: {ex.Message}", ex);
+                // 构建查询条件
+                var conditions = new List<string>();
+                var parameters = new Dictionary<string, object>();
                 
-                // 返回0，表示没有记录
-                return 0;
+                // 添加出发站筛选条件
+                if (!string.IsNullOrWhiteSpace(departStation))
+                {
+                    // 如果用户输入的站名不以"站"结尾，自动添加"站"字
+                    string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                    conditions.Add("depart_station = @DepartStation");
+                    parameters.Add("@DepartStation", stationName);
+                }
+                
+                // 添加车次号筛选条件
+                if (!string.IsNullOrWhiteSpace(trainNo))
+                {
+                    // 直接匹配车次号
+                    conditions.Add("train_no = @TrainNo");
+                    parameters.Add("@TrainNo", trainNo);
+                }
+                
+                // 添加出发年份筛选条件
+                if (year.HasValue)
+                {
+                    conditions.Add("YEAR(depart_date) = @Year");
+                    parameters.Add("@Year", year.Value);
+                }
+                
+                // 如果没有任何条件，返回所有记录数
+                if (conditions.Count == 0)
+                {
+                    return await GetTotalTrainRideInfoCountAsync();
+                }
+                
+                // 构建SQL查询语句
+                string conditionOperator = isAndCondition ? " AND " : " OR ";
+                string query = $"SELECT COUNT(*) FROM train_ride_info WHERE {string.Join(conditionOperator, conditions)}";
+                
+                using (var connection = new MySqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        // 添加参数
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.AddWithValue(param.Key, param.Value);
+                        }
+                        
+                        return Convert.ToInt32(await command.ExecuteScalarAsync());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"获取筛选车票总数时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 根据筛选条件获取分页车票信息
+        /// </summary>
+        /// <param name="pageNumber">页码</param>
+        /// <param name="pageSize">每页记录数</param>
+        /// <param name="departStation">出发站</param>
+        /// <param name="trainNo">车次号</param>
+        /// <param name="year">出发年份</param>
+        /// <param name="isAndCondition">是否使用AND条件</param>
+        /// <returns>符合条件的车票列表</returns>
+        public async Task<List<TrainRideInfo>> GetFilteredTrainRideInfosAsync(int pageNumber, int pageSize, string departStation, string trainNo, int? year, bool isAndCondition)
+        {
+            try
+            {
+                // 添加一个小延迟，确保加载动画能够显示
+                await Task.Delay(300);
+                
+                var items = new List<TrainRideInfo>();
+                
+                // 构建查询条件
+                var conditions = new List<string>();
+                var parameters = new Dictionary<string, object>();
+                
+                // 添加出发站筛选条件
+                if (!string.IsNullOrWhiteSpace(departStation))
+                {
+                    // 如果用户输入的站名不以"站"结尾，自动添加"站"字
+                    string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                    conditions.Add("depart_station = @DepartStation");
+                    parameters.Add("@DepartStation", stationName);
+                }
+                
+                // 添加车次号筛选条件
+                if (!string.IsNullOrWhiteSpace(trainNo))
+                {
+                    // 直接匹配车次号
+                    conditions.Add("train_no = @TrainNo");
+                    parameters.Add("@TrainNo", trainNo);
+                }
+                
+                // 添加出发年份筛选条件
+                if (year.HasValue)
+                {
+                    conditions.Add("YEAR(depart_date) = @Year");
+                    parameters.Add("@Year", year.Value);
+                }
+                
+                // 如果没有任何条件，使用常规查询
+                if (conditions.Count == 0)
+                {
+                    return await GetPagedTrainRideInfosAsync(pageNumber, pageSize);
+                }
+                
+                // 构建SQL查询语句
+                string conditionOperator = isAndCondition ? " AND " : " OR ";
+                string query = $@"SELECT * FROM train_ride_info 
+                               WHERE {string.Join(conditionOperator, conditions)} 
+                               ORDER BY id 
+                               LIMIT @Offset, @PageSize";
+                
+                // 记录SQL查询和参数
+                var debugInfo = new StringBuilder();
+                debugInfo.AppendLine($"执行SQL查询: {query}");
+                debugInfo.AppendLine("查询参数:");
+                foreach (var param in parameters)
+                {
+                    debugInfo.AppendLine($"  {param.Key}: {param.Value}");
+                }
+                debugInfo.AppendLine($"  @Offset: {(pageNumber - 1) * pageSize}");
+                debugInfo.AppendLine($"  @PageSize: {pageSize}");
+                
+                Debug.WriteLine(debugInfo.ToString());
+                
+                using (var connection = new MySqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        // 添加分页参数
+                        command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                        command.Parameters.AddWithValue("@PageSize", pageSize);
+                        
+                        // 添加筛选参数
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.AddWithValue(param.Key, param.Value);
+                        }
+                        
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                items.Add(MapTrainRideInfo(reader));
+                            }
+                        }
+                    }
+                }
+                
+                return items;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"获取筛选车票信息时出错: {ex.Message}", ex);
             }
         }
 
@@ -583,6 +743,49 @@ namespace TA_WPF.Services
             {
                 Console.WriteLine($"删除车票时出错: {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// 获取所有不同的出发站
+        /// </summary>
+        /// <returns>不同出发站列表</returns>
+        public async Task<List<string>> GetDistinctDepartStationsAsync()
+        {
+            try
+            {
+                var stations = new List<string>();
+                
+                using (var connection = new MySqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    
+                    string query = "SELECT DISTINCT depart_station FROM train_ride_info WHERE depart_station IS NOT NULL ORDER BY depart_station";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                string stationName = reader.GetString(0);
+                                // 如果站名不以"站"结尾，添加"站"字
+                                if (!stationName.EndsWith("站"))
+                                {
+                                    stationName += "站";
+                                }
+                                stations.Add(stationName);
+                            }
+                        }
+                    }
+                }
+                
+                return stations;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"获取出发站列表时出错: {ex.Message}");
+                return new List<string>();
             }
         }
     }
