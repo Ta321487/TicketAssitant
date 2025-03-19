@@ -305,11 +305,39 @@ namespace TA_WPF.ViewModels
             // 批量更新所有项的选择状态
             foreach (var item in TrainRideInfos)
             {
-                item.IsSelected = isSelected;
+                // 仅当需要更改状态时才更新，避免不必要的UI更新
+                if (item.IsSelected != isSelected)
+                {
+                    item.IsSelected = isSelected;
+                }
             }
 
-            // 更新选中项计数
-            UpdateSelectedItemsCount();
+            // 更新UI状态
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => {
+                // 确保UI已更新后再触发通知
+                UpdateSelectedItemsCount();
+                
+                // 触发属性变更通知以确保UI更新
+                OnPropertyChanged(nameof(HasSelectedItems));
+                OnPropertyChanged(nameof(SelectionToggleText));
+                OnPropertyChanged(nameof(SelectionToggleIcon));
+                OnPropertyChanged(nameof(SelectionToggleTooltip));
+                
+                // 刷新命令状态
+                CommandManager.InvalidateRequerySuggested();
+            }));
+        }
+
+        /// <summary>
+        /// 允许外部组件更新选中项计数的公共方法
+        /// </summary>
+        /// <param name="count">选中项数量</param>
+        public void UpdateSelectedItemsCountExternal(int count)
+        {
+            SelectedItemsCount = count;
+            
+            // 刷新命令状态，确保EditTicketCommand可用性正确更新
+            CommandManager.InvalidateRequerySuggested();
         }
 
         /// <summary>

@@ -284,6 +284,10 @@ namespace TA_WPF.Views
                 {
                     // 检查是否所有项都被选中
                     bool allSelected = items.All(item => item.IsSelected);
+                    int selectedCount = items.Count(item => item.IsSelected);
+                    
+                    // 强制更新选中项计数，确保EditTicketCommand可用性正确
+                    ticketViewModel.UpdateSelectedItemsCountExternal(selectedCount);
                     
                     // 如果全选状态与实际不符，则更新全选状态
                     if (allSelected != ticketViewModel.IsAllSelected)

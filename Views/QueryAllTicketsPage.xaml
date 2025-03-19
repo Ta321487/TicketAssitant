@@ -30,6 +30,7 @@
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+            <converters:IntEqualityToVisibilityConverter x:Key="IntEqualityToVisibilityConverter" />
             <!-- 自定义资源 -->
             <SolidColorBrush x:Key="SelectedRowBrushLight" Color="#E3F2FD" />
             <SolidColorBrush x:Key="SelectedRowBrushDark" Color="#3F51B5" Opacity="0.3" />
@@ -220,13 +221,13 @@
                 </Button>
                 <Button Command="{Binding ClearSelectionCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="清除选择"
+                        ToolTip="取消选择"
                         Margin="0,0,8,0"
                         Height="36"
                         Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="CheckboxMultipleBlankOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="清除选择" VerticalAlignment="Center"/>
+                        <TextBlock Text="取消选择" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Command="{Binding EditTicketCommand}" 
@@ -234,7 +235,7 @@
                         ToolTip="修改选中的车票"
                         Margin="0,0,8,0"
                         Height="36"
-                        Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        Visibility="{Binding SelectedItemsCount, Converter={StaticResource IntEqualityToVisibilityConverter}, ConverterParameter=1}">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Edit" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBlock Text="修改" VerticalAlignment="Center"/>
@@ -355,6 +356,10 @@
                       SelectionUnit="FullRow"
                       EnableRowVirtualization="True"
                       EnableColumnVirtualization="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                      VirtualizingPanel.ScrollUnit="Pixel"
                       RowHeight="{Binding DataGridRowHeight}"
                       HeadersVisibility="Column"
                       materialDesign:DataGridAssist.CellPadding="12 6 12 6"
