@@ -8,6 +8,8 @@ using MaterialDesignThemes.Wpf;
 using System.Windows.Media;
 using TA_WPF.Models;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
+using System.Windows.Input;
 
 namespace TA_WPF.Views
 {
@@ -125,6 +127,21 @@ namespace TA_WPF.Views
         {
             // 更新窗口主题
             ApplyTheme(isDarkMode);
+        }
+        
+        private void SeatNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            try
+            {
+                // 只允许输入数字
+                Regex regex = new Regex("[^0-9]+");
+                e.Handled = regex.IsMatch(e.Text);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理座位号输入时出错", ex);
+                e.Handled = true;
+            }
         }
 
         private void EditTicketWindow_Loaded(object sender, RoutedEventArgs e)

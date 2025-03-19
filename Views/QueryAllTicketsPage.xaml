@@ -257,7 +257,7 @@
             
             <!-- 右侧操作区域 -->
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Command="{Binding ToggleQueryPanelCommand}" 
+                <Button Command="{Binding AdvancedQueryViewModel.ToggleQueryPanelCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="高级查询"
                         Margin="0,0,8,0"
@@ -270,148 +270,65 @@
             </StackPanel>
         </Grid>
 
-        <!-- 高级查询面板 -->
+        <!-- 替换高级查询面板 -->
         <Border Grid.Row="1" 
-                Background="{DynamicResource MaterialDesignCardBackground}"
-                Margin="10,10,10,0"
-                CornerRadius="4"
-                BorderBrush="{DynamicResource MaterialDesignDivider}"
-                BorderThickness="1"
-                Padding="16"
-                Visibility="{Binding IsQueryPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <!-- 查询条件 -->
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- 出发站 -->
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="出发站" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
-                        <Grid>
-                            <TextBox Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                     materialDesign:HintAssist.Hint="输入出发站"
-                                     InputMethod.IsInputMethodEnabled="True"
-                                     InputMethod.PreferredImeState="On"
-                                     InputMethod.PreferredImeConversionMode="Native"/>
-                            <Button Style="{StaticResource MaterialDesignIconButton}"
-                                    Command="{Binding ClearDepartStationCommand}"
-                                    ToolTip="清空出发站"
-                                    Width="32" Height="32"
-                                    Padding="4"
-                                    HorizontalAlignment="Right"
-                                    Margin="0,0,8,0"
-                                    Visibility="{Binding SelectedDepartStation, Converter={StaticResource NullToVisibilityConverter}}">
-                                <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
-                            </Button>
-                            <Popup IsOpen="{Binding IsDepartStationDropdownOpen}" 
-                                   PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
-                                   Width="{Binding ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
-                                   StaysOpen="False">
-                                <Border Background="{DynamicResource MaterialDesignPaper}" 
-                                        BorderBrush="{DynamicResource MaterialDesignDivider}" 
-                                        BorderThickness="1" 
-                                        MaxHeight="200">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                        <ItemsControl ItemsSource="{Binding DepartStationSuggestions}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Button Command="{Binding DataContext.SelectDepartStationCommand, 
-                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                            CommandParameter="{Binding}"
-                                                            Content="{Binding StationName}"
-                                                            HorizontalContentAlignment="Left"
-                                                            HorizontalAlignment="Stretch"
-                                                            Style="{StaticResource MaterialDesignFlatButton}"/>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </ScrollViewer>
-                                </Border>
-                            </Popup>
-                        </Grid>
-                    </StackPanel>
-
-                    <!-- 车次号 -->
-                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                        <TextBlock Text="车次号" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <ComboBox Grid.Column="0"
-                                      ItemsSource="{Binding TrainPrefixes}"
-                                      SelectedItem="{Binding SelectedTrainPrefix}"
-                                      Margin="0,0,8,0"
-                                      Style="{StaticResource MaterialDesignThemedOutlinedComboBox}"/>
-                            <Grid Grid.Column="1">
-                                <TextBox Text="{Binding TrainNumberFilter, UpdateSourceTrigger=PropertyChanged}"
-                                         materialDesign:HintAssist.Hint="输入车次号"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                                <Button Style="{StaticResource MaterialDesignIconButton}"
-                                        Command="{Binding ClearTrainNumberCommand}"
-                                        ToolTip="清空车次号"
-                                        Width="32" Height="32"
-                                        Padding="4"
-                                        HorizontalAlignment="Right"
-                                        Margin="0,0,8,0"
-                                        Visibility="{Binding TrainNumberFilter, Converter={StaticResource StringToVisibilityConverter}}">
-                                    <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </StackPanel>
-
-                    <!-- 出发年份 -->
-                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
-                        <TextBlock Text="出发年份" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
-                        <Grid>
-                            <ComboBox ItemsSource="{Binding YearOptions}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding SelectedYearOption}"
-                                      materialDesign:HintAssist.Hint="选择年份"
-                                      Style="{StaticResource MaterialDesignThemedOutlinedComboBox}"/>
-                        </Grid>
-                    </StackPanel>
-                </Grid>
-
-                <!-- 查询条件类型选择 -->
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,0">
-                    <TextBlock Text="查询条件组合方式:" 
-                               Style="{StaticResource MaterialDesignBody1TextBlock}" 
-                               VerticalAlignment="Center" 
-                               Margin="0,0,16,0"/>
-                    <RadioButton Content="AND (同时满足所有条件)" 
-                                 IsChecked="{Binding IsAndCondition}" 
-                                 GroupName="QueryConditionType" 
-                                 Margin="0,0,16,0"/>
-                    <RadioButton Content="OR (满足任一条件)" 
-                                 IsChecked="{Binding IsOrCondition}" 
-                                 GroupName="QueryConditionType"/>
-                </StackPanel>
-
-                <!-- 操作按钮 -->
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                    <Button Content="重置" 
-                            Command="{Binding ResetFilterCommand}" 
-                            Style="{StaticResource MaterialDesignOutlinedButton}" 
-                            Margin="0,0,16,0"/>
-                    <Button Content="{Binding QueryButtonText}" 
-                            Command="{Binding ApplyFilterCommand}" 
-                            Style="{StaticResource MaterialDesignRaisedButton}"/>
-                </StackPanel>
-            </Grid>
+                Margin="10,10,10,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding AdvancedQueryViewModel.IsQueryPanelVisible}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                        </ObjectAnimationUsingKeyFrames>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="0" To="1" Duration="0:0:0.35">
+                                            <DoubleAnimation.EasingFunction>
+                                                <PowerEase EasingMode="EaseOut" Power="2"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                                         From="-15" To="0" Duration="0:0:0.4">
+                                            <DoubleAnimation.EasingFunction>
+                                                <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="1" To="0" Duration="0:0:0.25">
+                                            <DoubleAnimation.EasingFunction>
+                                                <PowerEase EasingMode="EaseIn" Power="2"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                                         From="0" To="-10" Duration="0:0:0.25">
+                                            <DoubleAnimation.EasingFunction>
+                                                <PowerEase EasingMode="EaseIn" Power="3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                            <DiscreteObjectKeyFrame KeyTime="0:0:0.25" Value="{x:Static Visibility.Collapsed}"/>
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Border.RenderTransform>
+                <TranslateTransform Y="0"/>
+            </Border.RenderTransform>
+            <Border.Opacity>0</Border.Opacity>
+            <local:AdvancedQueryTicketPanel DataContext="{Binding AdvancedQueryViewModel}" />
         </Border>
 
         <!-- 数据表格 -->
@@ -644,11 +561,19 @@
         <Grid Grid.Row="0" Grid.RowSpan="4" 
               Background="#80000000" 
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
                          Value="0" 
                          IsIndeterminate="True" 
                          Width="48" 
-                         Height="48"/>
+                             Height="48"
+                             Margin="0,0,0,8"/>
+                <TextBlock Text="加载中" 
+                           Style="{StaticResource MaterialDesignBody1TextBlock}"
+                           HorizontalAlignment="Center"
+                           Foreground="White"
+                           FontWeight="Medium"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl> 

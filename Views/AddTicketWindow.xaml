@@ -462,6 +462,7 @@
                                  IsEnabled="{Binding IsSeatInputEnabled}"
                                  Style="{StaticResource FormNumberTextBoxStyle}"
                                  materialDesign:HintAssist.Hint="座位号"
+                                 PreviewTextInput="SeatNo_PreviewTextInput"
                                  Margin="0"/>
                         <ComboBox Grid.Column="1" 
                                   ItemsSource="{Binding SeatPositions}" 

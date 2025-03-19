@@ -283,6 +283,21 @@ namespace TA_WPF.Views
                 e.Handled = true;
             }
         }
+        
+        private void SeatNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            try
+            {
+                // 只允许输入数字
+                Regex regex = new Regex("[^0-9]+");
+                e.Handled = regex.IsMatch(e.Text);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理座位号输入时出错", ex);
+                e.Handled = true;
+            }
+        }
 
         private void MoneyTextBox_LostFocus(object sender, RoutedEventArgs e)
         {

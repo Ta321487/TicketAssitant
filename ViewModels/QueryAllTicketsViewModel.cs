@@ -7,51 +7,28 @@ using System.Windows.Input;
 
 namespace TA_WPF.ViewModels
 {
-    public class YearOption
-    {
-        public int? Year { get; set; }
-        public string DisplayName { get; set; }
-        public bool IsCustom { get; set; }
-
-        public YearOption(int? year, string displayName, bool isCustom = false)
-        {
-            Year = year;
-            DisplayName = displayName;
-            IsCustom = isCustom;
-        }
-    }
-    
-    public class DepartStationItem
-    {
-        public string DepartStation { get; set; }
-        
-        public DepartStationItem(string departStation)
-        {
-            DepartStation = departStation;
-        }
-    }
-
     public class QueryAllTicketsViewModel : TicketBaseViewModel
     {
         #region 字段
 
         private bool _isQueryPanelVisible;
-        private string _trainNumberFilter;
-        private string _selectedTrainPrefix;
-        private DepartStationItem _selectedDepartStation;
-        private YearOption _selectedYearOption;
-        private List<YearOption> _yearOptions;
-        private ObservableCollection<DepartStationItem> _departStations;
-        private List<string> _trainPrefixes;
+        private string _trainNumberFilter = string.Empty;
+        private string _selectedTrainPrefix = string.Empty;
+        private DepartStationItem? _selectedDepartStation;
+        private YearOption? _selectedYearOption;
+        private List<YearOption> _yearOptions = new();
+        private ObservableCollection<DepartStationItem> _departStations = new();
+        private List<string> _trainPrefixes = new();
         private bool _isAndCondition = true;
         private bool _isOrCondition;
         private bool _hasActiveFilters;
         private int? _customYear;
         private bool _isCustomYearSelected;
-        private ObservableCollection<StationInfo> _departStationSuggestions;
+        private ObservableCollection<StationInfo> _departStationSuggestions = new();
         private bool _isDepartStationDropdownOpen;
-        private string _departStationSearchText;
+        private string _departStationSearchText = string.Empty;
         private bool _isUpdatingDepartStation = false;
+        private AdvancedQueryTicketViewModel _advancedQueryViewModel;
 
         #endregion
 
@@ -79,6 +56,12 @@ namespace TA_WPF.ViewModels
             
             // 异步加载出发站列表
             LoadDepartStationsAsync();
+
+            // 初始化高级查询视图模型
+            _advancedQueryViewModel = new AdvancedQueryTicketViewModel(databaseService);
+            
+            // 订阅筛选条件应用事件
+            _advancedQueryViewModel.FilterApplied += OnFilterApplied;
         }
 
         /// <summary>
@@ -88,7 +71,7 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                _paginationViewModel.IsLoading = true;
+                IsLoading = true;
                 
                 // 获取总记录数
                 int totalCount = await _databaseService.GetTotalTrainRideInfoCountAsync();
@@ -100,7 +83,7 @@ namespace TA_WPF.ViewModels
                 _paginationViewModel.CurrentPage = 1;
                 
                 // 清除筛选条件
-                ResetFilter();
+                AdvancedQueryViewModel.ResetFilter();
                 
                 // 清除缓存
                 _paginationViewModel.ClearCache();
@@ -135,7 +118,7 @@ namespace TA_WPF.ViewModels
             }
             finally
             {
-                _paginationViewModel.IsLoading = false;
+                IsLoading = false;
             }
         }
 
@@ -147,156 +130,129 @@ namespace TA_WPF.ViewModels
             try
             {
                 // 确保加载状态已设置
-                _paginationViewModel.IsLoading = true;
+                IsLoading = true;
                 
-                // 检查缓存中是否已有当前页数据，且页大小未变
-                if (_paginationViewModel.PageCache.ContainsKey(_paginationViewModel.CurrentPage) && 
-                    _paginationViewModel.CachePageSize == _paginationViewModel.PageSize)
+                // 检查缓存中是否已有该页数据
+                if (_paginationViewModel.TryGetCachedPage(out var cachedItems))
                 {
-                    // 从缓存加载数据
-                    var cachedItems = _paginationViewModel.PageCache[_paginationViewModel.CurrentPage];
-                    
-                    // 使用批量更新方式更新UI，减少闪烁
-                    await Application.Current.Dispatcher.InvokeAsync(() => {
-                        // 如果数量相同，尝试更新现有项而不是清空重建
-                        if (_paginationViewModel.Items.Count == cachedItems.Count)
+                    // 使用缓存数据
+                    bool needsUpdate = _paginationViewModel.Items.Count != cachedItems.Count;
+                    if (!needsUpdate)
+                    {
+                        // 如果数量相同，检查内容是否相同
+                        for (int i = 0; i < cachedItems.Count; i++)
                         {
-                            for (int i = 0; i < cachedItems.Count; i++)
+                            if (_paginationViewModel.Items[i] != cachedItems[i])
                             {
-                                _paginationViewModel.Items[i] = cachedItems[i];
+                                needsUpdate = true;
+                                break;
                             }
                         }
-                        else
-                        {
-                            _paginationViewModel.Items.Clear();
-                            foreach (var item in cachedItems)
-                            {
-                                _paginationViewModel.Items.Add(item);
-                            }
-                        }
-                    });
+                    }
+
+                    if (needsUpdate)
+                    {
+                        // 更新UI
+                        _paginationViewModel.Items = new ObservableCollection<TrainRideInfo>(cachedItems);
+                    }
+                    
+                    // 触发属性变更通知，确保UI正确显示数据状态
+                    OnPropertyChanged(nameof(HasData));
+                    OnPropertyChanged(nameof(HasNoData));
+                    return;
                 }
-                else
+                
+                // 如果有筛选条件，使用筛选查询
+                var departStation = AdvancedQueryViewModel.SelectedDepartStation?.DepartStation;
+                string? fullTrainNo = null;
+                if (!string.IsNullOrWhiteSpace(AdvancedQueryViewModel.TrainNumberFilter))
                 {
-                    // 需要从数据库加载新数据
-                    List<TrainRideInfo> items;
-                    
-                    if (HasActiveFilters)
-                    {
-                        // 构建完整的车次号
-                        string fullTrainNo = null;
-                        if (!string.IsNullOrWhiteSpace(TrainNumberFilter))
-                        {
-                            fullTrainNo = GetFullTrainNo();
-                        }
-                        
-                        // 获取年份值
-                        int? yearValue = null;
-                        if (SelectedYearOption?.Year.HasValue == true)
-                        {
-                            yearValue = SelectedYearOption.Year.Value;
-                        }
-                        
-                        // 使用筛选条件加载数据
-                        items = await _databaseService.GetFilteredTrainRideInfosAsync(
-                            _paginationViewModel.CurrentPage,
-                            _paginationViewModel.PageSize,
-                            _selectedDepartStation?.DepartStation,
-                            fullTrainNo,
-                            yearValue,
-                            _isAndCondition);
-                    }
-                    else
-                    {
-                        // 加载所有数据
-                        items = await _databaseService.GetPagedTrainRideInfosAsync(
-                            _paginationViewModel.CurrentPage,
-                            _paginationViewModel.PageSize);
-                    }
-
-                    // 更新缓存
-                    _paginationViewModel.PageCache[_paginationViewModel.CurrentPage] = items;
-                    _paginationViewModel.CachePageSize = _paginationViewModel.PageSize;
-                    
-                    // 更新UI
-                    await Application.Current.Dispatcher.InvokeAsync(() => {
-                        _paginationViewModel.Items.Clear();
-                        foreach (var item in items)
-                        {
-                            _paginationViewModel.Items.Add(item);
-                        }
-                    });
+                    fullTrainNo = AdvancedQueryViewModel.GetFullTrainNo();
                 }
-
-                // 通知数据状态变更
+                
+                // 获取年份值
+                int? yearValue = null;
+                if (AdvancedQueryViewModel.SelectedYearOption?.Year.HasValue == true)
+                {
+                    yearValue = AdvancedQueryViewModel.SelectedYearOption.Year.Value;
+                }
+                
+                // 获取当前页数据
+                var items = await _databaseService.GetFilteredTrainRideInfosAsync(
+                    _paginationViewModel.CurrentPage,
+                    _paginationViewModel.PageSize,
+                    departStation,
+                    fullTrainNo,
+                    yearValue,
+                    AdvancedQueryViewModel.IsAndCondition);
+                
+                // 更新缓存和UI
+                _paginationViewModel.UpdateCache(items);
+                
+                // 清空现有项并添加新项
+                _paginationViewModel.Items.Clear();
+                foreach (var item in items)
+                {
+                    _paginationViewModel.Items.Add(item);
+                }
+                
+                // 如果是第一页，刷新总记录数
+                if (_paginationViewModel.CurrentPage == 1)
+                {
+                    await RefreshTotalCountAsync();
+                }
+                
+                // 触发属性变更通知，确保UI正确显示数据状态
                 OnPropertyChanged(nameof(HasData));
                 OnPropertyChanged(nameof(HasNoData));
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.ShowError($"加载页面数据时出错: {ex.Message}");
+                MessageBoxHelper.ShowError($"加载数据时出错: {ex.Message}");
+                LogHelper.LogError($"加载数据时出错", ex);
             }
             finally
             {
-                _paginationViewModel.IsLoading = false;
-            }
-        }
-
-        /// <summary>
-        /// 页码变更事件处理
-        /// </summary>
-        private void OnPageChanged(object sender, EventArgs e)
-        {
-            // 确保加载状态已设置，这里不需要条件判断，因为我们希望每次页面变更都显示加载动画
-            _paginationViewModel.IsLoading = true;
-            
-            // 直接加载页面数据，不需要额外的Dispatcher调用
-            _ = LoadPageDataAsync();
-        }
-
-        /// <summary>
-        /// 页大小变更事件处理
-        /// </summary>
-        private void OnPageSizeChanged(object sender, EventArgs e)
-        {
-            try
-            {
-                // 确保加载状态已设置
-                _paginationViewModel.IsLoading = true;
-                
-                // 手动触发属性变更通知，确保UI更新
-                OnPropertyChanged(nameof(TotalPages));
-                OnPropertyChanged(nameof(CurrentPage));
-                OnPropertyChanged(nameof(PageSize));
-                OnPropertyChanged(nameof(CanNavigateToFirstPage));
-                OnPropertyChanged(nameof(CanNavigateToPreviousPage));
-                OnPropertyChanged(nameof(CanNavigateToNextPage));
-                OnPropertyChanged(nameof(CanNavigateToLastPage));
-                
-                // 刷新命令状态
-                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
-                
-                // 加载新的页面数据
-                _ = LoadPageDataAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"页大小变更处理出错: {ex.Message}");
-                // 确保加载状态被重置
-                _paginationViewModel.IsLoading = false;
+                IsLoading = false;
             }
         }
 
         /// <summary>
         /// 刷新总记录数
         /// </summary>
-        /// <returns>异步任务</returns>
-        protected override async Task RefreshTotalItemsAsync()
+        private async Task RefreshTotalCountAsync()
         {
             try
             {
-                // 获取总记录数
-                int totalCount = await _databaseService.GetTotalTrainRideInfoCountAsync();
+                // 获取总记录数（考虑筛选条件）
+                int totalCount;
+                var departStation = AdvancedQueryViewModel.SelectedDepartStation?.DepartStation;
+                string fullTrainNo = null;
+                if (!string.IsNullOrWhiteSpace(AdvancedQueryViewModel.TrainNumberFilter))
+                {
+                    fullTrainNo = AdvancedQueryViewModel.GetFullTrainNo();
+                }
+                
+                // 获取年份值
+                int? yearValue = null;
+                if (AdvancedQueryViewModel.SelectedYearOption?.Year.HasValue == true)
+                {
+                    yearValue = AdvancedQueryViewModel.SelectedYearOption.Year.Value;
+                }
+                
+                // 根据是否有筛选条件获取总记录数
+                if (departStation != null || fullTrainNo != null || yearValue.HasValue)
+                {
+                    totalCount = await _databaseService.GetFilteredTrainRideInfoCountAsync(
+                        departStation,
+                        fullTrainNo,
+                        yearValue,
+                        AdvancedQueryViewModel.IsAndCondition);
+                }
+                else
+                {
+                    totalCount = await _databaseService.GetTotalTrainRideInfoCountAsync();
+                }
                 
                 // 设置总记录数，这会触发TotalPages的重新计算
                 _paginationViewModel.TotalItems = totalCount;
@@ -317,10 +273,100 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public async Task RefreshDataAsync()
         {
-            await base.RefreshDataAsync();
+            // 设置加载状态为 true，这会自动触发 HasData 和 HasNoData 的更新
+            IsLoading = true;
+            
+            try
+            {
+                await base.RefreshDataAsync();
+            }
+            finally
+            {
+                // 无论操作成功与否，都需要更新加载状态为 false
+                IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// 处理筛选条件应用事件
+        /// </summary>
+        private async void OnFilterApplied(object sender, QueryFilterEventArgs e)
+        {
+            try
+            {
+                // 使用我们的属性设置加载状态
+                IsLoading = true;
+                
+                // 获取总记录数
+                int totalCount;
+                
+                // 根据是否有筛选条件获取总记录数
+                if (e.DepartStation != null || e.FullTrainNo != null || e.Year.HasValue)
+                {
+                    totalCount = await _databaseService.GetFilteredTrainRideInfoCountAsync(
+                        e.DepartStation,
+                        e.FullTrainNo,
+                        e.Year,
+                        e.IsAndCondition);
+                }
+                else
+                {
+                    totalCount = await _databaseService.GetTotalTrainRideInfoCountAsync();
+                }
+                
+                // 设置总记录数，这会触发TotalPages的重新计算
+                _paginationViewModel.TotalItems = totalCount;
+                
+                // 重置到第一页
+                _paginationViewModel.CurrentPage = 1;
+                
+                // 清除缓存
+                _paginationViewModel.ClearCache();
+                
+                // 加载第一页数据
+                await LoadPageDataAsync();
+                
+                // 标记为已初始化
+                _paginationViewModel.IsInitialized = true;
+                
+                // 显示数据表格
+                _mainViewModel.ShowQueryAllTickets = true;
+                
+                // 手动触发属性变更通知，确保UI更新
+                OnPropertyChanged(nameof(TotalItems));
+                OnPropertyChanged(nameof(TotalPages));
+                OnPropertyChanged(nameof(CurrentPage));
+                OnPropertyChanged(nameof(TrainRideInfos));
+                
+                // 手动触发导航按钮状态更新
+                OnPropertyChanged(nameof(CanNavigateToFirstPage));
+                OnPropertyChanged(nameof(CanNavigateToPreviousPage));
+                OnPropertyChanged(nameof(CanNavigateToNextPage));
+                OnPropertyChanged(nameof(CanNavigateToLastPage));
+                
+                // 触发属性变更通知，确保UI正确显示数据状态
+                OnPropertyChanged(nameof(HasData));
+                OnPropertyChanged(nameof(HasNoData));
+                
+                // 手动刷新命令状态
+                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"应用筛选条件时出错: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         #region 属性
+
+        /// <summary>
+        /// 高级查询视图模型
+        /// </summary>
+        public AdvancedQueryTicketViewModel AdvancedQueryViewModel => _advancedQueryViewModel;
 
         /// <summary>
         /// 是否正在加载
@@ -328,7 +374,17 @@ namespace TA_WPF.ViewModels
         public bool IsLoading
         {
             get => _paginationViewModel.IsLoading;
-            set => _paginationViewModel.IsLoading = value;
+            set 
+            { 
+                if (_paginationViewModel.IsLoading != value)
+                {
+                    _paginationViewModel.IsLoading = value;
+                    OnPropertyChanged(nameof(IsLoading));
+                    // 当加载状态改变时，刷新HasData和HasNoData
+                    OnPropertyChanged(nameof(HasData));
+                    OnPropertyChanged(nameof(HasNoData));
+                }
+            }
         }
 
         /// <summary>
@@ -462,7 +518,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 选中的出发站
         /// </summary>
-        public DepartStationItem SelectedDepartStation
+        public DepartStationItem? SelectedDepartStation
         {
             get => _selectedDepartStation;
             set
@@ -471,7 +527,16 @@ namespace TA_WPF.ViewModels
                 {
                     _selectedDepartStation = value;
                     OnPropertyChanged(nameof(SelectedDepartStation));
-                    OnPropertyChanged(nameof(QueryButtonText));
+                    
+                    _departStationSearchText = value?.DepartStation ?? string.Empty;
+                    OnPropertyChanged(nameof(DepartStationSearchText));
+                    
+                    // 更新是否有筛选条件的状态
+                    bool hasActiveFilter = HasAnyActiveFilter();
+                    if (HasActiveFilters != hasActiveFilter)
+                    {
+                        HasActiveFilters = hasActiveFilter;
+                    }
                 }
             }
         }
@@ -479,7 +544,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 选中的年份选项
         /// </summary>
-        public YearOption SelectedYearOption
+        public YearOption? SelectedYearOption
         {
             get => _selectedYearOption;
             set
@@ -496,7 +561,13 @@ namespace TA_WPF.ViewModels
                     }
                     
                     OnPropertyChanged(nameof(SelectedYearOption));
-                    OnPropertyChanged(nameof(QueryButtonText));
+                    
+                    // 更新是否有筛选条件的状态
+                    bool hasActiveFilter = HasAnyActiveFilter();
+                    if (HasActiveFilters != hasActiveFilter)
+                    {
+                        HasActiveFilters = hasActiveFilter;
+                    }
                 }
             }
         }
@@ -697,12 +768,12 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 是否有数据
         /// </summary>
-        public bool HasData => TrainRideInfos != null && TrainRideInfos.Count > 0;
+        public bool HasData => TrainRideInfos != null && TrainRideInfos.Count > 0 && !IsLoading;
 
         /// <summary>
         /// 是否无数据
         /// </summary>
-        public bool HasNoData => !HasData;
+        public bool HasNoData => TrainRideInfos != null && TrainRideInfos.Count == 0 && !IsLoading;
 
         #endregion
 
@@ -822,7 +893,7 @@ namespace TA_WPF.ViewModels
                     .ToList();
                 
                 // 添加一个空选项
-                departStationItems.Insert(0, null);
+                departStationItems.Insert(0, new DepartStationItem(string.Empty));
                 
                 DepartStations = new ObservableCollection<DepartStationItem>(departStationItems);
             }
@@ -970,7 +1041,7 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                _paginationViewModel.IsLoading = true;
+                IsLoading = true;
                 
                 // 检查是否有筛选条件
                 HasActiveFilters = HasAnyActiveFilter();
@@ -1033,6 +1104,10 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(CanNavigateToNextPage));
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
                 
+                // 触发属性变更通知，确保UI正确显示数据状态
+                OnPropertyChanged(nameof(HasData));
+                OnPropertyChanged(nameof(HasNoData));
+                
                 // 手动刷新命令状态
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
             }
@@ -1042,7 +1117,7 @@ namespace TA_WPF.ViewModels
             }
             finally
             {
-                _paginationViewModel.IsLoading = false;
+                IsLoading = false;
             }
         }
 
@@ -1051,14 +1126,18 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void ResetFilter()
         {
-            TrainNumberFilter = null;
-            SelectedTrainPrefix = TrainPrefixes.FirstOrDefault();
+            TrainNumberFilter = string.Empty;
             SelectedDepartStation = null;
             SelectedYearOption = null;
             CustomYear = null;
+            SelectedTrainPrefix = "G";
             IsAndCondition = true;
+            DepartStationSearchText = string.Empty;
+            
             HasActiveFilters = false;
-            DepartStationSearchText = null;
+            
+            // 不要自动应用筛选，等待用户点击查询按钮
+            // 实际会执行一次无筛选条件的查询
         }
 
         /// <summary>
@@ -1077,8 +1156,8 @@ namespace TA_WPF.ViewModels
         private void ClearDepartStation()
         {
             SelectedDepartStation = null;
-            DepartStationSearchText = null;
-            // 不要自动应用筛选
+            DepartStationSearchText = string.Empty;
+            // 不要自动应用筛选，等待用户点击查询按钮
             // ApplyFilter();
         }
 
@@ -1087,9 +1166,9 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void ClearTrainNumber()
         {
-            TrainNumberFilter = null;
-            SelectedTrainPrefix = TrainPrefixes.FirstOrDefault();
-            // 不要自动应用筛选
+            TrainNumberFilter = string.Empty;
+            SelectedTrainPrefix = "G";
+            // 不要自动应用筛选，等待用户点击查询按钮
             // ApplyFilter();
         }
 

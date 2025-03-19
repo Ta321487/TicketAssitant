@@ -37,6 +37,57 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 尝试获取缓存的页面数据
+        /// </summary>
+        /// <param name="cachedItems">输出缓存的数据项</param>
+        /// <returns>如果成功获取到缓存数据返回true，否则返回false</returns>
+        public bool TryGetCachedPage(out List<TrainRideInfo> cachedItems)
+        {
+            // 检查缓存中是否已有当前页数据，且页大小未变
+            if (_pageCache.ContainsKey(_currentPage) && _cachePageSize == _pageSize)
+            {
+                // 从缓存加载数据
+                cachedItems = _pageCache[_currentPage];
+                return true;
+            }
+            
+            cachedItems = null;
+            return false;
+        }
+        
+        /// <summary>
+        /// 更新页面缓存
+        /// </summary>
+        /// <param name="items">要缓存的数据项</param>
+        public void UpdateCache(List<TrainRideInfo> items)
+        {
+            // 更新缓存
+            _pageCache[_currentPage] = items;
+            _cachePageSize = _pageSize;
+        }
+        
+        /// <summary>
+        /// 清除缓存
+        /// </summary>
+        public void ClearCache()
+        {
+            _pageCache.Clear();
+            
+            // 在清除缓存后，确保UI状态与缓存状态一致
+            // 异步执行以避免阻塞主线程
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => {
+                // 刷新导航按钮状态
+                OnPropertyChanged(nameof(CanNavigateToFirstPage));
+                OnPropertyChanged(nameof(CanNavigateToPreviousPage));
+                OnPropertyChanged(nameof(CanNavigateToNextPage));
+                OnPropertyChanged(nameof(CanNavigateToLastPage));
+                
+                // 刷新命令状态
+                CommandManager.InvalidateRequerySuggested();
+            }));
+        }
+
+        /// <summary>
         /// 当前页码
         /// </summary>
         public int CurrentPage
@@ -55,12 +106,27 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(CanNavigateToNextPage));
                     OnPropertyChanged(nameof(CanNavigateToLastPage));
                     
+                    // 强制刷新命令状态
+                    CommandManager.InvalidateRequerySuggested();
+                    
                     if (_isInitialized)
                     {
-                        // 使用Dispatcher延迟触发页面变更事件，减少UI闪烁
-                        System.Windows.Application.Current.Dispatcher.BeginInvoke(
-                            System.Windows.Threading.DispatcherPriority.Background,
-                            new Action(() => PageChanged?.Invoke(this, EventArgs.Empty)));
+                        // 使用Dispatcher以较高优先级触发页面变更事件
+                        Application.Current.Dispatcher.BeginInvoke(
+                            DispatcherPriority.Normal,
+                            new Action(() => {
+                                // 再次刷新按钮状态
+                                OnPropertyChanged(nameof(CanNavigateToFirstPage));
+                                OnPropertyChanged(nameof(CanNavigateToPreviousPage));
+                                OnPropertyChanged(nameof(CanNavigateToNextPage));
+                                OnPropertyChanged(nameof(CanNavigateToLastPage));
+                                
+                                // 再次刷新命令状态
+                                CommandManager.InvalidateRequerySuggested();
+                                
+                                // 触发页面变更事件
+                                PageChanged?.Invoke(this, EventArgs.Empty);
+                            }));
                     }
                 }
             }
@@ -189,7 +255,7 @@ namespace TA_WPF.ViewModels
         public int[] PageSizeOptions { get; }
 
         /// <summary>
-        /// 是否正在加载数据
+        /// 是否正在加载
         /// </summary>
         public bool IsLoading
         {
@@ -316,7 +382,7 @@ namespace TA_WPF.ViewModels
         public event EventHandler PageSizeChanged;
 
         /// <summary>
-        /// 导航到首页
+        /// 导航到第一页
         /// </summary>
         private void FirstPage()
         {
@@ -328,6 +394,9 @@ namespace TA_WPF.ViewModels
                 // 使用Dispatcher确保加载状态能够立即更新到UI
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
                     CurrentPage = 1;
+                    
+                    // 强制刷新命令状态
+                    CommandManager.InvalidateRequerySuggested();
                 }));
             }
         }
@@ -345,6 +414,9 @@ namespace TA_WPF.ViewModels
                 // 使用Dispatcher确保加载状态能够立即更新到UI
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
                     CurrentPage--;
+                    
+                    // 强制刷新命令状态
+                    CommandManager.InvalidateRequerySuggested();
                 }));
             }
         }
@@ -362,12 +434,15 @@ namespace TA_WPF.ViewModels
                 // 使用Dispatcher确保加载状态能够立即更新到UI
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
                     CurrentPage++;
+                    
+                    // 强制刷新命令状态
+                    CommandManager.InvalidateRequerySuggested();
                 }));
             }
         }
 
         /// <summary>
-        /// 导航到末页
+        /// 导航到最后一页
         /// </summary>
         private void LastPage()
         {
@@ -379,6 +454,9 @@ namespace TA_WPF.ViewModels
                 // 使用Dispatcher确保加载状态能够立即更新到UI
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
                     CurrentPage = TotalPages;
+                    
+                    // 强制刷新命令状态
+                    CommandManager.InvalidateRequerySuggested();
                 }));
             }
         }
@@ -428,15 +506,19 @@ namespace TA_WPF.ViewModels
             
             // 通知命令状态可能已更改
             CommandManager.InvalidateRequerySuggested();
-        }
-
-        /// <summary>
-        /// 清除页面缓存
-        /// </summary>
-        public void ClearCache()
-        {
-            _pageCache.Clear();
-            _cachePageSize = 0;
+            
+            // 使用Dispatcher确保UI状态更新
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => {
+                // 再次刷新状态，确保UI完全更新
+                OnPropertyChanged(nameof(TotalPages));
+                OnPropertyChanged(nameof(CanNavigateToFirstPage));
+                OnPropertyChanged(nameof(CanNavigateToPreviousPage));
+                OnPropertyChanged(nameof(CanNavigateToNextPage));
+                OnPropertyChanged(nameof(CanNavigateToLastPage));
+                
+                // 再次刷新命令状态
+                CommandManager.InvalidateRequerySuggested();
+            }));
         }
 
         /// <summary>

@@ -242,22 +242,6 @@ namespace TA_WPF.ViewModels
                 
                 MessageBoxHelper.ShowInformation("车票修改成功！", "成功");
                 
-                // 刷新仪表盘和查询全部数据
-                if (_mainViewModel != null)
-                {
-                    // 刷新仪表盘数据
-                    if (_mainViewModel.DashboardViewModel != null)
-                    {
-                        await _mainViewModel.DashboardViewModel.RefreshDataAsync();
-                    }
-                    
-                    // 刷新查询全部数据
-                    if (_mainViewModel.QueryAllTicketsViewModel != null)
-                    {
-                        await _mainViewModel.QueryAllTicketsViewModel.QueryAllAsync();
-                    }
-                }
-                
                 // 重置表单修改状态
                 ResetFormModifiedState();
                 
@@ -281,6 +265,22 @@ namespace TA_WPF.ViewModels
                     LogHelper.LogError("关闭修改车票窗口时出错", ex);
                     // 尝试使用事件关闭
                     OnCloseWindow();
+                }
+                
+                // 在窗口关闭后再刷新仪表盘和查询全部数据
+                if (_mainViewModel != null)
+                {
+                    // 刷新仪表盘数据
+                    if (_mainViewModel.DashboardViewModel != null)
+                    {
+                        await _mainViewModel.DashboardViewModel.RefreshDataAsync();
+                    }
+                    
+                    // 刷新查询全部数据
+                    if (_mainViewModel.QueryAllTicketsViewModel != null)
+                    {
+                        await _mainViewModel.QueryAllTicketsViewModel.QueryAllAsync();
+                    }
                 }
             }
             catch (MySqlException sqlEx)

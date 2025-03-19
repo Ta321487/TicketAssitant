@@ -462,6 +462,7 @@
                              Text="{Binding SeatNo, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource FormNumberTextBoxStyle}"
                              materialDesign:HintAssist.Hint="座位号"
+                             PreviewTextInput="SeatNo_PreviewTextInput"
                              IsEnabled="{Binding IsNoSeat, Converter={StaticResource InverseBooleanConverter}}"
                              Margin="0,0,16,0"/>
                     <ComboBox Grid.Column="1" 

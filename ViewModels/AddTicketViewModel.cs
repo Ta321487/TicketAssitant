@@ -23,6 +23,7 @@ namespace TA_WPF.ViewModels
         // 添加表单修改状态跟踪
         private bool _isFormModified = false;
         private bool _isInitializing = true;
+        private bool _needToRefreshData = false;
 
         /// <summary>
         /// 窗口关闭事件
@@ -149,12 +150,12 @@ namespace TA_WPF.ViewModels
                 _arriveStationPinyin = string.Empty;
                 _departStationCode = string.Empty;
                 _arriveStationCode = string.Empty;
-                _selectedTrainType = TrainTypes.FirstOrDefault() ?? string.Empty;
+                _selectedTrainType = TrainTypes.FirstOrDefault() ?? "T";
                 _trainNumber = string.Empty;
                 _coachNo = string.Empty;
                 _seatNo = string.Empty;
                 _selectedSeatPosition = SeatPositions.FirstOrDefault() ?? string.Empty;
-                _selectedSeatType = SeatTypes.FirstOrDefault() ?? string.Empty;
+                _selectedSeatType = SeatTypes.FirstOrDefault() ?? "新空硬座";
                 _selectedAdditionalInfo = string.Empty;
                 _selectedTicketPurpose = string.Empty;
                 _selectedHint = HintOptions.FirstOrDefault() ?? string.Empty;
@@ -1091,9 +1092,9 @@ namespace TA_WPF.ViewModels
                 if (!Regex.IsMatch(SeatNo, @"^\d{1,3}$"))
                     _validationErrors.Add("座位号必须为1-3位数字");
                 
-                // 座位号不能以0开头或只有0
-                if (SeatNo.StartsWith("0") || SeatNo.All(c => c == '0'))
-                    _validationErrors.Add("座位号不能以0开头或只有0");
+                // 座位号可以以0开头，但不能只有0
+                if (SeatNo.All(c => c == '0'))
+                    _validationErrors.Add("座位号不能只有0");
             }
 
             // 返回是否验证通过
@@ -1190,24 +1191,18 @@ namespace TA_WPF.ViewModels
                 
                 MessageBoxHelper.ShowInformation("车票添加成功！", "成功");
                 
-                // 刷新仪表盘和查询全部数据
-                if (_mainViewModel != null)
-                {
-                    // 刷新仪表盘数据
-                    if (_mainViewModel.DashboardViewModel != null)
-                    {
-                        await _mainViewModel.DashboardViewModel.RefreshDataAsync();
-                    }
-                    
-                    // 刷新查询全部数据
-                    if (_mainViewModel.QueryAllTicketsViewModel != null)
-                    {
-                        await _mainViewModel.QueryAllTicketsViewModel.QueryAllAsync();
-                    }
-                }
+                // 重置数据
+                ResetData();
                 
                 // 重置表单修改状态
                 ResetFormModifiedState();
+                
+                // 刷新仪表盘数据和查询全部数据
+                if (_mainViewModel != null)
+                {
+                    // 标记需要刷新数据
+                    _needToRefreshData = true;
+                }
                 
                 // 安全地关闭窗口
                 try
@@ -1230,6 +1225,25 @@ namespace TA_WPF.ViewModels
                     // 尝试使用事件关闭
                     OnCloseWindow();
                 }
+                
+                // 在窗口关闭后刷新数据
+                if (_needToRefreshData && _mainViewModel != null)
+                {
+                    // 刷新仪表盘数据
+                    if (_mainViewModel.DashboardViewModel != null)
+                    {
+                        await _mainViewModel.DashboardViewModel.RefreshDataAsync();
+                    }
+                    
+                    // 刷新查询全部数据
+                    if (_mainViewModel.QueryAllTicketsViewModel != null)
+                    {
+                        await _mainViewModel.QueryAllTicketsViewModel.QueryAllAsync();
+                    }
+                    
+                    // 重置刷新标记
+                    _needToRefreshData = false;
+                }
             }
             catch (MySqlException sqlEx)
             {
@@ -1245,7 +1259,7 @@ namespace TA_WPF.ViewModels
 
         private void ResetForm()
         {
-            // 重置所有字段
+            // 重置所有字段为默认值
             TicketNumber = string.Empty;
             CheckInLocation = string.Empty;
             DepartStation = string.Empty;
@@ -1569,6 +1583,21 @@ namespace TA_WPF.ViewModels
         public string GetValidationErrors()
         {
             return string.Join("\n", _validationErrors);
+        }
+
+        private void ResetData()
+        {
+            // 重置所有字段
+            ResetForm();
+            
+            // 根据默认座位类型更新座位位置选项
+            UpdateSeatPositions();
+            
+            // 加载车站数据
+            LoadStationsAsync();
+            
+            // 确保初始化字体大小相关属性
+            InitializeFontSizes();
         }
     }
 
