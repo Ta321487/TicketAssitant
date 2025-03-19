@@ -891,8 +891,8 @@ namespace TA_WPF.ViewModels
             // 创建并设置选中的出发站
             SelectedDepartStation = new DepartStationItem(stationName);
             
-            // 应用筛选
-            ApplyFilter();
+            // 不要自动应用筛选，等待用户点击查询按钮
+            // ApplyFilter();
         }
 
         /// <summary>
@@ -923,8 +923,8 @@ namespace TA_WPF.ViewModels
                         OnPropertyChanged(nameof(YearOptions));
                     }
                     
-                    // 应用筛选条件
-                    ApplyFilter();
+                    // 不要自动应用筛选条件
+                    // ApplyFilter();
                 }
                 else
                 {
@@ -1078,7 +1078,8 @@ namespace TA_WPF.ViewModels
         {
             SelectedDepartStation = null;
             DepartStationSearchText = null;
-            ApplyFilter();
+            // 不要自动应用筛选
+            // ApplyFilter();
         }
 
         /// <summary>
@@ -1088,7 +1089,8 @@ namespace TA_WPF.ViewModels
         {
             TrainNumberFilter = null;
             SelectedTrainPrefix = TrainPrefixes.FirstOrDefault();
-            ApplyFilter();
+            // 不要自动应用筛选
+            // ApplyFilter();
         }
 
         /// <summary>
@@ -1098,7 +1100,8 @@ namespace TA_WPF.ViewModels
         {
             SelectedYearOption = null;
             CustomYear = null;
-            ApplyFilter();
+            // 不要自动应用筛选
+            // ApplyFilter();
         }
 
         #endregion

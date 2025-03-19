@@ -264,28 +264,77 @@ namespace TA_WPF.Services
                 var conditions = new List<string>();
                 var parameters = new Dictionary<string, object>();
                 
-                // 添加出发站筛选条件
-                if (!string.IsNullOrWhiteSpace(departStation))
+                if (isAndCondition)
                 {
-                    // 如果用户输入的站名不以"站"结尾，自动添加"站"字
-                    string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
-                    conditions.Add("depart_station = @DepartStation");
-                    parameters.Add("@DepartStation", stationName);
+                    // 如果没有任何条件，返回所有记录
+                    if (string.IsNullOrWhiteSpace(departStation) && string.IsNullOrWhiteSpace(trainNo) && !year.HasValue)
+                    {
+                        return await GetTotalTrainRideInfoCountAsync();
+                    }
+                    
+                    // 添加出发站筛选条件
+                    if (!string.IsNullOrWhiteSpace(departStation))
+                    {
+                        // 如果用户输入的站名不以"站"结尾，自动添加"站"字
+                        string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                        conditions.Add("depart_station = @DepartStation");
+                        parameters.Add("@DepartStation", stationName);
+                    }
+                    else
+                    {
+                        // 对于AND条件，如果站点为空，使用IS NULL条件
+                        conditions.Add("depart_station IS NULL");
+                    }
+                    
+                    // 添加车次号筛选条件
+                    if (!string.IsNullOrWhiteSpace(trainNo))
+                    {
+                        conditions.Add("train_no = @TrainNo");
+                        parameters.Add("@TrainNo", trainNo);
+                    }
+                    else
+                    {
+                        // 对于AND条件，如果车次为空，使用IS NULL条件
+                        conditions.Add("train_no IS NULL");
+                    }
+                    
+                    // 添加出发年份筛选条件
+                    if (year.HasValue)
+                    {
+                        conditions.Add("YEAR(depart_date) = @Year");
+                        parameters.Add("@Year", year.Value);
+                    }
+                    else
+                    {
+                        // 对于AND条件，如果年份为空，使用IS NULL条件
+                        // 使用YEAR()函数对NULL值返回NULL，所以需要检查日期是否为NULL
+                        conditions.Add("depart_date IS NULL");
+                    }
                 }
-                
-                // 添加车次号筛选条件
-                if (!string.IsNullOrWhiteSpace(trainNo))
+                else // OR 条件
                 {
-                    // 直接匹配车次号
-                    conditions.Add("train_no = @TrainNo");
-                    parameters.Add("@TrainNo", trainNo);
-                }
-                
-                // 添加出发年份筛选条件
-                if (year.HasValue)
-                {
-                    conditions.Add("YEAR(depart_date) = @Year");
-                    parameters.Add("@Year", year.Value);
+                    // 添加出发站筛选条件
+                    if (!string.IsNullOrWhiteSpace(departStation))
+                    {
+                        // 如果用户输入的站名不以"站"结尾，自动添加"站"字
+                        string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                        conditions.Add("depart_station = @DepartStation");
+                        parameters.Add("@DepartStation", stationName);
+                    }
+                    
+                    // 添加车次号筛选条件
+                    if (!string.IsNullOrWhiteSpace(trainNo))
+                    {
+                        conditions.Add("train_no = @TrainNo");
+                        parameters.Add("@TrainNo", trainNo);
+                    }
+                    
+                    // 添加出发年份筛选条件
+                    if (year.HasValue)
+                    {
+                        conditions.Add("YEAR(depart_date) = @Year");
+                        parameters.Add("@Year", year.Value);
+                    }
                 }
                 
                 // 如果没有任何条件，返回所有记录数
@@ -295,8 +344,28 @@ namespace TA_WPF.Services
                 }
                 
                 // 构建SQL查询语句
-                string conditionOperator = isAndCondition ? " AND " : " OR ";
-                string query = $"SELECT COUNT(*) FROM train_ride_info WHERE {string.Join(conditionOperator, conditions)}";
+                string query;
+                // 如果只有一个条件，不需要使用AND或OR
+                if (conditions.Count == 1)
+                {
+                    query = $"SELECT COUNT(*) FROM train_ride_info WHERE {conditions[0]}";
+                }
+                else
+                {
+                    string conditionOperator = isAndCondition ? " AND " : " OR ";
+                    query = $"SELECT COUNT(*) FROM train_ride_info WHERE {string.Join(conditionOperator, conditions)}";
+                }
+                
+                // 记录SQL查询和参数
+                var debugInfo = new StringBuilder();
+                debugInfo.AppendLine($"执行Count查询: {query}");
+                debugInfo.AppendLine("查询参数:");
+                foreach (var param in parameters)
+                {
+                    debugInfo.AppendLine($"  {param.Key}: {param.Value}");
+                }
+                
+                Debug.WriteLine(debugInfo.ToString());
                 
                 using (var connection = new MySqlConnection(_connectionString))
                 {
@@ -343,28 +412,77 @@ namespace TA_WPF.Services
                 var conditions = new List<string>();
                 var parameters = new Dictionary<string, object>();
                 
-                // 添加出发站筛选条件
-                if (!string.IsNullOrWhiteSpace(departStation))
+                if (isAndCondition)
                 {
-                    // 如果用户输入的站名不以"站"结尾，自动添加"站"字
-                    string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
-                    conditions.Add("depart_station = @DepartStation");
-                    parameters.Add("@DepartStation", stationName);
+                    // 如果没有任何条件，返回所有记录
+                    if (string.IsNullOrWhiteSpace(departStation) && string.IsNullOrWhiteSpace(trainNo) && !year.HasValue)
+                    {
+                        return await GetPagedTrainRideInfosAsync(pageNumber, pageSize);
+                    }
+                    
+                    // 添加出发站筛选条件
+                    if (!string.IsNullOrWhiteSpace(departStation))
+                    {
+                        // 如果用户输入的站名不以"站"结尾，自动添加"站"字
+                        string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                        conditions.Add("depart_station = @DepartStation");
+                        parameters.Add("@DepartStation", stationName);
+                    }
+                    else
+                    {
+                        // 对于AND条件，如果站点为空，使用IS NULL条件
+                        conditions.Add("depart_station IS NULL");
+                    }
+                    
+                    // 添加车次号筛选条件
+                    if (!string.IsNullOrWhiteSpace(trainNo))
+                    {
+                        conditions.Add("train_no = @TrainNo");
+                        parameters.Add("@TrainNo", trainNo);
+                    }
+                    else
+                    {
+                        // 对于AND条件，如果车次为空，使用IS NULL条件
+                        conditions.Add("train_no IS NULL");
+                    }
+                    
+                    // 添加出发年份筛选条件
+                    if (year.HasValue)
+                    {
+                        conditions.Add("YEAR(depart_date) = @Year");
+                        parameters.Add("@Year", year.Value);
+                    }
+                    else
+                    {
+                        // 对于AND条件，如果年份为空，使用IS NULL条件
+                        // 使用YEAR()函数对NULL值返回NULL，所以需要检查日期是否为NULL
+                        conditions.Add("depart_date IS NULL");
+                    }
                 }
-                
-                // 添加车次号筛选条件
-                if (!string.IsNullOrWhiteSpace(trainNo))
+                else // OR 条件
                 {
-                    // 直接匹配车次号
-                    conditions.Add("train_no = @TrainNo");
-                    parameters.Add("@TrainNo", trainNo);
-                }
-                
-                // 添加出发年份筛选条件
-                if (year.HasValue)
-                {
-                    conditions.Add("YEAR(depart_date) = @Year");
-                    parameters.Add("@Year", year.Value);
+                    // 添加出发站筛选条件
+                    if (!string.IsNullOrWhiteSpace(departStation))
+                    {
+                        // 如果用户输入的站名不以"站"结尾，自动添加"站"字
+                        string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                        conditions.Add("depart_station = @DepartStation");
+                        parameters.Add("@DepartStation", stationName);
+                    }
+                    
+                    // 添加车次号筛选条件
+                    if (!string.IsNullOrWhiteSpace(trainNo))
+                    {
+                        conditions.Add("train_no = @TrainNo");
+                        parameters.Add("@TrainNo", trainNo);
+                    }
+                    
+                    // 添加出发年份筛选条件
+                    if (year.HasValue)
+                    {
+                        conditions.Add("YEAR(depart_date) = @Year");
+                        parameters.Add("@Year", year.Value);
+                    }
                 }
                 
                 // 如果没有任何条件，使用常规查询
@@ -374,11 +492,23 @@ namespace TA_WPF.Services
                 }
                 
                 // 构建SQL查询语句
-                string conditionOperator = isAndCondition ? " AND " : " OR ";
-                string query = $@"SELECT * FROM train_ride_info 
-                               WHERE {string.Join(conditionOperator, conditions)} 
-                               ORDER BY id 
-                               LIMIT @Offset, @PageSize";
+                string query;
+                // 如果只有一个条件，不需要使用AND或OR
+                if (conditions.Count == 1)
+                {
+                    query = $@"SELECT * FROM train_ride_info 
+                            WHERE {conditions[0]} 
+                            ORDER BY id 
+                            LIMIT @Offset, @PageSize";
+                }
+                else
+                {
+                    string conditionOperator = isAndCondition ? " AND " : " OR ";
+                    query = $@"SELECT * FROM train_ride_info 
+                            WHERE {string.Join(conditionOperator, conditions)} 
+                            ORDER BY id 
+                            LIMIT @Offset, @PageSize";
+                }
                 
                 // 记录SQL查询和参数
                 var debugInfo = new StringBuilder();
