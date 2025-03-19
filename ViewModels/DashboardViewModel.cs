@@ -8,6 +8,7 @@ using TA_WPF.Services;
 using LiveCharts;
 using LiveCharts.Wpf;
 using TA_WPF.Utils;
+using LiveCharts.Defaults;
 
 namespace TA_WPF.ViewModels
 {
@@ -242,6 +243,7 @@ namespace TA_WPF.ViewModels
                     {
                         SelectedTimeRange = "自定义";
                         OnPropertyChanged(nameof(CurrentRangeText));
+                        OnPropertyChanged(nameof(MonthlyTicketXTitle));
                         
                         // 确保图表显示
                         _showMonthlyTicketChart = true;
@@ -265,6 +267,8 @@ namespace TA_WPF.ViewModels
                             _startDate = _endDate;
                             OnPropertyChanged(nameof(StartDate));
                         }
+                        
+                        System.Diagnostics.Debug.WriteLine($"手动更改StartDate: {_startDate:yyyy-MM-dd}，将刷新数据...");
                     }
                     RefreshDataAsync();
                 }
@@ -288,6 +292,7 @@ namespace TA_WPF.ViewModels
                     {
                         SelectedTimeRange = "自定义";
                         OnPropertyChanged(nameof(CurrentRangeText));
+                        OnPropertyChanged(nameof(MonthlyTicketXTitle));
                         
                         // 确保图表显示
                         _showMonthlyTicketChart = true;
@@ -311,6 +316,8 @@ namespace TA_WPF.ViewModels
                             _endDate = _startDate;
                             OnPropertyChanged(nameof(EndDate));
                         }
+                        
+                        System.Diagnostics.Debug.WriteLine($"手动更改EndDate: {_endDate:yyyy-MM-dd}，将刷新数据...");
                     }
                     RefreshDataAsync();
                 }
@@ -704,7 +711,7 @@ namespace TA_WPF.ViewModels
                         else if (span.TotalDays <= 31)
                             return "日期";
                         else
-                            return "月份";
+                            return "年份";
                     default:
                         return "时间";
                 }
@@ -885,6 +892,12 @@ namespace TA_WPF.ViewModels
                         {
                             Utils.MessageBoxHelper.ShowWarning("选择的时间范围过大（超过20年），可能影响显示效果，建议调整时间范围。", "时间范围过大");
                         }
+                        
+                        // 确保自定义时间范围下显示车票使用趋势图表
+                        _showMonthlyTicketChart = true;
+                        _monthlyTicketChartMessage = "";
+                        OnPropertyChanged(nameof(ShowMonthlyTicketChart));
+                        OnPropertyChanged(nameof(MonthlyTicketChartMessage));
                     }
                     break;
             }
@@ -1160,9 +1173,12 @@ namespace TA_WPF.ViewModels
                     getNextStep = date => date.AddMonths(1);
                     break;
                 case "自定义":
-                    // 自定义时间范围，根据时间跨度选择合适的显示方式
+                    // 自定义时间范围始终使用用户指定的日期
                     startDate = StartDate;
                     endDate = EndDate;
+                    
+                    // 记录调试信息
+                    System.Diagnostics.Debug.WriteLine($"自定义时间范围：{startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}");
                     
                     // 计算时间跨度
                     TimeSpan span = endDate - startDate;
@@ -1326,9 +1342,25 @@ namespace TA_WPF.ViewModels
                 MonthlyTicketData.Add(monthData);
             }
             
-            // 更新图表数据
-            if (MonthlyTicketSeries != null && MonthlyTicketSeries.Count >= 2)
+            // 确保MonthlyTicketSeries已经初始化
+            if (MonthlyTicketSeries == null)
             {
+                MonthlyTicketSeries = new SeriesCollection();
+                // 添加默认系列
+                MonthlyTicketSeries.Add(new LineSeries { Title = "当前", Values = new ChartValues<int>() });
+                MonthlyTicketSeries.Add(new LineSeries { Title = "对比", Values = new ChartValues<int>() });
+            }
+            
+            // 更新图表数据
+            if (SelectedTimeRange == "自定义")
+            {
+                // 对于自定义时间范围，无论跨越多少年份，都使用单一折线图显示每年车票总量
+                UpdateMultiYearTicketSeries(tickets);
+                System.Diagnostics.Debug.WriteLine($"自定义时间范围：使用年份折线图显示，范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}");
+            }
+            else
+            {
+                // 普通情况下只显示两条折线（当前和对比）
                 var currentYearValues = new ChartValues<int>();
                 var lastYearValues = new ChartValues<int>();
                 var labels = new string[MonthlyTicketData.Count];
@@ -1339,6 +1371,12 @@ namespace TA_WPF.ViewModels
                     currentYearValues.Add(data.Count);
                     lastYearValues.Add(data.LastYearCount);
                     labels[i] = data.Month;
+                }
+                
+                // 确保有足够的系列
+                while (MonthlyTicketSeries.Count < 2)
+                {
+                    MonthlyTicketSeries.Add(new LineSeries { Title = MonthlyTicketSeries.Count == 0 ? "当前" : "对比", Values = new ChartValues<int>() });
                 }
                 
                 ((LineSeries)MonthlyTicketSeries[0]).Values = currentYearValues;
@@ -1390,6 +1428,108 @@ namespace TA_WPF.ViewModels
                         break;
                 }
             }
+            
+            // 显式触发属性更改通知
+            OnPropertyChanged(nameof(MonthlyTicketSeries));
+            OnPropertyChanged(nameof(MonthlyTicketLabels));
+        }
+        
+        /// <summary>
+        /// 更新多年份车票使用趋势图表
+        /// </summary>
+        /// <param name="tickets">车票数据</param>
+        private void UpdateMultiYearTicketSeries(List<TrainRideInfo> tickets)
+        {
+            // 获取用户设置的时间范围内的所有年份
+            var years = new HashSet<int>();
+            for (int year = StartDate.Year; year <= EndDate.Year; year++)
+            {
+                years.Add(year);
+            }
+            
+            // 记录调试信息
+            System.Diagnostics.Debug.WriteLine($"更新年份车票趋势图，时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，年份范围：{StartDate.Year} 到 {EndDate.Year}");
+            
+            // 横坐标表示年份
+            var yearLabels = years.OrderBy(y => y).Select(y => y.ToString()).ToList();
+            
+            // 清空并重建SeriesCollection
+            if (MonthlyTicketSeries == null)
+            {
+                MonthlyTicketSeries = new SeriesCollection();
+            }
+            else
+            {
+                MonthlyTicketSeries.Clear();
+            }
+            
+            // 配色使用MaterialDesignInXAML风格
+            var colorPalette = new[]
+            {
+                Color.FromRgb(124, 77, 255),  // 主色调紫色 #7C4DFF
+                Color.FromRgb(0, 176, 255),   // 天蓝色 #00B0FF
+                Color.FromRgb(94, 53, 177),   // 深紫色 #5E35B1
+                Color.FromRgb(3, 169, 244),   // 蓝色 #03A9F4
+                Color.FromRgb(156, 100, 255), // 浅紫色 #9C64FF
+                Color.FromRgb(179, 136, 255), // 淡紫色 #B388FF
+                Color.FromRgb(0, 121, 107),   // 深绿色 #00796B
+                Color.FromRgb(255, 171, 0),   // 橙色 #FFAB00
+                Color.FromRgb(213, 0, 0),     // 红色 #D50000
+                Color.FromRgb(48, 63, 159),   // 深蓝色 #303F9F
+            };
+            
+            // 创建单一折线图，表示每年的车票总量
+            var yearlyValues = new ChartValues<int>();
+            
+            // 对每一年计算车票总数，严格按照用户设置的时间范围
+            foreach (var year in yearLabels.Select(int.Parse).OrderBy(y => y))
+            {
+                // 为每一年设置起始和结束日期
+                DateTime startDate = new DateTime(year, 1, 1);
+                DateTime endDate = new DateTime(year, 12, 31, 23, 59, 59);
+                
+                // 如果该年是开始年份，则使用用户设置的开始日期
+                if (year == StartDate.Year)
+                {
+                    startDate = StartDate;
+                }
+                
+                // 如果该年是结束年份，则使用用户设置的结束日期
+                if (year == EndDate.Year)
+                {
+                    endDate = EndDate;
+                }
+                
+                // 统计该年份内的车票数量
+                int count = tickets.Count(t => t.DepartDate.HasValue && 
+                                        t.DepartDate.Value >= startDate && 
+                                        t.DepartDate.Value <= endDate);
+                
+                yearlyValues.Add(count);
+                
+                System.Diagnostics.Debug.WriteLine($"年份：{year}，时间范围：{startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}，车票数量：{count}");
+            }
+            
+            // 创建单一折线图
+            var series = new LineSeries
+            {
+                Title = "车票总量",
+                Values = yearlyValues,
+                PointGeometry = DefaultGeometries.Diamond,
+                PointGeometrySize = 10,
+                Stroke = new SolidColorBrush(colorPalette[0]),
+                Fill = new SolidColorBrush(Color.FromArgb(128, colorPalette[0].R, colorPalette[0].G, colorPalette[0].B)),
+                LineSmoothness = 0.5
+            };
+            
+            MonthlyTicketSeries.Add(series);
+            
+            // 更新X轴标签
+            MonthlyTicketLabels = yearLabels.ToArray();
+            OnPropertyChanged(nameof(MonthlyTicketLabels));
+            OnPropertyChanged(nameof(MonthlyTicketSeries));
+            
+            System.Diagnostics.Debug.WriteLine($"车票使用趋势图表更新完成，用户设置的时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，横坐标年份数量：{yearLabels.Count}");
         }
         
         /// <summary>
@@ -2029,6 +2169,23 @@ namespace TA_WPF.ViewModels
                 
                 // 记录调试信息
                 System.Diagnostics.Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+                
+                // 强制更新UI上的时间范围属性，确保图表使用最新的时间范围
+                OnPropertyChanged(nameof(StartDate));
+                OnPropertyChanged(nameof(EndDate));
+                OnPropertyChanged(nameof(SelectedTimeRange));
+                OnPropertyChanged(nameof(MonthlyTicketXTitle));
+                
+                // 对于自定义时间范围，确保图表显示
+                if (SelectedTimeRange == "自定义")
+                {
+                    _showMonthlyTicketChart = true;
+                    _monthlyTicketChartMessage = "";
+                    OnPropertyChanged(nameof(ShowMonthlyTicketChart));
+                    OnPropertyChanged(nameof(MonthlyTicketChartMessage));
+                    
+                    System.Diagnostics.Debug.WriteLine($"自定义时间范围刷新，时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，确保图表可见");
+                }
                 
                 // 调用加载仪表盘数据方法
                 await LoadDashboardDataAsync();
