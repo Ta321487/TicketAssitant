@@ -52,6 +52,9 @@ namespace TA_WPF.ViewModels
             ClearYearCommand = new RelayCommand(ClearYear);
             SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
             
+            // 设置设计时数据
+            _isQueryPanelVisible = true;
+            
             // 初始化车次前缀
             InitializeTrainPrefixes();
             
@@ -61,7 +64,10 @@ namespace TA_WPF.ViewModels
             // 初始化站点建议列表
             DepartStationSuggestions = new ObservableCollection<StationInfo>();
             
-            // 设计时不加载数据
+            // 设计时不加载数据，但创建空的出发站列表
+            DepartStations = new ObservableCollection<DepartStationItem>();
+            
+            // 设计时的数据库服务为空
             _databaseService = null;
         }
 
@@ -297,9 +303,9 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(CustomYear));
 
                     // 如果已经选择了自定义年份选项，更新它的值
-                    if (SelectedYearOption?.IsCustom == true && _yearOptions != null)
+                    if (SelectedYearOption?.IsCustom == true && _yearOptions != null && _yearOptions.Count > 0)
                     {
-                        var customOption = _yearOptions.FirstOrDefault(y => y.IsCustom);
+                        var customOption = _yearOptions.FirstOrDefault(y => y != null && y.IsCustom);
                         if (customOption != null)
                         {
                             customOption.Year = value;
@@ -515,8 +521,8 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 如果正在更新，不执行搜索
-                if (_isUpdatingDepartStation)
+                // 如果正在更新或数据库服务为null，不执行搜索
+                if (_isUpdatingDepartStation || _databaseService == null)
                     return;
 
                 // 清空搜索结果
@@ -588,25 +594,56 @@ namespace TA_WPF.ViewModels
                     CustomYear = year;
                     
                     // 更新自定义年份选项
-                    var customOption = YearOptions.FirstOrDefault(y => y.IsCustom);
-                    if (customOption != null)
+                    if (YearOptions != null && YearOptions.Count > 0)
                     {
-                        customOption.Year = year;
-                        customOption.DisplayName = $"自定义: {year}";
-                        OnPropertyChanged(nameof(YearOptions));
+                        var customOption = YearOptions.FirstOrDefault(y => y != null && y.IsCustom);
+                        if (customOption != null)
+                        {
+                            customOption.Year = year;
+                            customOption.DisplayName = $"自定义: {year}";
+                            OnPropertyChanged(nameof(YearOptions));
+                        }
+                        else
+                        {
+                            // 如果没有找到自定义选项，创建一个新的
+                            var newCustomOption = new YearOption(year, $"自定义: {year}", true);
+                            YearOptions.Add(newCustomOption);
+                            SelectedYearOption = newCustomOption;
+                            OnPropertyChanged(nameof(YearOptions));
+                        }
+                    }
+                    else
+                    {
+                        // 如果YearOptions为空，初始化它
+                        InitializeYearOptions();
+                        // 重新尝试设置自定义年份
+                        var customOption = YearOptions.FirstOrDefault(y => y != null && y.IsCustom);
+                        if (customOption != null)
+                        {
+                            customOption.Year = year;
+                            customOption.DisplayName = $"自定义: {year}";
+                            SelectedYearOption = customOption;
+                            OnPropertyChanged(nameof(YearOptions));
+                        }
                     }
                 }
                 else
                 {
                     MessageBoxHelper.ShowError("年份必须是1900-2099之间的整数。");
-                    // 恢复选择非自定义年份
-                    SelectedYearOption = YearOptions.FirstOrDefault(y => !y.IsCustom);
+                    // 恢复选择非自定义年份，确保YearOptions不为空
+                    if (YearOptions != null && YearOptions.Count > 0)
+                    {
+                        SelectedYearOption = YearOptions.FirstOrDefault(y => y != null && !y.IsCustom);
+                    }
                 }
             }
             else
             {
-                // 用户取消，恢复选择非自定义年份
-                SelectedYearOption = YearOptions.FirstOrDefault(y => !y.IsCustom);
+                // 用户取消，恢复选择非自定义年份，确保YearOptions不为空
+                if (YearOptions != null && YearOptions.Count > 0)
+                {
+                    SelectedYearOption = YearOptions.FirstOrDefault(y => y != null && !y.IsCustom);
+                }
             }
         }
 
@@ -623,14 +660,26 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public string GetFullTrainNo()
         {
-            if (string.IsNullOrEmpty(SelectedTrainPrefix) || SelectedTrainPrefix == "纯数字")
+            if (string.IsNullOrEmpty(_selectedTrainPrefix) || _selectedTrainPrefix == "纯数字")
             {
-                return TrainNumberFilter;
+                return _trainNumberFilter;
             }
             else
             {
-                return $"{SelectedTrainPrefix}{TrainNumberFilter}";
+                return $"{_selectedTrainPrefix}{_trainNumberFilter}";
             }
+        }
+
+        /// <summary>
+        /// 检查是否有任何激活的筛选条件
+        /// </summary>
+        private bool HasAnyActiveFilter()
+        {
+            bool hasDepartStation = _selectedDepartStation != null && !string.IsNullOrWhiteSpace(_selectedDepartStation.DepartStation);
+            bool hasTrainNumber = !string.IsNullOrWhiteSpace(_trainNumberFilter);
+            bool hasYear = _selectedYearOption != null && _selectedYearOption.Year.HasValue;
+            
+            return hasDepartStation || hasTrainNumber || hasYear;
         }
 
         /// <summary>
@@ -645,21 +694,28 @@ namespace TA_WPF.ViewModels
                 
                 // 构建完整的车次号
                 string fullTrainNo = null;
-                if (!string.IsNullOrWhiteSpace(TrainNumberFilter))
+                if (!string.IsNullOrWhiteSpace(_trainNumberFilter))
                 {
                     fullTrainNo = GetFullTrainNo();
                 }
                 
                 // 获取年份值
                 int? yearValue = null;
-                if (SelectedYearOption?.Year.HasValue == true)
+                if (_selectedYearOption != null && _selectedYearOption.Year.HasValue)
                 {
-                    yearValue = SelectedYearOption.Year.Value;
+                    yearValue = _selectedYearOption.Year.Value;
+                }
+                
+                // 获取出发站
+                string departStation = null;
+                if (_selectedDepartStation != null)
+                {
+                    departStation = _selectedDepartStation.DepartStation;
                 }
                 
                 // 记录查询条件
                 Console.WriteLine("应用查询条件:");
-                Console.WriteLine($"  出发站: {_selectedDepartStation?.DepartStation}");
+                Console.WriteLine($"  出发站: {departStation}");
                 Console.WriteLine($"  车次号: {fullTrainNo}");
                 Console.WriteLine($"  出发年份: {yearValue}");
                 Console.WriteLine($"  查询条件组合方式: {(_isAndCondition ? "AND" : "OR")}");
@@ -667,7 +723,7 @@ namespace TA_WPF.ViewModels
                 // 触发筛选条件应用事件
                 FilterApplied?.Invoke(this, new QueryFilterEventArgs
                 {
-                    DepartStation = _selectedDepartStation?.DepartStation,
+                    DepartStation = departStation,
                     FullTrainNo = fullTrainNo,
                     Year = yearValue,
                     IsAndCondition = _isAndCondition
@@ -702,16 +758,6 @@ namespace TA_WPF.ViewModels
                 Year = null,
                 IsAndCondition = true
             });
-        }
-
-        /// <summary>
-        /// 检查是否有任何激活的筛选条件
-        /// </summary>
-        private bool HasAnyActiveFilter()
-        {
-            return SelectedDepartStation != null || 
-                   !string.IsNullOrWhiteSpace(TrainNumberFilter) || 
-                   SelectedYearOption?.Year.HasValue == true;
         }
 
         /// <summary>
