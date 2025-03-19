@@ -397,6 +397,9 @@ namespace TA_WPF.ViewModels
                     
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
+                    
+                    // 触发页面变更事件，确保数据被刷新
+                    PageChanged?.Invoke(this, EventArgs.Empty);
                 }));
             }
         }
@@ -417,6 +420,9 @@ namespace TA_WPF.ViewModels
                     
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
+                    
+                    // 触发页面变更事件，确保数据被刷新
+                    PageChanged?.Invoke(this, EventArgs.Empty);
                 }));
             }
         }
@@ -437,6 +443,9 @@ namespace TA_WPF.ViewModels
                     
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
+                    
+                    // 触发页面变更事件，确保数据被刷新
+                    PageChanged?.Invoke(this, EventArgs.Empty);
                 }));
             }
         }
@@ -457,6 +466,9 @@ namespace TA_WPF.ViewModels
                     
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
+                    
+                    // 触发页面变更事件，确保数据被刷新
+                    PageChanged?.Invoke(this, EventArgs.Empty);
                 }));
             }
         }

@@ -7,6 +7,7 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using LiveCharts;
 using LiveCharts.Wpf;
+using TA_WPF.Utils;
 
 namespace TA_WPF.ViewModels
 {
@@ -110,6 +111,11 @@ namespace TA_WPF.ViewModels
                 ArriveStation = "请添加车票记录",
                 DepartDate = DateTime.Now
             });
+            
+            // 设置图表显示状态，确保自定义时间段也会显示
+            _showMonthlyTicketChart = true;
+            _showExpenseChart = true;
+            _showRecentActivitiesChart = true;
             
             // 设置默认时间范围为今日
             SetTimeRange(_selectedTimeRange);
@@ -236,6 +242,29 @@ namespace TA_WPF.ViewModels
                     {
                         SelectedTimeRange = "自定义";
                         OnPropertyChanged(nameof(CurrentRangeText));
+                        
+                        // 确保图表显示
+                        _showMonthlyTicketChart = true;
+                        _showExpenseChart = true;
+                        OnPropertyChanged(nameof(ShowMonthlyTicketChart));
+                        OnPropertyChanged(nameof(ShowExpenseChart));
+                        
+                        // 清除提示信息
+                        _monthlyTicketChartMessage = "";
+                        _expenseChartMessage = "";
+                        OnPropertyChanged(nameof(MonthlyTicketChartMessage));
+                        OnPropertyChanged(nameof(ExpenseChartMessage));
+                        
+                        // 检查开始日期是否大于结束日期
+                        if (_startDate > _endDate)
+                        {
+                            // 显示警告对话框
+                            Utils.MessageBoxHelper.ShowWarning("开始日期不能大于结束日期，请重新选择！", "日期范围错误");
+                            
+                            // 将开始日期重置为结束日期
+                            _startDate = _endDate;
+                            OnPropertyChanged(nameof(StartDate));
+                        }
                     }
                     RefreshDataAsync();
                 }
@@ -259,6 +288,29 @@ namespace TA_WPF.ViewModels
                     {
                         SelectedTimeRange = "自定义";
                         OnPropertyChanged(nameof(CurrentRangeText));
+                        
+                        // 确保图表显示
+                        _showMonthlyTicketChart = true;
+                        _showExpenseChart = true;
+                        OnPropertyChanged(nameof(ShowMonthlyTicketChart));
+                        OnPropertyChanged(nameof(ShowExpenseChart));
+                        
+                        // 清除提示信息
+                        _monthlyTicketChartMessage = "";
+                        _expenseChartMessage = "";
+                        OnPropertyChanged(nameof(MonthlyTicketChartMessage));
+                        OnPropertyChanged(nameof(ExpenseChartMessage));
+                        
+                        // 检查结束日期是否小于开始日期
+                        if (_endDate < _startDate)
+                        {
+                            // 显示警告对话框
+                            MessageBoxHelper.ShowWarning("结束日期不能小于开始日期，请重新选择！", "日期范围错误");
+                            
+                            // 将结束日期重置为开始日期
+                            _endDate = _startDate;
+                            OnPropertyChanged(nameof(EndDate));
+                        }
                     }
                     RefreshDataAsync();
                 }
@@ -816,12 +868,23 @@ namespace TA_WPF.ViewModels
                     break;
                 default:
                     // 自定义时间范围
-                    if (range == "自定义" && StartDate > EndDate)
+                    if (range == "自定义")
                     {
-                        // 如果开始日期大于结束日期，则交换
-                        var temp = StartDate;
-                        StartDate = EndDate;
-                        EndDate = temp;
+                        if (StartDate > EndDate)
+                        {
+                            // 如果开始日期大于结束日期，则显示警告并交换日期
+                            Utils.MessageBoxHelper.ShowWarning("开始日期不能大于结束日期，系统已自动调整！", "日期范围错误");
+                            var temp = StartDate;
+                            StartDate = EndDate;
+                            EndDate = temp;
+                        }
+                        
+                        // 检查时间跨度是否过大（超过20年）
+                        TimeSpan timeSpan = EndDate - StartDate;
+                        if (timeSpan.TotalDays > 365 * 20)
+                        {
+                            Utils.MessageBoxHelper.ShowWarning("选择的时间范围过大（超过20年），可能影响显示效果，建议调整时间范围。", "时间范围过大");
+                        }
                     }
                     break;
             }
@@ -831,12 +894,18 @@ namespace TA_WPF.ViewModels
             // 更新图表显示状态
             if (range != "今日") {
                 // 车票使用趋势在本周、本月、本年和自定义时间范围下显示
-                _showMonthlyTicketChart = (range == "本周" || range == "本月" || range == "本年" || range == "自定义");
+                _showMonthlyTicketChart = true;
                 OnPropertyChanged(nameof(ShowMonthlyTicketChart));
                 
                 // 费用支出分析在本周、本月、本年和自定义时间范围下显示
                 _showExpenseChart = true;
                 OnPropertyChanged(nameof(ShowExpenseChart));
+                
+                // 清除任何可能存在的消息提示
+                _monthlyTicketChartMessage = "";
+                _expenseChartMessage = "";
+                OnPropertyChanged(nameof(MonthlyTicketChartMessage));
+                OnPropertyChanged(nameof(ExpenseChartMessage));
             }
             
             // 最近活动始终显示，不受时间范围约束
@@ -941,16 +1010,79 @@ namespace TA_WPF.ViewModels
             LoadTopRouteData(tickets);
             LoadRecentActivities(tickets);
             
-            // 根据时间范围筛选车票数据
+            // 根据时间范围筛选车票数据（当前时间范围）
             var filteredTickets = tickets.Where(t => t.DepartDate.HasValue && 
-                                                t.DepartDate.Value >= StartDate && 
-                                                t.DepartDate.Value <= EndDate).ToList();
+                                        t.DepartDate.Value >= StartDate && 
+                                        t.DepartDate.Value <= EndDate).ToList();
             
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"筛选后的车票数据：{filteredTickets.Count}条，时间范围：{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
+            System.Diagnostics.Debug.WriteLine($"筛选后的当前时间范围车票数据：{filteredTickets.Count}条，时间范围：{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
             
-            // 加载月度车票数据
-            LoadMonthlyTicketData(filteredTickets);
+            // 对比时间范围（去年同期或其他对比时间）
+            DateTime comparisonStartDate = DateTime.MinValue;
+            DateTime comparisonEndDate = DateTime.MinValue;
+            
+            // 确定对比时间范围
+            switch (SelectedTimeRange)
+            {
+                case "本周":
+                    comparisonStartDate = StartDate.AddDays(-7);
+                    comparisonEndDate = EndDate.AddDays(-7);
+                    break;
+                case "本月":
+                    comparisonStartDate = StartDate.AddMonths(-1);
+                    comparisonEndDate = EndDate.AddMonths(-1);
+                    break;
+                case "本年":
+                    comparisonStartDate = StartDate.AddYears(-1);
+                    comparisonEndDate = EndDate.AddYears(-1);
+                    break;
+                case "自定义":
+                    // 根据时间跨度选择合适的对比方式
+                    TimeSpan span = EndDate - StartDate;
+                    if (span.TotalDays <= 7)
+                    {
+                        // 一周内，对比上周同期
+                        comparisonStartDate = StartDate.AddDays(-7);
+                        comparisonEndDate = EndDate.AddDays(-7);
+                    }
+                    else if (span.TotalDays <= 31)
+                    {
+                        // 一个月内，对比上月同期
+                        comparisonStartDate = StartDate.AddMonths(-1);
+                        comparisonEndDate = EndDate.AddMonths(-1);
+                    }
+                    else if (span.TotalDays <= 366) // 考虑闰年
+                    {
+                        // 一年内，对比去年同期
+                        comparisonStartDate = StartDate.AddYears(-1);
+                        comparisonEndDate = EndDate.AddYears(-1);
+                    }
+                    else
+                    {
+                        // 多年数据，比较同样跨度的上一时间段
+                        int yearSpan = EndDate.Year - StartDate.Year;
+                        comparisonStartDate = StartDate.AddYears(-yearSpan);
+                        comparisonEndDate = EndDate.AddYears(-yearSpan);
+                    }
+                    break;
+                default:
+                    // 默认为去年同期
+                    comparisonStartDate = StartDate.AddYears(-1);
+                    comparisonEndDate = EndDate.AddYears(-1);
+                    break;
+            }
+            
+            // 根据对比时间范围筛选车票数据
+            var comparisonTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                          t.DepartDate.Value >= comparisonStartDate && 
+                                          t.DepartDate.Value <= comparisonEndDate).ToList();
+            
+            // 记录调试信息
+            System.Diagnostics.Debug.WriteLine($"筛选后的对比时间范围车票数据：{comparisonTickets.Count}条，对比时间范围：{comparisonStartDate:yyyy-MM-dd} 至 {comparisonEndDate:yyyy-MM-dd}");
+            
+            // 加载月度车票数据（传入当前和对比时间段的数据）
+            LoadMonthlyTicketData(filteredTickets, comparisonTickets);
             
             // 加载车票类型数据（使用筛选后的数据）
             LoadTicketTypeData(filteredTickets);
@@ -965,8 +1097,9 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 加载月度车票数据
         /// </summary>
-        /// <param name="tickets">车票数据</param>
-        private void LoadMonthlyTicketData(List<TrainRideInfo> tickets)
+        /// <param name="tickets">当前时间范围车票数据</param>
+        /// <param name="comparisonTickets">对比时间范围车票数据</param>
+        private void LoadMonthlyTicketData(List<TrainRideInfo> tickets, List<TrainRideInfo> comparisonTickets)
         {
             // 清空集合
             MonthlyTicketData.Clear();
@@ -994,7 +1127,7 @@ namespace TA_WPF.ViewModels
             }
             
             // 显示图表
-            // 图表显示状态已在SetTimeRange方法中设置
+            // 图表显示状态已在SetTimeRange方法或属性设置器中设置
             
             DateTime startDate, endDate;
             string format;
@@ -1055,9 +1188,21 @@ namespace TA_WPF.ViewModels
                     }
                     else
                     {
-                        // 超过一年按季度显示
-                        format = "yyyy/MM";
-                        getNextStep = date => date.AddMonths(3);
+                        // 跨越多年的情况
+                        // 检查是否跨越了超过5年
+                        int yearDiff = endDate.Year - startDate.Year;
+                        if (yearDiff >= 5)
+                        {
+                            // 如果跨越了5年或以上，按年显示
+                            format = "yyyy年";
+                            getNextStep = date => date.AddYears(1);
+                        }
+                        else
+                        {
+                            // 否则按季度显示
+                            format = "yyyy/MM";
+                            getNextStep = date => date.AddMonths(3);
+                        }
                     }
                     break;
                 default:
@@ -1084,56 +1229,83 @@ namespace TA_WPF.ViewModels
                                           t.DepartDate.Value >= periodStart && 
                                           t.DepartDate.Value <= periodEnd);
                 
-                // 计算同比数据
-                DateTime comparisonPeriodStart = DateTime.MinValue;
-                DateTime comparisonPeriodEnd = DateTime.MinValue;
+                // 计算对比时间段
+                DateTime comparisonPeriodStart;
+                DateTime comparisonPeriodEnd;
                 
-                if (SelectedTimeRange == "本周")
+                switch (SelectedTimeRange)
                 {
-                    // 上周同期
-                    comparisonPeriodStart = periodStart.AddDays(-7);
-                    comparisonPeriodEnd = periodEnd.AddDays(-7);
-                }
-                else if (SelectedTimeRange == "本月")
-                {
-                    // 上月同期
-                    comparisonPeriodStart = periodStart.AddMonths(-1);
-                    comparisonPeriodEnd = periodEnd.AddMonths(-1);
-                }
-                else if (SelectedTimeRange == "本年")
-                {
-                    // 去年同期
-                    comparisonPeriodStart = periodStart.AddYears(-1);
-                    comparisonPeriodEnd = periodEnd.AddYears(-1);
-                }
-                else if (SelectedTimeRange == "自定义")
-                {
-                    // 自定义时间范围，根据时间跨度选择合适的对比方式
-                    TimeSpan span = endDate - startDate;
-                    
-                    if (span.TotalDays <= 7)
-                    {
-                        // 一周内，对比上周同期
+                    case "本周":
+                        // 上周同期
                         comparisonPeriodStart = periodStart.AddDays(-7);
                         comparisonPeriodEnd = periodEnd.AddDays(-7);
-                    }
-                    else if (span.TotalDays <= 31)
-                    {
-                        // 一个月内，对比上月同期
+                        break;
+                    case "本月":
+                        // 上月同期
                         comparisonPeriodStart = periodStart.AddMonths(-1);
                         comparisonPeriodEnd = periodEnd.AddMonths(-1);
-                    }
-                    else
-                    {
-                        // 超过一个月，对比去年同期
+                        break;
+                    case "本年":
+                        // 去年同期
                         comparisonPeriodStart = periodStart.AddYears(-1);
                         comparisonPeriodEnd = periodEnd.AddYears(-1);
-                    }
+                        break;
+                    case "自定义":
+                        // 自定义时间范围，根据时间跨度选择合适的对比方式
+                        TimeSpan span = endDate - startDate;
+                        
+                        if (span.TotalDays <= 7)
+                        {
+                            // 一周内，对比上周同期
+                            comparisonPeriodStart = periodStart.AddDays(-7);
+                            comparisonPeriodEnd = periodEnd.AddDays(-7);
+                        }
+                        else if (span.TotalDays <= 31)
+                        {
+                            // 一个月内，对比上月同期
+                            comparisonPeriodStart = periodStart.AddMonths(-1);
+                            comparisonPeriodEnd = periodEnd.AddMonths(-1);
+                        }
+                        else if (span.TotalDays <= 366) // 考虑闰年
+                        {
+                            // 一年内，对比去年同期
+                            comparisonPeriodStart = periodStart.AddYears(-1);
+                            comparisonPeriodEnd = periodEnd.AddYears(-1);
+                        }
+                        else
+                        {
+                            // 对于跨越多年的情况，我们需要特殊处理
+                            // 如果是按年统计，对比的就是前一年的数据
+                            if (format == "yyyy年")
+                            {
+                                comparisonPeriodStart = periodStart.AddYears(-1);
+                                comparisonPeriodEnd = periodEnd.AddYears(-1);
+                            }
+                            else
+                            {
+                                // 否则对比去年同期
+                                comparisonPeriodStart = periodStart.AddYears(-1);
+                                comparisonPeriodEnd = periodEnd.AddYears(-1);
+                            }
+                        }
+                        break;
+                    default:
+                        // 默认为去年同期
+                        comparisonPeriodStart = periodStart.AddYears(-1);
+                        comparisonPeriodEnd = periodEnd.AddYears(-1);
+                        break;
                 }
                 
-                var comparisonCount = tickets.Count(t => t.DepartDate.HasValue && 
-                                                    t.DepartDate.Value >= comparisonPeriodStart && 
-                                                    t.DepartDate.Value <= comparisonPeriodEnd);
+                // 使用传入的对比数据计算对比时间段内的车票数量
+                int comparisonCount = comparisonTickets.Count(t => t.DepartDate.HasValue && 
+                                                  t.DepartDate.Value >= comparisonPeriodStart && 
+                                                  t.DepartDate.Value <= comparisonPeriodEnd);
+                
+                // 记录调试信息
+                if (count > 0 || comparisonCount > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"时间段 {periodStart:yyyy-MM-dd} 至 {periodEnd:yyyy-MM-dd}: 当前={count}, 对比={comparisonCount}");
+                }
                 
                 // 上一时间段
                 var lastPeriodStart = getNextStep(date.AddDays(-getNextStep(date).Subtract(date).TotalDays * 2));
@@ -1189,8 +1361,28 @@ namespace TA_WPF.ViewModels
                         ((LineSeries)MonthlyTicketSeries[1]).Title = "去年";
                         break;
                     case "自定义":
-                        ((LineSeries)MonthlyTicketSeries[0]).Title = "当前";
-                        ((LineSeries)MonthlyTicketSeries[1]).Title = "对比";
+                        // 对于自定义时间范围，根据跨度设置更具体的标题
+                        TimeSpan span = EndDate - StartDate;
+                        if (span.TotalDays > 365 * 2)
+                        {
+                            ((LineSeries)MonthlyTicketSeries[0]).Title = $"{StartDate.Year}-{EndDate.Year}";
+                            ((LineSeries)MonthlyTicketSeries[1]).Title = $"{StartDate.Year-1}-{EndDate.Year-1}";
+                        }
+                        else if (span.TotalDays > 365)
+                        {
+                            ((LineSeries)MonthlyTicketSeries[0]).Title = $"{StartDate.Year}/{EndDate.Year}";
+                            ((LineSeries)MonthlyTicketSeries[1]).Title = $"{StartDate.Year-1}/{EndDate.Year-1}";
+                        }
+                        else if (span.TotalDays > 30)
+                        {
+                            ((LineSeries)MonthlyTicketSeries[0]).Title = $"{StartDate:yyyy/MM}-{EndDate:yyyy/MM}";
+                            ((LineSeries)MonthlyTicketSeries[1]).Title = "去年同期";
+                        }
+                        else
+                        {
+                            ((LineSeries)MonthlyTicketSeries[0]).Title = "当前";
+                            ((LineSeries)MonthlyTicketSeries[1]).Title = "对比";
+                        }
                         break;
                     default:
                         ((LineSeries)MonthlyTicketSeries[0]).Title = "当前";
@@ -1332,7 +1524,7 @@ namespace TA_WPF.ViewModels
             }
             
             // 显示图表
-            // 图表显示状态已在SetTimeRange方法中设置
+            // 图表显示状态已在SetTimeRange方法或属性设置器中设置
             
             DateTime startDate, endDate;
             string format;

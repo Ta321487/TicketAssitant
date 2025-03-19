@@ -5,6 +5,7 @@ using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
+using System.Windows.Threading;
 
 namespace TA_WPF.ViewModels
 {
@@ -506,13 +507,15 @@ namespace TA_WPF.ViewModels
                 // 刷新命令状态
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
                 
-                // 加载新的页面数据
-                _ = LoadPageDataAsync().ContinueWith(t => 
+                // 使用Dispatcher以更高优先级执行数据加载
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
                 {
-                    // 在页面数据加载完成后，确保选择状态与IsAllSelected一致
-                    Application.Current.Dispatcher.Invoke(() => 
+                    try 
                     {
-                        // 如果IsAllSelected为true，则选中所有项
+                        // 加载新的页面数据
+                        await LoadPageDataAsync();
+                        
+                        // 确保选择状态与IsAllSelected一致
                         if (IsAllSelected)
                         {
                             ApplySelectionToAll(true);
@@ -520,8 +523,20 @@ namespace TA_WPF.ViewModels
                         
                         // 更新选中项计数
                         UpdateSelectedItemsCount();
-                    });
-                });
+                        
+                        // 再次触发UI更新通知
+                        OnPropertyChanged(nameof(TrainRideInfos));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"加载页面数据出错: {ex.Message}");
+                    }
+                    finally
+                    {
+                        // 确保加载状态被重置
+                        _paginationViewModel.IsLoading = false;
+                    }
+                }));
             }
             catch (Exception ex)
             {
@@ -553,13 +568,15 @@ namespace TA_WPF.ViewModels
                 // 刷新命令状态
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
                 
-                // 加载新的页面数据
-                _ = LoadPageDataAsync().ContinueWith(t => 
+                // 使用Dispatcher以更高优先级执行数据加载
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
                 {
-                    // 在页面数据加载完成后，确保选择状态与IsAllSelected一致
-                    Application.Current.Dispatcher.Invoke(() => 
+                    try 
                     {
-                        // 如果IsAllSelected为true，则选中所有项
+                        // 加载新的页面数据
+                        await LoadPageDataAsync();
+                        
+                        // 确保选择状态与IsAllSelected一致
                         if (IsAllSelected)
                         {
                             ApplySelectionToAll(true);
@@ -567,8 +584,20 @@ namespace TA_WPF.ViewModels
                         
                         // 更新选中项计数
                         UpdateSelectedItemsCount();
-                    });
-                });
+                        
+                        // 再次触发UI更新通知
+                        OnPropertyChanged(nameof(TrainRideInfos));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"加载页面数据出错: {ex.Message}");
+                    }
+                    finally
+                    {
+                        // 确保加载状态被重置
+                        _paginationViewModel.IsLoading = false;
+                    }
+                }));
             }
             catch (Exception ex)
             {
