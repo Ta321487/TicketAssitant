@@ -4,6 +4,7 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using System.Windows.Input;
+using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -29,13 +30,17 @@ namespace TA_WPF.ViewModels
         private string _departStationSearchText = string.Empty;
         private bool _isUpdatingDepartStation = false;
         private AdvancedQueryTicketViewModel _advancedQueryViewModel;
+        private bool _canPreviewTicket;
+        private ICommand _previewTicketCommand;
 
         #endregion
 
         public QueryAllTicketsViewModel(DatabaseService databaseService, PaginationViewModel paginationViewModel, MainViewModel mainViewModel)
             : base(databaseService, paginationViewModel, mainViewModel)
         {
-            // 初始化命令
+            _advancedQueryViewModel = new AdvancedQueryTicketViewModel(databaseService);
+            _advancedQueryViewModel.FilterApplied += OnFilterApplied;
+            
             ToggleQueryPanelCommand = new RelayCommand(ToggleQueryPanel);
             ApplyFilterCommand = new RelayCommand(ApplyFilter);
             ResetFilterCommand = new RelayCommand(ResetFilter);
@@ -45,23 +50,12 @@ namespace TA_WPF.ViewModels
             ClearYearCommand = new RelayCommand(ClearYear);
             SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
             
-            // 初始化年份选项
+            // 添加预览车票命令
+            _previewTicketCommand = new RelayCommand(PreviewSelectedTicket, () => CanPreviewTicket);
+            
             InitializeYearOptions();
-            
-            // 初始化车次前缀
             InitializeTrainPrefixes();
-            
-            // 初始化站点建议列表
-            DepartStationSuggestions = new ObservableCollection<StationInfo>();
-            
-            // 异步加载出发站列表
             LoadDepartStationsAsync();
-
-            // 初始化高级查询视图模型
-            _advancedQueryViewModel = new AdvancedQueryTicketViewModel(databaseService);
-            
-            // 订阅筛选条件应用事件
-            _advancedQueryViewModel.FilterApplied += OnFilterApplied;
         }
 
         /// <summary>
@@ -775,6 +769,22 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public bool HasNoData => TrainRideInfos != null && TrainRideInfos.Count == 0 && !IsLoading;
 
+        /// <summary>
+        /// 是否可以预览车票
+        /// </summary>
+        public bool CanPreviewTicket
+        {
+            get => _canPreviewTicket;
+            set
+            {
+                if (_canPreviewTicket != value)
+                {
+                    _canPreviewTicket = value;
+                    OnPropertyChanged(nameof(CanPreviewTicket));
+                }
+            }
+        }
+
         #endregion
 
         #region 命令
@@ -838,6 +848,11 @@ namespace TA_WPF.ViewModels
         /// 选择出发站命令
         /// </summary>
         public ICommand SelectDepartStationCommand { get; }
+
+        /// <summary>
+        /// 预览车票命令
+        /// </summary>
+        public ICommand PreviewTicketCommand => _previewTicketCommand;
 
         #endregion
 
@@ -1181,6 +1196,25 @@ namespace TA_WPF.ViewModels
             CustomYear = null;
             // 不要自动应用筛选
             // ApplyFilter();
+        }
+
+        // 重写选择变更方法，更新预览按钮状态
+        protected override void UpdateSelectedItemsCount()
+        {
+            base.UpdateSelectedItemsCount();
+            CanPreviewTicket = SelectedItemsCount == 1;
+        }
+        
+        // 预览车票方法
+        private void PreviewSelectedTicket()
+        {
+            var selectedTicket = TrainRideInfos.FirstOrDefault(t => t.IsSelected);
+            if (selectedTicket != null)
+            {
+                var previewWindow = new Views.TicketPreviewWindow(selectedTicket);
+                previewWindow.Owner = Application.Current.MainWindow;
+                previewWindow.ShowDialog();
+            }
         }
 
         #endregion

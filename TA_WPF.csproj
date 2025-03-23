@@ -20,7 +20,9 @@
     <PackageReference Include="MaterialDesignColors" Version="2.1.4" />
     <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
     <PackageReference Include="MySql.Data" Version="8.0.33" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.2" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.3" />
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
   </ItemGroup>
 
@@ -30,6 +32,12 @@
 
   <ItemGroup>
     <Resource Include="Assets\Icons\app_icon.ico" />
+    <Resource Include="Assets\pic\blueTicket.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\pic\redTicket.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>
@@ -44,6 +52,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\pic\blueTicket.png" />
+    <None Remove="Assets\pic\redTicket.png" />
   </ItemGroup>
 
   <ItemGroup>

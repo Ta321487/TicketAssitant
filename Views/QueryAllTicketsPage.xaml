@@ -241,6 +241,20 @@
                         <TextBlock Text="修改" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                
+                <!-- 添加预览车票按钮 -->
+                <Button Command="{Binding PreviewTicketCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="预览选中的车票"
+                        Margin="0,0,8,0"
+                        Height="36"
+                        Visibility="{Binding SelectedItemsCount, Converter={StaticResource IntEqualityToVisibilityConverter}, ConverterParameter=1}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="TicketOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="预览车票" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                
                 <Button Command="{Binding DeleteTicketsCommand}" 
                         Style="{StaticResource MaterialDesignRaisedButton}"
                         ToolTip="删除选中的车票"

@@ -792,13 +792,13 @@ namespace TA_WPF.ViewModels
                 return;
             }
 
-            // 检查长度是否在1-4个汉字之间
-            if (stationName.Length > 4)
+            // 检查长度是否在1-5个汉字之间
+            if (stationName.Length > 5)
             {
-                MessageBoxHelper.ShowInformation("车站名称不能超过4个汉字");
+                MessageBoxHelper.ShowInformation("车站名称不能超过5个汉字");
                 
                 // 截取前4个字符
-                string truncatedName = stationName.Substring(0, 4);
+                string truncatedName = stationName.Substring(0, 5);
                 if (isDepartStation)
                     DepartStation = truncatedName;
                 else

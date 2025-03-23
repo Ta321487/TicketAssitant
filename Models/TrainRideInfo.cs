@@ -4,6 +4,8 @@ namespace TA_WPF.Models
 {
     public class TrainRideInfo : INotifyPropertyChanged
     {
+        internal string? _identityInfo;
+        internal string? _encodingArea;
         private int _id;
         private string? _ticketNumber;
         private string? _checkInLocation;

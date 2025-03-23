@@ -26,6 +26,8 @@
             
             <!-- 转换器 -->
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+            <converters:BooleanToVisibilityHiddenConverter x:Key="BooleanToVisibilityHiddenConverter" />
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             
             <!-- 主题相关资源 -->
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />

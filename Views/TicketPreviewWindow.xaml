@@ -1,0 +1,793 @@
+<Window x:Class="TA_WPF.Views.TicketPreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TA_WPF.Views"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels"
+        xmlns:converters="clr-namespace:TA_WPF.Converters"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        d:DataContext="{d:DesignInstance Type=viewmodels:TicketPreviewViewModel, IsDesignTimeCreatable=True}"
+        d:DesignHeight="1200" d:DesignWidth="1100"
+        mc:Ignorable="d"
+        Title="车票预览" 
+        Height="650" 
+        Width="1050"
+        WindowStartupLocation="CenterScreen"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        FontFamily="{materialDesign:MaterialDesignFont}">
+
+    <Window.Resources>
+        <converters:StationWordPositionConverter x:Key="StationWordPositionConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:MoneyUnitPositionConverter x:Key="MoneyUnitPositionConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <!-- 定义金额单位位置转换器 -->
+        <converters:MoneyValueToMarginConverter x:Key="MoneyValueToMarginConverter"/>
+        <converters:TrainNumberPositionConverter x:Key="TrainNumberPositionConverter"/>
+        <converters:ArrowStyleConverter x:Key="ArrowStyleConverter"/>
+        <converters:PointConverter x:Key="PointConverter"/>
+        <converters:ArrowStartPointConverter x:Key="ArrowStartPointConverter"/>
+        <converters:HeadStartPointConverter x:Key="HeadStartPointConverter"/>
+        <converters:ArrowPathConverter x:Key="ArrowPathConverter"/>
+
+        <!-- 系统常量 -->
+        <sys:Double x:Key="Ten">10</sys:Double>
+        <sys:Double x:Key="Twenty">20</sys:Double>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- 左侧数据表单 -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,12,0">
+            <StackPanel>
+                <TextBlock Text="车票信息" 
+                           Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
+                           Margin="0,0,0,8"/>
+
+                <TextBlock Text="车票号码" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.TicketNumber, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="检票口" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.CheckInLocation, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="出发车站" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.DepartStation, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="车次号" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.TrainNo, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="出发站拼音" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.DepartStationPinyin, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="到达车站" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.ArriveStation, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="到达站拼音" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.ArriveStationPinyin, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="出发日期" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.DepartDate, StringFormat=\{0:yyyy-MM-dd\}, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="出发时间" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding DepartTimeFormatted, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="车厢号" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.CoachNo, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="座位号" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.SeatNo, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="金额" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.Money, StringFormat=¥\{0:N2\}, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="座位类型" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.SeatType, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="附加信息" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.AdditionalInfo, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="车票用途" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.TicketPurpose, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="提示" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding SelectedTicket.Hint, Mode=OneWay}" 
+                         IsEnabled="False"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="身份信息" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding IdentityInfo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+
+                <TextBlock Text="编码区" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,4,0,2"/>
+                <TextBox Text="{Binding EncodingArea, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Height="30"
+                         Padding="8,0"
+                         VerticalContentAlignment="Center"
+                         Margin="0,0,0,4"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 右侧车票预览 -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 车票预览区域 -->
+            <Grid Grid.Row="0">
+                <Viewbox Stretch="Uniform" Margin="5">
+                    <Grid Width="811" Height="509">
+                        <Image Source="pack://application:,,,/Assets/pic/blueTicket.png" Stretch="Fill" />
+
+                        <!-- 车票号码 -->
+                        <TextBlock Text="{Binding SelectedTicket.TicketNumber}" 
+                                FontWeight="Normal" 
+                                Foreground="Red" 
+                                FontSize="40" 
+                                Margin="55,20,0,0" 
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"/>
+                        <!-- 检票口 - 条件显示 -->
+                        <StackPanel Orientation="Horizontal" 
+                        Margin="510,20,0,0" 
+                        HorizontalAlignment="Left" 
+                        VerticalAlignment="Top">
+                            <TextBlock Text="检票：" 
+                            FontWeight="Bold" 
+                            Foreground="Black"
+                            FontFamily="SimHei"
+                            FontSize="28">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="Null">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="null">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="NULL">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding SelectedTicket.CheckInLocation}" 
+                                        FontWeight="Bold"
+                                       FontFamily="SimHei"
+                                        Foreground="Black" 
+                                        FontSize="28">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="Null">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="null">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="NULL">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedTicket.CheckInLocation}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                        <!-- 出发站站名 -->
+                        <TextBlock Text="{Binding DepartStationWithSpacing}" 
+                                FontWeight="Bold"
+                                FontFamily="SimHei" 
+                                Foreground="Black" 
+                                FontSize="40" 
+                                Margin="60,108,0,0"
+                                Width="280"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top" />
+
+                        <!-- 出发站拼音 -->
+                        <TextBlock Text="{Binding SelectedTicket.DepartStationPinyin}" 
+                                FontWeight="Normal" 
+                                Foreground="Black"
+                                FontFamily="Times New Roman"
+                                FontSize="28" 
+                                Margin="-20,161,0,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top">
+                            <TextBlock.RenderTransform>
+                                <TranslateTransform X="{Binding DepartStationPinyinPosition}"/>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+
+                        <!-- 出发站"站"字 -->
+                        <TextBlock Text="站" 
+                                FontWeight="Bold" 
+                                Foreground="Black" 
+                                FontSize="30"
+                                Width="40"
+                                Height="40"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top">
+                            <TextBlock.Margin>
+                                <MultiBinding Converter="{StaticResource StationWordPositionConverter}">
+                                    <Binding Path="DepartStationName"/>
+                                    <Binding Source="271,114,513,362"/>
+                                </MultiBinding>
+                            </TextBlock.Margin>
+                        </TextBlock>
+
+                        <!-- 车次号 -->
+                        <TextBlock x:Name="TrainNumber"
+                                Text="{Binding SelectedTicket.TrainNo}" 
+                                FontWeight="Regular" 
+                                Foreground="Black" 
+                                FontSize="36"
+                                FontFamily="Times New Roman"
+                                VerticalAlignment="Top"
+                                HorizontalAlignment="Left">
+                            <TextBlock.Margin>356,108,0,0</TextBlock.Margin>
+                        </TextBlock>
+
+                        <!-- 车次号下方箭头 -->
+                        <Path Stroke="Black" 
+                              StrokeThickness="2.5"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Top"
+                              Height="9"
+                              Margin="0,149,0,0"
+                              RenderTransformOrigin="0,0">
+                            <Path.RenderTransform>
+                                <TranslateTransform X="{Binding Margin.Left, ElementName=TrainNumber}"/>
+                            </Path.RenderTransform>
+                            <Path.Data>
+                                <MultiBinding Converter="{StaticResource ArrowPathConverter}">
+                                    <Binding Path="ActualWidth" ElementName="TrainNumber"/>
+                                    <Binding Path="SelectedTicket.TrainNo"/>
+                                    <Binding Path="TrainNumberCenterPosition"/>
+                                </MultiBinding>
+                            </Path.Data>
+                        </Path>
+
+                        <!-- 到达站站名 -->
+                        <TextBlock Text="{Binding ArriveStationWithSpacing}" 
+                                FontWeight="Bold" 
+                                Foreground="Black"
+                                FontFamily="SimHei" 
+                                FontSize="40"
+                                Width="280"
+                                Margin="530,110,0,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top" />
+
+                        <!-- 到达站拼音 -->
+                        <TextBlock Text="{Binding SelectedTicket.ArriveStationPinyin}" 
+                                FontWeight="Normal" 
+                                Foreground="Black" 
+                                FontSize="28"
+                                FontFamily="Times New Roman"
+                                Margin="0,160,0,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top">
+                            <TextBlock.RenderTransform>
+                                <TranslateTransform X="{Binding ArriveStationPinyinPosition}"/>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+
+                        <!-- 到达站"站"字 -->
+                        <TextBlock Text="站" 
+                                FontWeight="Bold" 
+                                Foreground="Black" 
+                                FontSize="30"
+                                Width="40"
+                                Height="40"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top">
+                            <TextBlock.Margin>
+                                <MultiBinding Converter="{StaticResource StationWordPositionConverter}">
+                                    <Binding Path="ArriveStationName"/>
+                                    <Binding Source="755,126,25,351"/>
+                                </MultiBinding>
+                            </TextBlock.Margin>
+                        </TextBlock>
+
+
+                        <!-- 分开的年月日显示 -->
+                        <StackPanel Orientation="Horizontal" 
+                                  Margin="60,213,0,0" 
+                                  HorizontalAlignment="Left" 
+                                  VerticalAlignment="Top">
+                            <!-- 年份 -->
+                            <!-- 年字 -->
+                            <!-- 年份 -->
+                            <TextBlock Text="{Binding DepartYear}"
+                                FontWeight="Normal" 
+                                Foreground="Black" 
+                                FontFamily="Times New Roman"
+                                FontSize="32"/>
+                            <!-- 年字 -->
+                            <TextBlock Text="年" 
+                                FontWeight="Bold"
+                                FontFamily="SimHei"
+                                Foreground="Black"
+                                Margin="0,8,0,0"
+                                FontSize="18" Height="23"/>
+                            <!-- 月份 -->
+                            <TextBlock Text="{Binding DepartMonth}" 
+                                FontWeight="Normal" 
+                                Foreground="Black" 
+                                FontFamily="Times New Roman"
+                                FontSize="32"/>
+                            <!-- 月字 -->
+                            <TextBlock Text="月"
+                                Margin="0,8,0,0"
+                                FontFamily="SimHei"
+                                FontWeight="Bold" 
+                                Foreground="Black" 
+                                FontSize="18" Height="23"/>
+                            <!-- 日 -->
+                            <TextBlock Text="{Binding DepartDay}" 
+                                FontWeight="Normal" 
+                                Foreground="Black" 
+                                FontFamily="Times New Roman"
+                                FontSize="32"/>
+                            <!-- 日字 -->
+                            <TextBlock Text="日"
+                                Margin="0,8,0,0"
+                                FontWeight="Bold" 
+                                Foreground="Black" 
+                                FontSize="18" Height="23"/>
+                        </StackPanel>
+
+                        <!-- 出发时间 - 根据截图最终调整位置 -->
+                        <TextBlock Text="{Binding DepartTimeFormatted}" 
+                                FontWeight="Normal" 
+                                Foreground="Black" 
+                                FontSize="32"
+                                FontFamily="Times New Roman"
+                                Margin="280,215,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top"/>
+                        <!-- "开"字 -->
+                        <TextBlock Text="开" 
+                         FontWeight="Bold" 
+                                Foreground="Black"
+                                FontFamily="SimHei"
+                                FontSize="18" 
+                                Margin="358,224,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top"/>
+
+                        <!-- 车厢号和座位号 -->
+                        <!-- 车厢号-->
+                        <TextBlock Text="{Binding CoachNumber}" 
+                                FontWeight="Normal" 
+                                Foreground="Black"
+                                FontFamily="Times New Roman"
+                                FontSize="32" 
+                                Margin="534,215,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top"/>
+
+                        <!-- "车"字 -->
+                        <TextBlock Text="车" 
+                                FontWeight="Bold" 
+                                Foreground="Black" 
+                                FontSize="18" 
+                                Margin="571,226,0,0"
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top"/>
+
+                        <!-- "加"字 - 条件显示 -->
+                        <TextBlock Text="加" 
+                                FontWeight="Bold"
+                                FontFamily="SimHei"
+                                Foreground="Black" 
+                                FontSize="18" 
+                                Margin="510,226,0,0"
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasAddedCoach}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- 普通座位号显示 -->
+                        <TextBlock Text="{Binding SelectedTicket.SeatNo}" 
+                                FontWeight="Normal" 
+                                Foreground="Black" 
+                                FontSize="32"
+                                FontFamily="Times New Roman"
+                                Margin="597,215,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasNoSeat}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- "无座"显示 -->
+                        <StackPanel Orientation="Horizontal" 
+                                  Margin="597,220,0,0" 
+                                  HorizontalAlignment="Left" 
+                                  VerticalAlignment="Top">
+                            <TextBlock Text="无" 
+                                    FontWeight="Medium" 
+                                    Foreground="Black" 
+                                    FontSize="28"
+                                    FontFamily="SimSun-ExtG">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasNoSeat}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="座" 
+                                    FontWeight="Medium" 
+                                    Foreground="Black" 
+                                    FontSize="28"
+                                    FontFamily="SimSun-ExtG"
+                                    Margin="-2,0,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasNoSeat}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- "号"字 -->
+                        <TextBlock Text="号" 
+                                FontWeight="Bold" 
+                                Foreground="Black" 
+                                FontSize="18" 
+                                Margin="654,224,0,0"
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasNoSeat}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- 金额 -->
+                        <!-- 人民币符号 -->
+                        <TextBlock Text="¥" 
+                                FontWeight="Medium" 
+                                Foreground="Black" 
+                                FontSize="28" 
+                                Margin="55,265,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top"/>
+
+                        <!-- 金额数值 -->
+                        <TextBlock Text="{Binding MoneyValue}" 
+                                FontWeight="Normal" 
+                                Foreground="Black" 
+                                FontFamily="Times New Roman"
+                                FontSize="32" 
+                                d:Text="9999.99"
+                                Margin="74,261,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top"
+                                Name="moneyValueText"/>
+
+                        <!-- 金额：元-->
+                        <TextBlock Text="元" 
+                                FontWeight="Bold" 
+                                Foreground="Black" 
+                                FontSize="16"
+                                Width="16"
+                                Height="16"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top">
+                            <TextBlock.Margin>
+                                <MultiBinding Converter="{StaticResource MoneyUnitPositionConverter}">
+                                    <Binding Path="MoneyValue"/>
+                                    <Binding Source="178,275,0,0"/>
+                                </MultiBinding>
+                            </TextBlock.Margin>
+                        </TextBlock>
+
+                        <!-- 座位类型 -->
+                        <TextBlock Text="{Binding SelectedTicket.SeatType}" 
+                                FontWeight="Bold"
+                                FontFamily="SimHei"
+                                Foreground="Black"
+                                FontSize="24" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Margin" Value="600,266,0,0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasNoSeat}" Value="True">
+                                            <Setter Property="Margin" Value="530,266,0,0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- 附加信息 - 条件显示 -->
+                        <TextBlock Text="{Binding SelectedTicket.AdditionalInfo}" 
+                                FontWeight="SemiBold" 
+                                Foreground="Black" 
+                                FontSize="16"
+                                   FontFamily="SimHei"
+                                Margin="55,308,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedTicket.AdditionalInfo, Converter={StaticResource StringToVisibilityConverter}}" Value="Collapsed">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- 车票用途 - 条件显示 -->
+                        <TextBlock Text="{Binding SelectedTicket.TicketPurpose}" 
+                                FontWeight="SemiBold" 
+                                Foreground="Black" 
+                                FontSize="16"
+                                FontFamily="SimHei"
+                                Margin="54,331,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedTicket.TicketPurpose, Converter={StaticResource StringToVisibilityConverter}}" Value="Collapsed">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- 身份信息 -->
+                        <TextBlock Text="{Binding IdentityInfo}" 
+                                FontWeight="Normal" 
+                                Foreground="Black"
+                                FontFamily="SimSun-ExtB"
+                                FontSize="32" 
+                                Margin="60,354,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top"/>
+
+                        <!-- 编码区 -->
+                        <TextBlock Text="{Binding EncodingArea}" 
+                                FontWeight="Normal"
+                                FontFamily="Times New Roman"
+                                Foreground="Black" 
+                                FontSize="28" 
+                                Margin="44,467,0,0" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top"/>
+
+                        <!-- 提示信息框 - 调整为虚线框 -->
+                        <Border BorderThickness="1"
+                                Width="485"
+                                Height="60"
+                                Margin="-170,390,0,0" 
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Background="Transparent">
+                            <Border.BorderBrush>
+                                <VisualBrush>
+                                    <VisualBrush.Visual>
+                                        <Rectangle StrokeDashArray="4 2"
+                                                 Stroke="Black"
+                                                 StrokeThickness="1"
+                                                 Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualWidth}"
+                                                 Height="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualHeight}"/>
+                                    </VisualBrush.Visual>
+                                </VisualBrush>
+                            </Border.BorderBrush>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding HintLines}" RenderTransformOrigin="0.5,0.5" 
+                                              VerticalAlignment="Center">
+                                    <ItemsControl.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform/>
+                                            <SkewTransform AngleY="0.117"/>
+                                            <RotateTransform/>
+                                            <TranslateTransform Y="-0.495"/>
+                                        </TransformGroup>
+                                    </ItemsControl.RenderTransform>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" 
+                                                    FontSize="20"
+                                                    FontFamily="SimHei"
+                                                    FontWeight="Medium"
+                                                    HorizontalAlignment="Center"
+                                                    Margin="5,2" 
+                                                    TextWrapping="Wrap"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+
+                        <!-- 二维码显示 -->
+                        <Image Source="{Binding QrCodeImage}" 
+                               Width="120" 
+                               Height="120" 
+                               HorizontalAlignment="Right" 
+                               VerticalAlignment="Bottom" 
+                               Margin="0,0,50,80"/>
+                    </Grid>
+                </Viewbox>
+            </Grid>
+
+            <!-- 底部按钮 -->
+            <Button Grid.Row="1" 
+                    Content="关闭" 
+                    Command="{Binding CloseCommand}" 
+                    Style="{StaticResource MaterialDesignFlatButton}" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,8,0,0"/>
+        </Grid>
+    </Grid>
+</Window> 
