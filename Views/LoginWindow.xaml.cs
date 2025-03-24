@@ -31,7 +31,7 @@ namespace TA_WPF.Views
         private MainWindow? _mainWindow;
         public bool LoginSuccessful { get; private set; } = false;
         public string ConnectionString { get; private set; } = string.Empty;
-        private string _lastDatabaseName = "otherbackup"; // 默认数据库名称
+        private string _lastDatabaseName = ""; // 默认数据库名称
         private string _lastServerAddress = "localhost"; // 默认服务器地址
         private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info" }; // 必要的表
         private readonly LoginInfoService _loginInfoService;
