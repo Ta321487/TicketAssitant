@@ -225,9 +225,9 @@ namespace TA_WPF.Services
                     Console.WriteLine($"找到配置文件: {config}");
                 }
 
-                LogHelper.LogInfo($"可执行文件路径: {exePath}");
-                LogHelper.LogInfo($"应用程序名称: {exeName}");
-                LogHelper.LogInfo($"应用程序基础目录: {baseDir}");
+                LogHelper.LogSystem("主题", $"可执行文件路径: {exePath}");
+                LogHelper.LogSystem("主题", $"应用程序名称: {exeName}");
+                LogHelper.LogSystem("主题", $"应用程序基础目录: {baseDir}");
 
                 // 首先尝试dll.config和exe.config
                 string dllConfigPath = System.IO.Path.Combine(baseDir, exeName + ".dll.config");
@@ -248,10 +248,10 @@ namespace TA_WPF.Services
                 Console.WriteLine($"已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
                 Console.WriteLine($"已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
 
-                LogHelper.LogInfo($"程序dll配置文件存在: {dllConfigExists} - {dllConfigPath}");
-                LogHelper.LogInfo($"程序exe配置文件存在: {exeConfigExists} - {exeConfigPath}");
-                LogHelper.LogInfo($"已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
-                LogHelper.LogInfo($"已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
+                LogHelper.LogSystem("主题", $"程序dll配置文件存在: {dllConfigExists} - {dllConfigPath}");
+                LogHelper.LogSystem("主题", $"程序exe配置文件存在: {exeConfigExists} - {exeConfigPath}");
+                LogHelper.LogSystem("主题", $"已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
+                LogHelper.LogSystem("主题", $"已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
 
                 // 尝试直接修改配置文件
                 string configToUse = null;
@@ -282,7 +282,7 @@ namespace TA_WPF.Services
                 if (configToUse != null)
                 {
                     Console.WriteLine($"将使用配置文件: {configToUse}");
-                    LogHelper.LogInfo($"将使用配置文件: {configToUse}");
+                    LogHelper.LogSystem("主题", $"将使用配置文件: {configToUse}");
 
                     try
                     {
@@ -302,7 +302,7 @@ namespace TA_WPF.Services
                                 // 更新已存在的IsDarkMode设置
                                 isDarkModeNode.Attributes["value"].Value = isDarkMode.ToString().ToLower();
                                 Console.WriteLine($"更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
-                                LogHelper.LogInfo($"更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
+                                LogHelper.LogSystem("主题", $"更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
                             }
                             else
                             {
@@ -318,18 +318,18 @@ namespace TA_WPF.Services
                                 appSettingsNode.AppendChild(newNode);
 
                                 Console.WriteLine($"创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
-                                LogHelper.LogInfo($"创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
+                                LogHelper.LogSystem("主题", $"创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
                             }
 
                             // 保存XML文档
                             xmlDoc.Save(configToUse);
                             Console.WriteLine($"已保存配置文件: {configToUse}");
-                            LogHelper.LogInfo($"已保存配置文件: {configToUse}");
+                            LogHelper.LogSystem("主题", $"已保存配置文件: {configToUse}");
                         }
                         else
                         {
                             Console.WriteLine("未找到appSettings节点");
-                            LogHelper.LogWarning("未找到appSettings节点");
+                            LogHelper.LogSystem("主题", "未找到appSettings节点");
                         }
 
                         // 刷新配置
@@ -339,8 +339,8 @@ namespace TA_WPF.Services
                     {
                         Console.WriteLine($"直接操作配置文件时出错: {ex.Message}");
                         Console.WriteLine($"异常堆栈: {ex.StackTrace}");
-                        LogHelper.LogError($"直接操作配置文件时出错: {ex.Message}");
-                        LogHelper.LogError($"异常堆栈: {ex.StackTrace}");
+                        LogHelper.LogSystem("主题", $"直接操作配置文件时出错: {ex.Message}");
+                        LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
                     }
                 }
 
@@ -352,14 +352,14 @@ namespace TA_WPF.Services
                 }
 
                 Console.WriteLine($"已保存主题设置: {(isDarkMode ? "深色" : "浅色")}，值为: {isDarkMode.ToString().ToLower()}");
-                LogHelper.LogInfo($"已保存主题设置: {(isDarkMode ? "深色" : "浅色")}，值为: {isDarkMode.ToString().ToLower()}");
+                LogHelper.LogSystem("主题", $"已保存主题设置: {(isDarkMode ? "深色" : "浅色")}，值为: {isDarkMode.ToString().ToLower()}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"保存主题设置时出错: {ex.Message}");
                 Console.WriteLine($"异常堆栈: {ex.StackTrace}");
-                LogHelper.LogError($"保存主题设置时出错: {ex.Message}");
-                LogHelper.LogError($"异常堆栈: {ex.StackTrace}");
+                LogHelper.LogSystem("主题", $"保存主题设置时出错: {ex.Message}");
+                LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -391,9 +391,9 @@ namespace TA_WPF.Services
                     Console.WriteLine($"加载配置 - 找到配置文件: {config}");
                 }
 
-                LogHelper.LogInfo($"加载配置 - 可执行文件路径: {exePath}");
-                LogHelper.LogInfo($"加载配置 - 应用程序名称: {exeName}");
-                LogHelper.LogInfo($"加载配置 - 应用程序基础目录: {baseDir}");
+                LogHelper.LogSystem("主题", $"加载配置 - 可执行文件路径: {exePath}");
+                LogHelper.LogSystem("主题", $"加载配置 - 应用程序名称: {exeName}");
+                LogHelper.LogSystem("主题", $"加载配置 - 应用程序基础目录: {baseDir}");
 
                 // 首先尝试dll.config和exe.config
                 string dllConfigPath = System.IO.Path.Combine(baseDir, exeName + ".dll.config");
@@ -414,10 +414,10 @@ namespace TA_WPF.Services
                 Console.WriteLine($"加载配置 - 已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
                 Console.WriteLine($"加载配置 - 已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
 
-                LogHelper.LogInfo($"加载配置 - 程序dll配置文件存在: {dllConfigExists} - {dllConfigPath}");
-                LogHelper.LogInfo($"加载配置 - 程序exe配置文件存在: {exeConfigExists} - {exeConfigPath}");
-                LogHelper.LogInfo($"加载配置 - 已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
-                LogHelper.LogInfo($"加载配置 - 已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
+                LogHelper.LogSystem("主题", $"加载配置 - 程序dll配置文件存在: {dllConfigExists} - {dllConfigPath}");
+                LogHelper.LogSystem("主题", $"加载配置 - 程序exe配置文件存在: {exeConfigExists} - {exeConfigPath}");
+                LogHelper.LogSystem("主题", $"加载配置 - 已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
+                LogHelper.LogSystem("主题", $"加载配置 - 已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
 
                 // 尝试直接读取配置文件
                 string configToUse = null;
@@ -448,19 +448,19 @@ namespace TA_WPF.Services
                 if (configToUse != null)
                 {
                     Console.WriteLine($"加载配置 - 将使用配置文件: {configToUse}");
-                    LogHelper.LogInfo($"加载配置 - 将使用配置文件: {configToUse}");
+                    LogHelper.LogSystem("主题", $"加载配置 - 将使用配置文件: {configToUse}");
 
                     try
                     {
                         // 读取配置文件内容
                         string configContent = System.IO.File.ReadAllText(configToUse);
                         Console.WriteLine($"加载配置 - 配置文件内容长度: {configContent.Length}字节");
-                        LogHelper.LogInfo($"加载配置 - 配置文件内容长度: {configContent.Length}字节");
+                        LogHelper.LogSystem("主题", $"加载配置 - 配置文件内容长度: {configContent.Length}字节");
 
                         // 检查是否包含IsDarkMode设置
                         bool containsIsDarkMode = configContent.Contains("IsDarkMode");
                         Console.WriteLine($"加载配置 - 配置文件包含IsDarkMode: {containsIsDarkMode}");
-                        LogHelper.LogInfo($"加载配置 - 配置文件包含IsDarkMode: {containsIsDarkMode}");
+                        LogHelper.LogSystem("主题", $"加载配置 - 配置文件包含IsDarkMode: {containsIsDarkMode}");
 
                         if (containsIsDarkMode)
                         {
@@ -474,7 +474,7 @@ namespace TA_WPF.Services
                             {
                                 string value = isDarkModeNode.Attributes["value"].Value.ToLower();
                                 Console.WriteLine($"加载配置 - 从配置文件读取到IsDarkMode值: {value}");
-                                LogHelper.LogInfo($"加载配置 - 从配置文件读取到IsDarkMode值: {value}");
+                                LogHelper.LogSystem("主题", $"加载配置 - 从配置文件读取到IsDarkMode值: {value}");
 
                                 if (bool.TryParse(value, out bool isDarkMode))
                                 {
@@ -486,7 +486,7 @@ namespace TA_WPF.Services
                                     }
 
                                     Console.WriteLine($"加载配置 - 已从配置文件读取主题设置: {(isDarkMode ? "深色" : "浅色")}");
-                                    LogHelper.LogInfo($"加载配置 - 已从配置文件读取主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                                    LogHelper.LogSystem("主题", $"加载配置 - 已从配置文件读取主题设置: {(isDarkMode ? "深色" : "浅色")}");
                                     return isDarkMode;
                                 }
                             }
@@ -496,8 +496,8 @@ namespace TA_WPF.Services
                     {
                         Console.WriteLine($"加载配置 - 直接读取配置文件时出错: {ex.Message}");
                         Console.WriteLine($"异常堆栈: {ex.StackTrace}");
-                        LogHelper.LogError($"加载配置 - 直接读取配置文件时出错: {ex.Message}");
-                        LogHelper.LogError($"异常堆栈: {ex.StackTrace}");
+                        LogHelper.LogSystem("主题", $"加载配置 - 直接读取配置文件时出错: {ex.Message}");
+                        LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
                     }
                 }
             }
@@ -505,8 +505,8 @@ namespace TA_WPF.Services
             {
                 Console.WriteLine($"加载主题设置时出错: {ex.Message}");
                 Console.WriteLine($"异常堆栈: {ex.StackTrace}");
-                LogHelper.LogError($"加载主题设置时出错: {ex.Message}");
-                LogHelper.LogError($"异常堆栈: {ex.StackTrace}");
+                LogHelper.LogSystem("主题", $"加载主题设置时出错: {ex.Message}");
+                LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
             }
 
             // 如果配置文件中没有主题设置或加载失败，检查当前主题
@@ -520,7 +520,7 @@ namespace TA_WPF.Services
             }
 
             Console.WriteLine($"加载配置 - 使用当前活动主题: {(currentTheme ? "深色" : "浅色")}");
-            LogHelper.LogInfo($"加载配置 - 使用当前活动主题: {(currentTheme ? "深色" : "浅色")}");
+            LogHelper.LogSystem("主题", $"加载配置 - 使用当前活动主题: {(currentTheme ? "深色" : "浅色")}");
 
             // 保存当前主题设置到配置文件
             SaveThemeToConfig(currentTheme);
@@ -541,14 +541,14 @@ namespace TA_WPF.Services
                 bool isDark = theme.GetBaseTheme() == BaseTheme.Dark;
 
                 Console.WriteLine($"当前活动主题检测: {(isDark ? "深色" : "浅色")}");
-                LogHelper.LogInfo($"当前活动主题检测: {(isDark ? "深色" : "浅色")}");
+                LogHelper.LogSystem("主题", $"当前活动主题检测: {(isDark ? "深色" : "浅色")}");
 
                 return isDark;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"检测当前主题时出错: {ex.Message}");
-                LogHelper.LogError($"检测当前主题时出错: {ex.Message}");
+                LogHelper.LogSystem("主题", $"检测当前主题时出错: {ex.Message}");
 
                 // 默认返回false（浅色主题）
                 return false;

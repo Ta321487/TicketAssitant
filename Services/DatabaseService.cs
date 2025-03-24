@@ -40,12 +40,12 @@ namespace TA_WPF.Services
                     if (retryCount >= MaxRetryCount)
                     {
                         // 记录详细的最终错误信息
-                        LogHelper.LogError($"数据库连接失败。错误: {ex.Message}, 错误代码: {ex.Number}");
+                        LogHelper.LogSystemError("数据库", $"连接失败。错误: {ex.Message}, 错误代码: {ex.Number}", ex);
                         throw; // 重新抛出异常
                     }
                     
                     // 记录重试信息
-                    LogHelper.LogWarning($"数据库连接失败，正在重试。错误: {ex.Message}");
+                    LogHelper.LogSystemWarning("数据库", $"连接失败，正在重试。错误: {ex.Message}");
                     
                     // 等待一段时间后重试
                     await Task.Delay(RetryDelayMs);

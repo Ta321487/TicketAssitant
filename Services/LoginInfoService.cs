@@ -34,12 +34,12 @@ namespace TA_WPF.Services
                 ConfigurationManager.RefreshSection("appSettings");
                 
                 // 记录日志
-                LogHelper.LogInfo($"用户登录成功，登录时间：{currentTime}");
+                LogHelper.LogSystem("登录", $"用户登录成功，登录时间：{currentTime}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"保存登录时间时出错: {ex.Message}");
-                LogHelper.LogError($"保存登录时间时出错: {ex.Message}");
+                LogHelper.LogSystemError("登录", $"保存登录时间时出错", ex);
             }
         }
         
@@ -60,7 +60,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"获取上次登录时间时出错: {ex.Message}");
-                LogHelper.LogError($"获取上次登录时间时出错: {ex.Message}");
+                LogHelper.LogSystemError("登录", $"获取上次登录时间时出错", ex);
             }
             
             return string.Empty;
@@ -96,7 +96,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"提取数据库名称时出错: {ex.Message}");
-                LogHelper.LogError($"提取数据库名称时出错: {ex.Message}");
+                LogHelper.LogSystemError("登录", $"提取数据库名称时出错", ex);
             }
             
             return "未知";

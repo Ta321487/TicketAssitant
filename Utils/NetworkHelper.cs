@@ -52,7 +52,7 @@ namespace TA_WPF.Utils
             catch (Exception ex)
             {
                 Console.WriteLine($"获取本地IP地址时出错: {ex.Message}");
-                LogHelper.LogError($"获取本地IP地址时出错: {ex.Message}");
+                LogHelper.LogSystemError("网络", $"获取本地IP地址时出错", ex);
             }
 
             // 如果所有方法都失败，返回本地回环地址
@@ -93,7 +93,7 @@ namespace TA_WPF.Utils
             catch (Exception ex)
             {
                 Console.WriteLine($"获取数据库服务器IP地址时出错: {ex.Message}");
-                LogHelper.LogError($"获取数据库服务器IP地址时出错: {ex.Message}");
+                LogHelper.LogSystemError("网络", $"获取数据库服务器IP地址时出错", ex);
             }
             
             return "未知";

@@ -183,7 +183,7 @@ namespace TA_WPF.Views
                 }
 
                 Console.WriteLine($"已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
-                LogHelper.LogInfo($"登录窗口已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
+                LogHelper.LogSystem("登录", $"窗口已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
             }
             catch (Exception ex)
             {
@@ -495,7 +495,7 @@ namespace TA_WPF.Views
                 }
 
                 Console.WriteLine($"主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
-                LogHelper.LogInfo($"登录窗口主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
+                LogHelper.LogSystem("登录", $"窗口主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
             }
             catch (Exception ex)
             {
@@ -708,14 +708,14 @@ namespace TA_WPF.Views
                             {
                                 serverReachable = false;
                                 // 记录日志但不终止连接
-                                LogHelper.LogWarning($"无法Ping通服务器 {serverAddress}，但仍将尝试连接数据库");
+                                LogHelper.LogSystemWarning("网络", $"无法Ping通服务器 {serverAddress}，但仍将尝试连接数据库");
                             }
                         });
 
                         // 如果Ping不通，记录警告但不抛出异常，继续尝试连接数据库
                         if (!serverReachable)
                         {
-                            LogHelper.LogWarning($"服务器 {serverAddress} 无法Ping通，但仍将尝试连接数据库");
+                            LogHelper.LogSystemWarning("网络", $"服务器 {serverAddress} 无法Ping通，但仍将尝试连接数据库");
                         }
                     }
                     else
@@ -1136,7 +1136,7 @@ namespace TA_WPF.Views
                         _mainWindow.ShowLoginSuccessNotification();
 
                         // 记录日志
-                        LogHelper.LogInfo($"用户登录成功，已创建新的MainViewModel，主题模式：{(isDarkMode ? "深色" : "浅色")}");
+                        LogHelper.LogSystem("登录", $"用户登录成功，已创建新的MainViewModel，主题模式：{(isDarkMode ? "深色" : "浅色")}");
 
                         // 关闭登录窗口
                         this.Close();

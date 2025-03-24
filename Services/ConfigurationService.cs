@@ -152,12 +152,12 @@ namespace TA_WPF.Services
                 ConfigurationManager.RefreshSection("appSettings");
                 
                 // 记录日志
-                LogHelper.LogInfo($"已将数据库名称 {databaseName} 添加到历史记录");
+                LogHelper.LogSystem("配置", $"已将数据库名称 {databaseName} 添加到历史记录");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
-                LogHelper.LogError($"保存数据库历史记录时出错: {ex.Message}");
+                LogHelper.LogSystemError("配置", $"保存数据库历史记录时出错", ex);
             }
         }
 
@@ -187,7 +187,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"保存数据库名称时出错: {ex.Message}");
-                LogHelper.LogError($"保存数据库名称时出错: {ex.Message}");
+                LogHelper.LogSystemError("配置", $"保存数据库名称时出错", ex);
             }
         }
 
@@ -208,7 +208,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"加载数据库名称时出错: {ex.Message}");
-                LogHelper.LogError($"加载数据库名称时出错: {ex.Message}");
+                LogHelper.LogSystemError("配置", $"加载数据库名称时出错", ex);
             }
             
             return string.Empty;
@@ -235,7 +235,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
-                LogHelper.LogError($"加载数据库历史记录时出错: {ex.Message}");
+                LogHelper.LogSystemError("配置", $"加载数据库历史记录时出错", ex);
             }
             
             return new List<string>();
@@ -271,7 +271,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"提取数据库名称时出错: {ex.Message}");
-                LogHelper.LogError($"提取数据库名称时出错: {ex.Message}");
+                LogHelper.LogSystemError("配置", $"提取数据库名称时出错", ex);
             }
             
             return string.Empty;
@@ -321,12 +321,12 @@ namespace TA_WPF.Services
                 }
                 
                 // 记录日志
-                LogHelper.LogInfo("数据库连接信息已解析");
+                LogHelper.LogSystem("配置", "数据库连接信息已解析");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"解析连接字符串时出错: {ex.Message}");
-                LogHelper.LogError($"解析连接字符串时出错: {ex.Message}");
+                LogHelper.LogSystemError("配置", $"解析连接字符串时出错", ex);
             }
             
             return (serverAddress, username, password);

@@ -174,7 +174,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"加载车票数据时出错: {ex.Message}");
-                LogHelper.LogError($"加载车票数据时出错", ex);
+                LogHelper.LogTicketError("加载", $"加载车票数据ID:{_ticketId}时出错", ex);
             }
         }
 
@@ -269,7 +269,7 @@ namespace TA_WPF.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    LogHelper.LogError("关闭修改车票窗口时出错", ex);
+                    LogHelper.LogTicketError("关闭", "关闭修改车票窗口时失败", ex);
                     // 尝试使用事件关闭
                     OnCloseWindow();
                 }
@@ -292,12 +292,12 @@ namespace TA_WPF.ViewModels
             }
             catch (MySqlException sqlEx)
             {
-                LogHelper.LogError($"数据库错误: {sqlEx.Message}", sqlEx);
+                LogHelper.LogTicketError("保存", $"更新车票时数据库错误: {sqlEx.Message}, 错误代码: {sqlEx.Number}", sqlEx);
                 MessageBoxHelper.ShowError($"数据库错误: {sqlEx.Message}\n错误代码: {sqlEx.Number}");
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"保存车票失败: {ex.Message}", ex);
+                LogHelper.LogTicketError("保存", $"更新车票失败(ID:{_ticketId}): {ex.Message}", ex);
                 MessageBoxHelper.ShowError($"保存车票失败: {ex.Message}");
             }
         }

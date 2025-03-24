@@ -68,7 +68,7 @@ namespace TA_WPF
                     bool isDarkMode = themeService.LoadThemeFromConfig();
                     
                     Console.WriteLine($"应用程序启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
-                    LogHelper.LogInfo($"应用程序启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                    LogHelper.LogSystem("应用程序", $"启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
                     
                     // 确保资源字典中的主题标志被正确设置
                     if (Resources != null)
@@ -89,7 +89,7 @@ namespace TA_WPF
                                 MaterialDesignThemes.Wpf.BaseTheme.Light;
                             
                             Console.WriteLine($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
-                            LogHelper.LogInfo($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
+                            LogHelper.LogSystem("应用程序", $"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
                         }
                     }
                     
@@ -99,21 +99,21 @@ namespace TA_WPF
                     // 验证主题是否已正确应用
                     bool verifyIsDarkMode = themeService.IsDarkThemeActive();
                     Console.WriteLine($"应用程序启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
-                    LogHelper.LogInfo($"应用程序启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
+                    LogHelper.LogSystem("应用程序", $"启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
                     
                     if (isDarkMode != verifyIsDarkMode)
                     {
                         Console.WriteLine($"警告: 主题设置验证失败，重新应用主题");
-                        LogHelper.LogWarning($"警告: 主题设置验证失败，重新应用主题");
+                        LogHelper.LogSystemWarning("应用程序", "主题设置验证失败，重新应用主题");
                         themeService.ApplyTheme(isDarkMode);
                     }
                     
-                    LogHelper.LogInfo($"已应用{(isDarkMode ? "深色" : "浅色")}主题");
+                    LogHelper.LogSystem("应用程序", $"已应用{(isDarkMode ? "深色" : "浅色")}主题");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"初始化主题服务时出错: {ex.Message}");
-                    LogHelper.LogError($"初始化主题服务时出错: {ex.Message}");
+                    LogHelper.LogSystemError("应用程序", "初始化主题服务时出错", ex);
                 }
                 
                 // 从配置文件加载字体大小设置
@@ -148,7 +148,7 @@ namespace TA_WPF
                             Resources["MediumFontSize"] = fontSize * (scaleFactor * 0.5);
                             
                             // 记录日志
-                            LogHelper.LogInfo($"从配置文件加载字体大小: {fontSize}pt，缩放因子: {scaleFactor}");
+                            LogHelper.LogSystem("应用程序", $"从配置文件加载字体大小: {fontSize}pt，缩放因子: {scaleFactor}");
                         }
                     }
                     else
@@ -179,7 +179,7 @@ namespace TA_WPF
                         Resources["MediumLargeFontSize"] = defaultFontSize * (scaleFactor * 0.7);
                         Resources["MediumFontSize"] = defaultFontSize * (scaleFactor * 0.5);
                         
-                        LogHelper.LogInfo($"使用默认字体大小: {defaultFontSize}pt，缩放因子: {scaleFactor}");
+                        LogHelper.LogSystem("应用程序", $"使用默认字体大小: {defaultFontSize}pt，缩放因子: {scaleFactor}");
                     }
                     
                     // 确保App.xaml中的资源字典与配置文件一致
@@ -203,7 +203,7 @@ namespace TA_WPF
                                 Resources["MediumLargeFontSize"] = configFontSize * (scaleFactor * 0.7);
                                 Resources["MediumFontSize"] = configFontSize * (scaleFactor * 0.5);
                                 
-                                LogHelper.LogInfo($"已同步字体大小设置: {configFontSize}pt，缩放因子: {scaleFactor}");
+                                LogHelper.LogSystem("应用程序", $"已同步字体大小设置: {configFontSize}pt，缩放因子: {scaleFactor}");
                             }
                         }
                     }
@@ -429,7 +429,7 @@ namespace TA_WPF
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             var exception = e.ExceptionObject as Exception;
-            LogHelper.LogError($"未处理的AppDomain异常: {exception?.Message}", exception);
+            LogHelper.LogSystemError("异常处理", "未处理的AppDomain异常", exception);
             MessageBox.Show($"程序发生严重错误: {exception?.Message}\n\n请联系开发人员并提供日志文件。", "严重错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
@@ -439,12 +439,12 @@ namespace TA_WPF
             // 特殊处理窗口Owner属性相关的异常
             if (e.Exception.Message.Contains("Owner") || e.Exception.Message.Contains("Window"))
             {
-                LogHelper.LogError($"窗口操作异常: {e.Exception.Message}", e.Exception);
+                LogHelper.LogSystemError("异常处理", "窗口操作异常", e.Exception);
                 e.Handled = true; // 标记为已处理，防止应用程序崩溃
                 return;
             }
             
-            LogHelper.LogError($"未处理的UI线程异常: {e.Exception.Message}", e.Exception);
+            LogHelper.LogSystemError("异常处理", "未处理的UI线程异常", e.Exception);
             MessageBox.Show($"程序发生错误: {e.Exception.Message}\n\n请联系开发人员并提供日志文件。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             e.Handled = true; // 标记为已处理，防止应用程序崩溃
         }
@@ -452,7 +452,7 @@ namespace TA_WPF
         // 处理Task未观察到的异常
         private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            LogHelper.LogError($"未观察到的Task异常: {e.Exception.Message}", e.Exception);
+            LogHelper.LogSystemError("异常处理", "未观察到的Task异常", e.Exception);
             e.SetObserved(); // 标记为已观察，防止应用程序崩溃
         }
 
@@ -474,7 +474,7 @@ namespace TA_WPF
             Resources["MediumLargeFontSize"] = configFontSize * (scaleFactor * 0.7);
             Resources["MediumFontSize"] = configFontSize * (scaleFactor * 0.5);
 
-            LogHelper.LogInfo($"同步字体大小设置: {configFontSize}pt，缩放因子: {scaleFactor}");
+            LogHelper.LogSystem("应用程序", $"同步字体大小设置: {configFontSize}pt，缩放因子: {scaleFactor}");
         }
     }
 }

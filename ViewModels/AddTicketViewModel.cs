@@ -194,7 +194,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"初始化添加车票视图模型时出错: {ex.Message}");
-                LogHelper.LogError($"初始化添加车票视图模型时出错", ex);
+                LogHelper.LogTicketError("初始化", "初始化添加车票视图模型时失败", ex);
             }
         }
 
@@ -1255,7 +1255,7 @@ namespace TA_WPF.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    LogHelper.LogError("关闭添加车票窗口时出错", ex);
+                    LogHelper.LogTicketError("关闭", "关闭添加车票窗口时失败", ex);
                     // 尝试使用事件关闭
                     OnCloseWindow();
                 }
@@ -1281,12 +1281,12 @@ namespace TA_WPF.ViewModels
             }
             catch (MySqlException sqlEx)
             {
-                LogHelper.LogError($"数据库错误: {sqlEx.Message}", sqlEx);
+                LogHelper.LogTicketError("保存", $"添加车票时数据库错误: {sqlEx.Message}, 错误代码: {sqlEx.Number}", sqlEx);
                 MessageBoxHelper.ShowError($"数据库错误: {sqlEx.Message}\n错误代码: {sqlEx.Number}");
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"保存车票失败: {ex.Message}", ex);
+                LogHelper.LogTicketError("保存", $"添加车票失败: {ex.Message}", ex);
                 MessageBoxHelper.ShowError($"保存车票失败: {ex.Message}");
             }
         }
@@ -1532,7 +1532,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError("字体大小变化处理出错", ex);
+                LogHelper.LogSystemError("UI", "字体大小变化处理出错", ex);
             }
         }
         
@@ -1555,7 +1555,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError("初始化字体大小设置出错", ex);
+                LogHelper.LogSystemError("UI", "初始化字体大小设置出错", ex);
             }
         }
 
