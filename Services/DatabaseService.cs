@@ -109,13 +109,13 @@ namespace TA_WPF.Services
                                     arrive_station, depart_station_pinyin, arrive_station_pinyin, 
                                     depart_date, depart_time, coach_no, seat_no, money, 
                                     seat_type, additional_info, ticket_purpose, hint, 
-                                    depart_station_code, arrive_station_code)
+                                    depart_station_code, arrive_station_code, ticket_modification_type)
                                   VALUES (
                                     @TicketNumber, @CheckInLocation, @DepartStation, @TrainNo, 
                                     @ArriveStation, @DepartStationPinyin, @ArriveStationPinyin, 
                                     @DepartDate, @DepartTime, @CoachNo, @SeatNo, @Money, 
                                     @SeatType, @AdditionalInfo, @TicketPurpose, @Hint, 
-                                    @DepartStationCode, @ArriveStationCode)";
+                                    @DepartStationCode, @ArriveStationCode, @TicketModificationType)";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
@@ -140,6 +140,7 @@ namespace TA_WPF.Services
                         command.Parameters.AddWithValue("@Hint", ticket.Hint ?? (object)DBNull.Value);
                         command.Parameters.AddWithValue("@DepartStationCode", ticket.DepartStationCode);
                         command.Parameters.AddWithValue("@ArriveStationCode", ticket.ArriveStationCode);
+                        command.Parameters.AddWithValue("@TicketModificationType", ticket.TicketModificationType ?? (object)DBNull.Value);
 
                         await command.ExecuteNonQueryAsync();
                     }
@@ -578,7 +579,8 @@ namespace TA_WPF.Services
                 TicketPurpose = reader.IsDBNull(reader.GetOrdinal("ticket_purpose")) ? null : reader.GetString(reader.GetOrdinal("ticket_purpose")),
                 Hint = reader.IsDBNull(reader.GetOrdinal("hint")) ? null : reader.GetString(reader.GetOrdinal("hint")),
                 DepartStationCode = reader.IsDBNull(reader.GetOrdinal("depart_station_code")) ? null : reader.GetString(reader.GetOrdinal("depart_station_code")),
-                ArriveStationCode = reader.IsDBNull(reader.GetOrdinal("arrive_station_code")) ? null : reader.GetString(reader.GetOrdinal("arrive_station_code"))
+                ArriveStationCode = reader.IsDBNull(reader.GetOrdinal("arrive_station_code")) ? null : reader.GetString(reader.GetOrdinal("arrive_station_code")),
+                TicketModificationType = reader.IsDBNull(reader.GetOrdinal("ticket_modification_type")) ? null : reader.GetString(reader.GetOrdinal("ticket_modification_type"))
             };
 
             // 处理时间字段
@@ -735,6 +737,8 @@ namespace TA_WPF.Services
             using (var connection = new MySqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
+
+                //TODO: 修改这个表结构
                 
                 string query = @"
                 CREATE TABLE IF NOT EXISTS `train_ride_info` (
@@ -805,7 +809,8 @@ namespace TA_WPF.Services
                                        ticket_purpose = @TicketPurpose,
                                        hint = @Hint,
                                        depart_station_code = @DepartStationCode,
-                                       arrive_station_code = @ArriveStationCode
+                                       arrive_station_code = @ArriveStationCode,
+                                       ticket_modification_type = @TicketModificationType
                                    WHERE id = @Id";
 
                     using (var command = new MySqlCommand(query, connection))
@@ -832,6 +837,7 @@ namespace TA_WPF.Services
                         command.Parameters.AddWithValue("@Hint", ticket.Hint ?? (object)DBNull.Value);
                         command.Parameters.AddWithValue("@DepartStationCode", ticket.DepartStationCode);
                         command.Parameters.AddWithValue("@ArriveStationCode", ticket.ArriveStationCode);
+                        command.Parameters.AddWithValue("@TicketModificationType", ticket.TicketModificationType ?? (object)DBNull.Value);
 
                         int rowsAffected = await command.ExecuteNonQueryAsync();
                         return rowsAffected > 0;

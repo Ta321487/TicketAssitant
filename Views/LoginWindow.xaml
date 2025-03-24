@@ -7,7 +7,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         d:DesignHeight="890" d:DesignWidth="450"
-        Title="登录" Height="750" Width="450"
+        Title="车票标记时光：旅程归档-登录" Height="750" Width="450"
         MinHeight="750" MinWidth="450"
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -20,7 +20,7 @@
         ResizeMode="CanMinimize"
         KeyDown="Window_KeyDown"
         Loaded="Window_Loaded">
-    
+
     <Window.Resources>
         <ResourceDictionary>
             <Style x:Key="ResponsiveTextBlock" TargetType="TextBlock">
@@ -28,7 +28,7 @@
                 <Setter Property="TextWrapping" Value="Wrap"/>
                 <Setter Property="Margin" Value="0,0,0,8"/>
             </Style>
-            
+
             <Style x:Key="ResponsiveButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
                 <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
                 <Setter Property="Padding" Value="16,8"/>
@@ -36,7 +36,7 @@
                 <Setter Property="MinHeight" Value="36"/>
                 <Setter Property="Margin" Value="0,0,0,8"/>
             </Style>
-            
+
             <Style x:Key="ResponsiveTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignFilledTextBox}">
                 <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
                 <Setter Property="Margin" Value="0,0,0,16"/>
@@ -44,7 +44,7 @@
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="48"/>
             </Style>
-            
+
             <Style x:Key="ResponsivePasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource MaterialDesignFilledPasswordBox}">
                 <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
                 <Setter Property="Margin" Value="0,0,0,16"/>
@@ -52,7 +52,7 @@
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="48"/>
             </Style>
-            
+
             <Style x:Key="ResponsiveComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignFilledComboBox}">
                 <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"/>
                 <Setter Property="Margin" Value="0,0,0,16"/>
@@ -62,7 +62,7 @@
             </Style>
         </ResourceDictionary>
     </Window.Resources>
-    
+
     <materialDesign:DialogHost Identifier="LoginDialogHost">
         <Grid>
             <Grid.RowDefinitions>
@@ -70,7 +70,7 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            
+
             <!-- 顶部按钮区域 -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,10,0">
                 <Button x:Name="FontSizeButton"
@@ -92,12 +92,12 @@
             <materialDesign:Card x:Name="MainCard" Grid.Row="1" Padding="16,12" Margin="16,8,16,16" Background="{DynamicResource MaterialDesignPaper}">
                 <StackPanel>
                     <!-- 标题和图标 -->
-                    <TextBlock Text="车票管理系统" 
+                    <TextBlock Text="" 
                                HorizontalAlignment="Center" 
                                FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize, Converter={StaticResource FontSizeIncreaseConverter}, ConverterParameter=9}" 
                                FontWeight="Bold" 
                                Margin="0,0,0,8"/>
-                    
+
                     <materialDesign:PackIcon Kind="Account" 
                                              Width="36" 
                                              Height="36" 
@@ -107,7 +107,7 @@
 
                     <!-- 表单内容 -->
                     <!-- 连接地址 -->
-                    
+
                     <TextBox x:Name="ServerAddressTextBox"
                              Style="{StaticResource ResponsiveTextBox}"
                              materialDesign:HintAssist.Hint="服务器地址"
@@ -126,11 +126,11 @@
                              StaysOpenOnEdit="True"
                              Loaded="DatabaseNameComboBox_Loaded"
                              Margin="0,0,0,8"/>
-                    
+
                     <TextBox x:Name="DatabaseNameTextBox"
                              Text=""
                              Visibility="Collapsed"/>
-                    
+
                     <!-- 创建新数据库区域 -->
                     <Expander Header="创建新数据库" 
                               Margin="0,0,0,8"
@@ -156,14 +156,14 @@
                                     MinWidth="80"/>
                         </Grid>
                     </Expander>
-                    
+
                     <!-- 用户名 -->
                     <TextBox x:Name="UsernameTextBox"
                              Style="{StaticResource ResponsiveTextBox}"
                              materialDesign:HintAssist.Hint="用户名"
                              materialDesign:TextFieldAssist.HasClearButton="True"
                              Margin="0,0,0,8"/>
-                    
+
                     <!-- 密码 -->
                     <Grid Margin="0,0,0,8">
                         <PasswordBox x:Name="PasswordBox"
@@ -174,7 +174,7 @@
                                     KeyUp="PasswordBox_KeyUp"
                                     GotFocus="PasswordBox_GotFocus"
                                     LostFocus="PasswordBox_LostFocus"/>
-                        
+
                         <materialDesign:PackIcon x:Name="CapsLockIcon"
                                                Kind="KeyboardCapslock"
                                                Foreground="{DynamicResource PrimaryHueMidBrush}"
@@ -219,7 +219,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                
+
                 <Button x:Name="LoginButton"
                         Content="登录"
                         Grid.Column="0"
@@ -230,7 +230,7 @@
                         Height="48"
                         FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"
                         IsDefault="True"/>
-                
+
                 <Button x:Name="CancelButton"
                         Content="关闭"
                         Grid.Column="1"
@@ -271,7 +271,7 @@
                     </StackPanel>
                 </materialDesign:Card>
             </Popup>
-            
+
             <!-- 底部消息提示 -->
             <materialDesign:Snackbar x:Name="LoginSnackbar"
                                      Grid.Row="2"

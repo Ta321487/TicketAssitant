@@ -19,7 +19,7 @@ namespace TA_WPF.Converters
             string trainNo = values[2].ToString();
 
             // 基础位置
-            double top = 160; // 垂直位置
+            double top = 100; // 垂直位置
             double horizontalPosition = 0; // 水平位置将根据车次号位置计算
 
             // 计算出发站"站"字的位置

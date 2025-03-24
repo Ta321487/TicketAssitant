@@ -9,6 +9,12 @@ using QRCoder;
 using System.Drawing;
 using System.IO;
 using System.Windows;
+using System.Windows.Media;
+using Microsoft.Win32;
+using System.Windows.Controls;
+using Point = System.Windows.Point;
+using Size = System.Windows.Size;
+using Color = System.Windows.Media.Color;
 
 namespace TA_WPF.ViewModels
 {
@@ -35,9 +41,10 @@ namespace TA_WPF.ViewModels
             SeatNo = "999",
             Money = 9999.99M,  // 确保非空
             SeatType = "上等座",
-            AdditionalInfo = "这是附加信息",
-            TicketPurpose = "这是车票类型",
-            Hint = "这是一条提示信息|这也是一条提示信息"
+            AdditionalInfo = "限乘当日当次车",
+            TicketPurpose = "仅供报销使用",
+            Hint = "这是一条提示信息|这也是一条提示信息",
+            TicketModificationType = "始发改签"
         })
         {
             // 为设计视图添加默认的身份信息和编码区内容
@@ -49,6 +56,7 @@ namespace TA_WPF.ViewModels
         {
             _selectedTicket = selectedTicket;
             CloseCommand = new RelayCommand(Close);
+            ExportImageCommand = new RelayCommand(ExportImage);
         }
 
         public TrainRideInfo SelectedTicket
@@ -388,10 +396,98 @@ namespace TA_WPF.ViewModels
         }
 
         public ICommand CloseCommand { get; }
+        public ICommand ExportImageCommand { get; }
 
         private void Close()
         {
             OnRequestClose();
+        }
+
+        private void ExportImage()
+        {
+            try
+            {
+                // 获取预览区域的Grid
+                var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
+                if (window == null) return;
+
+                var grid = window.FindName("PreviewGrid") as Grid;
+                if (grid == null) return;
+
+                // 构建默认文件名：出发站-车次号-到达站
+                string defaultFileName = $"{_selectedTicket.DepartStation?.Replace("站", "")}-{_selectedTicket.TrainNo}-{_selectedTicket.ArriveStation?.Replace("站", "")}";
+                
+                // 创建保存文件对话框
+                var saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "PNG图片|*.png",
+                    Title = "保存车票图片",
+                    FileName = defaultFileName
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // 检查用户是否输入了文件名
+                    string fileName = Path.GetFileNameWithoutExtension(saveFileDialog.FileName);
+                    if (string.IsNullOrWhiteSpace(fileName))
+                    {
+                        // 使用MaterialDesign风格的对话框提示用户输入文件名
+                        var result = Views.MessageDialog.Show(
+                            "请输入文件名！",
+                            "提示",
+                            Views.MessageType.Warning,
+                            Views.MessageButtons.Ok,
+                            window);
+                        return;
+                    }
+
+                    // 创建RenderTargetBitmap
+                    var bounds = VisualTreeHelper.GetDescendantBounds(grid);
+                    var renderTargetBitmap = new RenderTargetBitmap(
+                        811, // 使用BlueTicket图片的原始宽度
+                        509, // 使用BlueTicket图片的原始高度
+                        96,
+                        96,
+                        PixelFormats.Pbgra32);
+
+                    var drawingVisual = new DrawingVisual();
+                    using (var drawingContext = drawingVisual.RenderOpen())
+                    {
+                        var visualBrush = new VisualBrush(grid);
+                        drawingContext.DrawRectangle(visualBrush, null, new Rect(new Point(), new Size(811, 509)));
+                    }
+
+                    renderTargetBitmap.Render(drawingVisual);
+
+                    // 保存为PNG文件
+                    var encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(renderTargetBitmap));
+
+                    using (var fileStream = new FileStream(saveFileDialog.FileName, FileMode.Create))
+                    {
+                        encoder.Save(fileStream);
+                    }
+
+                    // 使用MaterialDesign风格的对话框显示成功消息
+                    Views.MessageDialog.Show(
+                        "图片导出成功！",
+                        "提示",
+                        Views.MessageType.Information,
+                        Views.MessageButtons.Ok,
+                        window);
+                }
+            }
+            catch (Exception ex)
+            {
+                // 使用MaterialDesign风格的对话框显示错误消息
+                var currentWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
+                Views.MessageDialog.Show(
+                    $"导出图片时发生错误：{ex.Message}",
+                    "错误",
+                    Views.MessageType.Error,
+                    Views.MessageButtons.Ok,
+                    currentWindow);
+            }
         }
 
         // 生成二维码
@@ -407,7 +503,7 @@ namespace TA_WPF.ViewModels
                     using (QRCode qrCode = new QRCode(qrCodeData))
                     {
                         // 生成二维码，不要白色背景，使用透明背景
-                        using (Bitmap qrCodeImage = qrCode.GetGraphic(20, Color.Black, Color.Transparent, false))
+                        using (Bitmap qrCodeImage = qrCode.GetGraphic(20, System.Drawing.Color.Black, System.Drawing.Color.Transparent, false))
                         {
                             QrCodeImage = BitmapToImageSource(qrCodeImage);
                         }

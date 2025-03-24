@@ -32,13 +32,13 @@ namespace TA_WPF.Converters
             if (left < 600)
             {
                 // 调整垂直位置使站字位于站名底部
-                top = 116;
+                top = 65;
 
                 // 根据字数精确调整水平位置，使"站"字紧贴在最后一个字后面
                 switch (length)
                 {
                     case 1:
-                        left = 126;  // 单字站名
+                        left = 115;  // 单字站名
                         break;
                     case 2:
                         left = 210; // 双字站名 
@@ -61,13 +61,13 @@ namespace TA_WPF.Converters
             else
             {
                 // 调整垂直位置使站字位于站名底部
-                top = 116;
+                top = 65;
 
                 // 根据字数精确调整水平位置，使"站"字紧贴在最后一个字后面
                 switch (length)
                 {
                     case 1:
-                        left = 560;  // 单字站名
+                        left = 595;  // 单字站名
                         break;
                     case 2:
                         left = 665; // 双字站名

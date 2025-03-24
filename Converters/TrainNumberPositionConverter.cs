@@ -17,7 +17,7 @@ namespace TA_WPF.Converters
             string trainNo = values[2].ToString();
 
             // 基础位置
-            double top = 110; // 垂直位置保持不变
+            double top = 65; // 垂直位置保持不变
             double horizontalPosition = 0; // 水平位置将根据站名长度计算
 
             // 计算出发站"站"字的位置
@@ -49,10 +49,10 @@ namespace TA_WPF.Converters
 
             // 计算中心点位置
             double centerPosition = (departStationEndPosition + arriveStationStartPosition) / 2;
-            
+
             // 计算车次号的宽度（假设每个字符约30个单位宽度）
             double trainNoWidth = trainNo.Length * 30;
-            
+
             // 计算最终位置，使车次号居中
             horizontalPosition = centerPosition - (trainNoWidth / 2);
 
@@ -64,4 +64,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

@@ -46,13 +46,41 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 设置基本信息
+                // 设置正在初始化标志
+                _isInitializing = true;
+                
+                // 设置车票号
                 TicketNumber = _originalTicket.TicketNumber;
+                
+                // 设置检票口
                 CheckInLocation = _originalTicket.CheckInLocation;
                 
-                // 设置车站信息
+                // 设置出发站
+                _isUpdatingDepartStation = true;
                 DepartStation = _originalTicket.DepartStation?.Replace("站", "");
+                DepartStationPinyin = _originalTicket.DepartStationPinyin;
+                DepartStationCode = _originalTicket.DepartStationCode;
+                _isUpdatingDepartStation = false;
+                
+                // 设置到达站
+                _isUpdatingArriveStation = true;
                 ArriveStation = _originalTicket.ArriveStation?.Replace("站", "");
+                ArriveStationPinyin = _originalTicket.ArriveStationPinyin;
+                ArriveStationCode = _originalTicket.ArriveStationCode;
+                _isUpdatingArriveStation = false;
+                
+                // 设置车票改签类型
+                SelectedTicketModificationType = _originalTicket.TicketModificationType;
+                
+                // 设置日期和时间
+                if (_originalTicket.DepartDate.HasValue)
+                    DepartDate = _originalTicket.DepartDate.Value;
+                
+                if (_originalTicket.DepartTime.HasValue)
+                {
+                    DepartHour = _originalTicket.DepartTime.Value.Hours;
+                    DepartMinute = _originalTicket.DepartTime.Value.Minutes;
+                }
                 
                 // 更新搜索文本框的显示
                 _isUpdatingDepartStation = true;
@@ -62,16 +90,7 @@ namespace TA_WPF.ViewModels
                 _isUpdatingDepartStation = false;
                 _isUpdatingArriveStation = false;
                 
-                DepartStationPinyin = _originalTicket.DepartStationPinyin;
-                ArriveStationPinyin = _originalTicket.ArriveStationPinyin;
                 Money = _originalTicket.Money ?? 0m;
-                DepartStationCode = _originalTicket.DepartStationCode;
-                ArriveStationCode = _originalTicket.ArriveStationCode;
-
-                // 设置日期和时间
-                DepartDate = _originalTicket.DepartDate ?? DateTime.Today;
-                DepartHour = _originalTicket.DepartTime?.Hours ?? 0;
-                DepartMinute = _originalTicket.DepartTime?.Minutes ?? 0;
 
                 // 设置车次信息
                 string trainNo = _originalTicket.TrainNo;
@@ -164,67 +183,55 @@ namespace TA_WPF.ViewModels
         /// </summary>
         protected override async void SaveTicket()
         {
-            if (!ValidateForm())
-            {
-                // 显示验证错误
-                string errorMessage = string.Join("\n", _validationErrors);
-                MessageBoxHelper.ShowWarning(errorMessage, "表单验证失败");
-                return;
-            }
-
             try
             {
-                // 创建车票对象
-                var ticket = new TrainRideInfo
+                // 验证数据有效性
+                if (!ValidateForm())
                 {
-                    Id = _ticketId,
-                    TicketNumber = TicketNumber,
-                    CheckInLocation = CheckInLocation,
-                    DepartStation = DepartStation + "站",
-                    ArriveStation = ArriveStation + "站",
-                    DepartStationPinyin = DepartStationPinyin,
-                    ArriveStationPinyin = ArriveStationPinyin,
-                    Money = Money,
-                    DepartStationCode = DepartStationCode,
-                    ArriveStationCode = ArriveStationCode,
-                    DepartDate = DepartDate,
-                    DepartTime = new TimeSpan(DepartHour, DepartMinute, 0),
-                    TrainNo = SelectedTrainType == "纯数字" ? TrainNumber : $"{SelectedTrainType}{TrainNumber}",
-                    SeatType = SelectedSeatType
-                };
+                    return;
+                }
+
+                // 更新车票对象
+                _originalTicket.TicketNumber = TicketNumber;
+                _originalTicket.CheckInLocation = CheckInLocation;
+                _originalTicket.DepartStation = DepartStation + "站";
+                _originalTicket.TrainNo = SelectedTrainType == "纯数字" ? TrainNumber : $"{SelectedTrainType}{TrainNumber}";
+                _originalTicket.ArriveStation = ArriveStation + "站";
+                _originalTicket.DepartStationPinyin = DepartStationPinyin;
+                _originalTicket.ArriveStationPinyin = ArriveStationPinyin;
+                _originalTicket.DepartDate = DepartDate;
+                _originalTicket.DepartTime = new TimeSpan(DepartHour, DepartMinute, 0);
+                _originalTicket.Money = Money;
+                _originalTicket.DepartStationCode = DepartStationCode;
+                _originalTicket.ArriveStationCode = ArriveStationCode;
+                _originalTicket.SeatType = SelectedSeatType;
+                _originalTicket.TicketModificationType = SelectedTicketModificationType;
 
                 // 处理车厢号
-                if (IsExtraCoach)
-                {
-                    // 去掉前导零并添加"加"和"车"
-                    int coachNum = int.Parse(CoachNo);
-                    ticket.CoachNo = $"加{coachNum}车";
-                }
-                else
-                    ticket.CoachNo = $"{CoachNo}车";
+                _originalTicket.CoachNo = IsExtraCoach ? CoachNo + "加车" : CoachNo + "车";
 
                 // 处理座位号
                 if (IsNoSeat)
-                    ticket.SeatNo = "无座";
+                    _originalTicket.SeatNo = "无座";
                 else if (SelectedSeatType == "新空调硬座")
-                    ticket.SeatNo = SeatNo;
+                    _originalTicket.SeatNo = SeatNo;
                 else
-                    ticket.SeatNo = $"{SeatNo}{SelectedSeatPosition}";
+                    _originalTicket.SeatNo = $"{SeatNo}{SelectedSeatPosition}";
 
                 // 处理附加信息
-                ticket.AdditionalInfo = SelectedAdditionalInfo;
+                _originalTicket.AdditionalInfo = SelectedAdditionalInfo;
                 
                 // 处理车票用途
-                ticket.TicketPurpose = SelectedTicketPurpose;
+                _originalTicket.TicketPurpose = SelectedTicketPurpose;
                 
                 // 处理提示信息
                 if (SelectedHint == "自定义")
-                    ticket.Hint = CustomHint;
+                    _originalTicket.Hint = CustomHint;
                 else
-                    ticket.Hint = SelectedHint;
+                    _originalTicket.Hint = SelectedHint;
 
                 // 设置超时任务
-                var saveTask = _databaseService.UpdateTicketAsync(ticket);
+                var saveTask = _databaseService.UpdateTicketAsync(_originalTicket);
                 
                 // 添加5秒超时
                 var timeoutTask = Task.Delay(5000);

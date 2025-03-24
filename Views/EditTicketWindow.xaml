@@ -151,6 +151,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -529,15 +530,31 @@
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
                 
-                <!-- 提示信息 -->
+                <!-- 第十二行：车票改签类型 -->
                 <TextBlock Grid.Row="11" Grid.Column="0" 
+                           Text="车票改签类型:" 
+                           Style="{StaticResource FormLabelStyle}"/>
+                <ComboBox Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource FormComboBoxStyle}"
+                         materialDesign:HintAssist.Hint="车票改签类型"
+                         SelectedItem="{Binding SelectedTicketModificationType, UpdateSourceTrigger=PropertyChanged}"
+                         ItemsSource="{Binding TicketModificationTypes}"
+                         IsEditable="False"
+                         Margin="0,8,0,8">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
+                
+                <!-- 第十三行：提示信息 -->
+                <TextBlock Grid.Row="12" Grid.Column="0" 
                            Text="提示信息:" 
                            Style="{StaticResource FormLabelStyle}"/>
-                <ComboBox Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="3" 
+                <ComboBox Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="3" 
                           ItemsSource="{Binding HintOptions}" 
                           SelectedItem="{Binding SelectedHint}" 
                           Style="{StaticResource FormComboBoxStyle}"
-                          materialDesign:HintAssist.Hint="请选择提示信息"
+                          materialDesign:HintAssist.Hint="提示信息"
                           Margin="0,8,0,8">
                     <ComboBox.ItemContainerStyle>
                         <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>

@@ -70,8 +70,10 @@ namespace TA_WPF.ViewModels
         // 附加信息
         private string _selectedAdditionalInfo;
         private string _selectedTicketPurpose;
-        private string _selectedHint;
-        private string _customHint;
+        private string? _selectedHint;
+        private string? _customHint;
+        private string? _selectedTicketModificationType;
+        private ObservableCollection<string> _ticketModificationTypes;
 
         // 车站数据
         private ObservableCollection<StationInfo> _stations;
@@ -141,6 +143,13 @@ namespace TA_WPF.ViewModels
                 DepartStationSuggestions = new ObservableCollection<StationInfo>();
                 ArriveStationSuggestions = new ObservableCollection<StationInfo>();
                 
+                // 初始化车票改签类型选项
+                TicketModificationTypes = new ObservableCollection<string>
+                {
+                    "始发改签",
+                    "变更到站"
+                };
+                
                 // 初始化字符串属性为空字符串而不是null
                 _ticketNumber = string.Empty;
                 _checkInLocation = string.Empty;
@@ -160,6 +169,7 @@ namespace TA_WPF.ViewModels
                 _selectedTicketPurpose = string.Empty;
                 _selectedHint = HintOptions.FirstOrDefault() ?? string.Empty;
                 _customHint = string.Empty;
+                _selectedTicketModificationType = null;
                 _departStationSearchText = string.Empty;
                 _arriveStationSearchText = string.Empty;
                 
@@ -718,6 +728,32 @@ namespace TA_WPF.ViewModels
             }
         }
 
+        public string? SelectedTicketModificationType
+        {
+            get => _selectedTicketModificationType;
+            set
+            {
+                if (_selectedTicketModificationType != value)
+                {
+                    _selectedTicketModificationType = value;
+                    OnPropertyChanged(nameof(SelectedTicketModificationType));
+                }
+            }
+        }
+
+        public ObservableCollection<string> TicketModificationTypes
+        {
+            get => _ticketModificationTypes;
+            set
+            {
+                if (_ticketModificationTypes != value)
+                {
+                    _ticketModificationTypes = value;
+                    OnPropertyChanged(nameof(TicketModificationTypes));
+                }
+            }
+        }
+
         #endregion
 
         #region 集合属性
@@ -1124,22 +1160,28 @@ namespace TA_WPF.ViewModels
 
             try
             {
-                // 创建车票对象
+                // 创建车票信息对象
                 var ticket = new TrainRideInfo
                 {
                     TicketNumber = TicketNumber,
                     CheckInLocation = CheckInLocation,
-                    DepartStation = DepartStation + "站",
-                    ArriveStation = ArriveStation + "站",
+                    DepartStation = DepartStation,
+                    TrainNo = SelectedTrainType == "纯数字" ? TrainNumber : $"{SelectedTrainType}{TrainNumber}",
+                    ArriveStation = ArriveStation,
                     DepartStationPinyin = DepartStationPinyin,
                     ArriveStationPinyin = ArriveStationPinyin,
-                    Money = Money,
-                    DepartStationCode = DepartStationCode,
-                    ArriveStationCode = ArriveStationCode,
                     DepartDate = DepartDate,
                     DepartTime = new TimeSpan(DepartHour, DepartMinute, 0),
-                    TrainNo = SelectedTrainType == "纯数字" ? TrainNumber : $"{SelectedTrainType}{TrainNumber}",
-                    SeatType = SelectedSeatType
+                    CoachNo = CoachNo,
+                    SeatNo = GetFormattedSeatNo(),
+                    Money = Money,
+                    SeatType = SelectedSeatType,
+                    AdditionalInfo = SelectedAdditionalInfo,
+                    TicketPurpose = SelectedTicketPurpose,
+                    Hint = SelectedHint == "自定义" ? CustomHint : SelectedHint,
+                    DepartStationCode = DepartStationCode,
+                    ArriveStationCode = ArriveStationCode,
+                    TicketModificationType = SelectedTicketModificationType
                 };
 
                 // 处理车厢号
@@ -1159,18 +1201,6 @@ namespace TA_WPF.ViewModels
                     ticket.SeatNo = SeatNo;
                 else
                     ticket.SeatNo = $"{SeatNo}{SelectedSeatPosition}";
-
-                // 处理附加信息
-                ticket.AdditionalInfo = SelectedAdditionalInfo;
-                
-                // 处理车票用途
-                ticket.TicketPurpose = SelectedTicketPurpose;
-                
-                // 处理提示信息
-                if (SelectedHint == "自定义")
-                    ticket.Hint = CustomHint;
-                else
-                    ticket.Hint = SelectedHint;
 
                 // 设置超时任务
                 var saveTask = _databaseService.AddTicketAsync(ticket);
@@ -1284,6 +1314,7 @@ namespace TA_WPF.ViewModels
             SelectedTicketPurpose = string.Empty;
             SelectedHint = HintOptions.FirstOrDefault() ?? string.Empty;
             CustomHint = string.Empty;
+            SelectedTicketModificationType = null;
             
             // 清空搜索文本框内容
             DepartStationSearchText = string.Empty;
@@ -1598,6 +1629,16 @@ namespace TA_WPF.ViewModels
             
             // 确保初始化字体大小相关属性
             InitializeFontSizes();
+        }
+
+        private string GetFormattedSeatNo()
+        {
+            if (IsNoSeat)
+                return "无座";
+            else if (SelectedSeatType == "新空调硬座")
+                return SeatNo;
+            else
+                return $"{SeatNo}{SelectedSeatPosition}";
         }
     }
 

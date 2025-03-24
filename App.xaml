@@ -361,6 +361,19 @@
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Foreground" Value="{DynamicResource GlobalAccentBrush}" />
                 <Setter Property="Opacity" Value="0" />
+                <Setter Property="ContextMenu">
+                    <Setter.Value>
+                        <ContextMenu FontFamily="Microsoft YaHei" Background="{DynamicResource MaterialDesignPaper}" BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1">
+                            <MenuItem Header="滚动至此"/>
+                            <MenuItem Header="Top"/>
+                            <MenuItem Header="Bottom"/>
+                            <MenuItem Header="Page Up"/>
+                            <MenuItem Header="Page Down"/>
+                            <MenuItem Header="向上滚动"/>
+                            <MenuItem Header="向下滚动"/>
+                        </ContextMenu>
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type ScrollBar}">

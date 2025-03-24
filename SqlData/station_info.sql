@@ -1,7 +1,3 @@
-
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
-
 DROP TABLE IF EXISTS `station_info`;
 CREATE TABLE `station_info`  (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
@@ -17,6 +13,6 @@ CREATE TABLE `station_info`  (
   INDEX `station_name`(`station_name` ASC) USING BTREE,
   INDEX `fk_arrive_code`(`station_code` ASC) USING BTREE,
   INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4128 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
-SET FOREIGN_KEY_CHECKS = 1; 
+SET FOREIGN_KEY_CHECKS = 1;

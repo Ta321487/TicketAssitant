@@ -1,8 +1,3 @@
-
-
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
-
 DROP TABLE IF EXISTS `train_ride_info`;
 CREATE TABLE `train_ride_info`  (
   `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
@@ -21,6 +16,7 @@ CREATE TABLE `train_ride_info`  (
   `seat_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '席别',
   `additional_info` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '附加信息（退票费/限乘当日当次车）',
   `ticket_purpose` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车票用途',
+  `ticket_modification_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车票改签类型',
   `hint` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '提示信息',
   `depart_station_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '出发车站代码',
   `arrive_station_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '到达车站代码',
@@ -30,7 +26,11 @@ CREATE TABLE `train_ride_info`  (
   INDEX `fk_depart_station_pinyin`(`depart_station_pinyin` ASC) USING BTREE,
   INDEX `fk_arrive_station_pinyin`(`arrive_station_pinyin` ASC) USING BTREE,
   INDEX `idx_train_no`(`train_no` ASC, `depart_date` ASC) USING BTREE,
-  INDEX `idx_depart_station`(`depart_station` ASC, `depart_date` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 298 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+  INDEX `idx_depart_station`(`depart_station` ASC, `depart_date` ASC) USING BTREE,
+  CONSTRAINT `fc_dc_arrive` FOREIGN KEY (`arrive_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fc_dp_arrive` FOREIGN KEY (`arrive_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fc_sp_depart` FOREIGN KEY (`depart_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_sc_depart` FOREIGN KEY (`depart_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
-SET FOREIGN_KEY_CHECKS = 1; 
+SET FOREIGN_KEY_CHECKS = 1;
