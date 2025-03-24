@@ -29,6 +29,8 @@ namespace TA_WPF.Views
         private Brush _iconBrush;
         private MessageButtons _buttons;
         private ThemeService _themeService;
+        private bool _isIgnoreButtonVisible;
+        private bool _isIgnoreButtonEnabled = true;
 
         public string Message
         {
@@ -81,6 +83,8 @@ namespace TA_WPF.Views
                     OnPropertyChanged(nameof(IsOkButtonVisible));
                     OnPropertyChanged(nameof(IsYesNoButtonsVisible));
                     OnPropertyChanged(nameof(IsCancelButtonVisible));
+                    OnPropertyChanged(nameof(IsIgnoreButtonVisible));
+                    OnPropertyChanged(nameof(IsIgnoreButtonEnabled));
                 }
             }
         }
@@ -88,6 +92,8 @@ namespace TA_WPF.Views
         public bool IsOkButtonVisible => Buttons == MessageButtons.Ok;
         public bool IsYesNoButtonsVisible => Buttons == MessageButtons.YesNo || Buttons == MessageButtons.YesNoCancel;
         public bool IsCancelButtonVisible => Buttons == MessageButtons.YesNoCancel;
+        public bool IsIgnoreButtonVisible => _isIgnoreButtonVisible;
+        public bool IsIgnoreButtonEnabled => _isIgnoreButtonEnabled;
 
         public MessageDialog(string message, string title, MessageType type, MessageButtons buttons)
         {
@@ -97,6 +103,21 @@ namespace TA_WPF.Views
             Message = message;
             Title = title;
             Buttons = buttons;
+            
+            // 检查是否显示"暂时忽略"按钮
+            _isIgnoreButtonVisible = type == MessageType.Warning && 
+                                    (message.Contains("未能加载车站数据") || 
+                                     message.Contains("未找到名称包含") && message.Contains("的车站")) && 
+                                    buttons == MessageButtons.Ok;
+            
+            // 如果显示"暂时忽略"按钮，则检查车站表是否有内容
+            if (_isIgnoreButtonVisible)
+            {
+                // 检查车站表是否为空
+                // 如果消息包含"未能加载车站数据"，说明车站表是空的，可以启用"暂时忽略"按钮
+                // 如果消息包含"未找到名称包含"，说明车站表不为空，应禁用"暂时忽略"按钮
+                _isIgnoreButtonEnabled = message.Contains("未能加载车站数据");
+            }
             
             // 获取主题服务
             _themeService = ThemeService.Instance;
@@ -209,6 +230,13 @@ namespace TA_WPF.Views
             DialogResult = true;
         }
 
+        private void IgnoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 使用StationCheckService标记忽略车站检查
+            Services.StationCheckService.Instance.SetIgnoreStationCheck();
+            DialogResult = false;
+        }
+
         private void YesButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
@@ -226,6 +254,10 @@ namespace TA_WPF.Views
 
         private void MessageDialog_Loaded(object sender, RoutedEventArgs e)
         {
+            // 确保窗口处于激活状态并显示在前面
+            this.Activate();
+            this.Focus();
+            
             // 根据按钮类型设置焦点
             switch (Buttons)
             {
@@ -251,16 +283,29 @@ namespace TA_WPF.Views
         {
             var dialog = new MessageDialog(message, title, type, buttons);
             
+            // 设置为始终在最前
+            dialog.Topmost = true;
+            
             if (owner != null)
             {
                 dialog.Owner = owner;
+                dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             }
-            else if (Application.Current.MainWindow != null)
+            else if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)
             {
                 dialog.Owner = Application.Current.MainWindow;
+                dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            }
+            else
+            {
+                dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
             
-            return dialog.ShowDialog();
+            // 显示对话框，并在显示后强制激活窗口
+            dialog.ShowInTaskbar = false;
+            var result = dialog.ShowDialog();
+            
+            return result;
         }
     }
 } 

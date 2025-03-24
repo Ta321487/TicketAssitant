@@ -795,7 +795,11 @@ namespace TA_WPF.ViewModels
                 }
                 else
                 {
-                    MessageBoxHelper.ShowWarning("未能加载车站数据，返回的列表为空");
+                    // 检查是否忽略车站检查
+                    if (!Services.StationCheckService.Instance.IgnoreStationCheck)
+                    {
+                        MessageBoxHelper.ShowWarning("未能加载车站数据，返回的列表为空");
+                    }
                 }
             }
             catch (MySqlException sqlEx)
@@ -1399,8 +1403,12 @@ namespace TA_WPF.ViewModels
                     (!isDepartStation && ArriveStationSuggestions.Count == 0)) && 
                     !string.IsNullOrWhiteSpace(searchText))
                 {
-                    string warningMessage = $"未找到名称包含\"{searchText}\"的车站，请检查输入是否正确或考虑添加新车站。";
-                    MessageBoxHelper.ShowWarning(warningMessage, "车站不存在");
+                    // 检查是否忽略车站检查
+                    if (!Services.StationCheckService.Instance.IgnoreStationCheck)
+                    {
+                        string warningMessage = $"未找到名称包含\"{searchText}\"的车站，请检查输入是否正确或考虑添加新车站。";
+                        MessageBoxHelper.ShowWarning(warningMessage, "车站不存在");
+                    }
                 }
             }
             catch (MySqlException sqlEx)
@@ -1470,6 +1478,10 @@ namespace TA_WPF.ViewModels
         private void CheckStationInfoCompleteness(StationInfo station, bool isDepartStation)
         {
             if (station == null)
+                return;
+                
+            // 如果已经设置忽略车站检查，则直接返回
+            if (Services.StationCheckService.Instance.IgnoreStationCheck)
                 return;
                 
             string stationName = station.StationName?.Replace("站", "") ?? string.Empty;

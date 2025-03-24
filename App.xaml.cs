@@ -256,7 +256,7 @@ namespace TA_WPF
                         string content = System.IO.File.ReadAllText(configPath);
                         Console.WriteLine($"应用程序退出时配置文件内容长度: {content.Length}字节");
                         LogHelper.LogInfo($"应用程序退出时配置文件内容长度: {content.Length}字节");
-                        
+
                         // 检查是否包含IsDarkMode设置
                         bool containsIsDarkMode = content.Contains("IsDarkMode");
                         Console.WriteLine($"应用程序退出时配置文件包含IsDarkMode: {containsIsDarkMode}");
@@ -322,6 +322,9 @@ namespace TA_WPF
                 
                 Console.WriteLine($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
                 LogHelper.LogInfo($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                
+                // 重置StationCheckService的状态
+                Services.StationCheckService.Instance.ResetIgnoreStationCheck();
             }
             catch (Exception ex)
             {
