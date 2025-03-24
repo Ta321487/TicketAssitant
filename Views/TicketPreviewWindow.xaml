@@ -55,6 +55,13 @@
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="FontSize" Value="{Binding SmallFontSize}"/>
             <Setter Property="Foreground" Value="{Binding FormForegroundBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding FontSize, Converter={StaticResource FontSizeIncreaseConverter}, ConverterParameter=16}" Value="True">
+                    <Setter Property="TextWrapping" Value="Wrap"/>
+                    <Setter Property="Margin" Value="2,8,2,4"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <!-- 自定义表单文本框样式 -->
@@ -247,20 +254,27 @@
                         Style="{StaticResource FormTextBoxStyle}"/>
 
                 <!-- 提示 - 跨所有列 -->
-                <TextBlock Text="提示信息（虚线框内的文本）" Grid.Row="17" Grid.Column="0" Style="{StaticResource FormLabelStyle}"/>
+                <TextBlock Text="提示信息" 
+                           Grid.Row="17" Grid.Column="0" 
+                           Grid.ColumnSpan="3"
+                           Style="{StaticResource FormLabelStyle}">
+                    <TextBlock.ToolTip>
+                        <ToolTip Content="虚线框内的文本内容" />
+                    </TextBlock.ToolTip>
+                </TextBlock>
                 <TextBox Text="{Binding SelectedTicket.Hint, Mode=OneWay}" 
                         Grid.Row="18" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
                 <!-- 身份信息 - 移到提示和编码之间 -->
-                <TextBlock Text="身份信息" Grid.Row="19" Grid.Column="0" Style="{StaticResource FormLabelStyle}"/>
+                <TextBlock Text="身份信息" Grid.Row="19" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding IdentityInfo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                         Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"
                         IsEnabled="True"/>
 
                 <!-- 编码区 - 跨所有列 -->
-                <TextBlock Text="编码区" Grid.Row="21" Grid.Column="0" Style="{StaticResource FormLabelStyle}"/>
+                <TextBlock Text="编码区" Grid.Row="21" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding EncodingArea, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                         Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"
