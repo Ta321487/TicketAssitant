@@ -10,10 +10,47 @@ namespace TA_WPF.Services
     public class DatabaseService
     {
         private readonly string _connectionString;
+        private const int MaxRetryCount = 1; // 最大重试次数
+        private const int RetryDelayMs = 500; // 重试延迟（毫秒）
 
         public DatabaseService(string connectionString)
         {
             _connectionString = connectionString;
+        }
+
+        /// <summary>
+        /// 创建数据库连接并尝试打开，带有自动重试功能
+        /// </summary>
+        /// <returns>已打开的数据库连接</returns>
+        private async Task<MySqlConnection> GetOpenConnectionWithRetryAsync()
+        {
+            MySqlConnection connection = new MySqlConnection(_connectionString);
+            int retryCount = 0;
+            
+            while (true)
+            {
+                try
+                {
+                    await connection.OpenAsync();
+                    return connection; // 成功打开连接
+                }
+                catch (MySqlException ex)
+                {
+                    retryCount++;
+                    if (retryCount >= MaxRetryCount)
+                    {
+                        // 记录详细的最终错误信息
+                        LogHelper.LogError($"数据库连接失败。错误: {ex.Message}, 错误代码: {ex.Number}");
+                        throw; // 重新抛出异常
+                    }
+                    
+                    // 记录重试信息
+                    LogHelper.LogWarning($"数据库连接失败，正在重试。错误: {ex.Message}");
+                    
+                    // 等待一段时间后重试
+                    await Task.Delay(RetryDelayMs);
+                }
+            }
         }
 
         public async Task<(List<TrainRideInfo> Items, int TotalCount)> GetTrainRideInfoAsync(int pageSize, int pageNumber)
@@ -21,10 +58,8 @@ namespace TA_WPF.Services
             var items = new List<TrainRideInfo>();
             int totalCount = 0;
 
-            using (var connection = new MySqlConnection(_connectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
-                await connection.OpenAsync();
-
                 // 获取总记录数
                 using (var countCommand = new MySqlCommand("SELECT COUNT(*) FROM train_ride_info", connection))
                 {
@@ -58,10 +93,8 @@ namespace TA_WPF.Services
         {
             var stations = new List<StationInfo>();
 
-            using (var connection = new MySqlConnection(_connectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
-                await connection.OpenAsync();
-
                 string query = "SELECT * FROM station_info ORDER BY station_name";
 
                 using (var command = new MySqlCommand(query, connection))
@@ -98,12 +131,10 @@ namespace TA_WPF.Services
                 ConnectionTimeout = 10 // 设置连接超时为10秒
             };
             
-            using (var connection = new MySqlConnection(builder.ConnectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
                 try
                 {
-                    await connection.OpenAsync();
-
                     string query = @"INSERT INTO train_ride_info (
                                     ticket_number, check_in_location, depart_station, train_no, 
                                     arrive_station, depart_station_pinyin, arrive_station_pinyin, 
@@ -120,7 +151,7 @@ namespace TA_WPF.Services
                     using (var command = new MySqlCommand(query, connection))
                     {
                         // 设置命令超时为5秒
-                        command.CommandTimeout = 5;
+                        command.CommandTimeout = 10;
                         
                         command.Parameters.AddWithValue("@TicketNumber", ticket.TicketNumber);
                         command.Parameters.AddWithValue("@CheckInLocation", ticket.CheckInLocation);
@@ -158,10 +189,8 @@ namespace TA_WPF.Services
         {
             var items = new List<TrainRideInfo>();
 
-            using (var connection = new MySqlConnection(_connectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
-                await connection.OpenAsync();
-
                 // 获取所有数据
                 string query = "SELECT * FROM train_ride_info ORDER BY id";
 
@@ -185,13 +214,8 @@ namespace TA_WPF.Services
         {
             var items = new List<TrainRideInfo>();
 
-            // 添加一个小延迟，确保加载动画能够显示
-            await Task.Delay(300);
-
-            using (var connection = new MySqlConnection(_connectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
-                await connection.OpenAsync();
-
                 // 构建排序方向
                 string direction = ascending ? "ASC" : "DESC";
                 
@@ -227,13 +251,8 @@ namespace TA_WPF.Services
         {
             try
             {
-                // 添加一个小延迟，确保加载动画能够显示
-                await Task.Delay(200);
-                
-                using (var connection = new MySqlConnection(_connectionString))
+                using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
-                    await connection.OpenAsync();
-
                     using (var command = new MySqlCommand("SELECT COUNT(*) FROM train_ride_info", connection))
                     {
                         return Convert.ToInt32(await command.ExecuteScalarAsync());
@@ -258,9 +277,6 @@ namespace TA_WPF.Services
         {
             try
             {
-                // 添加一个小延迟，确保加载动画能够显示
-                await Task.Delay(200);
-                
                 // 构建查询条件
                 var conditions = new List<string>();
                 var parameters = new Dictionary<string, object>();
@@ -357,21 +373,8 @@ namespace TA_WPF.Services
                     query = $"SELECT COUNT(*) FROM train_ride_info WHERE {string.Join(conditionOperator, conditions)}";
                 }
                 
-                // 记录SQL查询和参数
-                var debugInfo = new StringBuilder();
-                debugInfo.AppendLine($"执行Count查询: {query}");
-                debugInfo.AppendLine("查询参数:");
-                foreach (var param in parameters)
+                using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
-                    debugInfo.AppendLine($"  {param.Key}: {param.Value}");
-                }
-                
-                Debug.WriteLine(debugInfo.ToString());
-                
-                using (var connection = new MySqlConnection(_connectionString))
-                {
-                    await connection.OpenAsync();
-
                     using (var command = new MySqlCommand(query, connection))
                     {
                         // 添加参数
@@ -404,9 +407,6 @@ namespace TA_WPF.Services
         {
             try
             {
-                // 添加一个小延迟，确保加载动画能够显示
-                await Task.Delay(300);
-                
                 var items = new List<TrainRideInfo>();
                 
                 // 构建查询条件
@@ -511,23 +511,8 @@ namespace TA_WPF.Services
                             LIMIT @Offset, @PageSize";
                 }
                 
-                // 记录SQL查询和参数
-                var debugInfo = new StringBuilder();
-                debugInfo.AppendLine($"执行SQL查询: {query}");
-                debugInfo.AppendLine("查询参数:");
-                foreach (var param in parameters)
+                using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
-                    debugInfo.AppendLine($"  {param.Key}: {param.Value}");
-                }
-                debugInfo.AppendLine($"  @Offset: {(pageNumber - 1) * pageSize}");
-                debugInfo.AppendLine($"  @PageSize: {pageSize}");
-                
-                Debug.WriteLine(debugInfo.ToString());
-                
-                using (var connection = new MySqlConnection(_connectionString))
-                {
-                    await connection.OpenAsync();
-
                     using (var command = new MySqlCommand(query, connection))
                     {
                         // 添加分页参数
@@ -622,18 +607,16 @@ namespace TA_WPF.Services
                 ConnectionTimeout = 5 // 设置连接超时为5秒
             };
 
-            using (var connection = new MySqlConnection(builder.ConnectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
                 try
                 {
-                    await connection.OpenAsync();
-
                     string query = "SELECT * FROM station_info WHERE station_name LIKE @PartialName ORDER BY station_name LIMIT 10";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
                         // 设置命令超时为3秒
-                        command.CommandTimeout = 3;
+                        command.CommandTimeout = 10;
                         
                         command.Parameters.AddWithValue("@PartialName", partialName + "%");
 
@@ -675,10 +658,8 @@ namespace TA_WPF.Services
         /// <returns>表是否存在</returns>
         public async Task<bool> TableExistsAsync(string tableName)
         {
-            using (var connection = new MySqlConnection(_connectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
-                await connection.OpenAsync();
-                
                 // 获取数据库名称
                 string databaseName = connection.Database;
                 
@@ -703,10 +684,8 @@ namespace TA_WPF.Services
         /// </summary>
         public async Task CreateStationInfoTableAsync()
         {
-            using (var connection = new MySqlConnection(_connectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
-                await connection.OpenAsync();
-                
                 string query = @"
                 CREATE TABLE IF NOT EXISTS `station_info` (
                   `id` int NOT NULL AUTO_INCREMENT,
@@ -734,10 +713,8 @@ namespace TA_WPF.Services
         /// </summary>
         public async Task CreateTrainRideInfoTableAsync()
         {
-            using (var connection = new MySqlConnection(_connectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
-                await connection.OpenAsync();
-
                 //TODO: 修改这个表结构
                 
                 string query = @"
@@ -785,12 +762,10 @@ namespace TA_WPF.Services
                 ConnectionTimeout = 10 // 设置连接超时为10秒
             };
             
-            using (var connection = new MySqlConnection(builder.ConnectionString))
+            using (var connection = await GetOpenConnectionWithRetryAsync())
             {
                 try
                 {
-                    await connection.OpenAsync();
-
                     string query = @"UPDATE train_ride_info 
                                    SET ticket_number = @TicketNumber,
                                        check_in_location = @CheckInLocation,
@@ -816,7 +791,7 @@ namespace TA_WPF.Services
                     using (var command = new MySqlCommand(query, connection))
                     {
                         // 设置命令超时为5秒
-                        command.CommandTimeout = 5;
+                        command.CommandTimeout = 10;
                         
                         command.Parameters.AddWithValue("@Id", ticket.Id);
                         command.Parameters.AddWithValue("@TicketNumber", ticket.TicketNumber);
@@ -861,10 +836,8 @@ namespace TA_WPF.Services
         {
             try
             {
-                using (var connection = new MySqlConnection(_connectionString))
+                using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
-                    await connection.OpenAsync();
-
                     string query = "DELETE FROM train_ride_info WHERE id = @TicketId";
 
                     using (var command = new MySqlCommand(query, connection))
@@ -892,10 +865,8 @@ namespace TA_WPF.Services
             {
                 var stations = new List<string>();
                 
-                using (var connection = new MySqlConnection(_connectionString))
+                using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
-                    await connection.OpenAsync();
-                    
                     string query = "SELECT DISTINCT depart_station FROM train_ride_info WHERE depart_station IS NOT NULL ORDER BY depart_station";
                     
                     using (var command = new MySqlCommand(query, connection))

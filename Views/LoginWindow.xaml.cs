@@ -680,6 +680,7 @@ namespace TA_WPF.Views
                 try
                 {
                     // 检查服务器是否可达（仅对非本地连接进行Ping测试）
+                    // 注意：许多云服务器会禁用ICMP协议（Ping），但实际上数据库连接（TCP）可能正常
                     bool serverReachable = true;
                     if (!isLocalConnection)
                     {
@@ -692,25 +693,29 @@ namespace TA_WPF.Views
                             }
                         });
 
-                        serverReachable = await Task.Run(() =>
+                        // 尝试Ping服务器，但即使失败也继续尝试连接
+                        await Task.Run(() =>
                         {
                             try
                             {
                                 using (Ping ping = new Ping())
                                 {
                                     PingReply reply = ping.Send(serverAddress, 1000);
-                                    return reply.Status == IPStatus.Success;
+                                    serverReachable = reply.Status == IPStatus.Success;
                                 }
                             }
                             catch
                             {
-                                return false;
+                                serverReachable = false;
+                                // 记录日志但不终止连接
+                                LogHelper.LogWarning($"无法Ping通服务器 {serverAddress}，但仍将尝试连接数据库");
                             }
                         });
 
+                        // 如果Ping不通，记录警告但不抛出异常，继续尝试连接数据库
                         if (!serverReachable)
                         {
-                            throw new Exception($"无法连接到服务器 {serverAddress}，请检查服务器地址是否正确或网络连接是否正常。");
+                            LogHelper.LogWarning($"服务器 {serverAddress} 无法Ping通，但仍将尝试连接数据库");
                         }
                     }
                     else
@@ -765,7 +770,7 @@ namespace TA_WPF.Views
                     });
 
                     // 构建连接字符串
-                    string connectionString = $"Server={serverAddress};Port={port};Database={databaseName};User ID={username};Password={password};CharSet=utf8;Connect Timeout=10;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Old Guids=true;";
+                    string connectionString = $"Server={serverAddress};Port={port};Database={databaseName};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
 
                     // 尝试连接数据库
                     bool connected = false;
@@ -1677,7 +1682,7 @@ namespace TA_WPF.Views
                 }
 
                 // 构建连接字符串（不包含数据库名称）
-                string connectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=10;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Old Guids=true;";
+                string connectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
 
                 // 创建数据库
                 Exception createException = null;
