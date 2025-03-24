@@ -12,15 +12,15 @@
         d:DesignHeight="900" d:DesignWidth="1100"
         mc:Ignorable="d"
         Title="车票预览" 
-        Height="650" 
+        Height="700" 
         Width="1100"
-        MinHeight="600"
+        MinHeight="650"
         MinWidth="1000"
         WindowStartupLocation="CenterScreen"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.Foreground="{Binding FormForegroundBrush}"
+        Background="{Binding FormBackgroundBrush}"
         TextElement.FontWeight="Regular"
-        TextElement.FontSize="13"
+        TextElement.FontSize="{Binding FontSize}"
         FontFamily="Microsoft YaHei UI">
 
     <Window.Resources>
@@ -53,6 +53,8 @@
             <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
             <Setter Property="Margin" Value="2,4,2,2"/>
             <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="{Binding SmallFontSize}"/>
+            <Setter Property="Foreground" Value="{Binding FormForegroundBrush}"/>
         </Style>
 
         <!-- 自定义表单文本框样式 -->
@@ -63,6 +65,10 @@
             <Setter Property="Padding" Value="8,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Margin" Value="2,0,2,8"/>
+            <Setter Property="FontSize" Value="{Binding MediumFontSize}"/>
+            <Setter Property="Background" Value="{Binding FormInputBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{Binding FormForegroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{Binding FormBorderBrush}"/>
         </Style>
 
         <!-- 系统常量 -->
@@ -138,6 +144,8 @@
                           Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
                           Style="{StaticResource MaterialDesignHeadline6TextBlock}" 
                           Margin="0,0,0,8"
+                          FontSize="{Binding HeaderFontSize}"
+                          Foreground="{Binding FormForegroundBrush}"
                           FontFamily="Microsoft YaHei UI"/>
 
                 <!-- 第一列 -->
@@ -261,7 +269,7 @@
         </ScrollViewer>
 
         <!-- 右侧车票预览 -->
-        <Grid Grid.Column="1">
+        <Grid Grid.Column="1" Background="{Binding FormBackgroundBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
@@ -271,7 +279,27 @@
             <Grid Grid.Row="0">
                 <Viewbox Stretch="Uniform" Margin="5">
                     <Grid x:Name="PreviewGrid" Width="811" Height="509">
-                        <Image Source="pack://application:,,,/Assets/pic/blueTicket.png" Stretch="Fill" />
+                        <!-- 车票区域内所有TextBlock的默认样式 -->
+                        <Grid.Resources>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Foreground" Value="Black" />
+                            </Style>
+                        </Grid.Resources>
+                        
+                        <!-- 车票背景，根据主题切换深色/浅色 -->
+                        <Image Source="pack://application:,,,/Assets/pic/blueTicket.png" Stretch="Fill">
+                            <!-- 根据主题切换不透明度 -->
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="1.0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDarkMode}" Value="True">
+                                            <Setter Property="Opacity" Value="0.9"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
 
                         <!-- 车票号码 -->
                         <TextBlock Text="{Binding SelectedTicket.TicketNumber}" 
@@ -280,7 +308,15 @@
                                 FontSize="40" 
                                 Margin="55,20,0,0" 
                                 HorizontalAlignment="Left"
-                                VerticalAlignment="Top"/>
+                                VerticalAlignment="Top"
+                                Name="ticketNumberText">
+                            <!-- 确保车票号码始终为红色 -->
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Foreground" Value="Red" />
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         <!-- 检票口 - 条件显示 -->
                         <StackPanel Orientation="Horizontal" 
                         Margin="510,20,0,0" 
@@ -830,6 +866,7 @@
                                             <TextBlock Text="{Binding}" 
                                                     FontSize="20"
                                                     FontFamily="SimHei"
+                                                    Foreground="Black"
                                                     FontWeight="Medium"
                                                     HorizontalAlignment="Center"
                                                     Margin="5,2" 
@@ -855,21 +892,23 @@
             <StackPanel Grid.Row="1" 
                       Orientation="Horizontal" 
                       HorizontalAlignment="Right" 
-                      Margin="0,8,0,0">
+                      Margin="0,12,0,8">
                 <Button Content="导出图片" 
                         Command="{Binding ExportImageCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}" 
-                        Width="100"
-                        Height="36"
-                        Margin="0,0,8,0"
+                        Width="120"
+                        Height="45"
+                        Margin="0,0,12,0"
                         Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        FontSize="{Binding MediumFontSize}"
                         FontFamily="Microsoft YaHei UI"/>
                 <Button Content="关闭" 
                         Command="{Binding CloseCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}" 
-                        Width="100"
-                        Height="36"
+                        Width="120"
+                        Height="45"
                         Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        FontSize="{Binding MediumFontSize}"
                         FontFamily="Microsoft YaHei UI"/>
             </StackPanel>
         </Grid>

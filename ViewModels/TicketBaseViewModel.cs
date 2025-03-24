@@ -312,20 +312,15 @@ namespace TA_WPF.ViewModels
                 }
             }
 
-            // 更新UI状态
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => {
-                // 确保UI已更新后再触发通知
-                UpdateSelectedItemsCount();
-                
-                // 触发属性变更通知以确保UI更新
-                OnPropertyChanged(nameof(HasSelectedItems));
-                OnPropertyChanged(nameof(SelectionToggleText));
-                OnPropertyChanged(nameof(SelectionToggleIcon));
-                OnPropertyChanged(nameof(SelectionToggleTooltip));
-                
-                // 刷新命令状态
-                CommandManager.InvalidateRequerySuggested();
-            }));
+            // 更新UI状态（改为同步更新，避免使用Dispatcher触发更新问题）
+            UpdateSelectedItemsCount();
+            OnPropertyChanged(nameof(HasSelectedItems));
+            OnPropertyChanged(nameof(SelectionToggleText));
+            OnPropertyChanged(nameof(SelectionToggleIcon));
+            OnPropertyChanged(nameof(SelectionToggleTooltip));
+            
+            // 刷新命令状态
+            CommandManager.InvalidateRequerySuggested();
         }
 
         /// <summary>
@@ -535,6 +530,11 @@ namespace TA_WPF.ViewModels
                 // 刷新命令状态
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
                 
+                // 翻页时，确保重置全选状态
+                _isUpdatingAllSelected = true;
+                IsAllSelected = false;
+                _isUpdatingAllSelected = false;
+                
                 // 使用Dispatcher以更高优先级执行数据加载
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
                 {
@@ -543,17 +543,15 @@ namespace TA_WPF.ViewModels
                         // 加载新的页面数据
                         await LoadPageDataAsync();
                         
-                        // 确保选择状态与IsAllSelected一致
-                        if (IsAllSelected)
-                        {
-                            ApplySelectionToAll(true);
-                        }
-                        
                         // 更新选中项计数
                         UpdateSelectedItemsCount();
                         
                         // 再次触发UI更新通知
                         OnPropertyChanged(nameof(TrainRideInfos));
+                        OnPropertyChanged(nameof(IsAllSelected));
+                        OnPropertyChanged(nameof(SelectionToggleText));
+                        OnPropertyChanged(nameof(SelectionToggleIcon));
+                        OnPropertyChanged(nameof(SelectionToggleTooltip));
                     }
                     catch (Exception ex)
                     {
@@ -568,7 +566,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"页码变更处理出错: {ex.Message}");
+                Console.WriteLine($"页面变更处理出错: {ex.Message}");
                 // 确保加载状态被重置
                 _paginationViewModel.IsLoading = false;
             }
@@ -585,9 +583,7 @@ namespace TA_WPF.ViewModels
                 _paginationViewModel.IsLoading = true;
                 
                 // 手动触发属性变更通知，确保UI更新
-                OnPropertyChanged(nameof(TotalPages));
                 OnPropertyChanged(nameof(CurrentPage));
-                OnPropertyChanged(nameof(PageSize));
                 OnPropertyChanged(nameof(CanNavigateToFirstPage));
                 OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                 OnPropertyChanged(nameof(CanNavigateToNextPage));
@@ -595,6 +591,11 @@ namespace TA_WPF.ViewModels
                 
                 // 刷新命令状态
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+                
+                // 页大小改变时，重置全选状态
+                _isUpdatingAllSelected = true;
+                IsAllSelected = false;
+                _isUpdatingAllSelected = false;
                 
                 // 使用Dispatcher以更高优先级执行数据加载
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
@@ -604,17 +605,15 @@ namespace TA_WPF.ViewModels
                         // 加载新的页面数据
                         await LoadPageDataAsync();
                         
-                        // 确保选择状态与IsAllSelected一致
-                        if (IsAllSelected)
-                        {
-                            ApplySelectionToAll(true);
-                        }
-                        
                         // 更新选中项计数
                         UpdateSelectedItemsCount();
                         
                         // 再次触发UI更新通知
                         OnPropertyChanged(nameof(TrainRideInfos));
+                        OnPropertyChanged(nameof(IsAllSelected));
+                        OnPropertyChanged(nameof(SelectionToggleText));
+                        OnPropertyChanged(nameof(SelectionToggleIcon));
+                        OnPropertyChanged(nameof(SelectionToggleTooltip));
                     }
                     catch (Exception ex)
                     {
@@ -827,6 +826,9 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(SelectionToggleText));
                     OnPropertyChanged(nameof(SelectionToggleIcon));
                     OnPropertyChanged(nameof(SelectionToggleTooltip));
+                    
+                    // 刷新命令状态
+                    CommandManager.InvalidateRequerySuggested();
                 }
             }
         }

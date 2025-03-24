@@ -248,7 +248,8 @@
                         ToolTip="预览选中的车票"
                         Margin="0,0,8,0"
                         Height="36"
-                        Visibility="{Binding SelectedItemsCount, Converter={StaticResource IntEqualityToVisibilityConverter}, ConverterParameter=1}">
+                        IsEnabled="{Binding CanPreviewTicket}"
+                        Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="TicketOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBlock Text="预览车票" VerticalAlignment="Center"/>

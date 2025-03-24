@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using TA_WPF.Utils;
 using TA_WPF.Views;
+using System.Linq;
+using System.IO;
+using System.Xml;
 
 namespace TA_WPF
 {
@@ -60,6 +63,8 @@ namespace TA_WPF
                 try
                 {
                     var themeService = Services.ThemeService.Instance;
+                    
+                    // 从当前运行的可执行文件配置中获取主题设置
                     bool isDarkMode = themeService.LoadThemeFromConfig();
                     
                     Console.WriteLine($"应用程序启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
@@ -70,6 +75,22 @@ namespace TA_WPF
                     {
                         Resources["Theme.Dark"] = isDarkMode;
                         Resources["Theme.Light"] = !isDarkMode;
+                        
+                        // 获取BundledTheme
+                        var bundledTheme = Resources.MergedDictionaries
+                            .OfType<MaterialDesignThemes.Wpf.BundledTheme>()
+                            .FirstOrDefault();
+                        
+                        if (bundledTheme != null)
+                        {
+                            // 设置基本主题
+                            bundledTheme.BaseTheme = isDarkMode ? 
+                                MaterialDesignThemes.Wpf.BaseTheme.Dark : 
+                                MaterialDesignThemes.Wpf.BaseTheme.Light;
+                            
+                            Console.WriteLine($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
+                            LogHelper.LogInfo($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
+                        }
                     }
                     
                     // 应用主题
@@ -246,56 +267,120 @@ namespace TA_WPF
                 try
                 {
                     // 获取可执行文件的配置文件路径
-                    string configPath = AppDomain.CurrentDomain.BaseDirectory + "TA_WPF.dll.config";
+                    string exePath = System.Reflection.Assembly.GetEntryAssembly()?.Location ?? 
+                                    System.Reflection.Assembly.GetExecutingAssembly().Location;
+                    string exeName = System.IO.Path.GetFileNameWithoutExtension(exePath);
+                    string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    
+                    // 动态获取可能的配置文件名称
+                    string[] configNames = Directory.GetFiles(baseDir, "*.config")
+                        .Where(file => !file.EndsWith(".vshost.exe.config")) // 排除VS主机配置
+                        .ToArray();
+                    
+                    Console.WriteLine($"应用程序退出时 - 找到的配置文件数量: {configNames.Length}");
+                    LogHelper.LogInfo($"应用程序退出时 - 找到的配置文件数量: {configNames.Length}");
+                    
+                    foreach (var configFile in configNames)
+                    {
+                        Console.WriteLine($"应用程序退出时 - 找到配置文件: {configFile}");
+                    }
+                    
+                    // 首先尝试dll.config和exe.config
+                    string dllConfigPath = System.IO.Path.Combine(baseDir, exeName + ".dll.config");
+                    string exeConfigPath = System.IO.Path.Combine(baseDir, exeName + ".exe.config");
+                    
+                    // 也尝试已知可能的应用程序名称
+                    string knownDllConfig = System.IO.Path.Combine(baseDir, "以车票标记时光：旅程归档.dll.config");
+                    string knownExeConfig = System.IO.Path.Combine(baseDir, "以车票标记时光：旅程归档.exe.config");
+                    
+                    // 检查文件是否存在
+                    bool dllConfigExists = System.IO.File.Exists(dllConfigPath);
+                    bool exeConfigExists = System.IO.File.Exists(exeConfigPath);
+                    bool knownDllExists = System.IO.File.Exists(knownDllConfig);
+                    bool knownExeExists = System.IO.File.Exists(knownExeConfig);
+                    
+                    // 选择要使用的配置文件
+                    string configPath = null;
+                    if (dllConfigExists)
+                    {
+                        configPath = dllConfigPath;
+                    }
+                    else if (exeConfigExists)
+                    {
+                        configPath = exeConfigPath;
+                    }
+                    else if (knownDllExists)
+                    {
+                        configPath = knownDllConfig;
+                    }
+                    else if (knownExeExists)
+                    {
+                        configPath = knownExeConfig;
+                    }
+                    else if (configNames.Length > 0)
+                    {
+                        // 如果没有找到预期的配置文件，但目录中存在其他配置文件，使用第一个
+                        configPath = configNames[0];
+                    }
+                    
                     Console.WriteLine($"应用程序退出时使用的配置文件路径: {configPath}");
                     LogHelper.LogInfo($"应用程序退出时使用的配置文件路径: {configPath}");
                     
-                    if (System.IO.File.Exists(configPath))
+                    if (configPath != null && System.IO.File.Exists(configPath))
                     {
-                        // 读取配置文件内容
-                        string content = System.IO.File.ReadAllText(configPath);
-                        Console.WriteLine($"应用程序退出时配置文件内容长度: {content.Length}字节");
-                        LogHelper.LogInfo($"应用程序退出时配置文件内容长度: {content.Length}字节");
-
-                        // 检查是否包含IsDarkMode设置
-                        bool containsIsDarkMode = content.Contains("IsDarkMode");
-                        Console.WriteLine($"应用程序退出时配置文件包含IsDarkMode: {containsIsDarkMode}");
-                        LogHelper.LogInfo($"应用程序退出时配置文件包含IsDarkMode: {containsIsDarkMode}");
+                        // 使用XmlDocument直接操作XML配置文件
+                        var xmlDoc = new System.Xml.XmlDocument();
+                        xmlDoc.Load(configPath);
                         
-                        if (!containsIsDarkMode)
+                        // 获取appSettings节点
+                        var appSettingsNode = xmlDoc.SelectSingleNode("//appSettings");
+                        if (appSettingsNode != null)
                         {
-                            // 如果配置文件中不存在IsDarkMode设置，添加它
-                            int appSettingsEndIndex = content.IndexOf("</appSettings>");
-                            if (appSettingsEndIndex > 0)
+                            // 查找IsDarkMode设置
+                            var isDarkModeNode = appSettingsNode.SelectSingleNode("//add[@key='IsDarkMode']");
+                            
+                            if (isDarkModeNode != null)
                             {
-                                string newContent = content.Substring(0, appSettingsEndIndex) +
-                                                   $"    <add key=\"IsDarkMode\" value=\"{isDarkMode.ToString().ToLower()}\" />\r\n" +
-                                                   content.Substring(appSettingsEndIndex);
-                                System.IO.File.WriteAllText(configPath, newContent);
-                                Console.WriteLine($"应用程序退出时已直接写入IsDarkMode设置到配置文件");
-                                LogHelper.LogInfo($"应用程序退出时已直接写入IsDarkMode设置到配置文件");
+                                // 更新已存在的IsDarkMode设置
+                                isDarkModeNode.Attributes["value"].Value = isDarkMode.ToString().ToLower();
+                                Console.WriteLine($"应用程序退出时更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
+                                LogHelper.LogInfo($"应用程序退出时更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
                             }
+                            else
+                            {
+                                // 创建新的IsDarkMode设置
+                                var newNode = xmlDoc.CreateElement("add");
+                                var keyAttr = xmlDoc.CreateAttribute("key");
+                                keyAttr.Value = "IsDarkMode";
+                                var valueAttr = xmlDoc.CreateAttribute("value");
+                                valueAttr.Value = isDarkMode.ToString().ToLower();
+                                
+                                newNode.Attributes.Append(keyAttr);
+                                newNode.Attributes.Append(valueAttr);
+                                appSettingsNode.AppendChild(newNode);
+                                
+                                Console.WriteLine($"应用程序退出时创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
+                                LogHelper.LogInfo($"应用程序退出时创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
+                            }
+                            
+                            // 保存XML文档
+                            xmlDoc.Save(configPath);
+                            Console.WriteLine($"应用程序退出时已保存配置文件: {configPath}");
+                            LogHelper.LogInfo($"应用程序退出时已保存配置文件: {configPath}");
+                            
+                            // 刷新配置
+                            ConfigurationManager.RefreshSection("appSettings");
                         }
                         else
                         {
-                            // 如果配置文件中已存在IsDarkMode设置，更新它
-                            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex("key=\"IsDarkMode\"\\s+value=\"(true|false|True|False)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                            string newContent = regex.Replace(content, $"key=\"IsDarkMode\" value=\"{isDarkMode.ToString().ToLower()}\"");
-                            System.IO.File.WriteAllText(configPath, newContent);
-                            Console.WriteLine($"应用程序退出时已直接更新IsDarkMode设置在配置文件");
-                            LogHelper.LogInfo($"应用程序退出时已直接更新IsDarkMode设置在配置文件");
+                            Console.WriteLine("应用程序退出时未找到appSettings节点");
+                            LogHelper.LogWarning("应用程序退出时未找到appSettings节点");
                         }
-                        
-                        // 验证修改是否成功
-                        string verifyContent = System.IO.File.ReadAllText(configPath);
-                        bool verifyContainsIsDarkMode = verifyContent.Contains($"key=\"IsDarkMode\" value=\"{isDarkMode.ToString().ToLower()}\"");
-                        Console.WriteLine($"应用程序退出时验证配置文件包含正确的IsDarkMode设置: {verifyContainsIsDarkMode}");
-                        LogHelper.LogInfo($"应用程序退出时验证配置文件包含正确的IsDarkMode设置: {verifyContainsIsDarkMode}");
                     }
                     else
                     {
-                        Console.WriteLine($"应用程序退出时配置文件不存在: {configPath}");
-                        LogHelper.LogWarning($"应用程序退出时配置文件不存在: {configPath}");
+                        Console.WriteLine($"应用程序退出时配置文件不存在或无法确定配置文件");
+                        LogHelper.LogWarning($"应用程序退出时配置文件不存在或无法确定配置文件");
                     }
                 }
                 catch (Exception ex)

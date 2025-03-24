@@ -1203,6 +1203,35 @@ namespace TA_WPF.ViewModels
         {
             base.UpdateSelectedItemsCount();
             CanPreviewTicket = SelectedItemsCount == 1;
+            
+            // 刷新命令可执行状态
+            CommandManager.InvalidateRequerySuggested();
+        }
+        
+        // 重写页面变更方法，确保预览按钮状态也被更新
+        protected override void OnPageChanged(object sender, EventArgs e)
+        {
+            // 首先调用基类方法
+            base.OnPageChanged(sender, e);
+            
+            // 确保预览按钮状态正确
+            CanPreviewTicket = SelectedItemsCount == 1;
+            
+            // 通知UI更新
+            OnPropertyChanged(nameof(CanPreviewTicket));
+        }
+        
+        // 重写页大小变更方法，确保预览按钮状态也被更新
+        protected override void OnPageSizeChanged(object sender, EventArgs e)
+        {
+            // 首先调用基类方法
+            base.OnPageSizeChanged(sender, e);
+            
+            // 确保预览按钮状态正确
+            CanPreviewTicket = SelectedItemsCount == 1;
+            
+            // 通知UI更新
+            OnPropertyChanged(nameof(CanPreviewTicket));
         }
         
         // 预览车票方法

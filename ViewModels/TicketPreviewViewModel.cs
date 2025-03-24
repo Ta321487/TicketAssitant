@@ -15,6 +15,7 @@ using System.Windows.Controls;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
 using Color = System.Windows.Media.Color;
+using System.Configuration;
 
 namespace TA_WPF.ViewModels
 {
@@ -24,6 +25,8 @@ namespace TA_WPF.ViewModels
         private string _identityInfo;
         private string _encodingArea;
         private BitmapImage _qrCodeImage;
+        private bool _isDarkMode;
+        private double _fontSize;
 
         // 设计时构造函数
         public TicketPreviewViewModel() : this(new TrainRideInfo
@@ -57,6 +60,173 @@ namespace TA_WPF.ViewModels
             _selectedTicket = selectedTicket;
             CloseCommand = new RelayCommand(Close);
             ExportImageCommand = new RelayCommand(ExportImage);
+            
+            // 获取当前主题模式
+            LoadThemeSettings();
+            
+            // 获取当前字体大小设置
+            LoadFontSizeSettings();
+            
+            // 订阅主题服务的主题变更事件
+            Services.ThemeService.Instance.ThemeChanged += (sender, isDark) => 
+            {
+                IsDarkMode = isDark;
+            };
+        }
+        
+        // 加载主题设置
+        private void LoadThemeSettings()
+        {
+            try
+            {
+                // 从应用程序资源中获取当前主题设置
+                if (Application.Current?.Resources != null && 
+                    Application.Current.Resources.Contains("Theme.Dark"))
+                {
+                    _isDarkMode = (bool)Application.Current.Resources["Theme.Dark"];
+                }
+                else
+                {
+                    // 如果资源中没有，则从ThemeService获取
+                    _isDarkMode = Services.ThemeService.Instance.IsDarkThemeActive();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"加载主题设置时出错: {ex.Message}");
+                _isDarkMode = false; // 默认浅色主题
+            }
+        }
+        
+        // 加载字体大小设置
+        private void LoadFontSizeSettings()
+        {
+            try
+            {
+                // 从应用程序资源中获取当前字体大小设置
+                if (Application.Current?.Resources != null && 
+                    Application.Current.Resources.Contains("MaterialDesignFontSize"))
+                {
+                    _fontSize = (double)Application.Current.Resources["MaterialDesignFontSize"];
+                }
+                else
+                {
+                    // 如果资源中没有，则从配置文件获取
+                    var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    if (config.AppSettings.Settings["FontSize"] != null)
+                    {
+                        if (double.TryParse(config.AppSettings.Settings["FontSize"].Value, out double fontSize))
+                        {
+                            _fontSize = fontSize;
+                        }
+                        else
+                        {
+                            _fontSize = 13; // 默认字体大小
+                        }
+                    }
+                    else
+                    {
+                        _fontSize = 13; // 默认字体大小
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"加载字体大小设置时出错: {ex.Message}");
+                _fontSize = 13; // 默认字体大小
+            }
+        }
+        
+        // 是否为深色模式
+        public bool IsDarkMode
+        {
+            get => _isDarkMode;
+            set
+            {
+                if (_isDarkMode != value)
+                {
+                    _isDarkMode = value;
+                    OnPropertyChanged(nameof(IsDarkMode));
+                    OnPropertyChanged(nameof(FormBackgroundBrush));
+                    OnPropertyChanged(nameof(FormForegroundBrush));
+                    OnPropertyChanged(nameof(FormBorderBrush));
+                    OnPropertyChanged(nameof(FormInputBackgroundBrush));
+                }
+            }
+        }
+        
+        // 当前字体大小
+        public double FontSize
+        {
+            get => _fontSize;
+            set
+            {
+                if (Math.Abs(_fontSize - value) > 0.01)
+                {
+                    _fontSize = value;
+                    OnPropertyChanged(nameof(FontSize));
+                    OnPropertyChanged(nameof(SmallFontSize));
+                    OnPropertyChanged(nameof(MediumFontSize));
+                    OnPropertyChanged(nameof(LargeFontSize));
+                    OnPropertyChanged(nameof(HeaderFontSize));
+                }
+            }
+        }
+        
+        // 小字体大小（用于标签等）
+        public double SmallFontSize => _fontSize - 1;
+        
+        // 中等字体大小（用于普通文本）
+        public double MediumFontSize => _fontSize;
+        
+        // 大字体大小（用于标题等）
+        public double LargeFontSize => _fontSize + 2;
+        
+        // 表单标题字体大小
+        public double HeaderFontSize => _fontSize + 4;
+        
+        // 表单背景色刷
+        public SolidColorBrush FormBackgroundBrush
+        {
+            get
+            {
+                return _isDarkMode 
+                    ? new SolidColorBrush(Color.FromRgb(45, 45, 45)) 
+                    : new SolidColorBrush(Colors.White);
+            }
+        }
+        
+        // 表单前景色刷
+        public SolidColorBrush FormForegroundBrush
+        {
+            get
+            {
+                return _isDarkMode 
+                    ? new SolidColorBrush(Colors.White) 
+                    : new SolidColorBrush(Color.FromRgb(33, 33, 33));
+            }
+        }
+        
+        // 表单边框色刷
+        public SolidColorBrush FormBorderBrush
+        {
+            get
+            {
+                return _isDarkMode 
+                    ? new SolidColorBrush(Color.FromRgb(70, 70, 70)) 
+                    : new SolidColorBrush(Color.FromRgb(220, 220, 220));
+            }
+        }
+        
+        // 表单输入框背景色刷
+        public SolidColorBrush FormInputBackgroundBrush
+        {
+            get
+            {
+                return _isDarkMode 
+                    ? new SolidColorBrush(Color.FromRgb(60, 60, 60)) 
+                    : new SolidColorBrush(Color.FromRgb(245, 245, 245));
+            }
         }
 
         public TrainRideInfo SelectedTicket
