@@ -320,7 +320,7 @@
                                 FontWeight="Normal" 
                                 Foreground="Red" 
                                 FontSize="40" 
-                                Margin="{Binding TicketNumberMargin}" 
+                                Margin="55,20,0,0" 
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top"
                                 Name="ticketNumberText">
@@ -331,10 +331,9 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        
                         <!-- 检票口 - 条件显示 -->
                         <StackPanel Orientation="Horizontal" 
-                        Margin="{Binding CheckInLabelMargin}" 
+                        Margin="510,20,0,0" 
                         HorizontalAlignment="Left" 
                         VerticalAlignment="Top">
                             <TextBlock Text="检票：" 
@@ -400,7 +399,7 @@
                                 FontFamily="SimHei" 
                                 Foreground="Black" 
                                 FontSize="40" 
-                                Margin="{Binding DepartStationMargin}"
+                                Margin="60,60,0,0"
                                 Width="280"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top" />
@@ -411,7 +410,7 @@
                                 Foreground="Black"
                                 FontFamily="Times New Roman"
                                 FontSize="28" 
-                                Margin="{Binding DepartStationPinyinMargin}"
+                                Margin="-10,105,0,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top">
                             <TextBlock.RenderTransform>
@@ -431,7 +430,7 @@
                             <TextBlock.Margin>
                                 <MultiBinding Converter="{StaticResource StationWordPositionConverter}">
                                     <Binding Path="DepartStationName"/>
-                                    <Binding Path="DepartStationWordPositionParams"/>
+                                    <Binding Source="271,114,513,362"/>
                                 </MultiBinding>
                             </TextBlock.Margin>
                         </TextBlock>
@@ -444,8 +443,8 @@
                                 FontSize="36"
                                 FontFamily="Times New Roman"
                                 VerticalAlignment="Top"
-                                HorizontalAlignment="Left"
-                                Margin="{Binding TrainNumberMargin}">
+                                HorizontalAlignment="Left">
+                            <TextBlock.Margin>356,60,0,0</TextBlock.Margin>
                         </TextBlock>
 
                         <!-- 车次号下方箭头 -->
@@ -475,7 +474,7 @@
                                 FontFamily="SimHei" 
                                 FontSize="40"
                                 Width="280"
-                                Margin="{Binding ArriveStationMargin}"
+                                Margin="540,60,0,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top" />
 
@@ -485,7 +484,7 @@
                                 Foreground="Black" 
                                 FontSize="28"
                                 FontFamily="Times New Roman"
-                                Margin="{Binding ArriveStationPinyinMargin}"
+                                Margin="0,105,0,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top">
                             <TextBlock.RenderTransform>
@@ -505,7 +504,7 @@
                             <TextBlock.Margin>
                                 <MultiBinding Converter="{StaticResource StationWordPositionConverter}">
                                     <Binding Path="ArriveStationName"/>
-                                    <Binding Path="ArriveStationWordPositionParams"/>
+                                    <Binding Source="755,126,25,351"/>
                                 </MultiBinding>
                             </TextBlock.Margin>
                         </TextBlock>
@@ -513,7 +512,7 @@
 
                         <!-- 分开的年月日显示 -->
                         <StackPanel Orientation="Horizontal" 
-                                  Margin="{Binding DateDisplayMargin}" 
+                                  Margin="60,145,0,0" 
                                   HorizontalAlignment="Left" 
                                   VerticalAlignment="Top">
                             <!-- 年份 -->
@@ -564,7 +563,7 @@
                                 Foreground="Black" 
                                 FontSize="32"
                                 FontFamily="Times New Roman"
-                                Margin="{Binding DepartTimeMargin}" 
+                                Margin="280,145,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top"/>
                         <!-- "开"字 -->
@@ -573,7 +572,7 @@
                                 Foreground="Black"
                                 FontFamily="SimHei"
                                 FontSize="18" 
-                                Margin="{Binding DepartTimeKaiMargin}" 
+                                Margin="358,155,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top"/>
 
@@ -584,7 +583,7 @@
                                 Foreground="Black"
                                 FontFamily="Times New Roman"
                                 FontSize="32" 
-                                Margin="{Binding CoachNumberMargin}" 
+                                Margin="534,145,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top"/>
 
@@ -593,7 +592,7 @@
                                 FontWeight="Bold" 
                                 Foreground="Black" 
                                 FontSize="18" 
-                                Margin="{Binding CoachCarMargin}"
+                                Margin="571,155,0,0"
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top"/>
 
@@ -603,7 +602,7 @@
                                 FontFamily="SimHei"
                                 Foreground="Black" 
                                 FontSize="18" 
-                                Margin="{Binding CoachAddedMargin}"
+                                Margin="510,155,0,0"
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top">
                             <TextBlock.Style>
@@ -624,7 +623,7 @@
                                 Foreground="Black" 
                                 FontSize="32"
                                 FontFamily="Times New Roman"
-                                Margin="{Binding SeatNumberMargin}" 
+                                Margin="597,145,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top">
                             <TextBlock.Style>
@@ -641,7 +640,7 @@
 
                         <!-- "无座"显示 -->
                         <StackPanel Orientation="Horizontal" 
-                                  Margin="{Binding NoSeatMargin}" 
+                                  Margin="600,150,0,0" 
                                   HorizontalAlignment="Left" 
                                   VerticalAlignment="Top">
                             <TextBlock Text="无" 
@@ -684,7 +683,7 @@
                                 FontWeight="Bold" 
                                 Foreground="Black" 
                                 FontSize="18" 
-                                Margin="{Binding SeatNumberHaoMargin}"
+                                Margin="654,155,0,0"
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top">
                             <TextBlock.Style>
@@ -705,7 +704,7 @@
                                 FontWeight="Medium" 
                                 Foreground="Black" 
                                 FontSize="28" 
-                                Margin="{Binding MoneyYuanMargin}" 
+                                Margin="55,185,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top"/>
 
@@ -716,7 +715,7 @@
                                 FontFamily="Times New Roman"
                                 FontSize="32" 
                                 d:Text="9999.99"
-                                Margin="{Binding MoneyValueMargin}" 
+                                Margin="74,185,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top"
                                 Name="moneyValueText"/>
@@ -733,7 +732,7 @@
                             <TextBlock.Margin>
                                 <MultiBinding Converter="{StaticResource MoneyUnitPositionConverter}">
                                     <Binding Path="MoneyValue"/>
-                                    <Binding Path="MoneyUnitPositionParams"/>
+                                    <Binding Source="178,280,0,0"/>
                                 </MultiBinding>
                             </TextBlock.Margin>
                         </TextBlock>
@@ -745,16 +744,26 @@
                                 Foreground="Black"
                                 FontSize="24" 
                                 HorizontalAlignment="Left" 
-                                VerticalAlignment="Top"
-                                Margin="{Binding SeatTypeMargin}"/>
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Margin" Value="600,195,0,0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasNoSeat}" Value="True">
+                                            <Setter Property="Margin" Value="530,190,0,0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
 
                         <!-- 附加信息 - 条件显示 -->
                         <TextBlock Text="{Binding SelectedTicket.AdditionalInfo}" 
                                 FontWeight="SemiBold" 
                                 Foreground="Black" 
                                 FontSize="24"
-                                FontFamily="SimHei"
-                                Margin="{Binding AdditionalInfoMargin}" 
+                                   FontFamily="SimHei"
+                                Margin="55,260,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top">
                             <TextBlock.Style>
@@ -776,14 +785,18 @@
                                 FontSize="24"
                                 FontFamily="SimHei"
                                 HorizontalAlignment="Left" 
-                                VerticalAlignment="Top"
-                                Margin="{Binding TicketPurposeMargin}">
+                                VerticalAlignment="Top">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
                                     <Setter Property="Visibility" Value="Visible"/>
+                                    <Setter Property="Margin" Value="54,320,0,0"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding SelectedTicket.TicketPurpose, Converter={StaticResource StringToVisibilityConverter}}" Value="Collapsed">
                                             <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                        <!-- 如果车票改签类型有值，将车票用途向右移动 -->
+                                        <DataTrigger Binding="{Binding SelectedTicket.TicketModificationType, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible">
+                                            <Setter Property="Margin" Value="180,320,0,0"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -796,7 +809,7 @@
                                 Foreground="Black" 
                                 FontSize="24"
                                 FontFamily="SimHei"
-                                Margin="{Binding TicketModificationTypeMargin}" 
+                                Margin="54,320,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top">
                             <TextBlock.Style>
@@ -818,7 +831,7 @@
                                 Foreground="Black"
                                 FontFamily="SimSun-ExtB"
                                 FontSize="32" 
-                                Margin="{Binding IdentityInfoMargin}" 
+                                Margin="60,354,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top"/>
 
@@ -828,7 +841,7 @@
                                 FontFamily="Times New Roman"
                                 Foreground="Black" 
                                 FontSize="28" 
-                                Margin="{Binding EncodingAreaMargin}" 
+                                Margin="44,467,0,0" 
                                 HorizontalAlignment="Left" 
                                 VerticalAlignment="Top"/>
 
@@ -836,7 +849,7 @@
                         <Border BorderThickness="1"
                                 Width="485"
                                 Height="60"
-                                Margin="{Binding HintBorderMargin}" 
+                                Margin="-170,390,0,0" 
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Top"
                                 Background="Transparent">
@@ -884,7 +897,7 @@
                                Height="120" 
                                HorizontalAlignment="Right" 
                                VerticalAlignment="Bottom" 
-                               Margin="{Binding QRCodeMargin}"/>
+                               Margin="0,0,50,80"/>
                     </Grid>
                 </Viewbox>
             </Grid>

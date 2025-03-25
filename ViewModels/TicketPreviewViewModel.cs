@@ -451,358 +451,26 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 车票颜色状态
-        public bool IsRedTicket
-        {
-            get => _isRedTicket;
-            set
-            {
-                if (_isRedTicket != value)
-                {
-                    _isRedTicket = value;
-                    OnPropertyChanged(nameof(IsRedTicket));
-                    OnPropertyChanged(nameof(TicketBackgroundSource));
-                    OnPropertyChanged(nameof(ToggleTicketColorButtonText));
-                    
-                    // 更新所有与布局相关的属性
-                    OnPropertyChanged(nameof(TicketNumberMargin));
-                    OnPropertyChanged(nameof(CheckInLabelMargin));
-                    OnPropertyChanged(nameof(DepartStationMargin));
-                    OnPropertyChanged(nameof(ArriveStationMargin));
-                    OnPropertyChanged(nameof(DepartStationPinyinMargin));
-                    OnPropertyChanged(nameof(ArriveStationPinyinMargin));
-                    OnPropertyChanged(nameof(DepartStationPinyinPosition));
-                    OnPropertyChanged(nameof(ArriveStationPinyinPosition));
-                    OnPropertyChanged(nameof(DepartStationWordPositionParams));
-                    OnPropertyChanged(nameof(ArriveStationWordPositionParams));
-                    OnPropertyChanged(nameof(DateDisplayMargin));
-                    OnPropertyChanged(nameof(DepartTimeMargin));
-                    OnPropertyChanged(nameof(DepartTimeKaiMargin));
-                    OnPropertyChanged(nameof(CoachNumberMargin));
-                    OnPropertyChanged(nameof(CoachCarMargin));
-                    OnPropertyChanged(nameof(CoachAddedMargin));
-                    OnPropertyChanged(nameof(SeatNumberMargin));
-                    OnPropertyChanged(nameof(NoSeatMargin));
-                    OnPropertyChanged(nameof(SeatNumberHaoMargin));
-                    OnPropertyChanged(nameof(MoneyYuanMargin));
-                    OnPropertyChanged(nameof(MoneyValueMargin));
-                    OnPropertyChanged(nameof(MoneyUnitPositionParams));
-                    OnPropertyChanged(nameof(SeatTypeMargin));
-                    OnPropertyChanged(nameof(AdditionalInfoMargin));
-                    OnPropertyChanged(nameof(TicketPurposeMargin));
-                    OnPropertyChanged(nameof(TicketModificationTypeMargin));
-                    OnPropertyChanged(nameof(IdentityInfoMargin));
-                    OnPropertyChanged(nameof(EncodingAreaMargin));
-                    OnPropertyChanged(nameof(HintBorderMargin));
-                    OnPropertyChanged(nameof(QRCodeMargin));
-                    OnPropertyChanged(nameof(TrainNumberMargin));
-                    OnPropertyChanged(nameof(TrainNumberCenterPosition));
-                }
-            }
-        }
-        
-        // 车票背景图片源
-        public string TicketBackgroundSource
-        {
-            get => _isRedTicket 
-                ? "pack://application:,,,/Assets/pic/redTicket.png" 
-                : "pack://application:,,,/Assets/pic/blueTicket.png";
-        }
-        
-        // 切换车票颜色按钮文本
-        public string ToggleTicketColorButtonText
-        {
-            get => _isRedTicket ? "蓝色车票" : "红色车票";
-        }
-
-        // 车票号码位置
-        public Thickness TicketNumberMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(65, 25, 0, 0)   // 红色车票
-                : new Thickness(55, 20, 0, 0);  // 蓝色车票
-        }
-        
-        // 检票口位置
-        public Thickness CheckInLabelMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(520, 28, 0, 0)  // 红色车票
-                : new Thickness(510, 20, 0, 0); // 蓝色车票
-        }
-        
-        // 出发站站名位置
-        public Thickness DepartStationMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(70, 65, 0, 0)   // 红色车票
-                : new Thickness(60, 60, 0, 0);  // 蓝色车票
-        }
-        
-        // 到达站站名位置
-        public Thickness ArriveStationMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(550, 65, 0, 0)  // 红色车票
-                : new Thickness(540, 60, 0, 0); // 蓝色车票
-        }
-        
-        // 出发站拼音边距
-        public Thickness DepartStationPinyinMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(-10, 110, 0, 0) // 红色车票
-                : new Thickness(-10, 105, 0, 0); // 蓝色车票
-        }
-        
-        // 到达站拼音边距
-        public Thickness ArriveStationPinyinMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(0, 110, 0, 0)  // 红色车票
-                : new Thickness(0, 105, 0, 0); // 蓝色车票
-        }
-        
-        // 出发站"站"字位置参数 - 用于转换器
-        public string DepartStationWordPositionParams
-        {
-            get => IsRedTicket 
-                ? "80,63,513,362"   // 红色车票 - 基准位置
-                : "70,60,513,362";  // 蓝色车票 - 基准位置
-        }
-        
-        // 到达站"站"字位置参数 - 用于转换器
-        public string ArriveStationWordPositionParams
-        {
-            get => IsRedTicket 
-                ? "550,63,25,351"   // 红色车票 - 基准位置
-                : "540,60,25,351";  // 蓝色车票 - 基准位置
-        }
-        
-        // 日期显示位置
-        public Thickness DateDisplayMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(70, 150, 0, 0)  // 红色车票
-                : new Thickness(60, 145, 0, 0); // 蓝色车票
-        }
-        
-        // 出发时间位置
-        public Thickness DepartTimeMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(290, 150, 0, 0) // 红色车票
-                : new Thickness(280, 145, 0, 0); // 蓝色车票
-        }
-        
-        // "开"字位置
-        public Thickness DepartTimeKaiMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(368, 160, 0, 0) // 红色车票
-                : new Thickness(358, 155, 0, 0); // 蓝色车票
-        }
-        
-        // 车厢号位置
-        public Thickness CoachNumberMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(544, 150, 0, 0) // 红色车票
-                : new Thickness(534, 145, 0, 0); // 蓝色车票
-        }
-        
-        // "车"字位置
-        public Thickness CoachCarMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(581, 160, 0, 0) // 红色车票
-                : new Thickness(571, 155, 0, 0); // 蓝色车票
-        }
-        
-        // "加"字位置
-        public Thickness CoachAddedMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(520, 160, 0, 0) // 红色车票
-                : new Thickness(510, 155, 0, 0); // 蓝色车票
-        }
-        
-        // 座位号位置
-        public Thickness SeatNumberMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(607, 150, 0, 0) // 红色车票
-                : new Thickness(597, 145, 0, 0); // 蓝色车票
-        }
-        
-        // "无座"位置
-        public Thickness NoSeatMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(610, 155, 0, 0) // 红色车票
-                : new Thickness(600, 150, 0, 0); // 蓝色车票
-        }
-        
-        // "号"字位置
-        public Thickness SeatNumberHaoMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(664, 160, 0, 0) // 红色车票
-                : new Thickness(654, 155, 0, 0); // 蓝色车票
-        }
-        
-        // "¥"符号位置
-        public Thickness MoneyYuanMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(65, 190, 0, 0)  // 红色车票
-                : new Thickness(55, 185, 0, 0); // 蓝色车票
-        }
-        
-        // 金额数值位置
-        public Thickness MoneyValueMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(84, 190, 0, 0)  // 红色车票
-                : new Thickness(74, 185, 0, 0); // 蓝色车票
-        }
-        
-        // 金额"元"字位置参数 - 用于转换器
-        public string MoneyUnitPositionParams
-        {
-            get => IsRedTicket 
-                ? "160,190,0,0"       // 红色车票
-                : "150,185,0,0";      // 蓝色车票
-        }
-        
-        // 座位类型位置 - 无座时用固定值
-        public Thickness SeatTypeMargin
-        {
-            get
-            {
-                if (HasNoSeat)
-                {
-                    return IsRedTicket 
-                        ? new Thickness(540, 195, 0, 0) // 红色车票无座
-                        : new Thickness(530, 190, 0, 0); // 蓝色车票无座
-                }
-                else
-                {
-                    return IsRedTicket 
-                        ? new Thickness(610, 200, 0, 0) // 红色车票有座
-                        : new Thickness(600, 195, 0, 0); // 蓝色车票有座
-                }
-            }
-        }
-        
-        // 附加信息位置
-        public Thickness AdditionalInfoMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(65, 265, 0, 0)  // 红色车票
-                : new Thickness(55, 260, 0, 0); // 蓝色车票
-        }
-        
-        // 车票用途位置 - 根据改签类型调整
-        public Thickness TicketPurposeMargin
-        {
-            get
-            {
-                // 如果车票改签类型有值，车票用途需要向右移动
-                bool hasModificationType = !string.IsNullOrEmpty(_selectedTicket?.TicketModificationType);
-                
-                return IsRedTicket
-                    ? (hasModificationType ? new Thickness(190, 325, 0, 0) : new Thickness(64, 325, 0, 0)) // 红色车票
-                    : (hasModificationType ? new Thickness(180, 320, 0, 0) : new Thickness(54, 320, 0, 0)); // 蓝色车票
-            }
-        }
-        
-        // 车票改签类型位置
-        public Thickness TicketModificationTypeMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(64, 325, 0, 0)  // 红色车票
-                : new Thickness(54, 320, 0, 0); // 蓝色车票
-        }
-        
-        // 身份信息位置
-        public Thickness IdentityInfoMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(65, 359, 0, 0)  // 红色车票
-                : new Thickness(60, 354, 0, 0); // 蓝色车票
-        }
-        
-        // 编码区位置
-        public Thickness EncodingAreaMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(49, 472, 0, 0)  // 红色车票
-                : new Thickness(44, 467, 0, 0); // 蓝色车票
-        }
-        
-        // 提示信息框位置
-        public Thickness HintBorderMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(-170, 395, 0, 0) // 红色车票
-                : new Thickness(-170, 390, 0, 0); // 蓝色车票
-        }
-        
-        // 二维码位置
-        public Thickness QRCodeMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(0, 0, 60, 85)   // 红色车票
-                : new Thickness(0, 0, 50, 80);  // 蓝色车票
-        }
-        
-        // 车次号位置
-        public Thickness TrainNumberMargin
-        {
-            get => IsRedTicket 
-                ? new Thickness(366, 65, 0, 0)  // 红色车票
-                : new Thickness(356, 60, 0, 0); // 蓝色车票
-        }
-
         // 出发站拼音的水平位置
         public double DepartStationPinyinPosition
         {
             get
             {
                 if (string.IsNullOrEmpty(_selectedTicket?.DepartStationPinyin))
-                    return IsRedTicket ? 93 : 83;
+                    return 83;
 
                 // 根据出发站名称的长度计算拼音的居中位置
                 var name = DepartStationName;
-                if (string.IsNullOrEmpty(name)) 
-                    return IsRedTicket ? 93 : 83;
+                if (string.IsNullOrEmpty(name)) return 83;
 
-                if (IsRedTicket)
+                switch (name.Length)
                 {
-                    // 红色车票的位置计算
-                    switch (name.Length)
-                    {
-                        case 1: return 76;   // 单字站名，使拼音居中
-                        case 2: return 93;   // 双字站名
-                        case 3: return 93;   // 三字站名
-                        case 4: return 93;   // 四字站名
-                        case 5: return 93;   // 五字站名
-                        default: return 93;  // 其他情况
-                    }
-                }
-                else
-                {
-                    // 蓝色车票的位置计算
-                    switch (name.Length)
-                    {
-                        case 1: return 66;   // 单字站名，使拼音居中
-                        case 2: return 83;   // 双字站名
-                        case 3: return 83;   // 三字站名
-                        case 4: return 83;   // 四字站名
-                        case 5: return 83;   // 五字站名
-                        default: return 83;  // 其他情况
-                    }
+                    case 1: return 66;   // 单字站名，使拼音居中
+                    case 2: return 83;   // 双字站名
+                    case 3: return 83;   // 三字站名
+                    case 4: return 83;   // 四字站名
+                    case 5: return 83;   // 五字站名
+                    default: return 83;  // 其他情况
                 }
             }
         }
@@ -813,92 +481,21 @@ namespace TA_WPF.ViewModels
             get
             {
                 if (string.IsNullOrEmpty(_selectedTicket?.ArriveStationPinyin))
-                    return IsRedTicket ? 550 : 540;
+                    return 540;
 
                 // 根据到达站名称的长度计算拼音的居中位置
                 var name = ArriveStationName;
-                if (string.IsNullOrEmpty(name)) 
-                    return IsRedTicket ? 550 : 540;
+                if (string.IsNullOrEmpty(name)) return 540;
 
-                if (IsRedTicket)
+                switch (name.Length)
                 {
-                    // 红色车票的位置计算
-                    switch (name.Length)
-                    {
-                        case 1: return 566;  // 单字站名，使拼音居中
-                        case 2: return 550;  // 双字站名
-                        case 3: return 550;  // 三字站名
-                        case 4: return 550;  // 四字站名
-                        case 5: return 550;  // 五字站名
-                        default: return 550; // 其他情况
-                    }
+                    case 1: return 556;  // 单字站名，使拼音居中
+                    case 2: return 540;  // 双字站名
+                    case 3: return 540;  // 三字站名
+                    case 4: return 540;  // 四字站名
+                    case 5: return 540;  // 五字站名
+                    default: return 540; // 其他情况
                 }
-                else
-                {
-                    // 蓝色车票的位置计算
-                    switch (name.Length)
-                    {
-                        case 1: return 556;  // 单字站名，使拼音居中
-                        case 2: return 540;  // 双字站名
-                        case 3: return 540;  // 三字站名
-                        case 4: return 540;  // 四字站名
-                        case 5: return 540;  // 五字站名
-                        default: return 540; // 其他情况
-                    }
-                }
-            }
-        }
-
-        // 计算车次号居中位置，用于箭头定位
-        public double TrainNumberCenterPosition
-        {
-            get
-            {
-                // 获取出发站"站"字位置
-                double departStationEndPosition = 0;
-                
-                // 根据出发站名长度计算终点位置
-                switch (DepartStationName?.Length ?? 0)
-                {
-                    case 1:
-                        departStationEndPosition = IsRedTicket ? 97 : 87;
-                        break;
-                    case 2:
-                        departStationEndPosition = IsRedTicket ? 185 : 175;
-                        break;
-                    case 3:
-                        departStationEndPosition = IsRedTicket ? 220 : 210;
-                        break;
-                    case 4:
-                        departStationEndPosition = IsRedTicket ? 255 : 245;
-                        break;
-                    case 5:
-                        departStationEndPosition = IsRedTicket ? 270 : 260;
-                        break;
-                    default:
-                        departStationEndPosition = IsRedTicket 
-                            ? 50 + (35 * (DepartStationName?.Length ?? 0))
-                            : 40 + (35 * (DepartStationName?.Length ?? 0));
-                        break;
-                }
-
-                // 到达站位置固定但根据票颜色调整
-                double arriveStationStartPosition = IsRedTicket ? 540 : 530;
-
-                // 计算中心点位置
-                return (departStationEndPosition + arriveStationStartPosition) / 2;
-            }
-        }
-
-        // 获取提示信息并以"|"为分隔符分割
-        public IEnumerable<string> HintLines
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_selectedTicket?.Hint))
-                    return new List<string>();
-
-                return _selectedTicket.Hint.Split('|');
             }
         }
 
@@ -923,6 +520,85 @@ namespace TA_WPF.ViewModels
                     return 640;  // 有座时原位置显示
                 }
             }
+        }
+
+        // 计算车次号居中位置，用于箭头定位
+        public double TrainNumberCenterPosition
+        {
+            get
+            {
+                // 获取出发站"站"字位置
+                double departStationEndPosition = 0;
+                switch (DepartStationName?.Length ?? 0)
+                {
+                    case 1:
+                        departStationEndPosition = 87;
+                        break;
+                    case 2:
+                        departStationEndPosition = 175;
+                        break;
+                    case 3:
+                        departStationEndPosition = 210;
+                        break;
+                    case 4:
+                        departStationEndPosition = 245;
+                        break;
+                    case 5:
+                        departStationEndPosition = 260;
+                        break;
+                    default:
+                        departStationEndPosition = 40 + (35 * (DepartStationName?.Length ?? 0));
+                        break;
+                }
+
+                // 到达站位置固定
+                double arriveStationStartPosition = 530;
+
+                // 计算中心点位置
+                return (departStationEndPosition + arriveStationStartPosition) / 2;
+            }
+        }
+
+        // 获取提示信息并以"|"为分隔符分割
+        public IEnumerable<string> HintLines
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_selectedTicket?.Hint))
+                    return new List<string>();
+
+                return _selectedTicket.Hint.Split('|');
+            }
+        }
+
+        // 车票颜色状态
+        public bool IsRedTicket
+        {
+            get => _isRedTicket;
+            set
+            {
+                if (_isRedTicket != value)
+                {
+                    _isRedTicket = value;
+                    OnPropertyChanged(nameof(IsRedTicket));
+                    OnPropertyChanged(nameof(TicketBackgroundSource));
+                    OnPropertyChanged(nameof(ToggleTicketColorButtonText));
+                }
+            }
+        }
+        
+        // 车票背景图片源
+        public string TicketBackgroundSource
+        {
+            get => _isRedTicket 
+                ? "pack://application:,,,/Assets/pic/redTicket.png" 
+                : "pack://application:,,,/Assets/pic/blueTicket.png";
+        }
+        
+        // 切换车票颜色按钮文本
+        public string ToggleTicketColorButtonText
+        {
+            get => _isRedTicket ? "蓝色车票" : "红色车票";
         }
 
         public ICommand CloseCommand { get; }

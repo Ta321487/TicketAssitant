@@ -1647,10 +1647,34 @@ namespace TA_WPF.Views
         // 创建数据库按钮点击事件
         private async void CreateDatabaseButton_Click(object sender, RoutedEventArgs e)
         {
+            // 获取输入值并验证
+            string serverAddress = ServerAddressTextBox.Text.Trim();
+            string username = UsernameTextBox.Text.Trim();
+            string password = PasswordBox.Password;
+            string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306";
+
+            // 验证服务器地址
+            if (string.IsNullOrEmpty(serverAddress))
+            {
+                ShowError("请输入服务器地址");
+                return;
+            }
+
+            // 验证用户名和密码
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                ShowError("请输入用户名和密码");
+                return;
+            }
+            
             string newDatabaseName = NewDatabaseNameTextBox.Text.Trim();
+            
+            // 如果未输入数据库名称，提示用户输入
             if (string.IsNullOrEmpty(newDatabaseName))
             {
                 ShowError("请输入新数据库名称");
+                // 聚焦到数据库名称输入框
+                NewDatabaseNameTextBox.Focus();
                 return;
             }
 
@@ -1659,28 +1683,6 @@ namespace TA_WPF.Views
 
             try
             {
-                // 构建不包含数据库名称的连接字符串
-                string serverAddress = ServerAddressTextBox.Text.Trim();
-                string username = UsernameTextBox.Text.Trim();
-                string password = PasswordBox.Password;
-                string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306";
-
-                // 验证服务器地址
-                if (string.IsNullOrEmpty(serverAddress))
-                {
-                    ShowError("请输入服务器地址");
-                    CreateDatabaseButton.IsEnabled = true;
-                    return;
-                }
-
-                // 验证用户名和密码
-                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-                {
-                    ShowError("请输入用户名和密码");
-                    CreateDatabaseButton.IsEnabled = true;
-                    return;
-                }
-
                 // 构建连接字符串（不包含数据库名称）
                 string connectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
 
@@ -1724,24 +1726,36 @@ namespace TA_WPF.Views
                     throw createException;
                 }
 
-                // 更新数据库名称下拉框
+                // 更新数据库名称下拉框，选择刚刚创建的数据库
                 DatabaseNameComboBox.Text = newDatabaseName;
                 SaveDatabaseNameToHistory(newDatabaseName);
+                
+                // 确保下拉框正确显示新创建的数据库名称
+                if (!DatabaseNameComboBox.Items.Contains(newDatabaseName))
+                {
+                    DatabaseNameComboBox.Items.Add(newDatabaseName);
+                }
+                DatabaseNameComboBox.SelectedItem = newDatabaseName;
 
                 // 显示成功消息
                 LoginSnackbar.MessageQueue.Enqueue($"数据库 '{newDatabaseName}' 创建成功");
 
-                // 清空新数据库名称文本框
+                // 清空新数据库名称文本框，以便下次使用
                 NewDatabaseNameTextBox.Text = string.Empty;
+                
+                // 日志记录
+                LogHelper.LogSystem("数据库", $"成功创建数据库: {newDatabaseName}");
             }
             catch (MySqlException ex)
             {
                 // 特殊处理MySQL异常
                 ShowError($"创建数据库失败: {ex.Message}");
+                LogHelper.LogError($"创建数据库失败: {ex.Message}");
             }
             catch (Exception ex)
             {
                 ShowError(ex.Message);
+                LogHelper.LogError($"创建数据库失败: {ex.Message}");
             }
             finally
             {
@@ -1753,32 +1767,39 @@ namespace TA_WPF.Views
         // 创建必要的表结构
         private void CreateRequiredTables(MySqlConnection connection)
         {
-            // 创建station_info表
-            using (MySqlCommand cmd = new MySqlCommand(@"
-                DROP TABLE IF EXISTS `station_info`;
-                CREATE TABLE `station_info`  (
-                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
-                `station_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站名称',
-                `province` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在省',
-                `city` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在市',
-                `district` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在区',
-                `longitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '经度',
-                `latitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '纬度',
-                `station_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站代码',
-                `station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站拼音',
-                PRIMARY KEY (`id`) USING BTREE,
-                INDEX `station_name`(`station_name` ASC) USING BTREE,
-                INDEX `fk_arrive_code`(`station_code` ASC) USING BTREE,
-                INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
-                ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-                SET FOREIGN_KEY_CHECKS = 1;
-                ALTER TABLE `station_info` AUTO_INCREMENT = 1;", connection))
+            try
             {
-                cmd.ExecuteNonQuery();
-            }
+                // 禁用外键约束检查
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    disableChecksCmd.ExecuteNonQuery();
+                }
 
-            // 创建train_ride_info表
-            using (MySqlCommand cmd = new MySqlCommand(@"
+                // 创建station_info表
+                using (MySqlCommand cmd = new MySqlCommand(@"
+                    DROP TABLE IF EXISTS `station_info`;
+                    CREATE TABLE `station_info`  (
+                    `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                    `station_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站名称',
+                    `province` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在省',
+                    `city` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在市',
+                    `district` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在区',
+                    `longitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '经度',
+                    `latitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '纬度',
+                    `station_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站代码',
+                    `station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站拼音',
+                    PRIMARY KEY (`id`) USING BTREE,
+                    INDEX `station_name`(`station_name` ASC) USING BTREE,
+                    INDEX `fk_arrive_code`(`station_code` ASC) USING BTREE,
+                    INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+                    ALTER TABLE `station_info` AUTO_INCREMENT = 1;", connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                // 创建train_ride_info表
+                using (MySqlCommand cmd = new MySqlCommand(@"
                     DROP TABLE IF EXISTS `train_ride_info`;
                     CREATE TABLE `train_ride_info`  (
                     `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
@@ -1813,10 +1834,22 @@ namespace TA_WPF.Views
                     CONSTRAINT `fc_sp_depart` FOREIGN KEY (`depart_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
                     CONSTRAINT `fk_sc_depart` FOREIGN KEY (`depart_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE
                     ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-                    SET FOREIGN_KEY_CHECKS = 1;
                     ALTER TABLE `train_ride_info` AUTO_INCREMENT = 1;", connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                // 重新启用外键约束检查
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    enableChecksCmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
             {
-                cmd.ExecuteNonQuery();
+                System.Diagnostics.Debug.WriteLine($"创建表结构时出错: {ex.Message}");
+                LogHelper.LogError($"创建表结构时出错: {ex.Message}");
+                throw new Exception($"创建表结构时出错: {ex.Message}", ex);
             }
         }
 
