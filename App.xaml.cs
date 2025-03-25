@@ -46,7 +46,7 @@ namespace TA_WPF
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"COM初始化失败: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"COM初始化失败: {ex.Message}");
                     LogHelper.LogError($"COM初始化失败: {ex.Message}");
                     // 继续执行，不要因COM初始化失败而中断应用程序启动
                 }
@@ -67,7 +67,7 @@ namespace TA_WPF
                     // 从当前运行的可执行文件配置中获取主题设置
                     bool isDarkMode = themeService.LoadThemeFromConfig();
                     
-                    Console.WriteLine($"应用程序启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                    System.Diagnostics.Debug.WriteLine($"应用程序启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
                     LogHelper.LogSystem("应用程序", $"启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
                     
                     // 确保资源字典中的主题标志被正确设置
@@ -88,7 +88,7 @@ namespace TA_WPF
                                 MaterialDesignThemes.Wpf.BaseTheme.Dark : 
                                 MaterialDesignThemes.Wpf.BaseTheme.Light;
                             
-                            Console.WriteLine($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
+                            System.Diagnostics.Debug.WriteLine($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
                             LogHelper.LogSystem("应用程序", $"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
                         }
                     }
@@ -98,12 +98,12 @@ namespace TA_WPF
                     
                     // 验证主题是否已正确应用
                     bool verifyIsDarkMode = themeService.IsDarkThemeActive();
-                    Console.WriteLine($"应用程序启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
+                    System.Diagnostics.Debug.WriteLine($"应用程序启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
                     LogHelper.LogSystem("应用程序", $"启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
                     
                     if (isDarkMode != verifyIsDarkMode)
                     {
-                        Console.WriteLine($"警告: 主题设置验证失败，重新应用主题");
+                        System.Diagnostics.Debug.WriteLine($"警告: 主题设置验证失败，重新应用主题");
                         LogHelper.LogSystemWarning("应用程序", "主题设置验证失败，重新应用主题");
                         themeService.ApplyTheme(isDarkMode);
                     }
@@ -112,7 +112,7 @@ namespace TA_WPF
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"初始化主题服务时出错: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"初始化主题服务时出错: {ex.Message}");
                     LogHelper.LogSystemError("应用程序", "初始化主题服务时出错", ex);
                 }
                 
@@ -210,7 +210,7 @@ namespace TA_WPF
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"加载字体大小设置时出错: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"加载字体大小设置时出错: {ex.Message}");
                     LogHelper.LogError($"加载字体大小设置时出错: {ex.Message}");
                 }
 
@@ -244,7 +244,7 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"应用程序启动时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"应用程序启动时出错: {ex.Message}");
                 LogHelper.LogError($"应用程序启动时出错: {ex.Message}");
             }
         }
@@ -257,7 +257,7 @@ namespace TA_WPF
                 var themeService = Services.ThemeService.Instance;
                 bool isDarkMode = themeService.IsDarkThemeActive();
                 
-                Console.WriteLine($"应用程序退出时检测到的主题: {(isDarkMode ? "深色" : "浅色")}");
+                System.Diagnostics.Debug.WriteLine($"应用程序退出时检测到的主题: {(isDarkMode ? "深色" : "浅色")}");
                 LogHelper.LogInfo($"应用程序退出时检测到的主题: {(isDarkMode ? "深色" : "浅色")}");
                 
                 // 保存主题设置
@@ -277,12 +277,12 @@ namespace TA_WPF
                         .Where(file => !file.EndsWith(".vshost.exe.config")) // 排除VS主机配置
                         .ToArray();
                     
-                    Console.WriteLine($"应用程序退出时 - 找到的配置文件数量: {configNames.Length}");
+                    System.Diagnostics.Debug.WriteLine($"应用程序退出时 - 找到的配置文件数量: {configNames.Length}");
                     LogHelper.LogInfo($"应用程序退出时 - 找到的配置文件数量: {configNames.Length}");
                     
                     foreach (var configFile in configNames)
                     {
-                        Console.WriteLine($"应用程序退出时 - 找到配置文件: {configFile}");
+                        System.Diagnostics.Debug.WriteLine($"应用程序退出时 - 找到配置文件: {configFile}");
                     }
                     
                     // 首先尝试dll.config和exe.config
@@ -323,7 +323,7 @@ namespace TA_WPF
                         configPath = configNames[0];
                     }
                     
-                    Console.WriteLine($"应用程序退出时使用的配置文件路径: {configPath}");
+                    System.Diagnostics.Debug.WriteLine($"应用程序退出时使用的配置文件路径: {configPath}");
                     LogHelper.LogInfo($"应用程序退出时使用的配置文件路径: {configPath}");
                     
                     if (configPath != null && System.IO.File.Exists(configPath))
@@ -343,7 +343,7 @@ namespace TA_WPF
                             {
                                 // 更新已存在的IsDarkMode设置
                                 isDarkModeNode.Attributes["value"].Value = isDarkMode.ToString().ToLower();
-                                Console.WriteLine($"应用程序退出时更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
+                                System.Diagnostics.Debug.WriteLine($"应用程序退出时更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
                                 LogHelper.LogInfo($"应用程序退出时更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
                             }
                             else
@@ -359,13 +359,13 @@ namespace TA_WPF
                                 newNode.Attributes.Append(valueAttr);
                                 appSettingsNode.AppendChild(newNode);
                                 
-                                Console.WriteLine($"应用程序退出时创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
+                                System.Diagnostics.Debug.WriteLine($"应用程序退出时创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
                                 LogHelper.LogInfo($"应用程序退出时创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
                             }
                             
                             // 保存XML文档
                             xmlDoc.Save(configPath);
-                            Console.WriteLine($"应用程序退出时已保存配置文件: {configPath}");
+                            System.Diagnostics.Debug.WriteLine($"应用程序退出时已保存配置文件: {configPath}");
                             LogHelper.LogInfo($"应用程序退出时已保存配置文件: {configPath}");
                             
                             // 刷新配置
@@ -373,20 +373,20 @@ namespace TA_WPF
                         }
                         else
                         {
-                            Console.WriteLine("应用程序退出时未找到appSettings节点");
+                            System.Diagnostics.Debug.WriteLine("应用程序退出时未找到appSettings节点");
                             LogHelper.LogWarning("应用程序退出时未找到appSettings节点");
                         }
                     }
                     else
                     {
-                        Console.WriteLine($"应用程序退出时配置文件不存在或无法确定配置文件");
+                        System.Diagnostics.Debug.WriteLine($"应用程序退出时配置文件不存在或无法确定配置文件");
                         LogHelper.LogWarning($"应用程序退出时配置文件不存在或无法确定配置文件");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"应用程序退出时直接操作配置文件出错: {ex.Message}");
-                    Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                    System.Diagnostics.Debug.WriteLine($"应用程序退出时直接操作配置文件出错: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                     LogHelper.LogError($"应用程序退出时直接操作配置文件出错: {ex.Message}");
                     LogHelper.LogError($"异常堆栈: {ex.StackTrace}");
                 }
@@ -396,16 +396,16 @@ namespace TA_WPF
                 if (config.AppSettings.Settings["IsDarkMode"] != null)
                 {
                     string savedValue = config.AppSettings.Settings["IsDarkMode"].Value;
-                    Console.WriteLine($"应用程序退出时验证配置文件中的IsDarkMode值: {savedValue}");
+                    System.Diagnostics.Debug.WriteLine($"应用程序退出时验证配置文件中的IsDarkMode值: {savedValue}");
                     LogHelper.LogInfo($"应用程序退出时验证配置文件中的IsDarkMode值: {savedValue}");
                 }
                 else
                 {
-                    Console.WriteLine("应用程序退出时验证失败：配置文件中不存在IsDarkMode设置");
+                    System.Diagnostics.Debug.WriteLine("应用程序退出时验证失败：配置文件中不存在IsDarkMode设置");
                     LogHelper.LogWarning("应用程序退出时验证失败：配置文件中不存在IsDarkMode设置");
                 }
                 
-                Console.WriteLine($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                System.Diagnostics.Debug.WriteLine($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
                 LogHelper.LogInfo($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
                 
                 // 重置StationCheckService的状态
@@ -413,8 +413,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"退出时保存主题设置出错: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"退出时保存主题设置出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 LogHelper.LogError($"退出时保存主题设置出错: {ex.Message}");
                 LogHelper.LogError($"退出时保存主题设置出错: {ex.StackTrace}");
             }

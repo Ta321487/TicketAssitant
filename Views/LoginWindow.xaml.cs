@@ -69,8 +69,8 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"LoginWindow构造函数异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"LoginWindow构造函数异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show($"初始化登录窗口时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -97,15 +97,15 @@ namespace TA_WPF.Views
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"延迟执行UpdateThemeIcon异常: {ex.Message}");
-                        Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                        System.Diagnostics.Debug.WriteLine($"延迟执行UpdateThemeIcon异常: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                     }
                 }), DispatcherPriority.Loaded);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Window_Loaded异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"Window_Loaded异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -124,19 +124,19 @@ namespace TA_WPF.Views
                 if (hasServerAddress && hasDatabaseName)
                 {
                     UsernameTextBox.Focus();
-                    Console.WriteLine("焦点设置在用户名上");
+                    System.Diagnostics.Debug.WriteLine("焦点设置在用户名上");
                 }
                 else
                 {
                     // 否则，焦点放在服务器地址上
                     ServerAddressTextBox.Focus();
-                    Console.WriteLine("焦点设置在服务器地址上");
+                    System.Diagnostics.Debug.WriteLine("焦点设置在服务器地址上");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SetInitialFocus异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"SetInitialFocus异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -182,13 +182,13 @@ namespace TA_WPF.Views
                     mainCard.UpdateLayout();
                 }
 
-                Console.WriteLine($"已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
+                System.Diagnostics.Debug.WriteLine($"已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
                 LogHelper.LogSystem("登录", $"窗口已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"InitializeTheme异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"InitializeTheme异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -216,7 +216,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"加载字体大小设置时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"加载字体大小设置时出错: {ex.Message}");
             }
         }
 
@@ -251,7 +251,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"应用字体大小时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"应用字体大小时出错: {ex.Message}");
             }
         }
 
@@ -282,7 +282,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存字体大小设置时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"保存字体大小设置时出错: {ex.Message}");
             }
         }
 
@@ -316,7 +316,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"加载上次数据库名称时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"加载上次数据库名称时出错: {ex.Message}");
             }
         }
 
@@ -338,7 +338,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"加载上次服务器地址时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"加载上次服务器地址时出错: {ex.Message}");
             }
         }
 
@@ -363,7 +363,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存服务器地址时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"保存服务器地址时出错: {ex.Message}");
             }
         }
 
@@ -388,7 +388,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存数据库名称时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"保存数据库名称时出错: {ex.Message}");
             }
         }
 
@@ -399,7 +399,7 @@ namespace TA_WPF.Views
                 // 检查ThemeIcon是否已初始化
                 if (ThemeIcon == null)
                 {
-                    Console.WriteLine("UpdateThemeIcon: ThemeIcon为空");
+                    System.Diagnostics.Debug.WriteLine("UpdateThemeIcon: ThemeIcon为空");
                     return;
                 }
 
@@ -421,13 +421,13 @@ namespace TA_WPF.Views
                     MainCard.UpdateLayout();
                 }
 
-                Console.WriteLine($"当前主题: {(isDarkTheme ? "深色" : "浅色")}");
+                System.Diagnostics.Debug.WriteLine($"当前主题: {(isDarkTheme ? "深色" : "浅色")}");
             }
             catch (Exception ex)
             {
                 // 记录异常但不中断操作
-                Console.WriteLine($"UpdateThemeIcon异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"UpdateThemeIcon异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
 
                 // 尝试设置默认图标
                 try
@@ -451,7 +451,7 @@ namespace TA_WPF.Views
                 // 检查ThemeIcon是否已初始化
                 if (ThemeIcon == null)
                 {
-                    Console.WriteLine("ThemeToggleButton_Click: ThemeIcon为空");
+                    System.Diagnostics.Debug.WriteLine("ThemeToggleButton_Click: ThemeIcon为空");
                     return;
                 }
 
@@ -494,13 +494,13 @@ namespace TA_WPF.Views
                     MainCard.UpdateLayout();
                 }
 
-                Console.WriteLine($"主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
+                System.Diagnostics.Debug.WriteLine($"主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
                 LogHelper.LogSystem("登录", $"窗口主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ThemeToggleButton_Click异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"ThemeToggleButton_Click异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -573,21 +573,21 @@ namespace TA_WPF.Views
 
             try
             {
-                // 检查MySQL是否已安装
-                if (!IsMySqlInstalled())
-                {
-                    Console.WriteLine("未检测到MySQL安装，显示警告");
-                    LogHelper.LogWarning("未检测到MySQL安装，无法继续登录");
-                    await ShowMySqlNotInstalledWarning();
-                    return;
-                }
-
                 // 获取输入值
                 string serverAddress = ServerAddressTextBox.Text.Trim();
                 string databaseName = DatabaseNameComboBox.Text.Trim();
                 string username = UsernameTextBox.Text.Trim();
                 string password = PasswordBox.Password;
                 string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306";
+
+                // 检查MySQL是否已安装或可连接
+                if (!await IsMySqlInstalledOrConnectable(serverAddress, port))
+                {
+                    System.Diagnostics.Debug.WriteLine($"未检测到MySQL安装或无法连接到{serverAddress}，显示警告");
+                    LogHelper.LogWarning($"未检测到MySQL安装或无法连接到{serverAddress}，无法继续登录");
+                    await ShowMySqlNotInstalledWarning(serverAddress);
+                    return;
+                }
 
                 // 验证输入
                 if (string.IsNullOrEmpty(serverAddress))
@@ -870,7 +870,7 @@ namespace TA_WPF.Views
                                 throw new Exception($"数据库中缺少必要的表结构（{string.Join(", ", _requiredTables)}），且未找到SqlData文件夹。请确保SqlData文件夹存在于应用程序目录中。");
                             }
 
-                            Console.WriteLine($"找到SqlData文件夹: {sqlDataFolderPath}");
+                            System.Diagnostics.Debug.WriteLine($"找到SqlData文件夹: {sqlDataFolderPath}");
 
                             // 检查必要的SQL文件是否存在
                             bool allSqlFilesExist = true;
@@ -886,7 +886,7 @@ namespace TA_WPF.Views
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"找到SQL文件: {sqlFilePath}");
+                                    System.Diagnostics.Debug.WriteLine($"找到SQL文件: {sqlFilePath}");
                                 }
                             }
 
@@ -1004,8 +1004,8 @@ namespace TA_WPF.Views
                                                             catch (MySqlException ex)
                                                             {
                                                                 // 记录错误但继续执行其他语句
-                                                                Console.WriteLine($"执行SQL语句时出错: {ex.Message}");
-                                                                Console.WriteLine($"有问题的SQL语句: {statement}");
+                                                                System.Diagnostics.Debug.WriteLine($"执行SQL语句时出错: {ex.Message}");
+                                                                System.Diagnostics.Debug.WriteLine($"有问题的SQL语句: {statement}");
                                                             }
                                                         }
                                                     }
@@ -1088,7 +1088,7 @@ namespace TA_WPF.Views
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"关闭之前的主窗口时出错: {ex.Message}");
+                                System.Diagnostics.Debug.WriteLine($"关闭之前的主窗口时出错: {ex.Message}");
                                 LogHelper.LogError($"关闭之前的主窗口时出错: {ex.Message}");
                             }
                         }
@@ -1108,7 +1108,7 @@ namespace TA_WPF.Views
                         {
                             // 显式设置主题模式
                             mainViewModel.IsDarkMode = isDarkMode;
-                            Console.WriteLine($"已设置MainViewModel.IsDarkMode = {isDarkMode}");
+                            System.Diagnostics.Debug.WriteLine($"已设置MainViewModel.IsDarkMode = {isDarkMode}");
                             LogHelper.LogInfo($"已设置MainViewModel.IsDarkMode = {isDarkMode}");
                         }
 
@@ -1145,7 +1145,7 @@ namespace TA_WPF.Views
                 catch (Exception innerEx)
                 {
                     // 记录内部异常
-                    Console.WriteLine($"登录过程中发生内部异常: {innerEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"登录过程中发生内部异常: {innerEx.Message}");
                     LogHelper.LogError($"登录过程中发生内部异常: {innerEx.Message}");
 
                     // 关闭加载动画
@@ -1288,7 +1288,7 @@ namespace TA_WPF.Views
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"复制SQL命令时出错: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"复制SQL命令时出错: {ex.Message}");
                     }
                 };
 
@@ -1312,7 +1312,7 @@ namespace TA_WPF.Views
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"复制SQL命令时出错: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"复制SQL命令时出错: {ex.Message}");
                     }
                 };
 
@@ -1577,7 +1577,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
             }
         }
 
@@ -1628,7 +1628,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
             }
         }
 
@@ -1858,21 +1858,70 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 检查MySQL是否已安装
+        /// 检查MySQL是否已安装或远程服务器是否可连接
         /// </summary>
-        /// <returns>MySQL是否已安装</returns>
-        private bool IsMySqlInstalled()
+        /// <param name="serverAddress">服务器地址</param>
+        /// <param name="port">端口号</param>
+        /// <returns>MySQL是否已安装或远程服务器是否可连接</returns>
+        private async Task<bool> IsMySqlInstalledOrConnectable(string serverAddress, string port)
         {
             // 测试模式：模拟MySQL未安装的情况
             bool testMode = false;
             if (testMode)
             {
-                Console.WriteLine("测试模式：模拟MySQL未安装");
+                System.Diagnostics.Debug.WriteLine("测试模式：模拟MySQL未安装");
                 return false;
             }
 
             try
             {
+                // 检查是否是远程连接
+                bool isLocalConnection = string.IsNullOrEmpty(serverAddress) || 
+                                         serverAddress.ToLower() == "localhost" || 
+                                         serverAddress == "127.0.0.1" || 
+                                         serverAddress == "::1";
+
+                // 如果是远程连接，检查远程服务器是否可达
+                if (!isLocalConnection)
+                {
+                    System.Diagnostics.Debug.WriteLine($"检测远程MySQL连接: {serverAddress}:{port}");
+                    
+                    bool canConnect = await Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var client = new System.Net.Sockets.TcpClient())
+                            {
+                                // 尝试连接MySQL端口
+                                var connectTask = client.ConnectAsync(serverAddress, int.Parse(port));
+                                var timeoutTask = Task.Delay(2000); // 2秒超时
+
+                                var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
+                                return completedTask == connectTask && client.Connected;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"连接远程MySQL服务器失败: {ex.Message}");
+                            return false;
+                        }
+                    });
+
+                    if (canConnect)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"成功连接到远程MySQL服务器: {serverAddress}:{port}");
+                        return true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"无法连接到远程MySQL服务器: {serverAddress}:{port}");
+                        return false;
+                    }
+                }
+                
+                // 对于本地连接，检查本地MySQL安装
+                System.Diagnostics.Debug.WriteLine("检测本地MySQL安装");
+                
                 // 检查MySQL服务是否存在
                 bool serviceExists = false;
                 try
@@ -1942,20 +1991,45 @@ namespace TA_WPF.Views
                     }
                 }
 
-                // 如果任何一项检查通过，则认为MySQL已安装
-                return serviceExists || registryExists || folderExists;
+                // 如果本地任何一项检查通过，检查MySQL服务端口是否可连接
+                if (serviceExists || registryExists || folderExists)
+                {
+                    bool canConnect = await Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var client = new System.Net.Sockets.TcpClient())
+                            {
+                                // 尝试连接到MySQL默认端口
+                                var connectTask = client.ConnectAsync("127.0.0.1", int.Parse(port));
+                                var timeoutTask = Task.Delay(1000); // 1秒超时
+
+                                var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
+                                return completedTask == connectTask && client.Connected;
+                            }
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                    });
+
+                    return canConnect;
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"检查MySQL安装时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"检查MySQL安装或连接时出错: {ex.Message}");
                 return false;
             }
         }
 
         /// <summary>
-        /// 显示MySQL未安装提示
+        /// 显示MySQL未安装或无法连接提示
         /// </summary>
-        private async Task ShowMySqlNotInstalledWarning()
+        private async Task ShowMySqlNotInstalledWarning(string serverAddress = "")
         {
             try
             {
@@ -1976,72 +2050,98 @@ namespace TA_WPF.Views
                 };
                 content.Children.Add(warningIcon);
 
-                // 添加标题
+                // 判断是否为远程连接
+                bool isLocalConnection = string.IsNullOrEmpty(serverAddress) || 
+                                         serverAddress.ToLower() == "localhost" || 
+                                         serverAddress == "127.0.0.1" || 
+                                         serverAddress == "::1";
+
+                // 添加标题和消息
+                string titleText, messageText;
+                
+                if (!isLocalConnection)
+                {
+                    titleText = $"无法连接到MySQL服务器 {serverAddress}";
+                    messageText = $"无法连接到指定的MySQL服务器。请确认以下几点：\n\n" +
+                                  $"1. 服务器地址 {serverAddress} 是否正确\n" +
+                                  $"2. MySQL服务是否在该服务器上运行\n" +
+                                  $"3. 服务器防火墙是否允许MySQL端口连接\n" +
+                                  $"4. 网络连接是否正常";
+                }
+                else
+                {
+                    titleText = "未检测到MySQL数据库";
+                    messageText = "系统未检测到MySQL数据库服务器。本系统需要MySQL才能正常运行。\n\n请安装MySQL数据库服务器后再使用本系统。";
+                }
+
                 var title = new TextBlock
                 {
-                    Text = "未检测到MySQL数据库",
+                    Text = titleText,
                     FontSize = 20,
                     FontWeight = FontWeights.Bold,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(0, 0, 0, 16)
+                    Margin = new Thickness(0, 0, 0, 16),
+                    TextWrapping = TextWrapping.Wrap
                 };
                 content.Children.Add(title);
 
-                // 添加消息
                 var message = new TextBlock
                 {
-                    Text = "系统未检测到MySQL数据库服务器。本系统需要MySQL才能正常运行。\n\n请安装MySQL数据库服务器后再使用本系统。",
+                    Text = messageText,
                     TextWrapping = TextWrapping.Wrap,
                     Margin = new Thickness(0, 0, 0, 16),
                     LineHeight = 24
                 };
                 content.Children.Add(message);
 
-                // 添加安装步骤
-                var stepsTitle = new TextBlock
+                // 对于本地连接，添加安装步骤
+                if (isLocalConnection)
                 {
-                    Text = "安装步骤：",
-                    FontWeight = FontWeights.Bold,
-                    Margin = new Thickness(0, 0, 0, 8)
-                };
-                content.Children.Add(stepsTitle);
+                    var stepsTitle = new TextBlock
+                    {
+                        Text = "安装步骤：",
+                        FontWeight = FontWeights.Bold,
+                        Margin = new Thickness(0, 0, 0, 8)
+                    };
+                    content.Children.Add(stepsTitle);
 
-                var steps = new TextBlock
-                {
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 0, 0, 16),
-                    LineHeight = 24,
-                    Text = "1. 从MySQL官方网站下载安装程序\n" +
-                           "2. 运行安装程序，选择「开发者默认设置」\n" +
-                           "3. 设置root用户密码（请记住此密码）\n" +
-                           "4. 完成安装并确保MySQL服务已启动\n" +
-                           "5. 重新启动本应用程序"
-                };
-                content.Children.Add(steps);
+                    var steps = new TextBlock
+                    {
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(0, 0, 0, 16),
+                        LineHeight = 24,
+                        Text = "1. 从MySQL官方网站下载安装程序\n" +
+                               "2. 运行安装程序，选择「开发者默认设置」\n" +
+                               "3. 设置root用户密码（请记住此密码）\n" +
+                               "4. 完成安装并确保MySQL服务已启动\n" +
+                               "5. 重新启动本应用程序"
+                    };
+                    content.Children.Add(steps);
 
-                // 添加下载链接
-                var downloadLink = new TextBlock
-                {
-                    Text = "MySQL官方下载地址：",
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 0, 0, 8)
-                };
-                content.Children.Add(downloadLink);
+                    // 添加下载链接
+                    var downloadLink = new TextBlock
+                    {
+                        Text = "MySQL官方下载地址：",
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(0, 0, 0, 8)
+                    };
+                    content.Children.Add(downloadLink);
 
-                var hyperlink = new TextBlock
-                {
-                    Text = "https://dev.mysql.com/downloads/installer/",
-                    Foreground = new SolidColorBrush(Color.FromRgb(124, 77, 255)),
-                    TextDecorations = TextDecorations.Underline,
-                    Cursor = Cursors.Hand,
-                    Margin = new Thickness(0, 0, 0, 24)
-                };
-                hyperlink.MouseDown += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "https://dev.mysql.com/downloads/installer/",
-                    UseShellExecute = true
-                });
-                content.Children.Add(hyperlink);
+                    var hyperlink = new TextBlock
+                    {
+                        Text = "https://dev.mysql.com/downloads/installer/",
+                        Foreground = new SolidColorBrush(Color.FromRgb(124, 77, 255)),
+                        TextDecorations = TextDecorations.Underline,
+                        Cursor = Cursors.Hand,
+                        Margin = new Thickness(0, 0, 0, 24)
+                    };
+                    hyperlink.MouseDown += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "https://dev.mysql.com/downloads/installer/",
+                        UseShellExecute = true
+                    });
+                    content.Children.Add(hyperlink);
+                }
 
                 // 添加按钮
                 var buttonPanel = new StackPanel
@@ -2068,8 +2168,8 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"显示MySQL未安装提示时出错: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"显示MySQL未安装提示时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show("未检测到MySQL数据库服务器。请安装MySQL后再使用本系统。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }

@@ -25,6 +25,10 @@ namespace TA_WPF.Converters
             double right = double.Parse(parts[2]);
             double bottom = double.Parse(parts[3]);
 
+            // 保存原始的基础位置
+            double baseLeft = left;
+            double baseTop = top;
+
             // 解析金额数值，得到整数和小数部分，以更精确计算宽度
             // 首先分离掉逗号和空格等格式化字符
             string cleanValue = moneyValue.Replace(",", "").Replace(" ", "");
@@ -43,15 +47,16 @@ namespace TA_WPF.Converters
             double totalWidth = integerWidth + decimalWidth;
 
             // 设置元字的位置，使其紧跟在数字后面
-            left = 120 + totalWidth;
+            // 这里不再使用硬编码的120，而是使用传入的基础位置作为起点
+            left = baseLeft + totalWidth - 45; // 微调以匹配实际显示效果
 
-            // 微调垂直位置，使其更加贴合底线
-            top = 195;
+            // 垂直位置使用传入的top值作为基础
+            top = baseTop;
 
             // 特殊情况处理
             if (cleanValue == "0.0")
             {
-                left = 120; // 对于0.0这种特殊情况单独处理
+                left = baseLeft - 45; // 对于0.0这种特殊情况单独处理
             }
             else if (integerLength == 1 && decimalLength <= 1)
             {

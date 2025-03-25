@@ -587,7 +587,7 @@ namespace TA_WPF.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"解析时间出错: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"解析时间出错: {ex.Message}");
                 }
             }
 
@@ -850,7 +850,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"删除车票时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"删除车票时出错: {ex.Message}");
                 return false;
             }
         }
@@ -891,7 +891,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"获取出发站列表时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"获取出发站列表时出错: {ex.Message}");
                 return new List<string>();
             }
         }

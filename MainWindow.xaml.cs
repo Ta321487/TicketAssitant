@@ -66,8 +66,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"MainWindow构造函数异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"MainWindow构造函数异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show($"初始化窗口时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -92,7 +92,7 @@ namespace TA_WPF
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"设置窗口图标时出错: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"设置窗口图标时出错: {ex.Message}");
                 }
                 
                 // 获取控件引用
@@ -102,7 +102,7 @@ namespace TA_WPF
                 // 检查控件引用是否有效
                 if (_menuToggleButton == null)
                 {
-                    Console.WriteLine("警告: MenuToggleButton引用为空");
+                    System.Diagnostics.Debug.WriteLine("警告: MenuToggleButton引用为空");
                 }
                 else
                 {
@@ -113,7 +113,7 @@ namespace TA_WPF
                 
                 if (_settingsButton == null)
                 {
-                    Console.WriteLine("警告: SettingsButton引用为空");
+                    System.Diagnostics.Debug.WriteLine("警告: SettingsButton引用为空");
                 }
 
                 // 确保窗口加载时应用正确的主题
@@ -125,13 +125,13 @@ namespace TA_WPF
                     // 获取当前主题状态
                     bool isDarkMode = themeService.IsDarkThemeActive();
                     
-                    Console.WriteLine($"MainWindow_Loaded: 当前主题状态 isDarkMode = {isDarkMode}");
-                    Console.WriteLine($"MainWindow_Loaded: ViewModel.IsDarkMode = {viewModel.IsDarkMode}");
+                    System.Diagnostics.Debug.WriteLine($"MainWindow_Loaded: 当前主题状态 isDarkMode = {isDarkMode}");
+                    System.Diagnostics.Debug.WriteLine($"MainWindow_Loaded: ViewModel.IsDarkMode = {viewModel.IsDarkMode}");
                     
                     // 确保视图模型的IsDarkMode属性与当前主题同步
                     if (viewModel.IsDarkMode != isDarkMode)
                     {
-                        Console.WriteLine($"MainWindow_Loaded: 主题状态不一致，正在同步...");
+                        System.Diagnostics.Debug.WriteLine($"MainWindow_Loaded: 主题状态不一致，正在同步...");
                         viewModel.IsDarkMode = isDarkMode;
                     }
                     
@@ -145,7 +145,7 @@ namespace TA_WPF
                     // 强制刷新窗口
                         this.UpdateLayout();
                     
-                    Console.WriteLine($"窗口加载时应用了{(isDarkMode ? "深色" : "浅色")}主题");
+                    System.Diagnostics.Debug.WriteLine($"窗口加载时应用了{(isDarkMode ? "深色" : "浅色")}主题");
                 }
 
                 // 添加键盘事件处理
@@ -153,8 +153,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"MainWindow_Loaded异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"MainWindow_Loaded异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
         
@@ -172,7 +172,7 @@ namespace TA_WPF
                     // 如果按下ESC键且当前处于全屏模式，则退出全屏模式
                     if (e.Key == Key.Escape && mainViewModel.DashboardViewModel.IsFullScreen)
                     {
-                        Console.WriteLine("检测到ESC键，退出全屏模式");
+                        System.Diagnostics.Debug.WriteLine("检测到ESC键，退出全屏模式");
                         
                         // 使用命令切换全屏模式
                         mainViewModel.DashboardViewModel.ToggleFullScreenCommand.Execute(null);
@@ -184,8 +184,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"MainWindow_KeyDown异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"MainWindow_KeyDown异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
         
@@ -211,8 +211,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SettingsButton_Click异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"SettingsButton_Click异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
         
@@ -232,8 +232,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Window_SizeChanged异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"Window_SizeChanged异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
         
@@ -256,7 +256,7 @@ namespace TA_WPF
                     mainViewModel.DashboardViewModel != null)
                 {
                     // 记录窗口状态变化
-                    Console.WriteLine($"窗口状态变化: {this.WindowState}, 窗口样式: {this.WindowStyle}, 全屏模式: {mainViewModel.DashboardViewModel.IsFullScreen}");
+                    System.Diagnostics.Debug.WriteLine($"窗口状态变化: {this.WindowState}, 窗口样式: {this.WindowStyle}, 全屏模式: {mainViewModel.DashboardViewModel.IsFullScreen}");
                     
                     // 如果不是全屏模式，保存窗口状态
                     if (!mainViewModel.DashboardViewModel.IsFullScreen)
@@ -265,7 +265,7 @@ namespace TA_WPF
                         if (this.WindowState != WindowState.Minimized)
                         {
                             mainViewModel.DashboardViewModel.PreviousWindowState = this.WindowState;
-                            Console.WriteLine($"保存窗口状态: {this.WindowState}");
+                            System.Diagnostics.Debug.WriteLine($"保存窗口状态: {this.WindowState}");
                         }
                     }
                     // 不要在这里处理全屏模式的情况，让 ToggleFullScreen 方法完全控制全屏模式
@@ -273,8 +273,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Window_StateChanged异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"Window_StateChanged异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
         
@@ -289,8 +289,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"MenuToggleButton_CheckedChanged异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"MenuToggleButton_CheckedChanged异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
         
@@ -382,8 +382,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"处理窗口关闭事件时出错: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"处理窗口关闭事件时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 
                 // 发生异常时，允许应用程序关闭
                 e.Cancel = false;
@@ -406,7 +406,7 @@ namespace TA_WPF
         {
             try
             {
-                Console.WriteLine("MainWindow.ShowLoginSuccessNotification 被调用");
+                System.Diagnostics.Debug.WriteLine("MainWindow.ShowLoginSuccessNotification 被调用");
                 
                 // 使用Dispatcher.BeginInvoke确保在主窗口完全加载后显示提示框
                 this.Dispatcher.BeginInvoke(new Action(() => {
@@ -418,7 +418,7 @@ namespace TA_WPF
                         string lastLoginTime = _loginInfoService.GetLastLoginTime();
                         string databaseName = _loginInfoService.GetDatabaseName(_connectionString);
                         
-                        Console.WriteLine($"登录信息: IP={loginIP}, 数据库={databaseName}, 上次登录={lastLoginTime}");
+                        System.Diagnostics.Debug.WriteLine($"登录信息: IP={loginIP}, 数据库={databaseName}, 上次登录={lastLoginTime}");
                         
                         // 构建提示内容
                         string message = $"登录IP：{loginIP}\n上次登录时间：{lastLoginTime}\n登录数据库：{databaseName}";
@@ -586,7 +586,7 @@ namespace TA_WPF
                             PlacementTarget = this
                         };
                         
-                        Console.WriteLine("Popup已创建并设置为打开状态");
+                        System.Diagnostics.Debug.WriteLine("Popup已创建并设置为打开状态");
                         
                         // 设置关闭按钮的点击事件
                         closeButton.Click += (s, e) => 
@@ -681,19 +681,19 @@ namespace TA_WPF
                         
                         timer.Start();
                         
-                        Console.WriteLine("登录成功提示显示完成");
+                        System.Diagnostics.Debug.WriteLine("登录成功提示显示完成");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"显示登录成功提示时出错: {ex.Message}");
-                        Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                        System.Diagnostics.Debug.WriteLine($"显示登录成功提示时出错: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                     }
                 }), DispatcherPriority.Loaded);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"准备显示登录成功提示时出错: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"准备显示登录成功提示时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
     }

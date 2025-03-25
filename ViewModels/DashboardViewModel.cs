@@ -2250,7 +2250,7 @@ namespace TA_WPF.ViewModels
                 Window mainWindow = Application.Current.MainWindow;
                 if (mainWindow == null)
                 {
-                    Console.WriteLine("无法获取主窗口引用");
+                    System.Diagnostics.Debug.WriteLine("无法获取主窗口引用");
                     return;
                 }
                 
@@ -2273,7 +2273,7 @@ namespace TA_WPF.ViewModels
                     _savedWidth = mainWindow.RestoreBounds.Width;
                     _savedHeight = mainWindow.RestoreBounds.Height;
                     
-                    Console.WriteLine($"进入全屏模式：保存之前的窗口状态 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
+                    System.Diagnostics.Debug.WriteLine($"进入全屏模式：保存之前的窗口状态 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
                     
                     // 设置为全屏模式（无标题栏，最大化）
                     mainWindow.WindowStyle = WindowStyle.None; // 无边框
@@ -2291,12 +2291,12 @@ namespace TA_WPF.ViewModels
                     mainWindow.Width = screenWidth;
                     mainWindow.Height = screenHeight;
                     
-                    Console.WriteLine($"设置窗口为完全全屏模式：宽度={screenWidth}, 高度={screenHeight}");
+                    System.Diagnostics.Debug.WriteLine($"设置窗口为完全全屏模式：宽度={screenWidth}, 高度={screenHeight}");
                 }
                 else
                 {
                     // 退出全屏模式
-                    Console.WriteLine($"退出全屏模式：恢复窗口状态为 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
+                    System.Diagnostics.Debug.WriteLine($"退出全屏模式：恢复窗口状态为 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
                     
                     // 恢复窗口样式和状态
                     mainWindow.WindowStyle = WindowStyle.SingleBorderWindow; // 显示标题栏
@@ -2308,7 +2308,7 @@ namespace TA_WPF.ViewModels
                     {
                         // 如果之前是最大化状态，直接设置为最大化，避免闪烁
                         mainWindow.WindowState = WindowState.Maximized;
-                        Console.WriteLine("直接恢复到最大化状态，避免闪烁");
+                        System.Diagnostics.Debug.WriteLine("直接恢复到最大化状态，避免闪烁");
                     }
                     else
                     {
@@ -2325,11 +2325,11 @@ namespace TA_WPF.ViewModels
                                 mainWindow.Width = _savedWidth;
                                 mainWindow.Height = _savedHeight;
                                 
-                                Console.WriteLine($"完成恢复窗口位置和大小：({mainWindow.Left}, {mainWindow.Top}), {mainWindow.Width}x{mainWindow.Height}, 状态: {mainWindow.WindowState}");
+                                System.Diagnostics.Debug.WriteLine($"完成恢复窗口位置和大小：({mainWindow.Left}, {mainWindow.Top}), {mainWindow.Width}x{mainWindow.Height}, 状态: {mainWindow.WindowState}");
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"恢复窗口位置和大小时出错: {ex.Message}");
+                                System.Diagnostics.Debug.WriteLine($"恢复窗口位置和大小时出错: {ex.Message}");
                             }
                         }), DispatcherPriority.Render);
                     }
@@ -2337,8 +2337,8 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ToggleFullScreen异常: {ex.Message}");
-                Console.WriteLine($"异常堆栈: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"ToggleFullScreen异常: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 

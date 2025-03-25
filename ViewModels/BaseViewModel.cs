@@ -23,10 +23,10 @@ namespace TA_WPF.ViewModels
         {
             // 从配置文件加载主题设置
             _isDarkMode = ThemeService.LoadThemeFromConfig();
-            
+
             // 订阅主题变更事件
             ThemeService.ThemeChanged += OnThemeChanged;
-            
+
             // 初始化时同步主题状态
             if (Application.Current != null)
             {
@@ -34,24 +34,24 @@ namespace TA_WPF.ViewModels
                 PaletteHelper paletteHelper = new PaletteHelper();
                 var theme = paletteHelper.GetTheme();
                 bool currentIsDarkMode = theme.GetBaseTheme() == BaseTheme.Dark;
-                
+
                 // 如果当前主题状态与配置文件中的不一致，以当前主题状态为准
                 if (_isDarkMode != currentIsDarkMode)
                 {
-                    System.Console.WriteLine($"BaseViewModel: 主题状态不一致，配置文件中为{(_isDarkMode ? "深色" : "浅色")}，当前主题为{(currentIsDarkMode ? "深色" : "浅色")}");
+                    System.Diagnostics.Debug.WriteLine($"BaseViewModel: 主题状态不一致，配置文件中为{(_isDarkMode ? "深色" : "浅色")}，当前主题为{(currentIsDarkMode ? "深色" : "浅色")}");
                     _isDarkMode = currentIsDarkMode;
-                    
+
                     // 保存当前主题状态到配置文件
                     ThemeService.ApplyTheme(_isDarkMode);
                 }
-                
+
                 // 确保资源字典中的主题标志与当前主题同步
                 if (Application.Current.Resources != null)
                 {
                     Application.Current.Resources["Theme.Dark"] = _isDarkMode;
                     Application.Current.Resources["Theme.Light"] = !_isDarkMode;
                 }
-                
+
                 // 订阅应用程序退出事件，以便在应用程序退出时取消订阅
                 Application.Current.Exit += (s, e) => UnsubscribeFromEvents();
             }
@@ -69,7 +69,7 @@ namespace TA_WPF.ViewModels
                 {
                     _isDarkMode = value;
                     OnPropertyChanged(nameof(IsDarkMode));
-                    
+
                     // 应用主题
                     ThemeService.ApplyTheme(value);
                 }
@@ -88,7 +88,7 @@ namespace TA_WPF.ViewModels
                 {
                     _isAllSelected = value;
                     OnPropertyChanged(nameof(IsAllSelected));
-                    
+
                     // 应用全选状态到所有项
                     ApplySelectionToAll(value);
                 }
@@ -148,7 +148,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public void UpdateThemeState()
         {
-            if (Application.Current?.Resources != null && 
+            if (Application.Current?.Resources != null &&
                 Application.Current.Resources.Contains("Theme.Dark"))
             {
                 bool isDarkMode = (bool)Application.Current.Resources["Theme.Dark"];
@@ -194,4 +194,4 @@ namespace TA_WPF.ViewModels
             UnsubscribeFromEvents();
         }
     }
-} 
+}

@@ -28,67 +28,132 @@ namespace TA_WPF.Converters
             // 获取站名字数
             int length = stationName.Length;
 
+            // 使用传入的基础位置，但根据车站名称长度进行微调
+            // 使用传入的left和top作为基础位置
+            double baseLeft = left;
+            double baseTop = top;
+            
+            // 判断是否是红色车票 - 基于传入的位置参数推断
+            bool isRedTicket = baseTop > 115; // 红色车票的top值通常大于115
+            
             // 出发站(左侧大站名)
-            if (left < 600)
+            if (baseLeft < 400)
             {
-                // 调整垂直位置使站字位于站名底部
-                top = 65;
-
                 // 根据字数精确调整水平位置，使"站"字紧贴在最后一个字后面
-                switch (length)
+                // 但保留传入的参数作为偏移量
+                if (isRedTicket)
                 {
-                    case 1:
-                        left = 115;  // 单字站名
-                        break;
-                    case 2:
-                        left = 210; // 双字站名 
-                        break;
-                    case 3:
-                        left = 235; // 三字站名
-                        break;
-                    case 4:
-                        left = 270; // 四字站名
-                        break;
-                    case 5:
-                        left = 295; // 五字站名
-                        break;
-                    default:
-                        left = 20 + (35 * length); // 其他情况
-                        break;
+                    // 红色车票 - 需要更大的偏移量
+                    switch (length)
+                    {
+                        case 1:
+                            left = baseLeft + 45;  // 单字站名
+                            break;
+                        case 2:
+                            left = baseLeft + 145; // 双字站名 
+                            break;
+                        case 3:
+                            left = baseLeft + 170; // 三字站名
+                            break;
+                        case 4:
+                            left = baseLeft + 210; // 四字站名 - 增加偏移
+                            break;
+                        case 5:
+                            left = baseLeft + 240; // 五字站名 - 增加偏移
+                            break;
+                        default:
+                            left = baseLeft + (35 * length) + 10; // 其他情况
+                            break;
+                    }
+                }
+                else
+                {
+                    // 蓝色车票 - 使用原来的偏移量但为四字和五字站名微调
+                    switch (length)
+                    {
+                        case 1:
+                            left = baseLeft + 40;  // 单字站名
+                            break;
+                        case 2:
+                            left = baseLeft + 140; // 双字站名 
+                            break;
+                        case 3:
+                            left = baseLeft + 165; // 三字站名
+                            break;
+                        case 4:
+                            left = baseLeft + 195; // 四字站名 - 微调
+                            break;
+                        case 5:
+                            left = baseLeft + 225; // 五字站名 - 微调
+                            break;
+                        default:
+                            left = baseLeft + (35 * length); // 其他情况
+                            break;
+                    }
                 }
             }
             // 到达站(右侧小站名)
             else
             {
-                // 调整垂直位置使站字位于站名底部
-                top = 65;
-
                 // 根据字数精确调整水平位置，使"站"字紧贴在最后一个字后面
-                switch (length)
+                // 但保留传入的参数作为偏移量
+                if (isRedTicket)
                 {
-                    case 1:
-                        left = 595;  // 单字站名
-                        break;
-                    case 2:
-                        left = 665; // 双字站名
-                        break;
-                    case 3:
-                        left = 705; // 三字站名
-                        break;
-                    case 4:
-                        left = 735; // 四字站名
-                        break;
-                    case 5:
-                        left = 765; // 五字站名 (需要更紧凑的间距)
-                        break;
-                    default:
-                        left = 525 + (30 * length); // 其他情况
-                        break;
+                    // 红色车票 - 需要更大的偏移量
+                    switch (length)
+                    {
+                        case 1:
+                            left = baseLeft + 50;  // 单字站名
+                            break;
+                        case 2:
+                            left = baseLeft + 120; // 双字站名
+                            break;
+                        case 3:
+                            left = baseLeft + 165; // 三字站名
+                            break;
+                        case 4:
+                            left = baseLeft + 200; // 四字站名 - 增加偏移
+                            break;
+                        case 5:
+                            left = baseLeft + 230; // 五字站名 - 增加偏移
+                            break;
+                        default:
+                            left = baseLeft + (30 * length) + 10; // 其他情况
+                            break;
+                    }
+                }
+                else
+                {
+                    // 蓝色车票 - 使用原来的偏移量但为四字和五字站名微调
+                    switch (length)
+                    {
+                        case 1:
+                            left = baseLeft + 45;  // 单字站名
+                            break;
+                        case 2:
+                            left = baseLeft + 115; // 双字站名
+                            break;
+                        case 3:
+                            left = baseLeft + 155; // 三字站名
+                            break;
+                        case 4:
+                            left = baseLeft + 190; // 四字站名 - 微调
+                            break;
+                        case 5:
+                            left = baseLeft + 220; // 五字站名 - 微调
+                            break;
+                        default:
+                            left = baseLeft + (30 * length); // 其他情况
+                            break;
+                    }
                 }
             }
 
-            // 返回的right和bottom值设置为0，这样不会影响TextBlock的显示区域
-            return new Thickness(left, top, 0, 0);
+            // 保持传入的top值，不做任何调整
+            top = baseTop;
+
+            // 返回的right和bottom值保持原样
+            return new Thickness(left, top, right, bottom);
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

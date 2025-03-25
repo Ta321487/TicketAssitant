@@ -58,13 +58,13 @@ namespace TA_WPF.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"验证字体大小设置时出错: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"验证字体大小设置时出错: {ex.Message}");
                     LogHelper.LogError($"验证字体大小设置时出错: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存字体大小设置时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"保存字体大小设置时出错: {ex.Message}");
                 LogHelper.LogError($"保存字体大小设置时出错: {ex.Message}");
             }
         }
@@ -94,7 +94,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"加载字体大小设置时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"加载字体大小设置时出错: {ex.Message}");
                 LogHelper.LogError($"加载字体大小设置时出错: {ex.Message}");
             }
             
@@ -156,7 +156,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"保存数据库历史记录时出错", ex);
             }
         }
@@ -186,7 +186,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存数据库名称时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"保存数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"保存数据库名称时出错", ex);
             }
         }
@@ -207,7 +207,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"加载数据库名称时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"加载数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"加载数据库名称时出错", ex);
             }
             
@@ -234,7 +234,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"加载数据库历史记录时出错", ex);
             }
             
@@ -270,7 +270,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"提取数据库名称时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"提取数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"提取数据库名称时出错", ex);
             }
             
@@ -325,7 +325,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"解析连接字符串时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"解析连接字符串时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"解析连接字符串时出错", ex);
             }
             

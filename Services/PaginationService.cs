@@ -322,7 +322,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"加载页面数据时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"加载页面数据时出错: {ex.Message}");
                 throw;
             }
             finally
@@ -343,7 +343,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"获取总记录数时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"获取总记录数时出错: {ex.Message}");
                 throw;
             }
         }

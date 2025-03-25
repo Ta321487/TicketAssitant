@@ -71,7 +71,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"检查表时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"检查表时出错: {ex.Message}");
                 LogHelper.LogError($"检查表时出错: {ex.Message}");
                 TA_WPF.Views.MessageDialog.Show(
                     $"检查数据库表时出错: {ex.Message}",

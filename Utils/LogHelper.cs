@@ -38,7 +38,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"初始化日志系统时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"初始化日志系统时出错: {ex.Message}");
                 _isInitialized = false;
             }
         }
@@ -170,7 +170,7 @@ namespace TA_WPF.Utils
         {
             if (!_isInitialized)
             {
-                Console.WriteLine($"[{level}] {message} (日志系统未初始化)");
+                System.Diagnostics.Debug.WriteLine($"[{level}] {message} (日志系统未初始化)");
                 return;
             }
             
@@ -227,11 +227,11 @@ namespace TA_WPF.Utils
                 }
                 
                 // 输出到控制台（调试用）
-                Console.WriteLine(logEntry);
+                System.Diagnostics.Debug.WriteLine(logEntry);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"写入日志时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"写入日志时出错: {ex.Message}");
             }
         }
 
@@ -303,7 +303,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"读取日志时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"读取日志时出错: {ex.Message}");
             }
             
             return new string[0];
@@ -345,7 +345,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"导出日志时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"导出日志时出错: {ex.Message}");
                 // 记录错误到系统日志
                 string errorEntry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [ERROR] 导出日志时出错: {ex.Message}";
                 try
@@ -400,7 +400,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"导出系统日志时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"导出系统日志时出错: {ex.Message}");
                 // 记录错误到系统日志，尝试写入
                 string errorEntry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [ERROR] 导出系统日志时出错: {ex.Message}";
                 try
@@ -461,7 +461,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"轮换系统日志时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"轮换系统日志时出错: {ex.Message}");
                 // 不要调用LogError，避免循环依赖
                 try
                 {
@@ -506,7 +506,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"清理过期归档日志时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"清理过期归档日志时出错: {ex.Message}");
             }
         }
         

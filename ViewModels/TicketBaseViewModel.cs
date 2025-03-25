@@ -555,7 +555,7 @@ namespace TA_WPF.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"加载页面数据出错: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"加载页面数据出错: {ex.Message}");
                     }
                     finally
                     {
@@ -566,7 +566,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"页面变更处理出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"页面变更处理出错: {ex.Message}");
                 // 确保加载状态被重置
                 _paginationViewModel.IsLoading = false;
             }
@@ -617,7 +617,7 @@ namespace TA_WPF.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"加载页面数据出错: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"加载页面数据出错: {ex.Message}");
                     }
                     finally
                     {
@@ -628,7 +628,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"页大小变更处理出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"页大小变更处理出错: {ex.Message}");
                 // 确保加载状态被重置
                 _paginationViewModel.IsLoading = false;
             }

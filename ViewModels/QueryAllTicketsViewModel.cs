@@ -1076,11 +1076,11 @@ namespace TA_WPF.ViewModels
                 }
                 
                 // 记录查询条件
-                Console.WriteLine("应用查询条件:");
-                Console.WriteLine($"  出发站: {_selectedDepartStation?.DepartStation}");
-                Console.WriteLine($"  车次号: {fullTrainNo}");
-                Console.WriteLine($"  出发年份: {yearValue}");
-                Console.WriteLine($"  查询条件组合方式: {(_isAndCondition ? "AND" : "OR")}");
+                System.Diagnostics.Debug.WriteLine("应用查询条件:");
+                System.Diagnostics.Debug.WriteLine($"  出发站: {_selectedDepartStation?.DepartStation}");
+                System.Diagnostics.Debug.WriteLine($"  车次号: {fullTrainNo}");
+                System.Diagnostics.Debug.WriteLine($"  出发年份: {yearValue}");
+                System.Diagnostics.Debug.WriteLine($"  查询条件组合方式: {(_isAndCondition ? "AND" : "OR")}");
                 
                 // 获取带筛选条件的总记录数
                 int totalCount = await _databaseService.GetFilteredTrainRideInfoCountAsync(

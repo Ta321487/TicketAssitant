@@ -57,7 +57,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"更新字体大小滑块时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"更新字体大小滑块时出错: {ex.Message}");
             }
         }
 

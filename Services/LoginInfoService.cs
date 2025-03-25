@@ -38,7 +38,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"保存登录时间时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"保存登录时间时出错: {ex.Message}");
                 LogHelper.LogSystemError("登录", $"保存登录时间时出错", ex);
             }
         }
@@ -59,7 +59,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"获取上次登录时间时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"获取上次登录时间时出错: {ex.Message}");
                 LogHelper.LogSystemError("登录", $"获取上次登录时间时出错", ex);
             }
             
@@ -95,7 +95,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"提取数据库名称时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"提取数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("登录", $"提取数据库名称时出错", ex);
             }
             
