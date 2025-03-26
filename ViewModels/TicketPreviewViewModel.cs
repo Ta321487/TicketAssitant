@@ -28,6 +28,12 @@ namespace TA_WPF.ViewModels
         private bool _isDarkMode;
         private double _fontSize;
         private bool _isRedTicket;
+        // 红色车票布局参数
+        private Dictionary<string, object> _redTicketLayout;
+        // 蓝色车票布局参数
+        private Dictionary<string, object> _blueTicketLayout;
+        // 当前使用的布局参数
+        private Dictionary<string, object> _currentLayout;
 
         // 设计时构造函数
         public TicketPreviewViewModel() : this(new TrainRideInfo
@@ -62,30 +68,34 @@ namespace TA_WPF.ViewModels
             CloseCommand = new RelayCommand(Close);
             ExportImageCommand = new RelayCommand(ExportImage);
             ToggleTicketColorCommand = new RelayCommand(ToggleTicketColor);
-            
+
             // 获取当前主题模式
             LoadThemeSettings();
-            
+
             // 获取当前字体大小设置
             LoadFontSizeSettings();
-            
+
             // 订阅主题服务的主题变更事件
-            Services.ThemeService.Instance.ThemeChanged += (sender, isDark) => 
+            Services.ThemeService.Instance.ThemeChanged += (sender, isDark) =>
             {
                 IsDarkMode = isDark;
             };
-            
+
+            // 初始化蓝色和红色车票布局
+            InitializeTicketLayouts();
+
             // 默认使用蓝色车票
             _isRedTicket = false;
+            _currentLayout = _blueTicketLayout;
         }
-        
+
         // 加载主题设置
         private void LoadThemeSettings()
         {
             try
             {
                 // 从应用程序资源中获取当前主题设置
-                if (Application.Current?.Resources != null && 
+                if (Application.Current?.Resources != null &&
                     Application.Current.Resources.Contains("Theme.Dark"))
                 {
                     _isDarkMode = (bool)Application.Current.Resources["Theme.Dark"];
@@ -102,14 +112,14 @@ namespace TA_WPF.ViewModels
                 _isDarkMode = false; // 默认浅色主题
             }
         }
-        
+
         // 加载字体大小设置
         private void LoadFontSizeSettings()
         {
             try
             {
                 // 从应用程序资源中获取当前字体大小设置
-                if (Application.Current?.Resources != null && 
+                if (Application.Current?.Resources != null &&
                     Application.Current.Resources.Contains("MaterialDesignFontSize"))
                 {
                     _fontSize = (double)Application.Current.Resources["MaterialDesignFontSize"];
@@ -141,7 +151,7 @@ namespace TA_WPF.ViewModels
                 _fontSize = 13; // 默认字体大小
             }
         }
-        
+
         // 是否为深色模式
         public bool IsDarkMode
         {
@@ -160,7 +170,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         // 当前字体大小
         public double FontSize
         {
@@ -178,59 +188,59 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         // 小字体大小（用于标签等）
         public double SmallFontSize => _fontSize - 1;
-        
+
         // 中等字体大小（用于普通文本）
         public double MediumFontSize => _fontSize;
-        
+
         // 大字体大小（用于标题等）
         public double LargeFontSize => _fontSize + 2;
-        
+
         // 表单标题字体大小
         public double HeaderFontSize => _fontSize + 4;
-        
+
         // 表单背景色刷
         public SolidColorBrush FormBackgroundBrush
         {
             get
             {
-                return _isDarkMode 
-                    ? new SolidColorBrush(Color.FromRgb(45, 45, 45)) 
+                return _isDarkMode
+                    ? new SolidColorBrush(Color.FromRgb(45, 45, 45))
                     : new SolidColorBrush(Colors.White);
             }
         }
-        
+
         // 表单前景色刷
         public SolidColorBrush FormForegroundBrush
         {
             get
             {
-                return _isDarkMode 
-                    ? new SolidColorBrush(Colors.White) 
+                return _isDarkMode
+                    ? new SolidColorBrush(Colors.White)
                     : new SolidColorBrush(Color.FromRgb(33, 33, 33));
             }
         }
-        
+
         // 表单边框色刷
         public SolidColorBrush FormBorderBrush
         {
             get
             {
-                return _isDarkMode 
-                    ? new SolidColorBrush(Color.FromRgb(70, 70, 70)) 
+                return _isDarkMode
+                    ? new SolidColorBrush(Color.FromRgb(70, 70, 70))
                     : new SolidColorBrush(Color.FromRgb(220, 220, 220));
             }
         }
-        
+
         // 表单输入框背景色刷
         public SolidColorBrush FormInputBackgroundBrush
         {
             get
             {
-                return _isDarkMode 
-                    ? new SolidColorBrush(Color.FromRgb(60, 60, 60)) 
+                return _isDarkMode
+                    ? new SolidColorBrush(Color.FromRgb(60, 60, 60))
                     : new SolidColorBrush(Color.FromRgb(245, 245, 245));
             }
         }
@@ -580,21 +590,24 @@ namespace TA_WPF.ViewModels
                 if (_isRedTicket != value)
                 {
                     _isRedTicket = value;
+                    _currentLayout = _isRedTicket ? _redTicketLayout : _blueTicketLayout;
                     OnPropertyChanged(nameof(IsRedTicket));
                     OnPropertyChanged(nameof(TicketBackgroundSource));
                     OnPropertyChanged(nameof(ToggleTicketColorButtonText));
+                    // 更新所有布局相关属性
+                    UpdateAllLayoutProperties();
                 }
             }
         }
-        
+
         // 车票背景图片源
         public string TicketBackgroundSource
         {
-            get => _isRedTicket 
-                ? "pack://application:,,,/Assets/pic/redTicket.png" 
+            get => _isRedTicket
+                ? "pack://application:,,,/Assets/pic/redTicket.png"
                 : "pack://application:,,,/Assets/pic/blueTicket.png";
         }
-        
+
         // 切换车票颜色按钮文本
         public string ToggleTicketColorButtonText
         {
@@ -623,7 +636,7 @@ namespace TA_WPF.ViewModels
 
                 // 构建默认文件名：出发站-车次号-到达站
                 string defaultFileName = $"{_selectedTicket.DepartStation?.Replace("站", "")}-{_selectedTicket.TrainNo}-{_selectedTicket.ArriveStation?.Replace("站", "")}";
-                
+
                 // 创建保存文件对话框
                 var saveFileDialog = new SaveFileDialog
                 {
@@ -745,6 +758,304 @@ namespace TA_WPF.ViewModels
         {
             IsRedTicket = !IsRedTicket;
         }
+
+        // 初始化车票布局参数
+        private void InitializeTicketLayouts()
+        {
+            // 蓝色车票布局参数
+            _blueTicketLayout = new Dictionary<string, object>
+            {
+                // 车票号码位置 
+                { "TicketNumberMargin", new Thickness(55, 20, 0, 0) },
+                // 检票口位置
+                { "CheckInLocationMargin", new Thickness(510, 20, 0, 0) },
+                // 出发站站名位置
+                { "DepartStationMargin", new Thickness(60, 60, 0, 0) },
+                // 出发站拼音位置基础值
+                { "DepartStationPinyinBaseMargin", new Thickness(-10, 105, 0, 0) },
+                // 出发站"站"字位置参数
+                { "DepartStationWordParam", "285,63,513,362" },
+                // 车次号位置
+                { "TrainNumberMargin", new Thickness(356, 60, 0, 0) },
+                // 车次号下箭头位置
+                { "TrainArrowMargin", new Thickness(0, 100, 0, 0) },
+                // 到达站站名位置
+                { "ArriveStationMargin", new Thickness(540, 60, 0, 0) },
+                // 到达站拼音位置基础值
+                { "ArriveStationPinyinBaseMargin", new Thickness(0, 105, 0, 0) },
+                // 到达站"站"字位置参数
+                { "ArriveStationWordParam", "763,63,25,351" },
+                // 年月日显示位置
+                { "DateDisplayMargin", new Thickness(60, 145, 0, 0) },
+                // 出发时间位置
+                { "DepartTimeMargin", new Thickness(280, 145, 0, 0) },
+                // "开"字位置
+                { "DepartTimeWordMargin", new Thickness(358, 155, 0, 0) },
+                // 车厢号位置
+                { "CoachNumberMargin", new Thickness(534, 145, 0, 0) },
+                // "车"字位置
+                { "CoachWordMargin", new Thickness(571, 155, 0, 0) },
+                // "加"字位置
+                { "AddedCoachWordMargin", new Thickness(510, 155, 0, 0) },
+                // 座位号位置
+                { "SeatNumberMargin", new Thickness(597, 145, 0, 0) },
+                // "无座"显示位置
+                { "NoSeatDisplayMargin", new Thickness(600, 150, 0, 0) },
+                // "号"字位置
+                { "SeatNumberWordMargin", new Thickness(654, 155, 0, 0) },
+                // "¥"符号位置
+                { "MoneySymbolMargin", new Thickness(55, 185, 0, 0) },
+                // 金额数值位置
+                { "MoneyValueMargin", new Thickness(74, 185, 0, 0) },
+                // "元"字位置参数
+                { "MoneyUnitParam", "185,280,0,0" },
+                // 座位类型位置 - 普通
+                { "SeatTypeMargin", new Thickness(600, 195, 0, 0) },
+                // 座位类型位置 - 无座
+                { "SeatTypeMarginNoSeat", new Thickness(530, 190, 0, 0) },
+                // 附加信息位置
+                { "AdditionalInfoMargin", new Thickness(55, 260, 0, 0) },
+                // 车票用途位置
+                { "TicketPurposeMargin", new Thickness(54, 320, 0, 0) },
+                // 车票用途位置 - 与改签类型共存
+                { "TicketPurposeWithModMargin", new Thickness(180, 320, 0, 0) },
+                // 车票改签类型位置
+                { "TicketModificationTypeMargin", new Thickness(54, 320, 0, 0) },
+                // 身份信息位置
+                { "IdentityInfoMargin", new Thickness(60, 354, 0, 0) },
+                // 编码区位置
+                { "EncodingAreaMargin", new Thickness(44, 467, 0, 0) },
+                // 提示信息框位置
+                { "HintBoxMargin", new Thickness(-170, 390, 0, 0) },
+                // 二维码位置
+                { "QRCodeMargin", new Thickness(0, 0, 50, 80) }
+            };
+
+            // 红色车票布局参数 - 部分参数与蓝色不同
+            _redTicketLayout = new Dictionary<string, object>(_blueTicketLayout); // 复制蓝色车票布局基础
+
+            // 修改红色车票特定布局参数
+            _redTicketLayout["TicketNumberMargin"] = new Thickness(55, 25, 0, 0);
+            _redTicketLayout["CheckInLocationMargin"] = new Thickness(510, 25, 0, 0);
+            _redTicketLayout["DepartStationMargin"] = new Thickness(60, 65, 0, 0);
+            _redTicketLayout["DepartStationPinyinBaseMargin"] = new Thickness(-10, 110, 0, 0);
+            _redTicketLayout["DepartStationWordParam"] = "285,68,513,362";
+            _redTicketLayout["TrainNumberMargin"] = new Thickness(356, 65, 0, 0);
+            _redTicketLayout["TrainArrowMargin"] = new Thickness(0, 105, 0, 0);
+            _redTicketLayout["ArriveStationMargin"] = new Thickness(540, 65, 0, 0);
+            _redTicketLayout["ArriveStationPinyinBaseMargin"] = new Thickness(0, 110, 0, 0);
+            _redTicketLayout["ArriveStationWordParam"] = "758,68,25,351";
+            _redTicketLayout["DateDisplayMargin"] = new Thickness(60, 150, 0, 0);
+            _redTicketLayout["DepartTimeMargin"] = new Thickness(280, 150, 0, 0);
+            _redTicketLayout["DepartTimeWordMargin"] = new Thickness(358, 160, 0, 0);
+            _redTicketLayout["CoachNumberMargin"] = new Thickness(534, 150, 0, 0);
+            _redTicketLayout["CoachWordMargin"] = new Thickness(571, 160, 0, 0);
+            _redTicketLayout["AddedCoachWordMargin"] = new Thickness(510, 160, 0, 0);
+            _redTicketLayout["SeatNumberMargin"] = new Thickness(597, 150, 0, 0);
+            _redTicketLayout["NoSeatDisplayMargin"] = new Thickness(600, 155, 0, 0);
+            _redTicketLayout["SeatNumberWordMargin"] = new Thickness(654, 160, 0, 0);
+            _redTicketLayout["MoneySymbolMargin"] = new Thickness(55, 190, 0, 0);
+            _redTicketLayout["MoneyValueMargin"] = new Thickness(74, 190, 0, 0);
+            _redTicketLayout["MoneyUnitParam"] = "350,330,0,0";
+            _redTicketLayout["SeatTypeMargin"] = new Thickness(600, 200, 0, 0);
+            _redTicketLayout["SeatTypeMarginNoSeat"] = new Thickness(530, 195, 0, 0);
+            _redTicketLayout["AdditionalInfoMargin"] = new Thickness(55, 265, 0, 0);
+            _redTicketLayout["TicketPurposeMargin"] = new Thickness(54, 325, 0, 0);
+            _redTicketLayout["TicketPurposeWithModMargin"] = new Thickness(180, 325, 0, 0);
+            _redTicketLayout["TicketModificationTypeMargin"] = new Thickness(54, 325, 0, 0);
+            _redTicketLayout["IdentityInfoMargin"] = new Thickness(60, 359, 0, 0);
+            _redTicketLayout["EncodingAreaMargin"] = new Thickness(44, 450, 0, 0);
+            _redTicketLayout["HintBoxMargin"] = new Thickness(-170, 395, 0, 0);
+            _redTicketLayout["QRCodeMargin"] = new Thickness(0, 0, 75, 45);
+        }
+
+        // 更新所有布局相关属性
+        private void UpdateAllLayoutProperties()
+        {
+            // 首先触发布局参数本身的更新通知
+            OnPropertyChanged(nameof(TicketNumberMargin));
+            OnPropertyChanged(nameof(CheckInLocationMargin));
+            OnPropertyChanged(nameof(DepartStationMargin));
+            OnPropertyChanged(nameof(DepartStationPinyinBaseMargin));
+            OnPropertyChanged(nameof(DepartStationWordParam));
+            OnPropertyChanged(nameof(TrainNumberMargin));
+            OnPropertyChanged(nameof(TrainArrowMargin));
+            OnPropertyChanged(nameof(ArriveStationMargin));
+            OnPropertyChanged(nameof(ArriveStationPinyinBaseMargin));
+            OnPropertyChanged(nameof(ArriveStationWordParam));
+            OnPropertyChanged(nameof(DateDisplayMargin));
+            OnPropertyChanged(nameof(DepartTimeMargin));
+            OnPropertyChanged(nameof(DepartTimeWordMargin));
+            OnPropertyChanged(nameof(CoachNumberMargin));
+            OnPropertyChanged(nameof(CoachWordMargin));
+            OnPropertyChanged(nameof(AddedCoachWordMargin));
+            OnPropertyChanged(nameof(SeatNumberMargin));
+            OnPropertyChanged(nameof(NoSeatDisplayMargin));
+            OnPropertyChanged(nameof(SeatNumberWordMargin));
+            OnPropertyChanged(nameof(MoneySymbolMargin));
+            OnPropertyChanged(nameof(MoneyValueMargin));
+            OnPropertyChanged(nameof(MoneyUnitParam));
+            OnPropertyChanged(nameof(SeatTypeMargin));
+            OnPropertyChanged(nameof(SeatTypeMarginNoSeat));
+            OnPropertyChanged(nameof(AdditionalInfoMargin));
+            OnPropertyChanged(nameof(TicketPurposeMargin));
+            OnPropertyChanged(nameof(TicketPurposeWithModMargin));
+            OnPropertyChanged(nameof(TicketModificationTypeMargin));
+            OnPropertyChanged(nameof(IdentityInfoMargin));
+            OnPropertyChanged(nameof(EncodingAreaMargin));
+            OnPropertyChanged(nameof(HintBoxMargin));
+            OnPropertyChanged(nameof(QRCodeMargin));
+
+            // 然后触发使用转换器的属性的更新通知
+            // 这些属性在XAML中绑定了MultiBinding，需要特别触发
+            OnPropertyChanged(nameof(DepartStationWithSpacing));
+            OnPropertyChanged(nameof(ArriveStationWithSpacing));
+            OnPropertyChanged(nameof(DepartStationName));
+            OnPropertyChanged(nameof(ArriveStationName));
+
+            // 为了强制使用MultiBinding的转换器重新计算，我们需要触发转换器所依赖的所有属性
+            OnPropertyChanged(nameof(DepartStationPinyinPosition));
+            OnPropertyChanged(nameof(ArriveStationPinyinPosition));
+            OnPropertyChanged(nameof(TrainNumberCenterPosition));
+
+            // 刷新整个视图，确保所有转换器都能重新计算
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
+                if (window != null)
+                {
+                    var grid = window.FindName("PreviewGrid") as Grid;
+                    if (grid != null)
+                    {
+                        // 强制重新绘制整个Grid
+                        grid.InvalidateVisual();
+                    }
+                }
+            });
+        }
+
+        // 添加一个公共方法，允许外部代码更新布局
+        public void UpdateLayout(Dictionary<string, object> layoutValues, bool isRedTicket)
+        {
+            if (layoutValues == null) return;
+
+            // 根据车票颜色选择要更新的布局参数
+            var targetLayout = isRedTicket ? _redTicketLayout : _blueTicketLayout;
+
+            // 更新所有提供的布局参数
+            foreach (var kvp in layoutValues)
+            {
+                if (targetLayout.ContainsKey(kvp.Key))
+                {
+                    targetLayout[kvp.Key] = kvp.Value;
+                }
+            }
+
+            // 如果当前正在显示的是被更新的那种车票类型，则立即更新UI
+            if (_isRedTicket == isRedTicket)
+            {
+                _currentLayout = targetLayout;
+                UpdateAllLayoutProperties();
+            }
+        }
+
+        // 以下属性用于获取当前布局参数
+
+        // 车票号码位置
+        public Thickness TicketNumberMargin => (Thickness)_currentLayout["TicketNumberMargin"];
+
+        // 检票口位置
+        public Thickness CheckInLocationMargin => (Thickness)_currentLayout["CheckInLocationMargin"];
+
+        // 出发站站名位置
+        public Thickness DepartStationMargin => (Thickness)_currentLayout["DepartStationMargin"];
+
+        // 出发站拼音位置基础值
+        public Thickness DepartStationPinyinBaseMargin => (Thickness)_currentLayout["DepartStationPinyinBaseMargin"];
+
+        // 出发站"站"字位置参数
+        public string DepartStationWordParam => (string)_currentLayout["DepartStationWordParam"];
+
+        // 车次号位置
+        public Thickness TrainNumberMargin => (Thickness)_currentLayout["TrainNumberMargin"];
+
+        // 车次号下箭头位置
+        public Thickness TrainArrowMargin => (Thickness)_currentLayout["TrainArrowMargin"];
+
+        // 到达站站名位置
+        public Thickness ArriveStationMargin => (Thickness)_currentLayout["ArriveStationMargin"];
+
+        // 到达站拼音位置基础值
+        public Thickness ArriveStationPinyinBaseMargin => (Thickness)_currentLayout["ArriveStationPinyinBaseMargin"];
+
+        // 到达站"站"字位置参数
+        public string ArriveStationWordParam => (string)_currentLayout["ArriveStationWordParam"];
+
+        // 年月日显示位置
+        public Thickness DateDisplayMargin => (Thickness)_currentLayout["DateDisplayMargin"];
+
+        // 出发时间位置
+        public Thickness DepartTimeMargin => (Thickness)_currentLayout["DepartTimeMargin"];
+
+        // "开"字位置
+        public Thickness DepartTimeWordMargin => (Thickness)_currentLayout["DepartTimeWordMargin"];
+
+        // 车厢号位置
+        public Thickness CoachNumberMargin => (Thickness)_currentLayout["CoachNumberMargin"];
+
+        // "车"字位置
+        public Thickness CoachWordMargin => (Thickness)_currentLayout["CoachWordMargin"];
+
+        // "加"字位置
+        public Thickness AddedCoachWordMargin => (Thickness)_currentLayout["AddedCoachWordMargin"];
+
+        // 座位号位置
+        public Thickness SeatNumberMargin => (Thickness)_currentLayout["SeatNumberMargin"];
+
+        // "无座"显示位置
+        public Thickness NoSeatDisplayMargin => (Thickness)_currentLayout["NoSeatDisplayMargin"];
+
+        // "号"字位置
+        public Thickness SeatNumberWordMargin => (Thickness)_currentLayout["SeatNumberWordMargin"];
+
+        // "¥"符号位置
+        public Thickness MoneySymbolMargin => (Thickness)_currentLayout["MoneySymbolMargin"];
+
+        // 金额数值位置
+        public Thickness MoneyValueMargin => (Thickness)_currentLayout["MoneyValueMargin"];
+
+        // "元"字位置参数
+        public string MoneyUnitParam => (string)_currentLayout["MoneyUnitParam"];
+
+        // 座位类型位置 - 普通
+        public Thickness SeatTypeMargin => (Thickness)_currentLayout["SeatTypeMargin"];
+
+        // 座位类型位置 - 无座
+        public Thickness SeatTypeMarginNoSeat => (Thickness)_currentLayout["SeatTypeMarginNoSeat"];
+
+        // 附加信息位置
+        public Thickness AdditionalInfoMargin => (Thickness)_currentLayout["AdditionalInfoMargin"];
+
+        // 车票用途位置
+        public Thickness TicketPurposeMargin => (Thickness)_currentLayout["TicketPurposeMargin"];
+
+        // 车票用途位置 - 与改签类型共存
+        public Thickness TicketPurposeWithModMargin => (Thickness)_currentLayout["TicketPurposeWithModMargin"];
+
+        // 车票改签类型位置
+        public Thickness TicketModificationTypeMargin => (Thickness)_currentLayout["TicketModificationTypeMargin"];
+
+        // 身份信息位置
+        public Thickness IdentityInfoMargin => (Thickness)_currentLayout["IdentityInfoMargin"];
+
+        // 编码区位置
+        public Thickness EncodingAreaMargin => (Thickness)_currentLayout["EncodingAreaMargin"];
+
+        // 提示信息框位置
+        public Thickness HintBoxMargin => (Thickness)_currentLayout["HintBoxMargin"];
+
+        // 二维码位置
+        public Thickness QRCodeMargin => (Thickness)_currentLayout["QRCodeMargin"];
 
         public event EventHandler RequestClose;
 
