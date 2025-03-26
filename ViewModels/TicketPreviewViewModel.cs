@@ -6,16 +6,19 @@ using System.Linq;
 using TA_WPF.Models;
 using System.Windows.Media.Imaging;
 using QRCoder;
-using System.Drawing;
 using System.IO;
 using System.Windows;
-using System.Windows.Media;
-using Microsoft.Win32;
 using System.Windows.Controls;
+using System.Configuration;
+using Microsoft.Win32;
+// 使用别名避免命名冲突
+using System.Windows.Media;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
 using Color = System.Windows.Media.Color;
-using System.Configuration;
+using Brushes = System.Windows.Media.Brushes;
+using System.Drawing.Imaging;
+using Bitmap = System.Drawing.Bitmap;
 
 namespace TA_WPF.ViewModels
 {
@@ -673,6 +676,9 @@ namespace TA_WPF.ViewModels
                     var drawingVisual = new DrawingVisual();
                     using (var drawingContext = drawingVisual.RenderOpen())
                     {
+                        // 首先绘制白色背景
+                        drawingContext.DrawRectangle(Brushes.White, null, new Rect(new Point(), new Size(811, 509)));
+                        // 然后绘制车票内容
                         var visualBrush = new VisualBrush(grid);
                         drawingContext.DrawRectangle(visualBrush, null, new Rect(new Point(), new Size(811, 509)));
                     }
