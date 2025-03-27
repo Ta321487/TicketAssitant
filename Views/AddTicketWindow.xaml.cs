@@ -343,6 +343,38 @@ namespace TA_WPF.Views
             }
         }
 
+        /// <summary>
+        /// 出发站输入框失去焦点事件处理方法
+        /// </summary>
+        private void DepartStation_LostFocus(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 调用ViewModel中的处理方法，传入参数表示这是出发站
+                _viewModel.OnStationLostFocus(true);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理出发站失去焦点事件时出错", ex);
+            }
+        }
+
+        /// <summary>
+        /// 到达站输入框失去焦点事件处理方法
+        /// </summary>
+        private void ArriveStation_LostFocus(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 调用ViewModel中的处理方法，传入参数表示这是到达站
+                _viewModel.OnStationLostFocus(false);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理到达站失去焦点事件时出错", ex);
+            }
+        }
+
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);

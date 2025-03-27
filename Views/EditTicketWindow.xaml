@@ -194,6 +194,7 @@
                          InputMethod.IsInputMethodEnabled="True"
                          InputMethod.PreferredImeState="On"
                          InputMethod.PreferredImeConversionMode="Native"
+                         LostFocus="DepartStation_LostFocus"
                          Margin="0"/>
                     <TextBlock Text="站" 
                               HorizontalAlignment="Right" 
@@ -249,6 +250,7 @@
                          InputMethod.IsInputMethodEnabled="True"
                          InputMethod.PreferredImeState="On"
                          InputMethod.PreferredImeConversionMode="Native"
+                         LostFocus="ArriveStation_LostFocus"
                          Margin="0"/>
                     <TextBlock Text="站" 
                               HorizontalAlignment="Right" 

@@ -164,6 +164,7 @@
                              InputMethod.IsInputMethodEnabled="True"
                              InputMethod.PreferredImeState="On"
                              InputMethod.PreferredImeConversionMode="Native"
+                             LostFocus="DepartStation_LostFocus"
                              Margin="0"/>
                         <Popup IsOpen="{Binding IsDepartStationDropdownOpen}" 
                                PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
@@ -225,6 +226,7 @@
                              InputMethod.IsInputMethodEnabled="True"
                              InputMethod.PreferredImeState="On"
                              InputMethod.PreferredImeConversionMode="Native"
+                             LostFocus="ArriveStation_LostFocus"
                              Margin="0"/>
                         <Popup IsOpen="{Binding IsArriveStationDropdownOpen}" 
                                PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"

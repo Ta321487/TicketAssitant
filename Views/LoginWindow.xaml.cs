@@ -150,37 +150,8 @@ namespace TA_WPF.Views
                 // 从配置文件加载主题设置
                 bool isDarkMode = themeService.LoadThemeFromConfig();
 
-                // 显式设置窗口的ThemeAssist.Theme属性
-                MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(this,
-                    isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
-
-                // 获取当前主题
-                var paletteHelper = new PaletteHelper();
-                var theme = paletteHelper.GetTheme();
-
-                // 强制设置主题基础类型
-                theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
-                paletteHelper.SetTheme(theme);
-
-                // 应用主题
-                themeService.ApplyTheme(isDarkMode);
-
-                // 更新主题图标 - 深色模式显示太阳图标，浅色模式显示月亮图标
-                if (ThemeIcon != null)
-                {
-                    ThemeIcon.Kind = isDarkMode ? PackIconKind.WeatherSunny : PackIconKind.WeatherNight;
-                }
-
-                // 强制刷新窗口和所有控件
-                this.UpdateLayout();
-
-                // 强制刷新主卡片背景
-                var mainCard = this.FindName("MainCard") as MaterialDesignThemes.Wpf.Card;
-                if (mainCard != null)
-                {
-                    mainCard.Background = this.Background;
-                    mainCard.UpdateLayout();
-                }
+                // 使用集中的方法应用主题到窗口
+                themeService.ApplyThemeToWindow(this, isDarkMode, ThemeIcon, MainCard);
 
                 System.Diagnostics.Debug.WriteLine($"已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
                 LogHelper.LogSystem("登录", $"窗口已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
@@ -197,22 +168,17 @@ namespace TA_WPF.Views
             try
             {
                 // 从配置文件中加载字体大小设置
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                if (config.AppSettings.Settings["FontSize"] != null)
+                double fontSize = ConfigUtils.GetDoubleValue("FontSize", 13);
+                
+                // 确保字体大小不小于最小可读值
+                if (fontSize < 12)
                 {
-                    if (double.TryParse(config.AppSettings.Settings["FontSize"].Value, out double fontSize))
-                    {
-                        // 确保字体大小不小于最小可读值
-                        if (fontSize < 12)
-                        {
-                            fontSize = 12;
-                        }
-
-                        // 更新滑块值
-                        FontSizeSlider.Value = fontSize;
-                        FontSizeValueText.Text = $"{fontSize:N0}pt";
-                    }
+                    fontSize = 12;
                 }
+
+                // 更新滑块值
+                FontSizeSlider.Value = fontSize;
+                FontSizeValueText.Text = $"{fontSize:N0}pt";
             }
             catch (Exception ex)
             {
@@ -259,26 +225,14 @@ namespace TA_WPF.Views
         {
             try
             {
-                // 保存字体大小到配置文件
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-
                 // 确保字体大小不小于最小可读值
                 if (fontSize < 12)
                 {
                     fontSize = 12;
                 }
 
-                if (config.AppSettings.Settings["FontSize"] == null)
-                {
-                    config.AppSettings.Settings.Add("FontSize", fontSize.ToString(CultureInfo.InvariantCulture));
-                }
-                else
-                {
-                    config.AppSettings.Settings["FontSize"].Value = fontSize.ToString(CultureInfo.InvariantCulture);
-                }
-
-                config.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection("appSettings");
+                // 保存字体大小到配置文件
+                ConfigUtils.SaveDoubleValue("FontSize", fontSize);
             }
             catch (Exception ex)
             {
@@ -302,16 +256,12 @@ namespace TA_WPF.Views
             try
             {
                 // 从配置文件中加载上次使用的数据库名称
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                if (config.AppSettings.Settings["LastDatabaseName"] != null)
+                string lastDbName = ConfigUtils.GetStringValue("LastDatabaseName");
+                if (!string.IsNullOrEmpty(lastDbName))
                 {
-                    string lastDbName = config.AppSettings.Settings["LastDatabaseName"].Value;
-                    if (!string.IsNullOrEmpty(lastDbName))
-                    {
-                        _lastDatabaseName = lastDbName;
-                        DatabaseNameTextBox.Text = lastDbName;
-                        DatabaseNameComboBox.Text = lastDbName;
-                    }
+                    _lastDatabaseName = lastDbName;
+                    DatabaseNameTextBox.Text = lastDbName;
+                    DatabaseNameComboBox.Text = lastDbName;
                 }
             }
             catch (Exception ex)
@@ -325,15 +275,11 @@ namespace TA_WPF.Views
             try
             {
                 // 从配置文件中加载上次使用的服务器地址
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                if (config.AppSettings.Settings["LastServerAddress"] != null)
+                string lastAddress = ConfigUtils.GetStringValue("LastServerAddress");
+                if (!string.IsNullOrEmpty(lastAddress))
                 {
-                    string lastAddress = config.AppSettings.Settings["LastServerAddress"].Value;
-                    if (!string.IsNullOrEmpty(lastAddress))
-                    {
-                        _lastServerAddress = lastAddress;
-                        ServerAddressTextBox.Text = lastAddress;
-                    }
+                    _lastServerAddress = lastAddress;
+                    ServerAddressTextBox.Text = lastAddress;
                 }
             }
             catch (Exception ex)
@@ -347,19 +293,7 @@ namespace TA_WPF.Views
             try
             {
                 // 保存服务器地址到配置文件
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-
-                if (config.AppSettings.Settings["LastServerAddress"] == null)
-                {
-                    config.AppSettings.Settings.Add("LastServerAddress", serverAddress);
-                }
-                else
-                {
-                    config.AppSettings.Settings["LastServerAddress"].Value = serverAddress;
-                }
-
-                config.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection("appSettings");
+                ConfigUtils.SaveStringValue("LastServerAddress", serverAddress);
             }
             catch (Exception ex)
             {
@@ -372,19 +306,7 @@ namespace TA_WPF.Views
             try
             {
                 // 保存数据库名称到配置文件
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-
-                if (config.AppSettings.Settings["LastDatabaseName"] == null)
-                {
-                    config.AppSettings.Settings.Add("LastDatabaseName", databaseName);
-                }
-                else
-                {
-                    config.AppSettings.Settings["LastDatabaseName"].Value = databaseName;
-                }
-
-                config.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection("appSettings");
+                ConfigUtils.SaveStringValue("LastDatabaseName", databaseName);
             }
             catch (Exception ex)
             {
@@ -407,19 +329,8 @@ namespace TA_WPF.Views
                 var themeService = TA_WPF.Services.ThemeService.Instance;
                 bool isDarkTheme = themeService.IsDarkThemeActive();
 
-                // 更新图标 - 深色模式显示太阳图标，浅色模式显示月亮图标
-                ThemeIcon.Kind = isDarkTheme ? PackIconKind.WeatherSunny : PackIconKind.WeatherNight;
-
-                // 确保窗口主题与当前主题状态一致
-                MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(this,
-                    isDarkTheme ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
-
-                // 强制刷新主卡片背景
-                if (MainCard != null)
-                {
-                    MainCard.Background = this.Background;
-                    MainCard.UpdateLayout();
-                }
+                // 使用集中的方法应用主题到窗口
+                themeService.ApplyThemeToWindow(this, isDarkTheme, ThemeIcon, MainCard);
 
                 System.Diagnostics.Debug.WriteLine($"当前主题: {(isDarkTheme ? "深色" : "浅色")}");
             }
@@ -455,44 +366,20 @@ namespace TA_WPF.Views
                     return;
                 }
 
-                // 创建新的主题辅助器
-                var paletteHelper = new PaletteHelper();
-
-                // 获取当前主题
-                ITheme theme = paletteHelper.GetTheme();
-
-                // 检查当前主题是否为深色
-                bool isDarkTheme = theme.GetBaseTheme() == BaseTheme.Dark;
-
                 // 创建主题服务
                 var themeService = TA_WPF.Services.ThemeService.Instance;
+
+                // 获取当前主题状态
+                bool isDarkTheme = themeService.IsDarkThemeActive();
 
                 // 切换到相反的主题
                 bool newIsDarkTheme = !isDarkTheme;
 
-                // 强制设置主题基础类型
-                theme.SetBaseTheme(newIsDarkTheme ? Theme.Dark : Theme.Light);
-                paletteHelper.SetTheme(theme);
+                // 使用集中的方法应用主题到窗口
+                themeService.ApplyThemeToWindow(this, newIsDarkTheme, ThemeIcon, MainCard);
 
-                // 显式设置窗口的ThemeAssist.Theme属性
-                MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(this,
-                    newIsDarkTheme ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
-
-                // 应用相反的主题
+                // 应用全局主题
                 themeService.ApplyTheme(newIsDarkTheme);
-
-                // 更新图标 - 切换后的状态：如果切换后是深色模式，显示太阳图标；如果切换后是浅色模式，显示月亮图标
-                ThemeIcon.Kind = newIsDarkTheme ? PackIconKind.WeatherSunny : PackIconKind.WeatherNight;
-
-                // 强制刷新窗口
-                this.UpdateLayout();
-
-                // 强制刷新主卡片背景
-                if (MainCard != null)
-                {
-                    MainCard.Background = this.Background;
-                    MainCard.UpdateLayout();
-                }
 
                 System.Diagnostics.Debug.WriteLine($"主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
                 LogHelper.LogSystem("登录", $"窗口主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
@@ -1542,36 +1429,32 @@ namespace TA_WPF.Views
             try
             {
                 // 从配置文件中加载数据库历史记录
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                if (config.AppSettings.Settings["DatabaseHistory"] != null)
+                string historyString = ConfigUtils.GetStringValue("DatabaseHistory");
+                if (!string.IsNullOrEmpty(historyString))
                 {
-                    string historyString = config.AppSettings.Settings["DatabaseHistory"].Value;
-                    if (!string.IsNullOrEmpty(historyString))
+                    // 解析历史记录
+                    List<string> history = historyString.Split(',').ToList();
+
+                    // 清空当前项
+                    DatabaseNameComboBox.Items.Clear();
+
+                    // 添加历史记录
+                    foreach (string item in history)
                     {
-                        // 解析历史记录
-                        List<string> history = historyString.Split(',').ToList();
-
-                        // 清空当前项
-                        DatabaseNameComboBox.Items.Clear();
-
-                        // 添加历史记录
-                        foreach (string item in history)
+                        if (!string.IsNullOrEmpty(item))
                         {
-                            if (!string.IsNullOrEmpty(item))
-                            {
-                                DatabaseNameComboBox.Items.Add(item);
-                            }
+                            DatabaseNameComboBox.Items.Add(item);
                         }
+                    }
 
-                        // 设置当前选中项
-                        if (!string.IsNullOrEmpty(_lastDatabaseName) && DatabaseNameComboBox.Items.Contains(_lastDatabaseName))
-                        {
-                            DatabaseNameComboBox.SelectedItem = _lastDatabaseName;
-                        }
-                        else if (DatabaseNameComboBox.Items.Count > 0)
-                        {
-                            DatabaseNameComboBox.SelectedIndex = 0;
-                        }
+                    // 设置当前选中项
+                    if (!string.IsNullOrEmpty(_lastDatabaseName) && DatabaseNameComboBox.Items.Contains(_lastDatabaseName))
+                    {
+                        DatabaseNameComboBox.SelectedItem = _lastDatabaseName;
+                    }
+                    else if (DatabaseNameComboBox.Items.Count > 0)
+                    {
+                        DatabaseNameComboBox.SelectedIndex = 0;
                     }
                 }
             }
@@ -1586,17 +1469,13 @@ namespace TA_WPF.Views
             try
             {
                 // 从配置文件中读取历史数据库名称
-                var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 List<string> historyList = new List<string>();
 
                 // 读取现有历史记录
-                if (config.AppSettings.Settings["DatabaseHistory"] != null)
+                string history = ConfigUtils.GetStringValue("DatabaseHistory");
+                if (!string.IsNullOrEmpty(history))
                 {
-                    string history = config.AppSettings.Settings["DatabaseHistory"].Value;
-                    if (!string.IsNullOrEmpty(history))
-                    {
-                        historyList = history.Split(',').ToList();
-                    }
+                    historyList = history.Split(',').ToList();
                 }
 
                 // 如果历史记录中已存在该数据库名称，则移除它
@@ -1613,18 +1492,7 @@ namespace TA_WPF.Views
 
                 // 保存回配置文件
                 string newHistory = string.Join(",", historyList);
-
-                if (config.AppSettings.Settings["DatabaseHistory"] == null)
-                {
-                    config.AppSettings.Settings.Add("DatabaseHistory", newHistory);
-                }
-                else
-                {
-                    config.AppSettings.Settings["DatabaseHistory"].Value = newHistory;
-                }
-
-                config.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection("appSettings");
+                ConfigUtils.SaveStringValue("DatabaseHistory", newHistory);
             }
             catch (Exception ex)
             {

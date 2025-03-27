@@ -52,6 +52,57 @@ namespace TA_WPF.Services
         public event EventHandler<bool> ThemeChanged;
 
         /// <summary>
+        /// 应用主题设置到指定窗口
+        /// </summary>
+        /// <param name="window">要应用主题的窗口</param>
+        /// <param name="isDarkMode">是否为深色模式</param>
+        /// <param name="themeIcon">主题图标(如果有)</param>
+        /// <param name="mainCard">主卡片(如果有)</param>
+        public void ApplyThemeToWindow(Window window, bool isDarkMode, PackIcon themeIcon = null, Card mainCard = null)
+        {
+            try
+            {
+                if (window == null)
+                    return;
+            
+                // 显式设置窗口的ThemeAssist.Theme属性
+                MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(window,
+                    isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
+
+                // 获取当前主题
+                var paletteHelper = new PaletteHelper();
+                var theme = paletteHelper.GetTheme();
+
+                // 强制设置主题基础类型
+                theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
+                paletteHelper.SetTheme(theme);
+
+                // 更新主题图标 - 深色模式显示太阳图标，浅色模式显示月亮图标
+                if (themeIcon != null)
+                {
+                    themeIcon.Kind = isDarkMode ? PackIconKind.WeatherSunny : PackIconKind.WeatherNight;
+                }
+
+                // 强制刷新窗口和所有控件
+                window.UpdateLayout();
+
+                // 强制刷新主卡片背景
+                if (mainCard != null)
+                {
+                    mainCard.Background = window.Background;
+                    mainCard.UpdateLayout();
+                }
+
+                System.Diagnostics.Debug.WriteLine($"窗口已设置为{(isDarkMode ? "深色" : "浅色")}主题");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"应用主题到窗口时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
         /// 应用主题设置
         /// </summary>
         /// <param name="isDarkMode">是否为深色模式</param>
@@ -205,145 +256,9 @@ namespace TA_WPF.Services
         {
             try
             {
-                // 获取可执行文件的配置文件路径 - 使用多种方式尝试
-                string exePath = System.Reflection.Assembly.GetEntryAssembly()?.Location ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
-                string exeName = System.IO.Path.GetFileNameWithoutExtension(exePath);
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-
-                // 动态获取可能的配置文件名称
-                string[] configNames = Directory.GetFiles(baseDir, "*.config")
-                    .Where(file => !file.EndsWith(".vshost.exe.config")) // 排除VS主机配置
-                    .ToArray();
-
-                System.Diagnostics.Debug.WriteLine($"可执行文件路径: {exePath}");
-                System.Diagnostics.Debug.WriteLine($"应用程序名称: {exeName}");
-                System.Diagnostics.Debug.WriteLine($"应用程序基础目录: {baseDir}");
-                System.Diagnostics.Debug.WriteLine($"找到的配置文件数量: {configNames.Length}");
-
-                foreach (var config in configNames)
-                {
-                    System.Diagnostics.Debug.WriteLine($"找到配置文件: {config}");
-                }
-
-                LogHelper.LogSystem("主题", $"可执行文件路径: {exePath}");
-                LogHelper.LogSystem("主题", $"应用程序名称: {exeName}");
-                LogHelper.LogSystem("主题", $"应用程序基础目录: {baseDir}");
-
-                // 首先尝试dll.config和exe.config
-                string dllConfigPath = System.IO.Path.Combine(baseDir, exeName + ".dll.config");
-                string exeConfigPath = System.IO.Path.Combine(baseDir, exeName + ".exe.config");
-
-                // 也尝试已知可能的应用程序名称
-                string knownDllConfig = System.IO.Path.Combine(baseDir, "以车票标记时光：旅程归档.dll.config");
-                string knownExeConfig = System.IO.Path.Combine(baseDir, "以车票标记时光：旅程归档.exe.config");
-
-                // 检查文件是否存在
-                bool dllConfigExists = System.IO.File.Exists(dllConfigPath);
-                bool exeConfigExists = System.IO.File.Exists(exeConfigPath);
-                bool knownDllExists = System.IO.File.Exists(knownDllConfig);
-                bool knownExeExists = System.IO.File.Exists(knownExeConfig);
-
-                System.Diagnostics.Debug.WriteLine($"程序dll配置文件存在: {dllConfigExists} - {dllConfigPath}");
-                System.Diagnostics.Debug.WriteLine($"程序exe配置文件存在: {exeConfigExists} - {exeConfigPath}");
-                System.Diagnostics.Debug.WriteLine($"已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
-                System.Diagnostics.Debug.WriteLine($"已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
-
-                LogHelper.LogSystem("主题", $"程序dll配置文件存在: {dllConfigExists} - {dllConfigPath}");
-                LogHelper.LogSystem("主题", $"程序exe配置文件存在: {exeConfigExists} - {exeConfigPath}");
-                LogHelper.LogSystem("主题", $"已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
-                LogHelper.LogSystem("主题", $"已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
-
-                // 尝试直接修改配置文件
-                string configToUse = null;
-
-                // 按优先级选择配置文件
-                if (dllConfigExists)
-                {
-                    configToUse = dllConfigPath;
-                }
-                else if (exeConfigExists)
-                {
-                    configToUse = exeConfigPath;
-                }
-                else if (knownDllExists)
-                {
-                    configToUse = knownDllConfig;
-                }
-                else if (knownExeExists)
-                {
-                    configToUse = knownExeConfig;
-                }
-                else if (configNames.Length > 0)
-                {
-                    // 如果没有找到预期的配置文件，但目录中存在其他配置文件，使用第一个
-                    configToUse = configNames[0];
-                }
-
-                if (configToUse != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"将使用配置文件: {configToUse}");
-                    LogHelper.LogSystem("主题", $"将使用配置文件: {configToUse}");
-
-                    try
-                    {
-                        // 使用XmlDocument直接操作XML配置文件
-                        var xmlDoc = new System.Xml.XmlDocument();
-                        xmlDoc.Load(configToUse);
-
-                        // 获取appSettings节点
-                        var appSettingsNode = xmlDoc.SelectSingleNode("//appSettings");
-                        if (appSettingsNode != null)
-                        {
-                            // 查找IsDarkMode设置
-                            var isDarkModeNode = appSettingsNode.SelectSingleNode("//add[@key='IsDarkMode']");
-
-                            if (isDarkModeNode != null)
-                            {
-                                // 更新已存在的IsDarkMode设置
-                                isDarkModeNode.Attributes["value"].Value = isDarkMode.ToString().ToLower();
-                                System.Diagnostics.Debug.WriteLine($"更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
-                                LogHelper.LogSystem("主题", $"更新现有IsDarkMode设置为: {isDarkMode.ToString().ToLower()}");
-                            }
-                            else
-                            {
-                                // 创建新的IsDarkMode设置
-                                var newNode = xmlDoc.CreateElement("add");
-                                var keyAttr = xmlDoc.CreateAttribute("key");
-                                keyAttr.Value = "IsDarkMode";
-                                var valueAttr = xmlDoc.CreateAttribute("value");
-                                valueAttr.Value = isDarkMode.ToString().ToLower();
-
-                                newNode.Attributes.Append(keyAttr);
-                                newNode.Attributes.Append(valueAttr);
-                                appSettingsNode.AppendChild(newNode);
-
-                                System.Diagnostics.Debug.WriteLine($"创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
-                                LogHelper.LogSystem("主题", $"创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
-                            }
-
-                            // 保存XML文档
-                            xmlDoc.Save(configToUse);
-                            System.Diagnostics.Debug.WriteLine($"已保存配置文件: {configToUse}");
-                            LogHelper.LogSystem("主题", $"已保存配置文件: {configToUse}");
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine("未找到appSettings节点");
-                            LogHelper.LogSystem("主题", "未找到appSettings节点");
-                        }
-
-                        // 刷新配置
-                        ConfigurationManager.RefreshSection("appSettings");
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"直接操作配置文件时出错: {ex.Message}");
-                        System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
-                        LogHelper.LogSystem("主题", $"直接操作配置文件时出错: {ex.Message}");
-                        LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
-                    }
-                }
-
+                // 使用ConfigUtils保存主题设置
+                ConfigUtils.SaveBoolValue("IsDarkMode", isDarkMode);
+                
                 // 同时更新资源字典中的主题标志
                 if (Application.Current?.Resources != null)
                 {
@@ -371,135 +286,20 @@ namespace TA_WPF.Services
         {
             try
             {
-                // 获取可执行文件的配置文件路径 - 使用多种方式尝试
-                string exePath = System.Reflection.Assembly.GetEntryAssembly()?.Location ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
-                string exeName = System.IO.Path.GetFileNameWithoutExtension(exePath);
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-
-                // 动态获取可能的配置文件名称
-                string[] configNames = Directory.GetFiles(baseDir, "*.config")
-                    .Where(file => !file.EndsWith(".vshost.exe.config")) // 排除VS主机配置
-                    .ToArray();
-
-                System.Diagnostics.Debug.WriteLine($"加载配置 - 可执行文件路径: {exePath}");
-                System.Diagnostics.Debug.WriteLine($"加载配置 - 应用程序名称: {exeName}");
-                System.Diagnostics.Debug.WriteLine($"加载配置 - 应用程序基础目录: {baseDir}");
-                System.Diagnostics.Debug.WriteLine($"加载配置 - 找到的配置文件数量: {configNames.Length}");
-
-                foreach (var config in configNames)
+                // 使用ConfigUtils获取主题设置
+                bool isDarkMode = ConfigUtils.GetBoolValue("IsDarkMode", false);
+                
+                // 同时更新资源字典中的主题标志
+                if (Application.Current?.Resources != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"加载配置 - 找到配置文件: {config}");
+                    Application.Current.Resources["Theme.Dark"] = isDarkMode;
+                    Application.Current.Resources["Theme.Light"] = !isDarkMode;
                 }
-
-                LogHelper.LogSystem("主题", $"加载配置 - 可执行文件路径: {exePath}");
-                LogHelper.LogSystem("主题", $"加载配置 - 应用程序名称: {exeName}");
-                LogHelper.LogSystem("主题", $"加载配置 - 应用程序基础目录: {baseDir}");
-
-                // 首先尝试dll.config和exe.config
-                string dllConfigPath = System.IO.Path.Combine(baseDir, exeName + ".dll.config");
-                string exeConfigPath = System.IO.Path.Combine(baseDir, exeName + ".exe.config");
-
-                // 也尝试已知可能的应用程序名称
-                string knownDllConfig = System.IO.Path.Combine(baseDir, "车票标记时光：旅程归档.dll.config");
-                string knownExeConfig = System.IO.Path.Combine(baseDir, "车票标记时光：旅程归档.exe.config");
-
-                // 检查文件是否存在
-                bool dllConfigExists = System.IO.File.Exists(dllConfigPath);
-                bool exeConfigExists = System.IO.File.Exists(exeConfigPath);
-                bool knownDllExists = System.IO.File.Exists(knownDllConfig);
-                bool knownExeExists = System.IO.File.Exists(knownExeConfig);
-
-                System.Diagnostics.Debug.WriteLine($"加载配置 - 程序dll配置文件存在: {dllConfigExists} - {dllConfigPath}");
-                System.Diagnostics.Debug.WriteLine($"加载配置 - 程序exe配置文件存在: {exeConfigExists} - {exeConfigPath}");
-                System.Diagnostics.Debug.WriteLine($"加载配置 - 已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
-                System.Diagnostics.Debug.WriteLine($"加载配置 - 已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
-
-                LogHelper.LogSystem("主题", $"加载配置 - 程序dll配置文件存在: {dllConfigExists} - {dllConfigPath}");
-                LogHelper.LogSystem("主题", $"加载配置 - 程序exe配置文件存在: {exeConfigExists} - {exeConfigPath}");
-                LogHelper.LogSystem("主题", $"加载配置 - 已知dll配置文件存在: {knownDllExists} - {knownDllConfig}");
-                LogHelper.LogSystem("主题", $"加载配置 - 已知exe配置文件存在: {knownExeExists} - {knownExeConfig}");
-
-                // 尝试直接读取配置文件
-                string configToUse = null;
-
-                // 按优先级选择配置文件
-                if (dllConfigExists)
-                {
-                    configToUse = dllConfigPath;
-                }
-                else if (exeConfigExists)
-                {
-                    configToUse = exeConfigPath;
-                }
-                else if (knownDllExists)
-                {
-                    configToUse = knownDllConfig;
-                }
-                else if (knownExeExists)
-                {
-                    configToUse = knownExeConfig;
-                }
-                else if (configNames.Length > 0)
-                {
-                    // 如果没有找到预期的配置文件，但目录中存在其他配置文件，使用第一个
-                    configToUse = configNames[0];
-                }
-
-                if (configToUse != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"加载配置 - 将使用配置文件: {configToUse}");
-                    LogHelper.LogSystem("主题", $"加载配置 - 将使用配置文件: {configToUse}");
-
-                    try
-                    {
-                        // 读取配置文件内容
-                        string configContent = System.IO.File.ReadAllText(configToUse);
-                        System.Diagnostics.Debug.WriteLine($"加载配置 - 配置文件内容长度: {configContent.Length}字节");
-                        LogHelper.LogSystem("主题", $"加载配置 - 配置文件内容长度: {configContent.Length}字节");
-
-                        // 检查是否包含IsDarkMode设置
-                        bool containsIsDarkMode = configContent.Contains("IsDarkMode");
-                        System.Diagnostics.Debug.WriteLine($"加载配置 - 配置文件包含IsDarkMode: {containsIsDarkMode}");
-                        LogHelper.LogSystem("主题", $"加载配置 - 配置文件包含IsDarkMode: {containsIsDarkMode}");
-
-                        if (containsIsDarkMode)
-                        {
-                            // 使用XmlDocument直接读取
-                            var xmlDoc = new System.Xml.XmlDocument();
-                            xmlDoc.Load(configToUse);
-
-                            // 查找IsDarkMode设置
-                            var isDarkModeNode = xmlDoc.SelectSingleNode("//add[@key='IsDarkMode']");
-                            if (isDarkModeNode != null && isDarkModeNode.Attributes["value"] != null)
-                            {
-                                string value = isDarkModeNode.Attributes["value"].Value.ToLower();
-                                System.Diagnostics.Debug.WriteLine($"加载配置 - 从配置文件读取到IsDarkMode值: {value}");
-                                LogHelper.LogSystem("主题", $"加载配置 - 从配置文件读取到IsDarkMode值: {value}");
-
-                                if (bool.TryParse(value, out bool isDarkMode))
-                                {
-                                    // 同时更新资源字典中的主题标志
-                                    if (Application.Current?.Resources != null)
-                                    {
-                                        Application.Current.Resources["Theme.Dark"] = isDarkMode;
-                                        Application.Current.Resources["Theme.Light"] = !isDarkMode;
-                                    }
-
-                                    System.Diagnostics.Debug.WriteLine($"加载配置 - 已从配置文件读取主题设置: {(isDarkMode ? "深色" : "浅色")}");
-                                    LogHelper.LogSystem("主题", $"加载配置 - 已从配置文件读取主题设置: {(isDarkMode ? "深色" : "浅色")}");
-                                    return isDarkMode;
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"加载配置 - 直接读取配置文件时出错: {ex.Message}");
-                        System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
-                        LogHelper.LogSystem("主题", $"加载配置 - 直接读取配置文件时出错: {ex.Message}");
-                        LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
-                    }
-                }
+                
+                System.Diagnostics.Debug.WriteLine($"从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                LogHelper.LogSystem("主题", $"从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                
+                return isDarkMode;
             }
             catch (Exception ex)
             {
@@ -507,25 +307,22 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 LogHelper.LogSystem("主题", $"加载主题设置时出错: {ex.Message}");
                 LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
+                
+                // 如果加载失败，检查当前主题
+                bool currentTheme = IsDarkThemeActive();
+                
+                // 更新资源字典中的主题标志
+                if (Application.Current?.Resources != null)
+                {
+                    Application.Current.Resources["Theme.Dark"] = currentTheme;
+                    Application.Current.Resources["Theme.Light"] = !currentTheme;
+                }
+                
+                // 保存当前主题设置到配置文件
+                SaveThemeToConfig(currentTheme);
+                
+                return currentTheme;
             }
-
-            // 如果配置文件中没有主题设置或加载失败，检查当前主题
-            bool currentTheme = IsDarkThemeActive();
-
-            // 同时更新资源字典中的主题标志
-            if (Application.Current?.Resources != null)
-            {
-                Application.Current.Resources["Theme.Dark"] = currentTheme;
-                Application.Current.Resources["Theme.Light"] = !currentTheme;
-            }
-
-            System.Diagnostics.Debug.WriteLine($"加载配置 - 使用当前活动主题: {(currentTheme ? "深色" : "浅色")}");
-            LogHelper.LogSystem("主题", $"加载配置 - 使用当前活动主题: {(currentTheme ? "深色" : "浅色")}");
-
-            // 保存当前主题设置到配置文件
-            SaveThemeToConfig(currentTheme);
-
-            return currentTheme;
         }
 
         /// <summary>

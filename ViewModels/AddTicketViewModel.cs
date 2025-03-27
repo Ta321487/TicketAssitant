@@ -14,8 +14,9 @@ namespace TA_WPF.ViewModels
     public class AddTicketViewModel : INotifyPropertyChanged
     {
         protected readonly DatabaseService _databaseService;
-        protected readonly List<string> _validationErrors = new List<string>();
+        protected readonly StationSearchService _stationSearchService;
         protected readonly MainViewModel _mainViewModel;
+        protected readonly List<string> _validationErrors = new List<string>();
 
         // 添加字体大小变化监听
         private readonly FontSizeChangeListener _fontSizeChangeListener;
@@ -112,6 +113,9 @@ namespace TA_WPF.ViewModels
                 _databaseService = databaseService;
                 _mainViewModel = mainViewModel;
                 
+                // 初始化站点搜索服务
+                _stationSearchService = new StationSearchService(databaseService);
+                
                 // 初始化字体大小监听器
                 _fontSizeChangeListener = new FontSizeChangeListener();
                 _fontSizeChangeListener.FontSizeChanged += OnFontSizeChanged;
@@ -200,14 +204,13 @@ namespace TA_WPF.ViewModels
                 // 确保初始化字体大小相关属性
                 InitializeFontSizes();
                 
-                // 初始化完成后，重置表单修改状态
+                // 初始化完成
                 _isInitializing = false;
-                _isFormModified = false;
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.ShowError($"初始化添加车票视图模型时出错: {ex.Message}");
-                LogHelper.LogTicketError("初始化", "初始化添加车票视图模型时失败", ex);
+                MessageBoxHelper.ShowError($"初始化添加车票窗口时出错: {ex.Message}");
+                LogHelper.LogError("初始化添加车票窗口时出错", ex);
             }
         }
 
@@ -223,13 +226,14 @@ namespace TA_WPF.ViewModels
                     // 如果输入不为空，将首字母转换为大写
                     if (!string.IsNullOrEmpty(value))
                     {
-                        _ticketNumber = char.ToUpper(value[0]) + value.Substring(1);
+                        _ticketNumber = FormValidationHelper.EnsureFirstLetterUpperCase(value);
                     }
                     else
                     {
                         _ticketNumber = value;
                     }
                     OnPropertyChanged(nameof(TicketNumber));
+                    if (!_isInitializing) _isFormModified = true;
                 }
             }
         }
@@ -256,8 +260,7 @@ namespace TA_WPF.ViewModels
                 {
                     _departStation = value;
                     OnPropertyChanged(nameof(DepartStation));
-                    ValidateStationName(value, true);
-                    // UpdateStationInfo会在文本框失去焦点时调用
+                    // 不在这里调用ValidateStationName，而是在输入完成后再检测
                 }
             }
         }
@@ -271,8 +274,7 @@ namespace TA_WPF.ViewModels
                 {
                     _arriveStation = value;
                     OnPropertyChanged(nameof(ArriveStation));
-                    ValidateStationName(value, false);
-                    // UpdateStationInfo会在文本框失去焦点时调用
+                    // 不在这里调用ValidateStationName，而是在输入完成后再检测
                 }
             }
         }
@@ -567,7 +569,7 @@ namespace TA_WPF.ViewModels
                     _selectedHint = value;
                     OnPropertyChanged(nameof(SelectedHint));
                     
-                    if (value == "自定义" && string.IsNullOrEmpty(_customHint))
+                    if (value == "自定义")
                     {
                         ShowCustomHintDialog();
                     }
@@ -922,157 +924,117 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 初始化Stations集合，避免null引用
-                Stations = new ObservableCollection<StationInfo>();
-                
-                var stationList = await _databaseService.GetStationsAsync();
-                
-                if (stationList != null && stationList.Count > 0)
-                {
-                    Stations = new ObservableCollection<StationInfo>(stationList);
-                }
-                else
-                {
-                    // 检查是否忽略车站检查
-                    if (!Services.StationCheckService.Instance.IgnoreStationCheck)
-                    {
-                        MessageBoxHelper.ShowWarning("未能加载车站数据，返回的列表为空");
-                    }
-                }
-            }
-            catch (MySqlException sqlEx)
-            {
-                MessageBoxHelper.ShowError($"数据库错误: {sqlEx.Message}\n错误代码: {sqlEx.Number}");
+                // 使用StationSearchService加载站点数据
+                await _stationSearchService.LoadStationsAsync();
+                Stations = _stationSearchService.Stations;
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.ShowError($"加载车站数据失败: {ex.Message}");
+                MessageBoxHelper.ShowError($"加载车站数据时出错: {ex.Message}");
+                LogHelper.LogError("加载车站数据时出错", ex);
             }
         }
 
         private void ValidateStationName(string stationName, bool isDepartStation)
         {
             if (string.IsNullOrWhiteSpace(stationName))
-                return;
-
-            // 检查是否包含"站"字
-            if (stationName.Contains("站"))
             {
-                MessageBoxHelper.ShowInformation("系统已自动添加站字，无需手动输入");
-                
-                // 移除"站"字
-                string cleanName = stationName.Replace("站", "");
-                if (isDepartStation)
-                    DepartStation = cleanName;
-                else
-                    ArriveStation = cleanName;
-                
                 return;
             }
 
-            // 检查长度是否在1-5个汉字之间
-            if (stationName.Length > 5)
+            // 使用StationSearchService验证站点名称
+            var station = _stationSearchService.ValidateStationName(stationName);
+            if (station != null)
             {
-                MessageBoxHelper.ShowInformation("车站名称不能超过5个汉字");
-                
-                // 截取前4个字符
-                string truncatedName = stationName.Substring(0, 5);
-                if (isDepartStation)
-                    DepartStation = truncatedName;
-                else
-                    ArriveStation = truncatedName;
+                UpdateStationInfo(station.StationName, isDepartStation);
+                CheckStationInfoCompleteness(station, isDepartStation);
             }
         }
 
         private void UpdateStationInfo(string stationName, bool isDepartStation)
         {
-            if (string.IsNullOrWhiteSpace(stationName) || Stations == null)
-                return;
-
-            // 查找匹配的车站
-            var station = Stations.FirstOrDefault(s => s.StationName == stationName);
-            if (station != null)
+            if (string.IsNullOrWhiteSpace(stationName))
             {
-                if (isDepartStation)
+                return;
+            }
+
+            try
+            {
+                // 确保站点数据已加载
+                if (Stations == null || Stations.Count == 0)
                 {
-                    DepartStationPinyin = station.StationPinyin ?? string.Empty;
-                    DepartStationCode = station.StationCode ?? string.Empty;
+                    return;
                 }
-                else
+
+                // 在站点列表中查找匹配的站点
+                var station = Stations.FirstOrDefault(s => s.StationName == stationName);
+                
+                // 如果找不到完全匹配，则尝试查找部分匹配
+                if (station == null)
                 {
-                    ArriveStationPinyin = station.StationPinyin ?? string.Empty;
-                    ArriveStationCode = station.StationCode ?? string.Empty;
+                    // 移除"站"后缀进行比较
+                    string cleanName = stationName.Replace("站", "");
+                    station = Stations.FirstOrDefault(s => 
+                        s.StationName?.Replace("站", "") == cleanName ||
+                        s.StationName == cleanName);
+                }
+
+                // 如果找到匹配的站点，更新站点信息
+                if (station != null)
+                {
+                    CheckStationInfoCompleteness(station, isDepartStation);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                // 如果找不到匹配的车站，清空相关字段
-                if (isDepartStation)
-                {
-                    DepartStationPinyin = string.Empty;
-                    DepartStationCode = string.Empty;
-                }
-                else
-                {
-                    ArriveStationPinyin = string.Empty;
-                    ArriveStationCode = string.Empty;
-                }
-                
-                // 不再显示警告，避免干扰用户输入
-                // MessageBoxHelper.ShowWarning($"未找到车站\"{stationName}\"的信息，请检查车站名称是否正确。", "车站信息缺失");
+                LogHelper.LogError($"更新站点信息时出错: {stationName}", ex);
             }
         }
 
         protected virtual void UpdateSeatPositions()
         {
-            // 先清空集合
-            SeatPositions.Clear();
-            
-            switch (SelectedSeatType)
+            if (SeatPositions == null)
             {
-                case "新空调硬座":
-                    // 对于硬座，不显示下拉框
-                    break;
-                case "新空调硬卧":
-                    SeatPositions.Add("上");
-                    SeatPositions.Add("中");
-                    SeatPositions.Add("下");
-                    break;
-                case "新空调软卧":
-                    SeatPositions.Add("上");
-                    SeatPositions.Add("下");
-                    break;
-                case "商务座":
-                case "一等座":
-                    SeatPositions.Add("A");
-                    SeatPositions.Add("C");
-                    SeatPositions.Add("D");
-                    SeatPositions.Add("F");
-                    break;
-                case "二等座":
-                case "硬卧代硬座":
-                    SeatPositions.Add("A");
-                    SeatPositions.Add("B");
-                    SeatPositions.Add("C");
-                    SeatPositions.Add("D");
-                    SeatPositions.Add("F");
-                    break;
-                default:
-                    SeatPositions.Add("A");
-                    SeatPositions.Add("B");
-                    SeatPositions.Add("C");
-                    SeatPositions.Add("D");
-                    SeatPositions.Add("F");
-                    break;
+                SeatPositions = new ObservableCollection<string>();
+            }
+            else
+            {
+                SeatPositions.Clear();
             }
 
-            // 如果有选项，默认选择第一个
-            if (SeatPositions.Count > 0)
-                SelectedSeatPosition = SeatPositions[0];
-            else
-                SelectedSeatPosition = string.Empty;
-                
-            // 通知UI更新SeatPositions集合的可见性
+            // 根据座位类型设置可选的座位位置
+            if (!string.IsNullOrEmpty(_selectedSeatType))
+            {
+                switch (_selectedSeatType)
+                {
+                    case "商务座":
+                    case "一等座":
+                    case "二等座":
+                        // A-F 座位位置
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("B");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("D");
+                        SeatPositions.Add("F");
+                        break;
+                    case "新空调硬卧":
+                    case "新空调软卧":
+                        // 上中下卧铺位置
+                        SeatPositions.Add("上");
+                        SeatPositions.Add("中");
+                        SeatPositions.Add("下");
+                        break;
+                    case "软座":
+                    case "硬卧代硬座":
+                        // 这些类型没有特定位置，只有座位号
+                        break;
+                    default:
+                        // 默认不显示位置选项
+                        break;
+                }
+            }
+
+            // 通知UI更新
             OnPropertyChanged(nameof(SeatPositions));
             OnPropertyChanged(nameof(IsSeatPositionVisible));
         }
@@ -1180,111 +1142,50 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 验证表单并返回是否验证通过
+        /// 验证表单
         /// </summary>
+        /// <returns>是否验证通过</returns>
         public virtual bool ValidateForm()
         {
-            // 清空验证错误列表
-            _validationErrors.Clear();
-            
-            // 验证必填字段
-            if (string.IsNullOrWhiteSpace(TicketNumber))
-                _validationErrors.Add("未填写取票号");
-                
-            if (string.IsNullOrWhiteSpace(CheckInLocation))
-                _validationErrors.Add("未填写检票口");
-                
-            if (string.IsNullOrWhiteSpace(DepartStation))
-                _validationErrors.Add("未填写出发站");
-                
-            if (string.IsNullOrWhiteSpace(ArriveStation))
-                _validationErrors.Add("未填写到达站");
-                
-            if (string.IsNullOrWhiteSpace(DepartStationPinyin))
-                _validationErrors.Add("未填写出发站拼音");
-                
-            if (string.IsNullOrWhiteSpace(ArriveStationPinyin))
-                _validationErrors.Add("未填写到达站拼音");
-                
-            if (string.IsNullOrWhiteSpace(DepartStationCode))
-                _validationErrors.Add("未填写出发站代码");
-                
-            if (string.IsNullOrWhiteSpace(ArriveStationCode))
-                _validationErrors.Add("未填写到达站代码");
-                
-            if (string.IsNullOrWhiteSpace(SelectedTrainType))
-                _validationErrors.Add("未选择车次类型");
-                
-            if (string.IsNullOrWhiteSpace(TrainNumber))
-                _validationErrors.Add("未填写车次号");
-                
-            if (string.IsNullOrWhiteSpace(CoachNo))
-                _validationErrors.Add("未填写车厢号");
-                
-            if (!IsNoSeat && string.IsNullOrWhiteSpace(SeatNo))
-                _validationErrors.Add("未填写座位号");
-                
-            if (string.IsNullOrWhiteSpace(SelectedSeatType))
-                _validationErrors.Add("未选择座位类型");
-
-            // 验证金额格式
-            if (Money > 9999.99m)
-                _validationErrors.Add("金额不能超过9999.99");
-
-            // 验证车次号格式
-            if (!string.IsNullOrWhiteSpace(TrainNumber))
+            // 创建一个新的TrainRideInfo对象用于验证
+            var ticket = new TrainRideInfo
             {
-                if (!Regex.IsMatch(TrainNumber, @"^\d{1,4}$"))
-                    _validationErrors.Add("车次号必须为1-4位数字");
-                
-                // 车次号不能以0开头或只有0
-                if (TrainNumber.StartsWith("0") || TrainNumber.All(c => c == '0'))
-                    _validationErrors.Add("车次号不能以0开头或只有0");
-            }
+                TicketNumber = TicketNumber,
+                CheckInLocation = CheckInLocation,
+                DepartStation = DepartStation,
+                ArriveStation = ArriveStation,
+                DepartStationPinyin = DepartStationPinyin,
+                ArriveStationPinyin = ArriveStationPinyin,
+                DepartStationCode = DepartStationCode,
+                ArriveStationCode = ArriveStationCode,
+                DepartDate = DepartDate,
+                DepartTime = new TimeSpan(DepartHour, DepartMinute, 0),
+                TrainNo = FormValidationHelper.FormatTrainNo(SelectedTrainType, TrainNumber),
+                CoachNo = IsExtraCoach ? $"加{CoachNo}车" : $"{CoachNo}车",
+                SeatNo = FormValidationHelper.FormatSeatNo(IsNoSeat, SeatNo, SelectedSeatPosition),
+                Money = Money,
+                SeatType = SelectedSeatType,
+                AdditionalInfo = SelectedAdditionalInfo,
+                TicketPurpose = SelectedTicketPurpose,
+                Hint = SelectedHint == "自定义" ? CustomHint : SelectedHint,
+                TicketModificationType = SelectedTicketModificationType,
+                TicketTypeFlags = GetTicketTypeFlags(),
+                PaymentChannelFlags = GetPaymentChannelFlags()
+            };
 
-            // 验证车厢号格式
-            if (!string.IsNullOrWhiteSpace(CoachNo))
-            {
-                if (!Regex.IsMatch(CoachNo, @"^\d+$"))
-                    _validationErrors.Add("车厢号必须为数字");
-                
-                // 车厢号不能只有0
-                if (CoachNo.All(c => c == '0'))
-                    _validationErrors.Add("车厢号不能只有0");
-                
-                // 车厢号只能是00~99
-                if (Regex.IsMatch(CoachNo, @"^\d+$"))
-                {
-                    int coachNumber;
-                    if (int.TryParse(CoachNo, out coachNumber))
-                    {
-                        if (coachNumber < 0 || coachNumber > 99)
-                            _validationErrors.Add("车厢号必须在00-99之间");
-                    }
-                }
-            }
+            // 使用表单验证工具类验证表单
+            bool isValid = FormValidationHelper.ValidateTicketForm(ticket, _validationErrors);
 
-            // 验证座位号格式
-            if (!IsNoSeat && !string.IsNullOrWhiteSpace(SeatNo))
-            {
-                if (!Regex.IsMatch(SeatNo, @"^\d{1,3}$"))
-                    _validationErrors.Add("座位号必须为1-3位数字");
-                
-                // 座位号可以以0开头，但不能只有0
-                if (SeatNo.All(c => c == '0'))
-                    _validationErrors.Add("座位号不能只有0");
-            }
-
-            // 返回是否验证通过
-            return _validationErrors.Count == 0;
+            return isValid;
         }
 
+        /// <summary>
+        /// 判断是否可以保存车票
+        /// </summary>
+        /// <returns>是否可以保存</returns>
         private bool CanSaveTicket()
         {
-            // 简单验证，详细验证在保存时进行
-            return !string.IsNullOrWhiteSpace(TicketNumber) && 
-                   !string.IsNullOrWhiteSpace(DepartStation) && 
-                   !string.IsNullOrWhiteSpace(ArriveStation);
+            return true; // 简化处理，允许尝试保存，在保存前会进行验证
         }
 
         /// <summary>
@@ -1292,201 +1193,120 @@ namespace TA_WPF.ViewModels
         /// </summary>
         protected virtual async void SaveTicket()
         {
-            if (!ValidateForm())
-            {
-                // 显示验证错误
-                string errorMessage = string.Join("\n", _validationErrors);
-                MessageBoxHelper.ShowWarning(errorMessage, "表单验证失败");
-                return;
-            }
-
             try
             {
-                // 创建车票信息对象
+                // 验证表单
+                if (!ValidateForm())
+                {
+                    MessageBoxHelper.ShowWarning(FormValidationHelper.GetFormattedValidationErrors(_validationErrors));
+                    return;
+                }
+
+                // 创建TrainRideInfo对象
                 var ticket = new TrainRideInfo
                 {
                     TicketNumber = TicketNumber,
                     CheckInLocation = CheckInLocation,
-                    DepartStation = DepartStation,
-                    TrainNo = SelectedTrainType == "纯数字" ? TrainNumber : $"{SelectedTrainType}{TrainNumber}",
-                    ArriveStation = ArriveStation,
+                    DepartStation = DepartStation + "站",
+                    ArriveStation = ArriveStation + "站",
                     DepartStationPinyin = DepartStationPinyin,
                     ArriveStationPinyin = ArriveStationPinyin,
+                    DepartStationCode = DepartStationCode,
+                    ArriveStationCode = ArriveStationCode,
                     DepartDate = DepartDate,
                     DepartTime = new TimeSpan(DepartHour, DepartMinute, 0),
-                    CoachNo = CoachNo,
-                    SeatNo = GetFormattedSeatNo(),
+                    TrainNo = FormValidationHelper.FormatTrainNo(SelectedTrainType, TrainNumber),
+                    CoachNo = IsExtraCoach ? $"加{CoachNo}车" : $"{CoachNo}车",
+                    SeatNo = FormValidationHelper.FormatSeatNo(IsNoSeat, SeatNo, SelectedSeatPosition),
                     Money = Money,
                     SeatType = SelectedSeatType,
                     AdditionalInfo = SelectedAdditionalInfo,
                     TicketPurpose = SelectedTicketPurpose,
                     Hint = SelectedHint == "自定义" ? CustomHint : SelectedHint,
-                    DepartStationCode = DepartStationCode,
-                    ArriveStationCode = ArriveStationCode,
                     TicketModificationType = SelectedTicketModificationType,
                     TicketTypeFlags = GetTicketTypeFlags(),
                     PaymentChannelFlags = GetPaymentChannelFlags()
                 };
 
-                // 处理车厢号
-                if (IsExtraCoach)
-                {
-                    // 去掉前导零并添加"加"和"车"
-                    int coachNum = int.Parse(CoachNo);
-                    ticket.CoachNo = $"加{coachNum}车";
-                }
-                else
-                    ticket.CoachNo = $"{CoachNo}车";
-
-                // 处理座位号
-                if (IsNoSeat)
-                    ticket.SeatNo = "无座";
-                else if (SelectedSeatType == "新空调硬座")
-                    ticket.SeatNo = SeatNo;
-                else
-                    ticket.SeatNo = $"{SeatNo}{SelectedSeatPosition}";
-
-                // 设置超时任务
-                var saveTask = _databaseService.AddTicketAsync(ticket);
+                // 保存车票
+                await _databaseService.AddTicketAsync(ticket);
                 
-                // 添加5秒超时
-                var timeoutTask = Task.Delay(5000);
+                MessageBoxHelper.ShowInformation("车票已成功保存！", "成功");
                 
-                // 等待任务完成或超时
-                if (await Task.WhenAny(saveTask, timeoutTask) == timeoutTask)
-                {
-                    // 操作超时
-                    MessageBoxHelper.ShowError("保存车票操作超时，请检查数据库连接");
-                    return;
-                }
+                // 重置表单
+                ResetForm();
                 
-                // 确保任务完成且没有异常
-                await saveTask;
+                // 标记需要刷新数据
+                _needToRefreshData = true;
                 
-                MessageBoxHelper.ShowInformation("车票添加成功！", "成功");
-                
-                // 重置数据
-                ResetData();
-                
-                // 重置表单修改状态
-                ResetFormModifiedState();
-                
-                // 刷新仪表盘数据和查询全部数据
-                if (_mainViewModel != null)
-                {
-                    // 标记需要刷新数据
-                    _needToRefreshData = true;
-                }
-                
-                // 安全地关闭窗口
-                try
-                {
-                    // 关闭窗口，并设置DialogResult为true，表示保存成功
-                    var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
-                    if (window != null)
-                    {
-                        window.DialogResult = true;
-                    }
-                    else
-                    {
-                        // 如果找不到窗口，使用事件关闭
-                        OnCloseWindow();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogHelper.LogTicketError("关闭", "关闭添加车票窗口时失败", ex);
-                    // 尝试使用事件关闭
-                    OnCloseWindow();
-                }
-                
-                // 在窗口关闭后刷新数据
-                if (_needToRefreshData && _mainViewModel != null)
-                {
-                    // 刷新仪表盘数据
-                    if (_mainViewModel.DashboardViewModel != null)
-                    {
-                        await _mainViewModel.DashboardViewModel.RefreshDataAsync();
-                    }
-                    
-                    // 刷新查询全部数据
-                    if (_mainViewModel.QueryAllTicketsViewModel != null)
-                    {
-                        await _mainViewModel.QueryAllTicketsViewModel.QueryAllAsync();
-                    }
-                    
-                    // 重置刷新标记
-                    _needToRefreshData = false;
-                }
-            }
-            catch (MySqlException sqlEx)
-            {
-                LogHelper.LogTicketError("保存", $"添加车票时数据库错误: {sqlEx.Message}, 错误代码: {sqlEx.Number}", sqlEx);
-                MessageBoxHelper.ShowError($"数据库错误: {sqlEx.Message}\n错误代码: {sqlEx.Number}");
+                // 触发窗口关闭事件
+                OnCloseWindow();
             }
             catch (Exception ex)
             {
-                LogHelper.LogTicketError("保存", $"添加车票失败: {ex.Message}", ex);
-                MessageBoxHelper.ShowError($"保存车票失败: {ex.Message}");
+                MessageBoxHelper.ShowError($"保存车票时出错: {ex.Message}");
+                LogHelper.LogTicketError("添加", "保存车票时出错", ex);
             }
         }
 
+        /// <summary>
+        /// 重置表单
+        /// </summary>
         private void ResetForm()
         {
-            // 重置所有字段为默认值
+            // 重置表单字段
             TicketNumber = string.Empty;
             CheckInLocation = string.Empty;
             DepartStation = string.Empty;
             ArriveStation = string.Empty;
             DepartStationPinyin = string.Empty;
             ArriveStationPinyin = string.Empty;
-            Money = 0;
             DepartStationCode = string.Empty;
             ArriveStationCode = string.Empty;
             DepartDate = DateTime.Today;
             DepartHour = 0;
             DepartMinute = 0;
-            SelectedTrainType = TrainTypes.FirstOrDefault() ?? string.Empty;
+            SelectedTrainType = TrainTypes.FirstOrDefault() ?? "T";
             TrainNumber = string.Empty;
             CoachNo = string.Empty;
             IsExtraCoach = false;
             SeatNo = string.Empty;
             IsNoSeat = false;
-            SelectedSeatPosition = SeatPositions.FirstOrDefault() ?? string.Empty;
-            SelectedSeatType = SeatTypes.FirstOrDefault() ?? string.Empty;
+            SelectedSeatType = SeatTypes.FirstOrDefault() ?? "新空硬座";
+            SelectedSeatPosition = string.Empty;
+            Money = 0m;
             SelectedAdditionalInfo = string.Empty;
             SelectedTicketPurpose = string.Empty;
             SelectedHint = HintOptions.FirstOrDefault() ?? string.Empty;
             CustomHint = string.Empty;
             SelectedTicketModificationType = null;
-            
-            // 重置票种类型
             IsStudentTicket = false;
             IsDiscountTicket = false;
             IsOnlineTicket = false;
             IsChildTicket = false;
-            
-            // 重置支付渠道
             IsAlipayPayment = false;
             IsWeChatPayment = false;
             IsABCPayment = false;
             IsCCBPayment = false;
             IsICBCPayment = false;
             
-            // 清空搜索文本框内容
+            // 重置搜索框文本
             DepartStationSearchText = string.Empty;
             ArriveStationSearchText = string.Empty;
             
-            // 关闭下拉框
+            // 重置下拉列表状态
             IsDepartStationDropdownOpen = false;
             IsArriveStationDropdownOpen = false;
             
-            // 清空搜索结果
+            // 清空建议列表
             DepartStationSuggestions.Clear();
             ArriveStationSuggestions.Clear();
             
-            // 清空验证错误
-            _validationErrors.Clear();
+            // 更新座位位置选项
+            UpdateSeatPositions();
+            
+            // 重置表单修改状态
+            ResetFormModifiedState();
         }
 
         /// <summary>
@@ -1498,45 +1318,29 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 如果正在更新，不执行搜索
-                if ((isDepartStation && _isUpdatingDepartStation) || (!isDepartStation && _isUpdatingArriveStation))
-                    return;
-
-                // 清空搜索结果
-                if (isDepartStation)
-                {
-                    DepartStationSuggestions.Clear();
-                    IsDepartStationDropdownOpen = false;
-                }
-                else
-                {
-                    ArriveStationSuggestions.Clear();
-                    IsArriveStationDropdownOpen = false;
-                }
-
-                // 如果搜索文本为空，不执行搜索
                 if (string.IsNullOrWhiteSpace(searchText))
-                    return;
-
-                // 设置超时任务
-                var searchTask = _databaseService.SearchStationsByNameAsync(searchText);
-                var timeoutTask = Task.Delay(3000); // 3秒超时
-
-                // 等待任务完成或超时
-                if (await Task.WhenAny(searchTask, timeoutTask) == timeoutTask)
                 {
-                    // 操作超时
-                    MessageBoxHelper.ShowWarning("搜索车站操作超时，请检查数据库连接", "操作超时");
+                    if (isDepartStation)
+                    {
+                        DepartStationSuggestions.Clear();
+                        IsDepartStationDropdownOpen = false;
+                    }
+                    else
+                    {
+                        ArriveStationSuggestions.Clear();
+                        IsArriveStationDropdownOpen = false;
+                    }
                     return;
                 }
 
-                // 确保任务完成且没有异常
-                var stations = await searchTask;
-
-                // 更新搜索结果
+                // 使用站点搜索服务搜索站点
+                var suggestions = await _stationSearchService.SearchStationsAsync(searchText);
+                
                 if (isDepartStation)
                 {
-                    foreach (var station in stations)
+                    // 更新出发站建议列表
+                    DepartStationSuggestions.Clear();
+                    foreach (var station in suggestions)
                     {
                         DepartStationSuggestions.Add(station);
                     }
@@ -1544,34 +1348,18 @@ namespace TA_WPF.ViewModels
                 }
                 else
                 {
-                    foreach (var station in stations)
+                    // 更新到达站建议列表
+                    ArriveStationSuggestions.Clear();
+                    foreach (var station in suggestions)
                     {
                         ArriveStationSuggestions.Add(station);
                     }
                     IsArriveStationDropdownOpen = ArriveStationSuggestions.Count > 0;
                 }
-
-                // 如果没有找到匹配的车站，提示用户
-                if (((isDepartStation && DepartStationSuggestions.Count == 0) || 
-                    (!isDepartStation && ArriveStationSuggestions.Count == 0)) && 
-                    !string.IsNullOrWhiteSpace(searchText))
-                {
-                    // 检查是否忽略车站检查
-                    if (!Services.StationCheckService.Instance.IgnoreStationCheck)
-                    {
-                        string warningMessage = $"未找到名称包含\"{searchText}\"的车站，请检查输入是否正确或考虑添加新车站。";
-                        MessageBoxHelper.ShowWarning(warningMessage, "车站不存在");
-                    }
-                }
-            }
-            catch (MySqlException sqlEx)
-            {
-                MessageBoxHelper.ShowError($"数据库错误: {sqlEx.Message}\n错误代码: {sqlEx.Number}");
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"搜索车站时出错: {ex.Message}", ex);
-                MessageBoxHelper.ShowError($"搜索车站时出错: {ex.Message}");
             }
         }
 
@@ -1594,11 +1382,9 @@ namespace TA_WPF.ViewModels
             DepartStationSearchText = stationName;
             _isUpdatingDepartStation = false;
             
+            // 直接更新站点信息，无需等待失去焦点
             DepartStationPinyin = station.StationPinyin ?? string.Empty;
             DepartStationCode = station.StationCode ?? string.Empty;
-            
-            // 检查是否需要提示用户完善车站信息
-            CheckStationInfoCompleteness(station, true);
         }
 
         private void SelectArriveStation(StationInfo station)
@@ -1620,11 +1406,9 @@ namespace TA_WPF.ViewModels
             ArriveStationSearchText = stationName;
             _isUpdatingArriveStation = false;
             
+            // 直接更新站点信息，无需等待失去焦点
             ArriveStationPinyin = station.StationPinyin ?? string.Empty;
             ArriveStationCode = station.StationCode ?? string.Empty;
-            
-            // 检查是否需要提示用户完善车站信息
-            CheckStationInfoCompleteness(station, false);
         }
 
         // 检查车站信息是否完整
@@ -1825,6 +1609,56 @@ namespace TA_WPF.ViewModels
             if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
             if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
             return flags;
+        }
+
+        /// <summary>
+        /// 处理站点输入框失去焦点事件
+        /// </summary>
+        /// <param name="isDepartStation">是否为出发站</param>
+        public virtual void OnStationLostFocus(bool isDepartStation)
+        {
+            try
+            {
+                string stationName = isDepartStation ? DepartStation : ArriveStation;
+                if (!string.IsNullOrWhiteSpace(stationName))
+                {
+                    // 使用StationSearchService处理失去焦点事件
+                    var station = _stationSearchService.HandleStationLostFocus(stationName, isDepartStation);
+                    
+                    if (station != null)
+                    {
+                        // 更新站点信息
+                        if (isDepartStation)
+                        {
+                            // 更新出发站信息
+                            DepartStationPinyin = station.StationPinyin ?? string.Empty;
+                            DepartStationCode = station.StationCode ?? string.Empty;
+                            
+                            // 检查站点信息完整性，与原有逻辑保持一致
+                            CheckStationInfoCompleteness(station, true);
+                        }
+                        else
+                        {
+                            // 更新到达站信息
+                            ArriveStationPinyin = station.StationPinyin ?? string.Empty;
+                            ArriveStationCode = station.StationCode ?? string.Empty;
+                            
+                            // 检查站点信息完整性，与原有逻辑保持一致
+                            CheckStationInfoCompleteness(station, false);
+                        }
+                    }
+                    else
+                    {
+                        // 如果找不到匹配的站点，也执行原有的验证逻辑
+                        ValidateStationName(stationName, isDepartStation);
+                        UpdateStationInfo(stationName, isDepartStation);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"处理站点输入框失去焦点事件时出错: {ex.Message}", ex);
+            }
         }
     }
 

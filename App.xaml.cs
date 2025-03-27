@@ -7,6 +7,7 @@ using TA_WPF.Views;
 using System.Linq;
 using System.IO;
 using System.Xml;
+using TA_WPF.Services;
 
 namespace TA_WPF
 {
@@ -17,6 +18,7 @@ namespace TA_WPF
     {
         private MainWindow? _mainWindow;
         private LoginWindow? _loginWindow;
+        private StationSearchService? _stationSearchService;
 
         // COM初始化常量
         private const int COINIT_APARTMENTTHREADED = 0x2;
@@ -241,11 +243,40 @@ namespace TA_WPF
                         GC.WaitForPendingFinalizers();
                     }
                 };
+
+                // 在应用程序启动结束前，初始化服务
+                InitializeServices();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"应用程序启动时出错: {ex.Message}");
-                LogHelper.LogError($"应用程序启动时出错: {ex.Message}");
+                MessageBox.Show($"应用程序启动时出错: {ex.Message}\n\n{ex.StackTrace}", "应用程序错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                LogHelper.LogSystemError("应用程序", "应用程序启动时出错", ex);
+                Current.Shutdown(-1);
+            }
+        }
+
+        /// <summary>
+        /// 初始化应用程序服务
+        /// </summary>
+        private void InitializeServices()
+        {
+            try
+            {
+                // 获取数据库连接字符串
+                string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString ?? "Server=localhost;Database=ta_wpf;User ID=root;Password=";
+                
+                // 初始化站点搜索服务
+                var databaseService = new DatabaseService(connectionString);
+                _stationSearchService = new StationSearchService(databaseService);
+                
+                // 记录日志
+                LogHelper.LogSystem("应用程序", "服务初始化完成");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"初始化服务时出错: {ex.Message}");
+                LogHelper.LogSystemError("应用程序", "初始化服务时出错", ex);
+                throw;
             }
         }
 
