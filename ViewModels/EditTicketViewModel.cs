@@ -165,12 +165,7 @@ namespace TA_WPF.ViewModels
                 IsChildTicket = (ticketTypeFlags & (int)TicketTypeFlags.ChildTicket) != 0;
                 
                 // 设置支付渠道
-                int paymentChannelFlags = _originalTicket.PaymentChannelFlags;
-                IsAlipayPayment = (paymentChannelFlags & (int)PaymentChannelFlags.Alipay) != 0;
-                IsWeChatPayment = (paymentChannelFlags & (int)PaymentChannelFlags.WeChat) != 0;
-                IsABCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.ABC) != 0;
-                IsCCBPayment = (paymentChannelFlags & (int)PaymentChannelFlags.CCB) != 0;
-                IsICBCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.ICBC) != 0;
+                SetPaymentChannelFlags(_originalTicket.PaymentChannelFlags);
                 
                 // 初始化完成
                 _isInitializing = false;
@@ -257,15 +252,9 @@ namespace TA_WPF.ViewModels
         }
         
         // 获取支付渠道标志位
-        private int GetPaymentChannelFlags()
+        private new int GetPaymentChannelFlags()
         {
-            int flags = 0;
-            if (IsAlipayPayment) flags |= (int)PaymentChannelFlags.Alipay;
-            if (IsWeChatPayment) flags |= (int)PaymentChannelFlags.WeChat;
-            if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
-            if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
-            if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
-            return flags;
+            return base.GetPaymentChannelFlags();
         }
 
         /// <summary>

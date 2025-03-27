@@ -598,10 +598,12 @@
                     <WrapPanel Margin="4,2,0,2">
                         <CheckBox Content="支付宝售票" 
                                   IsChecked="{Binding IsAlipayPayment}" 
+                                  IsEnabled="{Binding IsAlipayPaymentEnabled}"
                                   Margin="0,0,24,0"
                                   VerticalAlignment="Center"/>
                         <CheckBox Content="微信售票" 
                                   IsChecked="{Binding IsWeChatPayment}" 
+                                  IsEnabled="{Binding IsWeChatPaymentEnabled}"
                                   Margin="0,0,24,0"
                                   VerticalAlignment="Center"/>
                         <CheckBox Content="农业银行" 
