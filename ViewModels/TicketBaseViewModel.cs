@@ -602,6 +602,9 @@ namespace TA_WPF.ViewModels
                 {
                     try 
                     {
+                        // 先刷新总记录数，确保总页数计算正确
+                        await RefreshTotalItemsAsync();
+                        
                         // 加载新的页面数据
                         await LoadPageDataAsync();
                         
@@ -609,6 +612,7 @@ namespace TA_WPF.ViewModels
                         UpdateSelectedItemsCount();
                         
                         // 再次触发UI更新通知
+                        OnPropertyChanged(nameof(TotalPages));
                         OnPropertyChanged(nameof(TrainRideInfos));
                         OnPropertyChanged(nameof(IsAllSelected));
                         OnPropertyChanged(nameof(SelectionToggleText));

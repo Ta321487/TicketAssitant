@@ -117,98 +117,26 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 加载页面数据
+        /// 获取当前筛选条件
         /// </summary>
-        protected override async Task LoadPageDataAsync()
+        /// <returns>筛选条件元组 (出发站, 车次, 年份, 是否为AND条件)</returns>
+        private (string departStation, string fullTrainNo, int? yearValue, bool isAndCondition) GetCurrentFilterConditions()
         {
-            try
+            var departStation = AdvancedQueryViewModel.SelectedDepartStation?.DepartStation;
+            string fullTrainNo = null;
+            if (!string.IsNullOrWhiteSpace(AdvancedQueryViewModel.TrainNumberFilter))
             {
-                // 确保加载状态已设置
-                IsLoading = true;
-                
-                // 检查缓存中是否已有该页数据
-                if (_paginationViewModel.TryGetCachedPage(out var cachedItems))
-                {
-                    // 使用缓存数据
-                    bool needsUpdate = _paginationViewModel.Items.Count != cachedItems.Count;
-                    if (!needsUpdate)
-                    {
-                        // 如果数量相同，检查内容是否相同
-                        for (int i = 0; i < cachedItems.Count; i++)
-                        {
-                            if (_paginationViewModel.Items[i] != cachedItems[i])
-                            {
-                                needsUpdate = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (needsUpdate)
-                    {
-                        // 更新UI
-                        _paginationViewModel.Items = new ObservableCollection<TrainRideInfo>(cachedItems);
-                    }
-                    
-                    // 触发属性变更通知，确保UI正确显示数据状态
-                    OnPropertyChanged(nameof(HasData));
-                    OnPropertyChanged(nameof(HasNoData));
-                    return;
-                }
-                
-                // 如果有筛选条件，使用筛选查询
-                var departStation = AdvancedQueryViewModel.SelectedDepartStation?.DepartStation;
-                string? fullTrainNo = null;
-                if (!string.IsNullOrWhiteSpace(AdvancedQueryViewModel.TrainNumberFilter))
-                {
-                    fullTrainNo = AdvancedQueryViewModel.GetFullTrainNo();
-                }
-                
-                // 获取年份值
-                int? yearValue = null;
-                if (AdvancedQueryViewModel.SelectedYearOption?.Year.HasValue == true)
-                {
-                    yearValue = AdvancedQueryViewModel.SelectedYearOption.Year.Value;
-                }
-                
-                // 获取当前页数据
-                var items = await _databaseService.GetFilteredTrainRideInfosAsync(
-                    _paginationViewModel.CurrentPage,
-                    _paginationViewModel.PageSize,
-                    departStation,
-                    fullTrainNo,
-                    yearValue,
-                    AdvancedQueryViewModel.IsAndCondition);
-                
-                // 更新缓存和UI
-                _paginationViewModel.UpdateCache(items);
-                
-                // 清空现有项并添加新项
-                _paginationViewModel.Items.Clear();
-                foreach (var item in items)
-                {
-                    _paginationViewModel.Items.Add(item);
-                }
-                
-                // 如果是第一页，刷新总记录数
-                if (_paginationViewModel.CurrentPage == 1)
-                {
-                    await RefreshTotalCountAsync();
-                }
-                
-                // 触发属性变更通知，确保UI正确显示数据状态
-                OnPropertyChanged(nameof(HasData));
-                OnPropertyChanged(nameof(HasNoData));
+                fullTrainNo = AdvancedQueryViewModel.GetFullTrainNo();
             }
-            catch (Exception ex)
+            
+            // 获取年份值
+            int? yearValue = null;
+            if (AdvancedQueryViewModel.SelectedYearOption?.Year.HasValue == true)
             {
-                MessageBoxHelper.ShowError($"加载数据时出错: {ex.Message}");
-                LogHelper.LogError($"加载数据时出错", ex);
+                yearValue = AdvancedQueryViewModel.SelectedYearOption.Year.Value;
             }
-            finally
-            {
-                IsLoading = false;
-            }
+            
+            return (departStation, fullTrainNo, yearValue, AdvancedQueryViewModel.IsAndCondition);
         }
 
         /// <summary>
@@ -218,21 +146,11 @@ namespace TA_WPF.ViewModels
         {
             try
             {
+                // 获取筛选条件
+                var (departStation, fullTrainNo, yearValue, isAndCondition) = GetCurrentFilterConditions();
+                
                 // 获取总记录数（考虑筛选条件）
                 int totalCount;
-                var departStation = AdvancedQueryViewModel.SelectedDepartStation?.DepartStation;
-                string fullTrainNo = null;
-                if (!string.IsNullOrWhiteSpace(AdvancedQueryViewModel.TrainNumberFilter))
-                {
-                    fullTrainNo = AdvancedQueryViewModel.GetFullTrainNo();
-                }
-                
-                // 获取年份值
-                int? yearValue = null;
-                if (AdvancedQueryViewModel.SelectedYearOption?.Year.HasValue == true)
-                {
-                    yearValue = AdvancedQueryViewModel.SelectedYearOption.Year.Value;
-                }
                 
                 // 根据是否有筛选条件获取总记录数
                 if (departStation != null || fullTrainNo != null || yearValue.HasValue)
@@ -241,7 +159,7 @@ namespace TA_WPF.ViewModels
                         departStation,
                         fullTrainNo,
                         yearValue,
-                        AdvancedQueryViewModel.IsAndCondition);
+                        isAndCondition);
                 }
                 else
                 {
@@ -260,6 +178,16 @@ namespace TA_WPF.ViewModels
                 MessageBoxHelper.ShowError($"刷新总记录数时出错: {ex.Message}");
                 LogHelper.LogError($"刷新总记录数时出错", ex);
             }
+        }
+
+        /// <summary>
+        /// 重写刷新总记录数方法
+        /// </summary>
+        /// <returns>异步任务</returns>
+        protected override async Task RefreshTotalItemsAsync()
+        {
+            // 调用已有的刷新总记录数方法
+            await RefreshTotalCountAsync();
         }
 
         /// <summary>
@@ -352,6 +280,375 @@ namespace TA_WPF.ViewModels
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// 加载页面数据
+        /// </summary>
+        protected override async Task LoadPageDataAsync()
+        {
+            try
+            {
+                // 尝试从缓存获取数据
+                if (_paginationViewModel.TryGetCachedPage(out var cachedItems))
+                {
+                    // 更新Items集合，触发UI更新
+                    _paginationViewModel.Items.Clear();
+                    foreach (var item in cachedItems)
+                    {
+                        _paginationViewModel.Items.Add(item);
+                    }
+                    
+                    // 触发属性变更通知，确保UI正确显示数据状态
+                    OnPropertyChanged(nameof(HasData));
+                    OnPropertyChanged(nameof(HasNoData));
+                    
+                    return;
+                }
+                
+                // 获取筛选条件
+                var (departStation, fullTrainNo, yearValue, isAndCondition) = GetCurrentFilterConditions();
+                
+                // 获取当前页数据
+                var items = await _databaseService.GetFilteredTrainRideInfosAsync(
+                    _paginationViewModel.CurrentPage,
+                    _paginationViewModel.PageSize,
+                    departStation,
+                    fullTrainNo,
+                    yearValue,
+                    isAndCondition);
+                
+                // 更新缓存和UI
+                _paginationViewModel.UpdateCache(items);
+                
+                // 清空现有项并添加新项
+                _paginationViewModel.Items.Clear();
+                foreach (var item in items)
+                {
+                    _paginationViewModel.Items.Add(item);
+                }
+                
+                // 如果是第一页，刷新总记录数
+                if (_paginationViewModel.CurrentPage == 1)
+                {
+                    await RefreshTotalCountAsync();
+                }
+                
+                // 触发属性变更通知，确保UI正确显示数据状态
+                OnPropertyChanged(nameof(HasData));
+                OnPropertyChanged(nameof(HasNoData));
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"加载数据时出错: {ex.Message}");
+                LogHelper.LogError($"加载数据时出错", ex);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// 异步加载出发站列表
+        /// </summary>
+        private async void LoadDepartStationsAsync()
+        {
+            try
+            {
+                // 获取已有的出发站点
+                var departStations = await _databaseService.GetDistinctDepartStationsAsync();
+                
+                // 转换为DepartStationItem列表
+                var departStationItems = departStations
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Select(s => new DepartStationItem(s))
+                    .ToList();
+                
+                // 添加一个空选项
+                departStationItems.Insert(0, new DepartStationItem(string.Empty));
+                
+                DepartStations = new ObservableCollection<DepartStationItem>(departStationItems);
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"加载出发站列表时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 搜索站点
+        /// </summary>
+        private async void SearchStations(string searchText)
+        {
+            try
+            {
+                // 如果正在更新，不执行搜索
+                if (_isUpdatingDepartStation)
+                    return;
+
+                // 清空搜索结果
+                DepartStationSuggestions.Clear();
+                IsDepartStationDropdownOpen = false;
+
+                // 如果搜索文本为空，不执行搜索
+                if (string.IsNullOrWhiteSpace(searchText))
+                    return;
+
+                // 搜索出发站
+                var stations = await _databaseService.SearchStationsByNameAsync(searchText);
+
+                // 添加到建议列表
+                foreach (var station in stations)
+                {
+                    DepartStationSuggestions.Add(station);
+                }
+                
+                // 如果有结果，显示下拉框
+                IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"搜索出发站时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 选择出发站
+        /// </summary>
+        private void SelectDepartStation(StationInfo station)
+        {
+            if (station == null)
+                return;
+                
+            // 确保车站名称不包含"站"字
+            string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
+            
+            // 先关闭下拉框，防止触发搜索
+            IsDepartStationDropdownOpen = false;
+            
+            // 暂时取消DepartStationSearchText的PropertyChanged事件触发
+            _isUpdatingDepartStation = true;
+            DepartStationSearchText = stationName;
+            _isUpdatingDepartStation = false;
+            
+            // 创建并设置选中的出发站
+            SelectedDepartStation = new DepartStationItem(stationName);
+            
+            // 不要自动应用筛选，等待用户点击查询按钮
+            // ApplyFilter();
+        }
+
+        /// <summary>
+        /// 选择自定义年份
+        /// </summary>
+        private void SelectCustomYear()
+        {
+            // 创建一个对话框获取用户输入的年份
+            string title = "输入自定义年份";
+            string prompt = "请输入年份 (1900-2099):";
+            string initialValue = CustomYear?.ToString() ?? DateTime.Now.Year.ToString();
+            
+            var result = MessageBoxHelper.ShowInputDialog(title, prompt, initialValue);
+            
+            if (result.IsConfirmed)
+            {
+                // 验证年份输入
+                if (int.TryParse(result.InputText, out int year) && year >= 1900 && year <= 2099)
+                {
+                    CustomYear = year;
+                    
+                    // 更新自定义年份选项
+                    var customOption = YearOptions.FirstOrDefault(y => y.IsCustom);
+                    if (customOption != null)
+                    {
+                        customOption.Year = year;
+                        customOption.DisplayName = $"自定义: {year}";
+                        OnPropertyChanged(nameof(YearOptions));
+                    }
+                    
+                    // 不要自动应用筛选条件
+                    // ApplyFilter();
+                }
+                else
+                {
+                    MessageBoxHelper.ShowError("年份必须是1900-2099之间的整数。");
+                    // 恢复选择非自定义年份
+                    SelectedYearOption = YearOptions.FirstOrDefault(y => !y.IsCustom);
+                }
+            }
+            else
+            {
+                // 用户取消，恢复选择非自定义年份
+                SelectedYearOption = YearOptions.FirstOrDefault(y => !y.IsCustom);
+            }
+        }
+
+        /// <summary>
+        /// 切换查询面板可见性
+        /// </summary>
+        private void ToggleQueryPanel()
+        {
+            IsQueryPanelVisible = !IsQueryPanelVisible;
+        }
+
+        /// <summary>
+        /// 获取完整的车次号
+        /// </summary>
+        private string GetFullTrainNo()
+        {
+            if (string.IsNullOrEmpty(SelectedTrainPrefix) || SelectedTrainPrefix == "纯数字")
+            {
+                return TrainNumberFilter;
+            }
+            else
+            {
+                return $"{SelectedTrainPrefix}{TrainNumberFilter}";
+            }
+        }
+
+        /// <summary>
+        /// 应用筛选条件
+        /// </summary>
+        private async void ApplyFilter()
+        {
+            try
+            {
+                // 获取筛选条件
+                var (departStation, fullTrainNo, yearValue, isAndCondition) = GetCurrentFilterConditions();
+                
+                // 检查是否存在筛选条件
+                bool hasFilter = departStation != null || !string.IsNullOrWhiteSpace(fullTrainNo) || yearValue.HasValue;
+                
+                // 更新活跃筛选条件标记
+                HasActiveFilters = hasFilter;
+                
+                // 创建查询事件参数
+                var filterEventArgs = new QueryFilterEventArgs
+                {
+                    DepartStation = departStation,
+                    FullTrainNo = fullTrainNo,
+                    Year = yearValue,
+                    IsAndCondition = isAndCondition
+                };
+                
+                // 触发筛选应用事件
+                OnFilterApplied(this, filterEventArgs);
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"应用筛选条件时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 重置筛选条件
+        /// </summary>
+        private void ResetFilter()
+        {
+            TrainNumberFilter = string.Empty;
+            SelectedDepartStation = null;
+            SelectedYearOption = null;
+            CustomYear = null;
+            SelectedTrainPrefix = "G";
+            IsAndCondition = true;
+            DepartStationSearchText = string.Empty;
+            
+            HasActiveFilters = false;
+            
+            // 不要自动应用筛选，等待用户点击查询按钮
+            // 实际会执行一次无筛选条件的查询
+        }
+
+        /// <summary>
+        /// 检查是否有任何激活的筛选条件
+        /// </summary>
+        private bool HasAnyActiveFilter()
+        {
+            return SelectedDepartStation != null || 
+                   !string.IsNullOrWhiteSpace(TrainNumberFilter) || 
+                   SelectedYearOption?.Year.HasValue == true;
+        }
+
+        /// <summary>
+        /// 清空出发站条件
+        /// </summary>
+        private void ClearDepartStation()
+        {
+            SelectedDepartStation = null;
+            DepartStationSearchText = string.Empty;
+            // 不要自动应用筛选，等待用户点击查询按钮
+            // ApplyFilter();
+        }
+
+        /// <summary>
+        /// 清空车次号条件
+        /// </summary>
+        private void ClearTrainNumber()
+        {
+            TrainNumberFilter = string.Empty;
+            SelectedTrainPrefix = "G";
+            // 不要自动应用筛选，等待用户点击查询按钮
+            // ApplyFilter();
+        }
+
+        /// <summary>
+        /// 清空年份条件
+        /// </summary>
+        private void ClearYear()
+        {
+            SelectedYearOption = null;
+            CustomYear = null;
+            // 不要自动应用筛选
+            // ApplyFilter();
+        }
+
+        // 重写选择变更方法，更新预览按钮状态
+        protected override void UpdateSelectedItemsCount()
+        {
+            base.UpdateSelectedItemsCount();
+            CanPreviewTicket = SelectedItemsCount == 1;
+            
+            // 刷新命令可执行状态
+            CommandManager.InvalidateRequerySuggested();
+        }
+        
+        // 重写页面变更方法，确保预览按钮状态也被更新
+        protected override void OnPageChanged(object sender, EventArgs e)
+        {
+            // 首先调用基类方法
+            base.OnPageChanged(sender, e);
+            
+            // 确保预览按钮状态正确
+            CanPreviewTicket = SelectedItemsCount == 1;
+            
+            // 通知UI更新
+            OnPropertyChanged(nameof(CanPreviewTicket));
+        }
+        
+        // 重写页大小变更方法，确保预览按钮状态也被更新
+        protected override void OnPageSizeChanged(object sender, EventArgs e)
+        {
+            // 首先调用基类方法
+            base.OnPageSizeChanged(sender, e);
+            
+            // 确保预览按钮状态正确
+            CanPreviewTicket = SelectedItemsCount == 1;
+            
+            // 通知UI更新
+            OnPropertyChanged(nameof(CanPreviewTicket));
+        }
+        
+        // 预览车票方法
+        private void PreviewSelectedTicket()
+        {
+            var selectedTicket = TrainRideInfos.FirstOrDefault(t => t.IsSelected);
+            if (selectedTicket != null)
+            {
+                var previewWindow = new Views.TicketPreviewWindow(selectedTicket);
+                previewWindow.Owner = Application.Current.MainWindow;
+                previewWindow.ShowDialog();
             }
         }
 
@@ -889,361 +1186,6 @@ namespace TA_WPF.ViewModels
             
             // 默认选择G
             SelectedTrainPrefix = TrainPrefixes.FirstOrDefault();
-        }
-
-        /// <summary>
-        /// 异步加载出发站列表
-        /// </summary>
-        private async void LoadDepartStationsAsync()
-        {
-            try
-            {
-                // 获取已有的出发站点
-                var departStations = await _databaseService.GetDistinctDepartStationsAsync();
-                
-                // 转换为DepartStationItem列表
-                var departStationItems = departStations
-                    .Where(s => !string.IsNullOrEmpty(s))
-                    .Select(s => new DepartStationItem(s))
-                    .ToList();
-                
-                // 添加一个空选项
-                departStationItems.Insert(0, new DepartStationItem(string.Empty));
-                
-                DepartStations = new ObservableCollection<DepartStationItem>(departStationItems);
-            }
-            catch (Exception ex)
-            {
-                MessageBoxHelper.ShowError($"加载出发站列表时出错: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// 搜索站点
-        /// </summary>
-        private async void SearchStations(string searchText)
-        {
-            try
-            {
-                // 如果正在更新，不执行搜索
-                if (_isUpdatingDepartStation)
-                    return;
-
-                // 清空搜索结果
-                DepartStationSuggestions.Clear();
-                IsDepartStationDropdownOpen = false;
-
-                // 如果搜索文本为空，不执行搜索
-                if (string.IsNullOrWhiteSpace(searchText))
-                    return;
-
-                // 搜索出发站
-                var stations = await _databaseService.SearchStationsByNameAsync(searchText);
-
-                // 添加到建议列表
-                foreach (var station in stations)
-                {
-                    DepartStationSuggestions.Add(station);
-                }
-                
-                // 如果有结果，显示下拉框
-                IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogError($"搜索出发站时出错: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// 选择出发站
-        /// </summary>
-        private void SelectDepartStation(StationInfo station)
-        {
-            if (station == null)
-                return;
-                
-            // 确保车站名称不包含"站"字
-            string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
-            
-            // 先关闭下拉框，防止触发搜索
-            IsDepartStationDropdownOpen = false;
-            
-            // 暂时取消DepartStationSearchText的PropertyChanged事件触发
-            _isUpdatingDepartStation = true;
-            DepartStationSearchText = stationName;
-            _isUpdatingDepartStation = false;
-            
-            // 创建并设置选中的出发站
-            SelectedDepartStation = new DepartStationItem(stationName);
-            
-            // 不要自动应用筛选，等待用户点击查询按钮
-            // ApplyFilter();
-        }
-
-        /// <summary>
-        /// 选择自定义年份
-        /// </summary>
-        private void SelectCustomYear()
-        {
-            // 创建一个对话框获取用户输入的年份
-            string title = "输入自定义年份";
-            string prompt = "请输入年份 (1900-2099):";
-            string initialValue = CustomYear?.ToString() ?? DateTime.Now.Year.ToString();
-            
-            var result = MessageBoxHelper.ShowInputDialog(title, prompt, initialValue);
-            
-            if (result.IsConfirmed)
-            {
-                // 验证年份输入
-                if (int.TryParse(result.InputText, out int year) && year >= 1900 && year <= 2099)
-                {
-                    CustomYear = year;
-                    
-                    // 更新自定义年份选项
-                    var customOption = YearOptions.FirstOrDefault(y => y.IsCustom);
-                    if (customOption != null)
-                    {
-                        customOption.Year = year;
-                        customOption.DisplayName = $"自定义: {year}";
-                        OnPropertyChanged(nameof(YearOptions));
-                    }
-                    
-                    // 不要自动应用筛选条件
-                    // ApplyFilter();
-                }
-                else
-                {
-                    MessageBoxHelper.ShowError("年份必须是1900-2099之间的整数。");
-                    // 恢复选择非自定义年份
-                    SelectedYearOption = YearOptions.FirstOrDefault(y => !y.IsCustom);
-                }
-            }
-            else
-            {
-                // 用户取消，恢复选择非自定义年份
-                SelectedYearOption = YearOptions.FirstOrDefault(y => !y.IsCustom);
-            }
-        }
-
-        /// <summary>
-        /// 切换查询面板可见性
-        /// </summary>
-        private void ToggleQueryPanel()
-        {
-            IsQueryPanelVisible = !IsQueryPanelVisible;
-        }
-
-        /// <summary>
-        /// 获取完整的车次号
-        /// </summary>
-        private string GetFullTrainNo()
-        {
-            if (string.IsNullOrEmpty(SelectedTrainPrefix) || SelectedTrainPrefix == "纯数字")
-            {
-                return TrainNumberFilter;
-            }
-            else
-            {
-                return $"{SelectedTrainPrefix}{TrainNumberFilter}";
-            }
-        }
-
-        /// <summary>
-        /// 应用筛选条件
-        /// </summary>
-        private async void ApplyFilter()
-        {
-            try
-            {
-                IsLoading = true;
-                
-                // 检查是否有筛选条件
-                HasActiveFilters = HasAnyActiveFilter();
-                
-                // 构建完整的车次号
-                string fullTrainNo = null;
-                if (!string.IsNullOrWhiteSpace(TrainNumberFilter))
-                {
-                    fullTrainNo = GetFullTrainNo();
-                }
-                
-                // 获取年份值
-                int? yearValue = null;
-                if (SelectedYearOption?.Year.HasValue == true)
-                {
-                    yearValue = SelectedYearOption.Year.Value;
-                }
-                
-                // 记录查询条件
-                System.Diagnostics.Debug.WriteLine("应用查询条件:");
-                System.Diagnostics.Debug.WriteLine($"  出发站: {_selectedDepartStation?.DepartStation}");
-                System.Diagnostics.Debug.WriteLine($"  车次号: {fullTrainNo}");
-                System.Diagnostics.Debug.WriteLine($"  出发年份: {yearValue}");
-                System.Diagnostics.Debug.WriteLine($"  查询条件组合方式: {(_isAndCondition ? "AND" : "OR")}");
-                
-                // 获取带筛选条件的总记录数
-                int totalCount = await _databaseService.GetFilteredTrainRideInfoCountAsync(
-                    _selectedDepartStation?.DepartStation,
-                    fullTrainNo,
-                    yearValue,
-                    _isAndCondition);
-                
-                // 设置总记录数，这会触发TotalPages的重新计算
-                _paginationViewModel.TotalItems = totalCount;
-                
-                // 重置到第一页
-                _paginationViewModel.CurrentPage = 1;
-                
-                // 清除缓存
-                _paginationViewModel.ClearCache();
-                
-                // 加载第一页数据
-                await LoadPageDataAsync();
-                
-                // 标记为已初始化
-                _paginationViewModel.IsInitialized = true;
-                
-                // 显示数据表格
-                _mainViewModel.ShowQueryAllTickets = true;
-                
-                // 手动触发属性变更通知，确保UI更新
-                OnPropertyChanged(nameof(TotalItems));
-                OnPropertyChanged(nameof(TotalPages));
-                OnPropertyChanged(nameof(CurrentPage));
-                OnPropertyChanged(nameof(TrainRideInfos));
-                
-                // 手动触发导航按钮状态更新
-                OnPropertyChanged(nameof(CanNavigateToFirstPage));
-                OnPropertyChanged(nameof(CanNavigateToPreviousPage));
-                OnPropertyChanged(nameof(CanNavigateToNextPage));
-                OnPropertyChanged(nameof(CanNavigateToLastPage));
-                
-                // 触发属性变更通知，确保UI正确显示数据状态
-                OnPropertyChanged(nameof(HasData));
-                OnPropertyChanged(nameof(HasNoData));
-                
-                // 手动刷新命令状态
-                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
-            }
-            catch (Exception ex)
-            {
-                MessageBoxHelper.ShowError($"应用筛选条件时出错: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        /// <summary>
-        /// 重置筛选条件
-        /// </summary>
-        private void ResetFilter()
-        {
-            TrainNumberFilter = string.Empty;
-            SelectedDepartStation = null;
-            SelectedYearOption = null;
-            CustomYear = null;
-            SelectedTrainPrefix = "G";
-            IsAndCondition = true;
-            DepartStationSearchText = string.Empty;
-            
-            HasActiveFilters = false;
-            
-            // 不要自动应用筛选，等待用户点击查询按钮
-            // 实际会执行一次无筛选条件的查询
-        }
-
-        /// <summary>
-        /// 检查是否有任何激活的筛选条件
-        /// </summary>
-        private bool HasAnyActiveFilter()
-        {
-            return SelectedDepartStation != null || 
-                   !string.IsNullOrWhiteSpace(TrainNumberFilter) || 
-                   SelectedYearOption?.Year.HasValue == true;
-        }
-
-        /// <summary>
-        /// 清空出发站条件
-        /// </summary>
-        private void ClearDepartStation()
-        {
-            SelectedDepartStation = null;
-            DepartStationSearchText = string.Empty;
-            // 不要自动应用筛选，等待用户点击查询按钮
-            // ApplyFilter();
-        }
-
-        /// <summary>
-        /// 清空车次号条件
-        /// </summary>
-        private void ClearTrainNumber()
-        {
-            TrainNumberFilter = string.Empty;
-            SelectedTrainPrefix = "G";
-            // 不要自动应用筛选，等待用户点击查询按钮
-            // ApplyFilter();
-        }
-
-        /// <summary>
-        /// 清空年份条件
-        /// </summary>
-        private void ClearYear()
-        {
-            SelectedYearOption = null;
-            CustomYear = null;
-            // 不要自动应用筛选
-            // ApplyFilter();
-        }
-
-        // 重写选择变更方法，更新预览按钮状态
-        protected override void UpdateSelectedItemsCount()
-        {
-            base.UpdateSelectedItemsCount();
-            CanPreviewTicket = SelectedItemsCount == 1;
-            
-            // 刷新命令可执行状态
-            CommandManager.InvalidateRequerySuggested();
-        }
-        
-        // 重写页面变更方法，确保预览按钮状态也被更新
-        protected override void OnPageChanged(object sender, EventArgs e)
-        {
-            // 首先调用基类方法
-            base.OnPageChanged(sender, e);
-            
-            // 确保预览按钮状态正确
-            CanPreviewTicket = SelectedItemsCount == 1;
-            
-            // 通知UI更新
-            OnPropertyChanged(nameof(CanPreviewTicket));
-        }
-        
-        // 重写页大小变更方法，确保预览按钮状态也被更新
-        protected override void OnPageSizeChanged(object sender, EventArgs e)
-        {
-            // 首先调用基类方法
-            base.OnPageSizeChanged(sender, e);
-            
-            // 确保预览按钮状态正确
-            CanPreviewTicket = SelectedItemsCount == 1;
-            
-            // 通知UI更新
-            OnPropertyChanged(nameof(CanPreviewTicket));
-        }
-        
-        // 预览车票方法
-        private void PreviewSelectedTicket()
-        {
-            var selectedTicket = TrainRideInfos.FirstOrDefault(t => t.IsSelected);
-            if (selectedTicket != null)
-            {
-                var previewWindow = new Views.TicketPreviewWindow(selectedTicket);
-                previewWindow.Owner = Application.Current.MainWindow;
-                previewWindow.ShowDialog();
-            }
         }
 
         #endregion

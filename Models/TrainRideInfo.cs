@@ -27,6 +27,8 @@ namespace TA_WPF.Models
         private string? _arriveStationCode;
         private string? _ticketModificationType;
         private bool _isSelected;
+        private int _ticketTypeFlags;
+        private int _paymentChannelFlags;
 
         public int Id 
         { 
@@ -286,6 +288,32 @@ namespace TA_WPF.Models
                     OnPropertyChanged(nameof(TicketModificationType));
                 }
             } 
+        }
+
+        public int TicketTypeFlags
+        {
+            get => _ticketTypeFlags;
+            set
+            {
+                if (_ticketTypeFlags != value)
+                {
+                    _ticketTypeFlags = value;
+                    OnPropertyChanged(nameof(TicketTypeFlags));
+                }
+            }
+        }
+
+        public int PaymentChannelFlags
+        {
+            get => _paymentChannelFlags;
+            set
+            {
+                if (_paymentChannelFlags != value)
+                {
+                    _paymentChannelFlags = value;
+                    OnPropertyChanged(nameof(PaymentChannelFlags));
+                }
+            }
         }
 
         public bool IsSelected

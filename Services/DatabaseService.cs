@@ -140,13 +140,15 @@ namespace TA_WPF.Services
                                     arrive_station, depart_station_pinyin, arrive_station_pinyin, 
                                     depart_date, depart_time, coach_no, seat_no, money, 
                                     seat_type, additional_info, ticket_purpose, hint, 
-                                    depart_station_code, arrive_station_code, ticket_modification_type)
+                                    depart_station_code, arrive_station_code, ticket_modification_type,
+                                    ticket_type_flags, payment_channel_flags)
                                   VALUES (
                                     @TicketNumber, @CheckInLocation, @DepartStation, @TrainNo, 
                                     @ArriveStation, @DepartStationPinyin, @ArriveStationPinyin, 
                                     @DepartDate, @DepartTime, @CoachNo, @SeatNo, @Money, 
                                     @SeatType, @AdditionalInfo, @TicketPurpose, @Hint, 
-                                    @DepartStationCode, @ArriveStationCode, @TicketModificationType)";
+                                    @DepartStationCode, @ArriveStationCode, @TicketModificationType,
+                                    @TicketTypeFlags, @PaymentChannelFlags)";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
@@ -172,6 +174,8 @@ namespace TA_WPF.Services
                         command.Parameters.AddWithValue("@DepartStationCode", ticket.DepartStationCode);
                         command.Parameters.AddWithValue("@ArriveStationCode", ticket.ArriveStationCode);
                         command.Parameters.AddWithValue("@TicketModificationType", ticket.TicketModificationType ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@TicketTypeFlags", ticket.TicketTypeFlags);
+                        command.Parameters.AddWithValue("@PaymentChannelFlags", ticket.PaymentChannelFlags);
 
                         await command.ExecuteNonQueryAsync();
                     }
@@ -565,7 +569,9 @@ namespace TA_WPF.Services
                 Hint = reader.IsDBNull(reader.GetOrdinal("hint")) ? null : reader.GetString(reader.GetOrdinal("hint")),
                 DepartStationCode = reader.IsDBNull(reader.GetOrdinal("depart_station_code")) ? null : reader.GetString(reader.GetOrdinal("depart_station_code")),
                 ArriveStationCode = reader.IsDBNull(reader.GetOrdinal("arrive_station_code")) ? null : reader.GetString(reader.GetOrdinal("arrive_station_code")),
-                TicketModificationType = reader.IsDBNull(reader.GetOrdinal("ticket_modification_type")) ? null : reader.GetString(reader.GetOrdinal("ticket_modification_type"))
+                TicketModificationType = reader.IsDBNull(reader.GetOrdinal("ticket_modification_type")) ? null : reader.GetString(reader.GetOrdinal("ticket_modification_type")),
+                TicketTypeFlags = reader.IsDBNull(reader.GetOrdinal("ticket_type_flags")) ? 0 : reader.GetInt32(reader.GetOrdinal("ticket_type_flags")),
+                PaymentChannelFlags = reader.IsDBNull(reader.GetOrdinal("payment_channel_flags")) ? 0 : reader.GetInt32(reader.GetOrdinal("payment_channel_flags"))
             };
 
             // 处理时间字段
@@ -785,7 +791,9 @@ namespace TA_WPF.Services
                                        hint = @Hint,
                                        depart_station_code = @DepartStationCode,
                                        arrive_station_code = @ArriveStationCode,
-                                       ticket_modification_type = @TicketModificationType
+                                       ticket_modification_type = @TicketModificationType,
+                                       ticket_type_flags = @TicketTypeFlags,
+                                       payment_channel_flags = @PaymentChannelFlags
                                    WHERE id = @Id";
 
                     using (var command = new MySqlCommand(query, connection))
@@ -813,6 +821,8 @@ namespace TA_WPF.Services
                         command.Parameters.AddWithValue("@DepartStationCode", ticket.DepartStationCode);
                         command.Parameters.AddWithValue("@ArriveStationCode", ticket.ArriveStationCode);
                         command.Parameters.AddWithValue("@TicketModificationType", ticket.TicketModificationType ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@TicketTypeFlags", ticket.TicketTypeFlags);
+                        command.Parameters.AddWithValue("@PaymentChannelFlags", ticket.PaymentChannelFlags);
 
                         int rowsAffected = await command.ExecuteNonQueryAsync();
                         return rowsAffected > 0;

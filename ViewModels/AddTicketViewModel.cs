@@ -75,6 +75,19 @@ namespace TA_WPF.ViewModels
         private string? _selectedTicketModificationType;
         private ObservableCollection<string> _ticketModificationTypes;
 
+        // 票种类型
+        private bool _isStudentTicket;
+        private bool _isDiscountTicket;
+        private bool _isOnlineTicket;
+        private bool _isChildTicket;
+
+        // 支付渠道
+        private bool _isAlipayPayment;
+        private bool _isWeChatPayment;
+        private bool _isABCPayment;
+        private bool _isCCBPayment;
+        private bool _isICBCPayment;
+
         // 车站数据
         private ObservableCollection<StationInfo> _stations;
 
@@ -744,12 +757,137 @@ namespace TA_WPF.ViewModels
         public ObservableCollection<string> TicketModificationTypes
         {
             get => _ticketModificationTypes;
+            private set
+            {
+                _ticketModificationTypes = value;
+                OnPropertyChanged(nameof(TicketModificationTypes));
+            }
+        }
+
+        // 票种类型属性
+        public bool IsStudentTicket
+        {
+            get => _isStudentTicket;
             set
             {
-                if (_ticketModificationTypes != value)
+                if (_isStudentTicket != value)
                 {
-                    _ticketModificationTypes = value;
-                    OnPropertyChanged(nameof(TicketModificationTypes));
+                    _isStudentTicket = value;
+                    OnPropertyChanged(nameof(IsStudentTicket));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsDiscountTicket
+        {
+            get => _isDiscountTicket;
+            set
+            {
+                if (_isDiscountTicket != value)
+                {
+                    _isDiscountTicket = value;
+                    OnPropertyChanged(nameof(IsDiscountTicket));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsOnlineTicket
+        {
+            get => _isOnlineTicket;
+            set
+            {
+                if (_isOnlineTicket != value)
+                {
+                    _isOnlineTicket = value;
+                    OnPropertyChanged(nameof(IsOnlineTicket));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsChildTicket
+        {
+            get => _isChildTicket;
+            set
+            {
+                if (_isChildTicket != value)
+                {
+                    _isChildTicket = value;
+                    OnPropertyChanged(nameof(IsChildTicket));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        // 支付渠道属性
+        public bool IsAlipayPayment
+        {
+            get => _isAlipayPayment;
+            set
+            {
+                if (_isAlipayPayment != value)
+                {
+                    _isAlipayPayment = value;
+                    OnPropertyChanged(nameof(IsAlipayPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsWeChatPayment
+        {
+            get => _isWeChatPayment;
+            set
+            {
+                if (_isWeChatPayment != value)
+                {
+                    _isWeChatPayment = value;
+                    OnPropertyChanged(nameof(IsWeChatPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsABCPayment
+        {
+            get => _isABCPayment;
+            set
+            {
+                if (_isABCPayment != value)
+                {
+                    _isABCPayment = value;
+                    OnPropertyChanged(nameof(IsABCPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsCCBPayment
+        {
+            get => _isCCBPayment;
+            set
+            {
+                if (_isCCBPayment != value)
+                {
+                    _isCCBPayment = value;
+                    OnPropertyChanged(nameof(IsCCBPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsICBCPayment
+        {
+            get => _isICBCPayment;
+            set
+            {
+                if (_isICBCPayment != value)
+                {
+                    _isICBCPayment = value;
+                    OnPropertyChanged(nameof(IsICBCPayment));
+                    if (!_isInitializing) _isFormModified = true;
                 }
             }
         }
@@ -1185,7 +1323,9 @@ namespace TA_WPF.ViewModels
                     Hint = SelectedHint == "自定义" ? CustomHint : SelectedHint,
                     DepartStationCode = DepartStationCode,
                     ArriveStationCode = ArriveStationCode,
-                    TicketModificationType = SelectedTicketModificationType
+                    TicketModificationType = SelectedTicketModificationType,
+                    TicketTypeFlags = GetTicketTypeFlags(),
+                    PaymentChannelFlags = GetPaymentChannelFlags()
                 };
 
                 // 处理车厢号
@@ -1319,6 +1459,19 @@ namespace TA_WPF.ViewModels
             SelectedHint = HintOptions.FirstOrDefault() ?? string.Empty;
             CustomHint = string.Empty;
             SelectedTicketModificationType = null;
+            
+            // 重置票种类型
+            IsStudentTicket = false;
+            IsDiscountTicket = false;
+            IsOnlineTicket = false;
+            IsChildTicket = false;
+            
+            // 重置支付渠道
+            IsAlipayPayment = false;
+            IsWeChatPayment = false;
+            IsABCPayment = false;
+            IsCCBPayment = false;
+            IsICBCPayment = false;
             
             // 清空搜索文本框内容
             DepartStationSearchText = string.Empty;
@@ -1651,6 +1804,27 @@ namespace TA_WPF.ViewModels
                 return SeatNo;
             else
                 return $"{SeatNo}{SelectedSeatPosition}";
+        }
+
+        private int GetTicketTypeFlags()
+        {
+            int flags = 0;
+            if (IsStudentTicket) flags |= (int)TicketTypeFlags.StudentTicket;
+            if (IsDiscountTicket) flags |= (int)TicketTypeFlags.DiscountTicket;
+            if (IsOnlineTicket) flags |= (int)TicketTypeFlags.OnlineTicket;
+            if (IsChildTicket) flags |= (int)TicketTypeFlags.ChildTicket;
+            return flags;
+        }
+
+        private int GetPaymentChannelFlags()
+        {
+            int flags = 0;
+            if (IsAlipayPayment) flags |= (int)PaymentChannelFlags.Alipay;
+            if (IsWeChatPayment) flags |= (int)PaymentChannelFlags.WeChat;
+            if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
+            if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
+            if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
+            return flags;
         }
     }
 

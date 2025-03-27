@@ -129,6 +129,8 @@
             <converters:FullScreenWindowStyleConverter x:Key="FullScreenWindowStyleConverter" />
             <converters:FullScreenWindowStateConverter x:Key="FullScreenWindowStateConverter" />
             <converters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
+            <converters:TicketTypeFlagsConverter x:Key="TicketTypeFlagsConverter" />
+            <converters:PaymentChannelFlagsConverter x:Key="PaymentChannelFlagsConverter" />
 
             <!-- 数据表格样式 -->
             <Style TargetType="{x:Type DataGrid}">

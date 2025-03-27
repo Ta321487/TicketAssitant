@@ -469,6 +469,8 @@
                     <DataGridTextColumn Header="附加信息" Binding="{Binding AdditionalInfo}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
                     <DataGridTextColumn Header="车票改签类型" Binding="{Binding TicketModificationType}" Width="*" MinWidth="110" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
                     <DataGridTextColumn Header="车票用途" Binding="{Binding TicketPurpose}" Width="*" MinWidth="100" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="票种类型" Binding="{Binding TicketTypeFlags, Converter={StaticResource TicketTypeFlagsConverter}}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
+                    <DataGridTextColumn Header="支付渠道" Binding="{Binding PaymentChannelFlags, Converter={StaticResource PaymentChannelFlagsConverter}}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
                     <DataGridTextColumn Header="提示" Binding="{Binding Hint}" Width="*" MinWidth="120" ElementStyle="{StaticResource DataGridTextColumnElementStyle}" />
                 </DataGrid.Columns>
             </DataGrid>

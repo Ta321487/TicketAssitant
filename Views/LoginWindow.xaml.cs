@@ -32,7 +32,7 @@ namespace TA_WPF.Views
         public bool LoginSuccessful { get; private set; } = false;
         public string ConnectionString { get; private set; } = string.Empty;
         private string _lastDatabaseName = ""; // 默认数据库名称
-        private string _lastServerAddress = "localhost"; // 默认服务器地址
+        private string _lastServerAddress = ""; // 默认服务器地址
         private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info" }; // 必要的表
         private readonly LoginInfoService _loginInfoService;
 
@@ -1666,9 +1666,9 @@ namespace TA_WPF.Views
                 ShowError("请输入用户名和密码");
                 return;
             }
-            
+
             string newDatabaseName = NewDatabaseNameTextBox.Text.Trim();
-            
+
             // 如果未输入数据库名称，提示用户输入
             if (string.IsNullOrEmpty(newDatabaseName))
             {
@@ -1729,7 +1729,7 @@ namespace TA_WPF.Views
                 // 更新数据库名称下拉框，选择刚刚创建的数据库
                 DatabaseNameComboBox.Text = newDatabaseName;
                 SaveDatabaseNameToHistory(newDatabaseName);
-                
+
                 // 确保下拉框正确显示新创建的数据库名称
                 if (!DatabaseNameComboBox.Items.Contains(newDatabaseName))
                 {
@@ -1742,7 +1742,7 @@ namespace TA_WPF.Views
 
                 // 清空新数据库名称文本框，以便下次使用
                 NewDatabaseNameTextBox.Text = string.Empty;
-                
+
                 // 日志记录
                 LogHelper.LogSystem("数据库", $"成功创建数据库: {newDatabaseName}");
             }
@@ -1819,6 +1819,8 @@ namespace TA_WPF.Views
                     `additional_info` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '附加信息（退票费/限乘当日当次车）',
                     `ticket_purpose` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车票用途',
                     `ticket_modification_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车票改签类型',
+                    `ticket_type_flags` int NULL DEFAULT 0 COMMENT '票种类型（枚举）',
+                    `payment_channel_flags` int NULL DEFAULT 0 COMMENT '支付渠道（枚举）',
                     `hint` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '提示信息',
                     `depart_station_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '出发车站代码',
                     `arrive_station_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '到达车站代码',
@@ -1909,16 +1911,16 @@ namespace TA_WPF.Views
             try
             {
                 // 检查是否是远程连接
-                bool isLocalConnection = string.IsNullOrEmpty(serverAddress) || 
-                                         serverAddress.ToLower() == "localhost" || 
-                                         serverAddress == "127.0.0.1" || 
+                bool isLocalConnection = string.IsNullOrEmpty(serverAddress) ||
+                                         serverAddress.ToLower() == "localhost" ||
+                                         serverAddress == "127.0.0.1" ||
                                          serverAddress == "::1";
 
                 // 如果是远程连接，检查远程服务器是否可达
                 if (!isLocalConnection)
                 {
                     System.Diagnostics.Debug.WriteLine($"检测远程MySQL连接: {serverAddress}:{port}");
-                    
+
                     bool canConnect = await Task.Run(() =>
                     {
                         try
@@ -1951,10 +1953,10 @@ namespace TA_WPF.Views
                         return false;
                     }
                 }
-                
+
                 // 对于本地连接，检查本地MySQL安装
                 System.Diagnostics.Debug.WriteLine("检测本地MySQL安装");
-                
+
                 // 检查MySQL服务是否存在
                 bool serviceExists = false;
                 try
@@ -2084,14 +2086,14 @@ namespace TA_WPF.Views
                 content.Children.Add(warningIcon);
 
                 // 判断是否为远程连接
-                bool isLocalConnection = string.IsNullOrEmpty(serverAddress) || 
-                                         serverAddress.ToLower() == "localhost" || 
-                                         serverAddress == "127.0.0.1" || 
+                bool isLocalConnection = string.IsNullOrEmpty(serverAddress) ||
+                                         serverAddress.ToLower() == "localhost" ||
+                                         serverAddress == "127.0.0.1" ||
                                          serverAddress == "::1";
 
                 // 添加标题和消息
                 string titleText, messageText;
-                
+
                 if (!isLocalConnection)
                 {
                     titleText = $"无法连接到MySQL服务器 {serverAddress}";
