@@ -47,6 +47,8 @@
         <converters:FullScreenWindowStateConverter x:Key="FullScreenWindowStateConverter"/>
         <converters:BooleanToStringConverter x:Key="BooleanToStringConverter"/>
         <converters:FontSizeIncreaseConverter x:Key="FontSizeIncreaseConverter"/>
+        <converters:TicketTypeFlagsConverter x:Key="TicketTypeFlagsConverter"/>
+        <converters:PaymentChannelFlagsConverter x:Key="PaymentChannelFlagsConverter"/>
 
         <!-- 自定义表单文本块样式 -->
         <Style x:Key="FormLabelStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignCaptionTextBlock}">
@@ -133,17 +135,25 @@
                     <RowDefinition Height="Auto" />
                     <!-- 16: 车票改签类型/车票用途 文本框 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 17: 提示 标签 -->
+                    <!-- 17: 票种信息 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 18: 提示 文本框 -->
+                    <!-- 18: 票种信息 文本框 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 19: 身份信息 标签 -->
+                    <!-- 19: 支付渠道 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 20: 身份信息 文本框 -->
+                    <!-- 20: 支付渠道 文本框 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 21: 编码区 标签 -->
+                    <!-- 21: 提示 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 22: 编码区 文本框 -->
+                    <!-- 22: 提示 文本框 -->
+                    <RowDefinition Height="Auto" />
+                    <!-- 23: 身份信息 标签 -->
+                    <RowDefinition Height="Auto" />
+                    <!-- 24: 身份信息 文本框 -->
+                    <RowDefinition Height="Auto" />
+                    <!-- 25: 编码区 标签 -->
+                    <RowDefinition Height="Auto" />
+                    <!-- 26: 编码区 文本框 -->
                 </Grid.RowDefinitions>
 
                 <!-- 标题 - 跨所有列 -->
@@ -253,9 +263,27 @@
                         Grid.Row="16" Grid.Column="2"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
+                <!-- 票种信息 - 跨所有列 -->
+                <TextBlock Text="票种信息" 
+                           Grid.Row="17" Grid.Column="0" 
+                           Grid.ColumnSpan="3"
+                           Style="{StaticResource FormLabelStyle}"/>
+                <TextBox Text="{Binding SelectedTicket.TicketTypeFlags, Converter={StaticResource TicketTypeFlagsConverter}}" 
+                        Grid.Row="18" Grid.Column="0" Grid.ColumnSpan="3"
+                        Style="{StaticResource FormTextBoxStyle}"/>
+
+                <!-- 支付渠道 - 跨所有列 -->
+                <TextBlock Text="支付渠道" 
+                           Grid.Row="19" Grid.Column="0" 
+                           Grid.ColumnSpan="3"
+                           Style="{StaticResource FormLabelStyle}"/>
+                <TextBox Text="{Binding SelectedTicket.PaymentChannelFlags, Converter={StaticResource PaymentChannelFlagsConverter}}" 
+                        Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="3"
+                        Style="{StaticResource FormTextBoxStyle}"/>
+
                 <!-- 提示 - 跨所有列 -->
                 <TextBlock Text="提示信息" 
-                           Grid.Row="17" Grid.Column="0" 
+                           Grid.Row="21" Grid.Column="0" 
                            Grid.ColumnSpan="3"
                            Style="{StaticResource FormLabelStyle}">
                     <TextBlock.ToolTip>
@@ -263,20 +291,20 @@
                     </TextBlock.ToolTip>
                 </TextBlock>
                 <TextBox Text="{Binding SelectedTicket.Hint, Mode=OneWay}" 
-                        Grid.Row="18" Grid.Column="0" Grid.ColumnSpan="3"
+                        Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
                 <!-- 身份信息 - 移到提示和编码之间 -->
-                <TextBlock Text="身份信息" Grid.Row="19" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
+                <TextBlock Text="身份信息" Grid.Row="23" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding IdentityInfo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                        Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="3"
+                        Grid.Row="24" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"
                         IsEnabled="True"/>
 
                 <!-- 编码区 - 跨所有列 -->
-                <TextBlock Text="编码区" Grid.Row="21" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
+                <TextBlock Text="编码区" Grid.Row="25" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding EncodingArea, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                        Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="3"
+                        Grid.Row="26" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"
                         IsEnabled="True"/>
             </Grid>

@@ -34,6 +34,28 @@
             <converters:FullScreenWindowStyleConverter x:Key="FullScreenWindowStyleConverter" />
             <converters:FullScreenWindowStateConverter x:Key="FullScreenWindowStateConverter" />
             <converters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <converters:FontSizeDecreaseConverter x:Key="FontSizeDecreaseConverter" />
+            
+            <!-- 全局样式：应用于整个应用程序的DataGrid -->
+            <Style TargetType="DataGrid" BasedOn="{StaticResource MaterialDesignDataGrid}">
+                <Setter Property="FontSize" Value="{Binding FontSize}" />
+                <Setter Property="RowHeight" Value="{Binding DataGridRowHeight}" />
+            </Style>
+            
+            <!-- 全局样式：应用于整个应用程序的DataGridColumnHeader -->
+            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                <Setter Property="FontSize" Value="{Binding FontSize}" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Padding" Value="8,4" />
+            </Style>
+            
+            <!-- 全局样式：应用于整个应用程序的DataGridCell -->
+            <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                <Setter Property="FontSize" Value="{Binding FontSize}" />
+                <Setter Property="Padding" Value="8,4" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     
@@ -73,19 +95,96 @@
                                         LeftDrawerBackground="{DynamicResource MaterialDesignPaper}">
                     <materialDesign:DrawerHost.LeftDrawerContent>
                         <DockPanel MinWidth="220">
-                            <materialDesign:ColorZone Mode="PrimaryMid" 
-                                                    Padding="16" 
-                                                    DockPanel.Dock="Top">
-                                <TextBlock Text="菜单" 
-                                        FontSize="18" 
-                                        FontWeight="Bold" 
-                                        HorizontalAlignment="Center"/>
-                            </materialDesign:ColorZone>
-                            <TreeView Margin="0,16,0,16">
+                            <!-- 头部区域 - 更美观的设计 -->
+                            <Border DockPanel.Dock="Top" MinHeight="180">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#673AB7" Offset="0.0" />
+                                        <GradientStop Color="#4527A0" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect ShadowDepth="1" BlurRadius="10" Opacity="0.3" Color="Black" />
+                                </Border.Effect>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    
+                                    <!-- 背景装饰元素 -->
+                                    <Canvas Grid.RowSpan="3">
+                                        <Path Data="M0,0 L50,30 L30,80 Z" Fill="#FFFFFF" Opacity="0.05" Canvas.Left="10" Canvas.Top="10" />
+                                        <Ellipse Width="100" Height="100" Fill="#FFFFFF" Opacity="0.05" Canvas.Right="-50" Canvas.Bottom="-50" />
+                                        <Path Data="M0,0 C20,10 40,10 60,0 V30 H0 Z" Fill="#FFFFFF" Opacity="0.05" Canvas.Right="10" Canvas.Top="10" />
+                                    </Canvas>
+                                    
+                                    <!-- 图标 -->
+                                    <Border Grid.Row="0" Width="80" Height="80" CornerRadius="40" BorderThickness="2" BorderBrush="#FFFFFF" Margin="0,20,0,0" HorizontalAlignment="Center">
+                                        <Border.Background>
+                                            <RadialGradientBrush>
+                                                <GradientStop Color="#7E57C2" Offset="0" />
+                                                <GradientStop Color="#5E35B1" Offset="1" />
+                                            </RadialGradientBrush>
+                                        </Border.Background>
+                                        <Border.Effect>
+                                            <DropShadowEffect ShadowDepth="2" BlurRadius="5" Opacity="0.3" Color="Black" />
+                                        </Border.Effect>
+                                        <materialDesign:PackIcon Kind="TrainVariant" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFFFFF" />
+                                    </Border>
+                                    
+                                    <!-- 应用名称 -->
+                                    <TextBlock Grid.Row="1" Text="车票标记时光" 
+                                           HorizontalAlignment="Center" 
+                                           Margin="0,15,0,0" 
+                                           FontSize="{Binding FontSize}"
+                                           FontWeight="Bold"
+                                           Foreground="#FFFFFF">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect ShadowDepth="1" BlurRadius="2" Opacity="0.5" Color="Black" />
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                    
+                                    <!-- 副标题 -->
+                                    <TextBlock Grid.Row="2" Text="旅程归档" 
+                                           HorizontalAlignment="Center" 
+                                           Margin="0,5,0,15" 
+                                           FontSize="{Binding FontSize, Converter={StaticResource FontSizeDecreaseConverter}}"
+                                           Foreground="#FFFFFF"
+                                           Opacity="0.8">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect ShadowDepth="1" BlurRadius="1" Opacity="0.3" Color="Black" />
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+
+                            <!-- 菜单列表 - 添加样式 -->
+                            <TreeView Background="{DynamicResource MaterialDesignPaper}" 
+                                     HorizontalAlignment="Stretch"
+                                     FontSize="{Binding FontSize}">
+                                <TreeView.Resources>
+                                    <!-- 为TreeViewItem添加字体大小绑定 -->
+                                    <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                                        <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                                    </Style>
+                                    <!-- 为TreeView中的所有TextBlock添加字体大小绑定 -->
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                    <!-- 为TreeView中的所有Button添加字体大小绑定 -->
+                                    <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                                        <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                                    </Style>
+                                </TreeView.Resources>
+                                
+                                <!-- 主页菜单项 -->
                                 <TreeViewItem>
                                     <TreeViewItem.Header>
                                         <Button Content="首页" 
-                                                Command="{Binding ShowHomeCommand}" 
+                                                Command="{Binding ShowWelcomeCommand}" 
                                                 Style="{StaticResource MaterialDesignFlatButton}"
                                                 HorizontalContentAlignment="Left"
                                                 Width="200"
@@ -93,10 +192,10 @@
                                                 Foreground="{DynamicResource PrimaryHueMidBrush}">
                                             <Button.ContentTemplate>
                                                 <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Home" Margin="0,0,8,0"/>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <materialDesign:PackIcon Kind="Home" Margin="0,0,8,0"/>
                                                         <TextBlock Text="{Binding}" />
-                                        </StackPanel>
+                                                    </StackPanel>
                                                 </DataTemplate>
                                             </Button.ContentTemplate>
                                         </Button>

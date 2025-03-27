@@ -28,6 +28,37 @@
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
             
+            <!-- 增强的MaterialDesign输入框样式 - 改善深色模式下的可见性 -->
+            <Style x:Key="EnhancedMaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Style.Triggers>
+                    <Trigger Property="IsKeyboardFocused" Value="True">
+                        <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
+                        <Setter Property="materialDesign:HintAssist.Background" Value="{DynamicResource MaterialDesignPaper}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            
+            <!-- 增强的ComboBox样式 - 改善深色模式下的可见性 -->
+            <Style x:Key="EnhancedMaterialDesignOutlinedComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsKeyboardFocused" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                        <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
+                        <Setter Property="materialDesign:HintAssist.Background" Value="{DynamicResource MaterialDesignPaper}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            
             <!-- ComboBox 样式 -->
             <Style x:Key="MaterialDesignThemedComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
@@ -86,7 +117,7 @@
                     <TextBlock Text="出发站" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
                     <Grid>
                         <TextBox Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    Style="{StaticResource EnhancedMaterialDesignOutlinedTextBox}"
                                     materialDesign:HintAssist.Hint="输入出发站"
                                     InputMethod.IsInputMethodEnabled="True"
                                     InputMethod.PreferredImeState="On"
@@ -141,11 +172,11 @@
                                     ItemsSource="{Binding TrainPrefixes}"
                                     SelectedItem="{Binding SelectedTrainPrefix}"
                                     Margin="0,0,8,0"
-                                    Style="{StaticResource MaterialDesignThemedOutlinedComboBox}"/>
+                                    Style="{StaticResource EnhancedMaterialDesignOutlinedComboBox}"/>
                         <Grid Grid.Column="1">
                             <TextBox Text="{Binding TrainNumberFilter, UpdateSourceTrigger=PropertyChanged}"
                                      materialDesign:HintAssist.Hint="输入车次号"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     Style="{StaticResource EnhancedMaterialDesignOutlinedTextBox}"
                                      PreviewTextInput="TrainNumber_PreviewTextInput"/>
                             <Button Style="{StaticResource MaterialDesignIconButton}"
                                     Command="{Binding ClearTrainNumberCommand}"
@@ -169,7 +200,7 @@
                                     DisplayMemberPath="DisplayName"
                                     SelectedItem="{Binding SelectedYearOption}"
                                     materialDesign:HintAssist.Hint="选择年份"
-                                    Style="{StaticResource MaterialDesignThemedOutlinedComboBox}"/>
+                                    Style="{StaticResource EnhancedMaterialDesignOutlinedComboBox}"/>
                         <Button Style="{StaticResource MaterialDesignIconButton}"
                                 Command="{Binding ClearYearCommand}"
                                 ToolTip="清空年份"

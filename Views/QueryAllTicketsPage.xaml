@@ -114,6 +114,7 @@
                 <Setter Property="HorizontalContentAlignment" Value="Center" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
                 <Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
                 <Setter Property="Padding" Value="12,8" />
@@ -128,9 +129,25 @@
                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
                 <Setter Property="Padding" Value="8,4" />
-                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
                 <Setter Property="MaxWidth" Value="400" />
                 <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+                <!-- 默认样式设置 -->
+                <Style.Triggers>
+                    <!-- 无论在深色还是浅色主题，都使用深色背景和白色文字，确保良好的可读性 -->
+                    <Trigger Property="IsVisible" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource PrimaryHueDarkBrush}" />
+                        <Setter Property="Foreground" Value="White" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueLightBrush}" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="FontWeight" Value="Normal" />
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect ShadowDepth="1" BlurRadius="3" Opacity="0.3" Color="Black" />
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
             
             <!-- 数据表格文本列样式 -->
@@ -142,6 +159,7 @@
                 <Setter Property="TextWrapping" Value="NoWrap" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
                 <Setter Property="Padding" Value="4,2" />
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.IsDarkMode}" Value="True">

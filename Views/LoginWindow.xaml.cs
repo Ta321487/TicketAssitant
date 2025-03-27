@@ -728,7 +728,7 @@ namespace TA_WPF.Views
                             // 如果仍然找不到，尝试在上级目录中查找
                             if (!Directory.Exists(sqlDataFolderPath))
                             {
-                                string parentDir = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
+                                string? parentDir = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
                                 if (parentDir != null)
                                 {
                                     sqlDataFolderPath = Path.Combine(parentDir, "SqlData");
@@ -986,6 +986,25 @@ namespace TA_WPF.Views
 
                         // 确保主题设置已保存到配置文件
                         themeService.ApplyTheme(isDarkMode);
+
+                        // 显式应用字体大小设置，确保在连接数据库切换后，所有UI元素都能正确应用设置
+                        try {
+                            // 从配置文件中获取当前字体大小
+                            double fontSize = ConfigUtils.GetDoubleValue("FontSize", 13);
+                            
+                            // 创建UIService实例并应用字体大小
+                            var uiService = new UIService();
+                            uiService.ApplyFontSize(fontSize);
+                            
+                            // 在应用级别同步字体大小设置
+                            if (Application.Current is App app) {
+                                app.SyncFontSizeSettings(fontSize);
+                            }
+                            
+                            LogHelper.LogInfo($"重新登录后应用字体大小设置: {fontSize}pt");
+                        } catch (Exception ex) {
+                            LogHelper.LogError($"重新登录后应用字体大小设置时出错: {ex.Message}", ex);
+                        }
 
                         // 创建新的主窗口和MainViewModel
                         _mainWindow = new MainWindow(ConnectionString);
