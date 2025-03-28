@@ -935,7 +935,7 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        protected void ValidateStationName(string stationName, bool isDepartStation)
+        private void ValidateStationName(string stationName, bool isDepartStation)
         {
             if (string.IsNullOrWhiteSpace(stationName))
             {
@@ -951,7 +951,7 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        protected void UpdateStationInfo(string stationName, bool isDepartStation)
+        private void UpdateStationInfo(string stationName, bool isDepartStation)
         {
             if (string.IsNullOrWhiteSpace(stationName))
             {
@@ -1382,21 +1382,9 @@ namespace TA_WPF.ViewModels
             DepartStationSearchText = stationName;
             _isUpdatingDepartStation = false;
             
-            // 更新站点信息
+            // 直接更新站点信息，无需等待失去焦点
             DepartStationPinyin = station.StationPinyin ?? string.Empty;
             DepartStationCode = station.StationCode ?? string.Empty;
-            
-            // 保存当前焦点元素
-            var focusedElement = System.Windows.Input.Keyboard.FocusedElement;
-            
-            // 检查站点信息完整性
-            CheckStationInfoCompleteness(station, true);
-            
-            // 确保警告框关闭后焦点回到原元素
-            if (focusedElement is System.Windows.UIElement uiElement)
-            {
-                uiElement.Focus();
-            }
         }
 
         private void SelectArriveStation(StationInfo station)
@@ -1418,25 +1406,13 @@ namespace TA_WPF.ViewModels
             ArriveStationSearchText = stationName;
             _isUpdatingArriveStation = false;
             
-            // 更新站点信息
+            // 直接更新站点信息，无需等待失去焦点
             ArriveStationPinyin = station.StationPinyin ?? string.Empty;
             ArriveStationCode = station.StationCode ?? string.Empty;
-            
-            // 保存当前焦点元素
-            var focusedElement = System.Windows.Input.Keyboard.FocusedElement;
-            
-            // 检查站点信息完整性
-            CheckStationInfoCompleteness(station, false);
-            
-            // 确保警告框关闭后焦点回到原元素
-            if (focusedElement is System.Windows.UIElement uiElement)
-            {
-                uiElement.Focus();
-            }
         }
 
         // 检查车站信息是否完整
-        protected void CheckStationInfoCompleteness(StationInfo station, bool isDepartStation)
+        private void CheckStationInfoCompleteness(StationInfo station, bool isDepartStation)
         {
             if (station == null)
                 return;
@@ -1444,8 +1420,7 @@ namespace TA_WPF.ViewModels
             // 如果已经设置忽略车站检查，则直接返回
             if (Services.StationCheckService.Instance.IgnoreStationCheck)
                 return;
-            
-            // 保存当前的站点名称信息，确保在显示警告后能恢复
+                
             string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
             
             // 检查车站信息是否完整
@@ -1464,28 +1439,7 @@ namespace TA_WPF.ViewModels
                     
                 message += "建议在车站管理中完善车站信息。";
                 
-                // 保存当前选中的文本框
-                var focusedElement = System.Windows.Input.Keyboard.FocusedElement;
-                
                 MessageBoxHelper.ShowWarning(message, "车站信息不完整");
-                
-                // 消息框关闭后，将焦点重新设置回原文本框
-                if (focusedElement is System.Windows.UIElement uiElement)
-                {
-                    uiElement.Focus();
-                }
-                
-                // 确保警告后保持选择的站点信息
-                if (isDepartStation)
-                {
-                    DepartStation = stationName;
-                    DepartStationSearchText = stationName;
-                }
-                else
-                {
-                    ArriveStation = stationName;
-                    ArriveStationSearchText = stationName;
-                }
             }
         }
 
@@ -1665,18 +1619,8 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 获取当前输入框中的车站名称，这可能是手动输入的或选择的
-                string stationName = isDepartStation ? DepartStationSearchText : ArriveStationSearchText;
-                
-                // 在有警告框出现时，我们需要保留用户最后选择的车站名称
-                // 如果通过下拉列表选择了站点，已经在SelectDepartStation或SelectArriveStation方法中更新了相关属性
-                // 这里只处理手动输入的情况
-                
-                bool isSelectedFromDropdown = isDepartStation 
-                    ? (DepartStation == stationName)
-                    : (ArriveStation == stationName);
-                
-                if (!isSelectedFromDropdown && !string.IsNullOrWhiteSpace(stationName))
+                string stationName = isDepartStation ? DepartStation : ArriveStation;
+                if (!string.IsNullOrWhiteSpace(stationName))
                 {
                     // 使用StationSearchService处理失去焦点事件
                     var station = _stationSearchService.HandleStationLostFocus(stationName, isDepartStation);
@@ -1687,7 +1631,6 @@ namespace TA_WPF.ViewModels
                         if (isDepartStation)
                         {
                             // 更新出发站信息
-                            DepartStation = station.StationName?.Replace("站", "") ?? string.Empty;
                             DepartStationPinyin = station.StationPinyin ?? string.Empty;
                             DepartStationCode = station.StationCode ?? string.Empty;
                             
@@ -1697,7 +1640,6 @@ namespace TA_WPF.ViewModels
                         else
                         {
                             // 更新到达站信息
-                            ArriveStation = station.StationName?.Replace("站", "") ?? string.Empty;
                             ArriveStationPinyin = station.StationPinyin ?? string.Empty;
                             ArriveStationCode = station.StationCode ?? string.Empty;
                             

@@ -274,18 +274,10 @@ namespace TA_WPF.ViewModels
         /// <param name="isDepartStation">是否为出发站</param>
         public override void OnStationLostFocus(bool isDepartStation)
         {
-            // 初始加载时不执行验证
-            if (_isInitialLoad) return;
+            if (_isInitialLoad) return;  // 初始加载时不执行验证
             
             // 调用基类方法
             base.OnStationLostFocus(isDepartStation);
-            
-            // 在警告框显示后恢复焦点到当前控件
-            var focusedElement = System.Windows.Input.Keyboard.FocusedElement;
-            if (focusedElement is System.Windows.UIElement uiElement)
-            {
-                uiElement.Focus();
-            }
         }
     }
 } 
