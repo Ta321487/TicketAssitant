@@ -11,7 +11,7 @@ using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
-    public class AddTicketViewModel : PaymentChannelViewModel
+    public class AddTicketViewModel : INotifyPropertyChanged
     {
         protected readonly DatabaseService _databaseService;
         protected readonly StationSearchService _stationSearchService;
@@ -81,6 +81,13 @@ namespace TA_WPF.ViewModels
         private bool _isDiscountTicket;
         private bool _isOnlineTicket;
         private bool _isChildTicket;
+
+        // 支付渠道
+        private bool _isAlipayPayment;
+        private bool _isWeChatPayment;
+        private bool _isABCPayment;
+        private bool _isCCBPayment;
+        private bool _isICBCPayment;
 
         // 车站数据
         private ObservableCollection<StationInfo> _stations;
@@ -197,12 +204,6 @@ namespace TA_WPF.ViewModels
                 // 确保初始化字体大小相关属性
                 InitializeFontSizes();
                 
-                // 在支付渠道变更时标记表单已修改
-                PaymentChannelChanged += (s, e) => 
-                {
-                    if (!_isInitializing) _isFormModified = true;
-                };
-
                 // 初始化完成
                 _isInitializing = false;
             }
@@ -822,6 +823,77 @@ namespace TA_WPF.ViewModels
             }
         }
 
+        // 支付渠道属性
+        public bool IsAlipayPayment
+        {
+            get => _isAlipayPayment;
+            set
+            {
+                if (_isAlipayPayment != value)
+                {
+                    _isAlipayPayment = value;
+                    OnPropertyChanged(nameof(IsAlipayPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsWeChatPayment
+        {
+            get => _isWeChatPayment;
+            set
+            {
+                if (_isWeChatPayment != value)
+                {
+                    _isWeChatPayment = value;
+                    OnPropertyChanged(nameof(IsWeChatPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsABCPayment
+        {
+            get => _isABCPayment;
+            set
+            {
+                if (_isABCPayment != value)
+                {
+                    _isABCPayment = value;
+                    OnPropertyChanged(nameof(IsABCPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsCCBPayment
+        {
+            get => _isCCBPayment;
+            set
+            {
+                if (_isCCBPayment != value)
+                {
+                    _isCCBPayment = value;
+                    OnPropertyChanged(nameof(IsCCBPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsICBCPayment
+        {
+            get => _isICBCPayment;
+            set
+            {
+                if (_isICBCPayment != value)
+                {
+                    _isICBCPayment = value;
+                    OnPropertyChanged(nameof(IsICBCPayment));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
         #endregion
 
         #region 集合属性
@@ -1212,6 +1284,11 @@ namespace TA_WPF.ViewModels
             IsDiscountTicket = false;
             IsOnlineTicket = false;
             IsChildTicket = false;
+            IsAlipayPayment = false;
+            IsWeChatPayment = false;
+            IsABCPayment = false;
+            IsCCBPayment = false;
+            IsICBCPayment = false;
             
             // 重置搜索框文本
             DepartStationSearchText = string.Empty;
@@ -1513,7 +1590,6 @@ namespace TA_WPF.ViewModels
                 return $"{SeatNo}{SelectedSeatPosition}";
         }
 
-        // 获取票种类型标志位
         private int GetTicketTypeFlags()
         {
             int flags = 0;
@@ -1521,6 +1597,17 @@ namespace TA_WPF.ViewModels
             if (IsDiscountTicket) flags |= (int)TicketTypeFlags.DiscountTicket;
             if (IsOnlineTicket) flags |= (int)TicketTypeFlags.OnlineTicket;
             if (IsChildTicket) flags |= (int)TicketTypeFlags.ChildTicket;
+            return flags;
+        }
+
+        private int GetPaymentChannelFlags()
+        {
+            int flags = 0;
+            if (IsAlipayPayment) flags |= (int)PaymentChannelFlags.Alipay;
+            if (IsWeChatPayment) flags |= (int)PaymentChannelFlags.WeChat;
+            if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
+            if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
+            if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
             return flags;
         }
 
