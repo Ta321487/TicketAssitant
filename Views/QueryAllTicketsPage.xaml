@@ -27,6 +27,10 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ToggleButton.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.ComboBox.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- 添加全局字体大小资源 -->
+            <system:Double x:Key="GlobalFontSize">12</system:Double>
+            
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
@@ -81,7 +85,7 @@
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="{DynamicResource MaterialDesignDivider}" />
                     </Trigger>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.IsDarkMode}" Value="True">
+                    <DataTrigger Binding="{Binding DataContext.MainViewModel.IsDarkMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
                         <Setter Property="Foreground" Value="White" />
                     </DataTrigger>
                     <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=AlternationIndex}" Value="0">
@@ -103,7 +107,7 @@
                 <Setter Property="Padding" Value="8,4" />
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.IsDarkMode}" Value="True">
+                    <DataTrigger Binding="{Binding DataContext.MainViewModel.IsDarkMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
                         <Setter Property="Foreground" Value="White" />
                     </DataTrigger>
                 </Style.Triggers>
@@ -114,7 +118,7 @@
                 <Setter Property="HorizontalContentAlignment" Value="Center" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                <Setter Property="FontSize" Value="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 <Setter Property="Background" Value="{DynamicResource PrimaryHueMidBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidForegroundBrush}" />
                 <Setter Property="Padding" Value="12,8" />
@@ -129,7 +133,7 @@
                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
                 <Setter Property="Padding" Value="8,4" />
-                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                <Setter Property="FontSize" Value="{DynamicResource GlobalFontSize}" />
                 <Setter Property="MaxWidth" Value="400" />
                 <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
                 <!-- 默认样式设置 -->
@@ -159,10 +163,10 @@
                 <Setter Property="TextWrapping" Value="NoWrap" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 <Setter Property="FontWeight" Value="Normal" />
-                <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                <Setter Property="FontSize" Value="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 <Setter Property="Padding" Value="4,2" />
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.IsDarkMode}" Value="True">
+                    <DataTrigger Binding="{Binding DataContext.MainViewModel.IsDarkMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
                         <Setter Property="Foreground" Value="White" />
                     </DataTrigger>
                 </Style.Triggers>

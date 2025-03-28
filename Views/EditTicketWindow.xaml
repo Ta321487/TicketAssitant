@@ -10,7 +10,7 @@
         xmlns:converters="clr-namespace:TA_WPF.Converters" 
         d:DataContext="{d:DesignInstance Type=viewmodels:EditTicketViewModel}"
         mc:Ignorable="d"
-        d:DesignHeight="1050" d:DesignWidth="900"
+        d:DesignHeight="1200" d:DesignWidth="900"
         Title="修改车票" Height="1050" Width="900"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
@@ -22,12 +22,12 @@
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="Microsoft YaHei"
         SizeToContent="Manual">
-    
+
     <Window.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StationNameConverter x:Key="StationNameConverter" />
-            
+
             <!-- 表单标签样式 -->
             <Style x:Key="FormLabelStyle" TargetType="TextBlock">
                 <Setter Property="Margin" Value="0,0,8,0"/>
@@ -36,7 +36,7 @@
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
             </Style>
-            
+
             <!-- 文本框样式 -->
             <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
@@ -45,7 +45,7 @@
                 <Setter Property="MinHeight" Value="45"/>
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
-            
+
             <!-- 数字文本框样式 -->
             <Style x:Key="FormNumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomNumberTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
@@ -54,7 +54,7 @@
                 <Setter Property="MinHeight" Value="45"/>
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
-            
+
             <!-- 搜索文本框样式 -->
             <Style x:Key="FormSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
@@ -63,7 +63,7 @@
                 <Setter Property="MinHeight" Value="45"/>
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
-            
+
             <!-- 下拉框样式 -->
             <Style x:Key="FormComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
@@ -72,7 +72,7 @@
                 <Setter Property="MinHeight" Value="45"/>
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
-            
+
             <!-- 下拉框选项样式 -->
             <Style x:Key="FormComboBoxItemStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
                 <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -82,7 +82,7 @@
                 <Setter Property="Padding" Value="16,8"/>
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
-            
+
             <!-- 滚动条样式 -->
             <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer">
                 <Setter Property="Template">
@@ -118,20 +118,20 @@
             </Style>
         </ResourceDictionary>
     </Window.Resources>
-    
+
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
+
         <!-- 标题 -->
         <TextBlock Grid.Row="0" 
                    Text="修改车票" 
                    Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
                    Margin="0,0,0,16"/>
-        
+
         <!-- 表单内容 -->
         <ScrollViewer Grid.Row="1" 
                       VerticalScrollBarVisibility="Auto" 
@@ -161,7 +161,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                
+
                 <!-- 第一行：车票号、检票口 -->
                 <TextBlock Grid.Row="0" Grid.Column="0" 
                            Text="车票号:" 
@@ -171,7 +171,7 @@
                          Style="{StaticResource FormTextBoxStyle}"
                          materialDesign:HintAssist.Hint="车票号"
                          Margin="0,8,16,8"/>
-                
+
                 <TextBlock Grid.Row="0" Grid.Column="2" 
                            Text="检票口:" 
                            Style="{StaticResource FormLabelStyle}"/>
@@ -180,7 +180,7 @@
                          Style="{StaticResource FormTextBoxStyle}"
                          materialDesign:HintAssist.Hint="检票口"
                          Margin="0,8,0,8"/>
-                
+
                 <!-- 第二行：出发站、到达站 -->
                 <TextBlock Grid.Row="1" Grid.Column="0" 
                            Text="出发站:" 
@@ -237,7 +237,7 @@
                         </Border>
                     </Popup>
                 </Grid>
-                
+
                 <TextBlock Grid.Row="1" Grid.Column="2" 
                            Text="到达站:" 
                            Style="{StaticResource FormLabelStyle}"/>
@@ -293,7 +293,7 @@
                         </Border>
                     </Popup>
                 </Grid>
-                
+
                 <!-- 第三行：出发站拼音、到达站拼音 -->
                 <TextBlock Grid.Row="2" Grid.Column="0" 
                            Text="出发站拼音:" 
@@ -303,7 +303,7 @@
                          Style="{StaticResource FormTextBoxStyle}"
                          materialDesign:HintAssist.Hint="出发站拼音"
                          Margin="0,8,16,8"/>
-                
+
                 <TextBlock Grid.Row="2" Grid.Column="2" 
                            Text="到达站拼音:" 
                            Style="{StaticResource FormLabelStyle}"/>
@@ -312,7 +312,7 @@
                          Style="{StaticResource FormTextBoxStyle}"
                          materialDesign:HintAssist.Hint="到达站拼音"
                          Margin="0,8,0,8"/>
-                
+
                 <!-- 第四行：金额、出发站代码 -->
                 <TextBlock Grid.Row="3" Grid.Column="0" 
                            Text="金额:" 
@@ -336,7 +336,7 @@
                               VerticalAlignment="Center" 
                               Margin="0,0,8,0"/>
                 </Grid>
-                
+
                 <TextBlock Grid.Row="3" Grid.Column="2" 
                            Text="出发站代码:" 
                            Style="{StaticResource FormLabelStyle}"/>
@@ -345,7 +345,7 @@
                          Style="{StaticResource FormTextBoxStyle}"
                          materialDesign:HintAssist.Hint="出发站代码"
                          Margin="0,8,0,8"/>
-                
+
                 <!-- 第五行：到达站代码、出发日期 -->
                 <TextBlock Grid.Row="4" Grid.Column="0" 
                            Text="到达站代码:" 
@@ -355,7 +355,7 @@
                          Style="{StaticResource FormTextBoxStyle}"
                          materialDesign:HintAssist.Hint="到达站代码"
                          Margin="0,8,16,8"/>
-                
+
                 <TextBlock Grid.Row="4" Grid.Column="2" 
                            Text="出发日期:" 
                            Style="{StaticResource FormLabelStyle}"/>
@@ -364,7 +364,7 @@
                            Style="{StaticResource MaterialDesignDatePicker}"
                            materialDesign:HintAssist.Hint="出发日期"
                            Margin="0,8,0,8"/>
-                
+
                 <!-- 第六行：车次号、出发时间 -->
                 <TextBlock Grid.Row="5" Grid.Column="0" 
                            Text="车次号:" 
@@ -391,7 +391,7 @@
                              materialDesign:HintAssist.Hint="车次号"
                              Margin="0"/>
                 </Grid>
-                
+
                 <TextBlock Grid.Row="5" Grid.Column="2" 
                            Text="出发时间:" 
                            Style="{StaticResource FormLabelStyle}"/>
@@ -427,7 +427,7 @@
                                Text="开" 
                                VerticalAlignment="Center"/>
                 </Grid>
-                
+
                 <!-- 第七行：车厢号 -->
                 <TextBlock Grid.Row="6" Grid.Column="0" 
                            Text="车厢号:" 
@@ -452,7 +452,7 @@
                               IsChecked="{Binding IsExtraCoach}"
                               VerticalAlignment="Center"/>
                 </Grid>
-                
+
                 <!-- 第八行：座位号 -->
                 <TextBlock Grid.Row="7" Grid.Column="0" 
                            Text="座位号:" 
@@ -488,7 +488,7 @@
                               Margin="16,0,0,0"
                               VerticalAlignment="Center"/>
                 </Grid>
-                
+
                 <!-- 座位类型 -->
                 <TextBlock Grid.Row="8" Grid.Column="0" 
                            Text="座位类型:" 
@@ -503,7 +503,7 @@
                         <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
-                
+
                 <!-- 附加信息 -->
                 <TextBlock Grid.Row="9" Grid.Column="0" 
                            Text="附加信息:" 
@@ -518,7 +518,7 @@
                         <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
-                
+
                 <!-- 车票用途 -->
                 <TextBlock Grid.Row="10" Grid.Column="0" 
                            Text="车票用途:" 
@@ -533,7 +533,7 @@
                         <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
-                
+
                 <!-- 第十二行：车票改签类型 -->
                 <TextBlock Grid.Row="11" Grid.Column="0" 
                            Text="车票改签类型:" 
@@ -549,7 +549,7 @@
                         <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
-                
+
                 <!-- 第十三行：提示信息 -->
                 <TextBlock Grid.Row="12" Grid.Column="0" 
                            Text="提示信息:" 
@@ -564,7 +564,7 @@
                         <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
-                
+
                 <!-- 第十四行：票种类型 -->
                 <TextBlock Grid.Row="13" Grid.Column="0" 
                            Text="票种类型:" 
@@ -589,7 +589,7 @@
                                   VerticalAlignment="Center"/>
                     </WrapPanel>
                 </Grid>
-                
+
                 <!-- 第十五行：支付渠道 -->
                 <TextBlock Grid.Row="14" Grid.Column="0" 
                            Text="支付渠道:" 
@@ -622,7 +622,7 @@
                 </Grid>
             </Grid>
         </ScrollViewer>
-        
+
         <!-- 底部按钮 -->
         <StackPanel Grid.Row="2" 
                     Orientation="Horizontal" 

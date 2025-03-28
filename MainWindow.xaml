@@ -184,7 +184,7 @@
                                 <TreeViewItem>
                                     <TreeViewItem.Header>
                                         <Button Content="首页" 
-                                                Command="{Binding ShowWelcomeCommand}" 
+                                                Command="{Binding ShowHomeCommand}" 
                                                 Style="{StaticResource MaterialDesignFlatButton}"
                                                 HorizontalContentAlignment="Left"
                                                 Width="200"
