@@ -64,6 +64,12 @@ namespace TA_WPF.ViewModels
         private bool _isStudentTicketEnabled;
         private bool _isChildTicketEnabled;
         
+        // 票种类型
+        private bool _isStudentTicket;
+        private bool _isDiscountTicket;
+        private bool _isOnlineTicket;
+        private bool _isChildTicket;
+        
         private bool _isAlipayPayment;
         private bool _isWeChatPayment;
         private bool _isABCPayment;
@@ -81,6 +87,101 @@ namespace TA_WPF.ViewModels
             _isInitializing = false;
         }
 
+        // 票种类型属性
+        public bool IsStudentTicket
+        {
+            get => _isStudentTicket;
+            set
+            {
+                if (_isStudentTicket != value)
+                {
+                    _isStudentTicket = value;
+                    OnPropertyChanged(nameof(IsStudentTicket));
+                    
+                    // 如果勾选了学生票，那么儿童票不可选择
+                    if (!_isInitializing && value)
+                    {
+                        // 勾选时，儿童票变为不可用
+                        _isChildTicketEnabled = false;
+                        OnPropertyChanged(nameof(IsChildTicketEnabled));
+                        
+                        // 如果儿童票已被勾选，则取消勾选
+                        if (IsChildTicket)
+                        {
+                            _isChildTicket = false;
+                            OnPropertyChanged(nameof(IsChildTicket));
+                        }
+                    }
+                    else if (!_isInitializing && !value)
+                    {
+                        // 取消勾选时，儿童票变为可用
+                        _isChildTicketEnabled = true;
+                        OnPropertyChanged(nameof(IsChildTicketEnabled));
+                    }
+                }
+            }
+        }
+
+        public bool IsDiscountTicket
+        {
+            get => _isDiscountTicket;
+            set
+            {
+                if (_isDiscountTicket != value)
+                {
+                    _isDiscountTicket = value;
+                    OnPropertyChanged(nameof(IsDiscountTicket));
+                }
+            }
+        }
+
+        public bool IsOnlineTicket
+        {
+            get => _isOnlineTicket;
+            set
+            {
+                if (_isOnlineTicket != value)
+                {
+                    _isOnlineTicket = value;
+                    OnPropertyChanged(nameof(IsOnlineTicket));
+                }
+            }
+        }
+
+        public bool IsChildTicket
+        {
+            get => _isChildTicket;
+            set
+            {
+                if (_isChildTicket != value)
+                {
+                    _isChildTicket = value;
+                    OnPropertyChanged(nameof(IsChildTicket));
+                    
+                    // 如果勾选了儿童票，那么学生票不可选择
+                    if (!_isInitializing && value)
+                    {
+                        // 勾选时，学生票变为不可用
+                        _isStudentTicketEnabled = false;
+                        OnPropertyChanged(nameof(IsStudentTicketEnabled));
+                        
+                        // 如果学生票已被勾选，则取消勾选
+                        if (IsStudentTicket)
+                        {
+                            _isStudentTicket = false;
+                            OnPropertyChanged(nameof(IsStudentTicket));
+                        }
+                    }
+                    else if (!_isInitializing && !value)
+                    {
+                        // 取消勾选时，学生票变为可用
+                        _isStudentTicketEnabled = true;
+                        OnPropertyChanged(nameof(IsStudentTicketEnabled));
+                    }
+                }
+            }
+        }
+
         // 支付渠道属性
         public bool IsAlipayPayment
         {
@@ -95,11 +196,22 @@ namespace TA_WPF.ViewModels
                     // 如果勾选了支付宝售票，那么微信售票不可选择
                     if (!_isInitializing && value)
                     {
-                        IsWeChatPaymentEnabled = false;
+                        // 勾选时，微信售票变为不可用
+                        _isWeChatPaymentEnabled = false;
+                        OnPropertyChanged(nameof(IsWeChatPaymentEnabled));
+                        
+                        // 如果微信售票已被勾选，则取消勾选
+                        if (IsWeChatPayment)
+                        {
+                            _isWeChatPayment = false;
+                            OnPropertyChanged(nameof(IsWeChatPayment));
+                        }
                     }
                     else if (!_isInitializing && !value)
                     {
-                        IsWeChatPaymentEnabled = true;
+                        // 取消勾选时，微信售票变为可用
+                        _isWeChatPaymentEnabled = true;
+                        OnPropertyChanged(nameof(IsWeChatPaymentEnabled));
                     }
                     
                     if (!_isInitializing) OnPaymentChannelChanged();
@@ -120,11 +232,22 @@ namespace TA_WPF.ViewModels
                     // 如果勾选了微信售票，那么支付宝售票不可选择
                     if (!_isInitializing && value)
                     {
-                        IsAlipayPaymentEnabled = false;
+                        // 勾选时，支付宝售票变为不可用
+                        _isAlipayPaymentEnabled = false;
+                        OnPropertyChanged(nameof(IsAlipayPaymentEnabled));
+                        
+                        // 如果支付宝售票已被勾选，则取消勾选
+                        if (IsAlipayPayment)
+                        {
+                            _isAlipayPayment = false;
+                            OnPropertyChanged(nameof(IsAlipayPayment));
+                        }
                     }
                     else if (!_isInitializing && !value)
                     {
-                        IsAlipayPaymentEnabled = true;
+                        // 取消勾选时，支付宝售票变为可用
+                        _isAlipayPaymentEnabled = true;
+                        OnPropertyChanged(nameof(IsAlipayPaymentEnabled));
                     }
                     
                     if (!_isInitializing) OnPaymentChannelChanged();
@@ -263,31 +386,109 @@ namespace TA_WPF.ViewModels
         {
             _isInitializing = true;
             
-            IsAlipayPayment = (flags & (int)PaymentChannelFlags.Alipay) != 0;
-            IsWeChatPayment = (flags & (int)PaymentChannelFlags.WeChat) != 0;
-            IsABCPayment = (flags & (int)PaymentChannelFlags.ABC) != 0;
-            IsCCBPayment = (flags & (int)PaymentChannelFlags.CCB) != 0;
-            IsICBCPayment = (flags & (int)PaymentChannelFlags.ICBC) != 0;
+            // 检查支付宝和微信支付的互斥关系
+            bool hasAlipay = (flags & (int)PaymentChannelFlags.Alipay) != 0;
+            bool hasWeChat = (flags & (int)PaymentChannelFlags.WeChat) != 0;
+            
+            // 检查多个银行的互斥关系
+            bool hasABC = (flags & (int)PaymentChannelFlags.ABC) != 0;
+            bool hasCCB = (flags & (int)PaymentChannelFlags.CCB) != 0;
+            bool hasICBC = (flags & (int)PaymentChannelFlags.ICBC) != 0;
+            
+            // 设置支付宝和微信支付的状态
+            _isAlipayPayment = hasAlipay;
+            _isWeChatPayment = hasWeChat && !hasAlipay; // 如果同时有支付宝和微信，优先保留支付宝
+            
+            // 设置银行支付的状态，如果多个银行同时被选中，按优先级保留一个：ABC > CCB > ICBC
+            _isABCPayment = hasABC;
+            _isCCBPayment = hasCCB && !hasABC; // 如果有农业银行，就不设置建设银行
+            _isICBCPayment = hasICBC && !hasABC && !hasCCB; // 如果有农业银行或建设银行，就不设置工商银行
             
             _isInitializing = false;
             
+            // 触发属性变更通知
+            OnPropertyChanged(nameof(IsAlipayPayment));
+            OnPropertyChanged(nameof(IsWeChatPayment));
+            OnPropertyChanged(nameof(IsABCPayment));
+            OnPropertyChanged(nameof(IsCCBPayment));
+            OnPropertyChanged(nameof(IsICBCPayment));
+            
             // 应用互斥逻辑
-            if (IsAlipayPayment)
+            if (_isAlipayPayment)
             {
-                IsWeChatPaymentEnabled = false;
+                _isWeChatPaymentEnabled = false;
+                OnPropertyChanged(nameof(IsWeChatPaymentEnabled));
             }
             else
             {
-                IsWeChatPaymentEnabled = true;
+                _isWeChatPaymentEnabled = true;
+                OnPropertyChanged(nameof(IsWeChatPaymentEnabled));
             }
             
-            if (IsWeChatPayment)
+            if (_isWeChatPayment)
             {
-                IsAlipayPaymentEnabled = false;
+                _isAlipayPaymentEnabled = false;
+                OnPropertyChanged(nameof(IsAlipayPaymentEnabled));
             }
             else
             {
-                IsAlipayPaymentEnabled = true;
+                _isAlipayPaymentEnabled = true;
+                OnPropertyChanged(nameof(IsAlipayPaymentEnabled));
+            }
+        }
+
+        /// <summary>
+        /// 设置票种类型标志位
+        /// </summary>
+        /// <remarks>
+        /// 设置票种类型时处理互斥关系
+        /// </remarks>
+        /// <param name="flags">票种类型标志位的整数表示</param>
+        public void SetTicketTypeFlags(int flags)
+        {
+            _isInitializing = true;
+            
+            // 检查学生票和儿童票的互斥关系
+            bool hasStudentTicket = (flags & (int)TicketTypeFlags.StudentTicket) != 0;
+            bool hasChildTicket = (flags & (int)TicketTypeFlags.ChildTicket) != 0;
+            bool hasDiscountTicket = (flags & (int)TicketTypeFlags.DiscountTicket) != 0;
+            bool hasOnlineTicket = (flags & (int)TicketTypeFlags.OnlineTicket) != 0;
+            
+            // 设置票种类型状态，如果同时有学生票和儿童票，优先保留学生票
+            _isStudentTicket = hasStudentTicket;
+            _isChildTicket = hasChildTicket && !hasStudentTicket;
+            _isDiscountTicket = hasDiscountTicket;
+            _isOnlineTicket = hasOnlineTicket;
+            
+            _isInitializing = false;
+            
+            // 触发属性变更通知
+            OnPropertyChanged(nameof(IsStudentTicket));
+            OnPropertyChanged(nameof(IsChildTicket));
+            OnPropertyChanged(nameof(IsDiscountTicket));
+            OnPropertyChanged(nameof(IsOnlineTicket));
+            
+            // 应用互斥逻辑
+            if (_isStudentTicket)
+            {
+                _isChildTicketEnabled = false;
+                OnPropertyChanged(nameof(IsChildTicketEnabled));
+            }
+            else
+            {
+                _isChildTicketEnabled = true;
+                OnPropertyChanged(nameof(IsChildTicketEnabled));
+            }
+            
+            if (_isChildTicket)
+            {
+                _isStudentTicketEnabled = false;
+                OnPropertyChanged(nameof(IsStudentTicketEnabled));
+            }
+            else
+            {
+                _isStudentTicketEnabled = true;
+                OnPropertyChanged(nameof(IsStudentTicketEnabled));
             }
         }
 

@@ -17,7 +17,7 @@ using System.Diagnostics; // 添加用于调试输出
 
 namespace TA_WPF.ViewModels
 {
-    public class AddTicketViewModel : INotifyPropertyChanged
+    public class AddTicketViewModel : PaymentChannelViewModel
     {
         protected readonly DatabaseService _databaseService;
         protected readonly StationSearchService _stationSearchService;
@@ -98,19 +98,6 @@ namespace TA_WPF.ViewModels
         private string? _customHint;
         private string? _selectedTicketModificationType;
         private ObservableCollection<string> _ticketModificationTypes;
-
-        // 票种类型
-        private bool _isStudentTicket;
-        private bool _isDiscountTicket;
-        private bool _isOnlineTicket;
-        private bool _isChildTicket;
-
-        // 支付渠道
-        private bool _isAlipayPayment;
-        private bool _isWeChatPayment;
-        private bool _isABCPayment;
-        private bool _isCCBPayment;
-        private bool _isICBCPayment;
 
         // 车站数据
         private ObservableCollection<StationInfo> _stations;
@@ -794,134 +781,6 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 票种类型属性
-        public bool IsStudentTicket
-        {
-            get => _isStudentTicket;
-            set
-            {
-                if (_isStudentTicket != value)
-                {
-                    _isStudentTicket = value;
-                    OnPropertyChanged(nameof(IsStudentTicket));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
-        public bool IsDiscountTicket
-        {
-            get => _isDiscountTicket;
-            set
-            {
-                if (_isDiscountTicket != value)
-                {
-                    _isDiscountTicket = value;
-                    OnPropertyChanged(nameof(IsDiscountTicket));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
-        public bool IsOnlineTicket
-        {
-            get => _isOnlineTicket;
-            set
-            {
-                if (_isOnlineTicket != value)
-                {
-                    _isOnlineTicket = value;
-                    OnPropertyChanged(nameof(IsOnlineTicket));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
-        public bool IsChildTicket
-        {
-            get => _isChildTicket;
-            set
-            {
-                if (_isChildTicket != value)
-                {
-                    _isChildTicket = value;
-                    OnPropertyChanged(nameof(IsChildTicket));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
-        // 支付渠道属性
-        public bool IsAlipayPayment
-        {
-            get => _isAlipayPayment;
-            set
-            {
-                if (_isAlipayPayment != value)
-                {
-                    _isAlipayPayment = value;
-                    OnPropertyChanged(nameof(IsAlipayPayment));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
-        public bool IsWeChatPayment
-        {
-            get => _isWeChatPayment;
-            set
-            {
-                if (_isWeChatPayment != value)
-                {
-                    _isWeChatPayment = value;
-                    OnPropertyChanged(nameof(IsWeChatPayment));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
-        public bool IsABCPayment
-        {
-            get => _isABCPayment;
-            set
-            {
-                if (_isABCPayment != value)
-                {
-                    _isABCPayment = value;
-                    OnPropertyChanged(nameof(IsABCPayment));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
-        public bool IsCCBPayment
-        {
-            get => _isCCBPayment;
-            set
-            {
-                if (_isCCBPayment != value)
-                {
-                    _isCCBPayment = value;
-                    OnPropertyChanged(nameof(IsCCBPayment));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
-        public bool IsICBCPayment
-        {
-            get => _isICBCPayment;
-            set
-            {
-                if (_isICBCPayment != value)
-                {
-                    _isICBCPayment = value;
-                    OnPropertyChanged(nameof(IsICBCPayment));
-                    if (!_isInitializing) _isFormModified = true;
-                }
-            }
-        }
-
         #endregion
 
         #region 集合属性
@@ -1353,16 +1212,11 @@ namespace TA_WPF.ViewModels
                 SelectedHint = null;
                 CustomHint = null;
                 
+                // 重置票种类型
                 IsStudentTicket = false;
                 IsDiscountTicket = false;
                 IsOnlineTicket = false;
                 IsChildTicket = false;
-                
-                IsAlipayPayment = false;
-                IsWeChatPayment = false;
-                IsABCPayment = false;
-                IsCCBPayment = false;
-                IsICBCPayment = false;
                 
                 SelectedTicketModificationType = null;
 
