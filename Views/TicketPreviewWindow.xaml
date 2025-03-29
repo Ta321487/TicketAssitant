@@ -300,12 +300,21 @@
                         Grid.Row="18" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
-                <!-- 票种显示选项 - 新增部分，添加新的行 -->
-                <TextBlock Text="票种显示选项" 
+                <!-- 支付渠道 - 跨所有列 -->
+                <TextBlock Text="支付渠道" 
                            Grid.Row="19" Grid.Column="0" 
                            Grid.ColumnSpan="3"
                            Style="{StaticResource FormLabelStyle}"/>
-                <Grid Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="3" Margin="2,0,2,8">
+                <TextBox Text="{Binding SelectedTicket.PaymentChannelFlags, Converter={StaticResource PaymentChannelFlagsConverter}}" 
+                        Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="3"
+                        Style="{StaticResource FormTextBoxStyle}"/>
+
+                <!-- 票种信息与支付渠道显示选项 - 新增部分 -->
+                <TextBlock Text="票种信息与支付渠道显示选项" 
+                           Grid.Row="21" Grid.Column="0" 
+                           Grid.ColumnSpan="3"
+                           Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="3" Margin="2,0,2,8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -332,21 +341,12 @@
                     <CheckBox Grid.Row="1" Content="使用'折'字替代'惠'字" 
                               IsChecked="{Binding UseDiscountAsDiscount, Mode=TwoWay}" 
                               Margin="8,0,0,4"/>
-                    <CheckBox Grid.Row="2" Content="显示带框票种信息" 
+                    <CheckBox Grid.Row="2" Content="显示带框票种信息与支付渠道信息" 
                               IsChecked="{Binding ShowBoxedTicketType, Mode=TwoWay}" 
                               Margin="8,0,0,4"/>
                 </Grid>
 
-                <!-- 支付渠道 - 跨所有列，调整行号 -->
-                <TextBlock Text="支付渠道" 
-                           Grid.Row="21" Grid.Column="0" 
-                           Grid.ColumnSpan="3"
-                           Style="{StaticResource FormLabelStyle}"/>
-                <TextBox Text="{Binding SelectedTicket.PaymentChannelFlags, Converter={StaticResource PaymentChannelFlagsConverter}}" 
-                        Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="3"
-                        Style="{StaticResource FormTextBoxStyle}"/>
-
-                <!-- 提示 - 跨所有列，调整行号 -->
+                <!-- 提示 - 跨所有列 -->
                 <TextBlock Text="提示信息" 
                            Grid.Row="23" Grid.Column="0" 
                            Grid.ColumnSpan="3"
@@ -620,7 +620,7 @@
                             <TextBlock Text="年" 
                                 FontWeight="Bold"
                                 FontFamily="SimHei"
-                                Foreground="Black"
+                                Foreground="Black" 
                                 Margin="0,8,0,0"
                                 FontSize="18" Height="23"/>
                             <!-- 月份 -->
@@ -1099,6 +1099,146 @@
                                     FontSize="24"
                                     FontFamily="SimHei"
                                     Margin="{Binding TicketTypeChildMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <!-- 支付渠道显示 - 支付宝 -->
+                        <Grid Visibility="{Binding ShowAlipayPayment, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="AlipayBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding PaymentAlipayMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding AlipayText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding AlipayText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding PaymentAlipayMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <!-- 支付渠道显示 - 微信 -->
+                        <Grid Visibility="{Binding ShowWeChatPayment, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="WeChatBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding PaymentWeChatMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding WeChatText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding WeChatText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding PaymentWeChatMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <!-- 支付渠道显示 - 农业银行 -->
+                        <Grid Visibility="{Binding ShowABCPayment, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="ABCBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding PaymentABCMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding ABCText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding ABCText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding PaymentABCMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <!-- 支付渠道显示 - 建设银行 -->
+                        <Grid Visibility="{Binding ShowCCBPayment, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="CCBBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding PaymentCCBMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding CCBText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding CCBText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding PaymentCCBMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <!-- 支付渠道显示 - 工商银行 -->
+                        <Grid Visibility="{Binding ShowICBCPayment, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="ICBCBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding PaymentICBCMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding ICBCText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding ICBCText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding PaymentICBCMargin}"
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Top"
                                     Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>

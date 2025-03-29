@@ -33,6 +33,12 @@ namespace TA_WPF.ViewModels
         // 当前使用的布局参数
         private Dictionary<string, object> _currentLayout;
         private bool _showBoxedTicketType;
+        // 支付渠道显示属性
+        private bool _showAlipayPayment;
+        private bool _showWeChatPayment;  
+        private bool _showABCPayment;
+        private bool _showCCBPayment;
+        private bool _showICBCPayment;
 
         // 设计时构造函数
         public TicketPreviewViewModel() : this(new TrainRideInfo
@@ -54,7 +60,8 @@ namespace TA_WPF.ViewModels
             TicketPurpose = "仅供报销使用",
             Hint = "这是一条提示信息|这也是一条提示信息",
             TicketModificationType = "始发改签",
-            TicketTypeFlags = (int)Models.TicketTypeFlags.ChildTicket // 设计时默认为儿童票
+            TicketTypeFlags = (int)Models.TicketTypeFlags.ChildTicket, // 设计时默认为儿童票
+            PaymentChannelFlags = (int)Models.PaymentChannelFlags.Alipay | (int)Models.PaymentChannelFlags.WeChat | (int)Models.PaymentChannelFlags.ABC | (int)Models.PaymentChannelFlags.CCB | (int)Models.PaymentChannelFlags.ICBC
         })
         {
             // 为设计视图添加默认的身份信息和编码区内容
@@ -717,6 +724,12 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(TicketTypeOnlineMargin));
                     OnPropertyChanged(nameof(TicketTypeChildMargin));
                     OnPropertyChanged(nameof(TicketTypeBoxStyle));
+                    // 通知支付渠道边距属性更新
+                    OnPropertyChanged(nameof(PaymentAlipayMargin));
+                    OnPropertyChanged(nameof(PaymentWeChatMargin));
+                    OnPropertyChanged(nameof(PaymentABCMargin));
+                    OnPropertyChanged(nameof(PaymentCCBMargin));
+                    OnPropertyChanged(nameof(PaymentICBCMargin));
                     
                     // 强制刷新UI，确保边框样式正确应用
                     Application.Current.Dispatcher.InvokeAsync(() =>
@@ -741,6 +754,79 @@ namespace TA_WPF.ViewModels
         public string DiscountText => UseDiscountAsDiscount ? "折" : "惠";
         public string OnlineText => "网";
         public string ChildText => "孩";
+
+        // 支付渠道文本
+        public string AlipayText => "支";
+        public string WeChatText => "微";
+        public string ABCText => "农";
+        public string CCBText => "建";
+        public string ICBCText => "工";
+
+        // 支付渠道显示属性
+        public bool ShowAlipayPayment
+        {
+            get => _showAlipayPayment;
+            set
+            {
+                if (_showAlipayPayment != value)
+                {
+                    _showAlipayPayment = value;
+                    OnPropertyChanged(nameof(ShowAlipayPayment));
+                }
+            }
+        }
+        
+        public bool ShowWeChatPayment
+        {
+            get => _showWeChatPayment;
+            set
+            {
+                if (_showWeChatPayment != value)
+                {
+                    _showWeChatPayment = value;
+                    OnPropertyChanged(nameof(ShowWeChatPayment));
+                }
+            }
+        }
+        
+        public bool ShowABCPayment
+        {
+            get => _showABCPayment;
+            set
+            {
+                if (_showABCPayment != value)
+                {
+                    _showABCPayment = value;
+                    OnPropertyChanged(nameof(ShowABCPayment));
+                }
+            }
+        }
+        
+        public bool ShowCCBPayment
+        {
+            get => _showCCBPayment;
+            set
+            {
+                if (_showCCBPayment != value)
+                {
+                    _showCCBPayment = value;
+                    OnPropertyChanged(nameof(ShowCCBPayment));
+                }
+            }
+        }
+        
+        public bool ShowICBCPayment
+        {
+            get => _showICBCPayment;
+            set
+            {
+                if (_showICBCPayment != value)
+                {
+                    _showICBCPayment = value;
+                    OnPropertyChanged(nameof(ShowICBCPayment));
+                }
+            }
+        }
 
         // 票种框样式
         public Style TicketTypeBoxStyle
@@ -1023,7 +1109,7 @@ namespace TA_WPF.ViewModels
                 // 金额数值位置
                 { "MoneyValueMargin", new Thickness(74, 185, 0, 0) },
                 // "元"字位置参数
-                { "MoneyUnitParam", "185,280,0,0" },
+                { "MoneyUnitParam", "74,185,0,0" },
                 // 座位类型位置 - 普通
                 { "SeatTypeMargin", new Thickness(600, 195, 0, 0) },
                 // 座位类型位置 - 无座
@@ -1047,14 +1133,26 @@ namespace TA_WPF.ViewModels
                 // 票种信息位置 - 不带框
                 { "TicketTypeStudentMargin", new Thickness(310, 185, 0, 0) },// 学生票
                 { "TicketTypeChildMargin", new Thickness(310, 185, 0, 0) },// 儿童票 - 与学生票在同一位置，因为它们是互斥的
-                { "TicketTypeOnlineMargin", new Thickness(345, 185, 0, 0) },// 网票
-                { "TicketTypeDiscountMargin", new Thickness(375, 185, 0, 0) },// 折扣票
+                { "TicketTypeOnlineMargin", new Thickness(335, 185, 0, 0) },// 网票
+                { "TicketTypeDiscountMargin", new Thickness(360, 185, 0, 0) },// 折扣票
+                // 支付渠道位置 - 不带框
+                { "PaymentAlipayMargin", new Thickness(335, 185, 0, 0) }, // 支付宝，与网票在同一位置
+                { "PaymentWeChatMargin", new Thickness(335, 185, 0, 0) }, // 微信，与网票在同一位置
+                { "PaymentABCMargin", new Thickness(385, 185, 0, 0) },    // 农业银行，在惠字旁边
+                { "PaymentCCBMargin", new Thickness(385, 185, 0, 0) },    // 建设银行，在惠字旁边
+                { "PaymentICBCMargin", new Thickness(385, 185, 0, 0) },   // 工商银行，在惠字旁边
                 
                 // 票种信息位置 - 带框
                 { "TicketTypeStudentBoxedMargin", new Thickness(310, 185, 0, 0) },// 学生票
                 { "TicketTypeChildBoxedMargin", new Thickness(310, 185, 0, 0) },// 儿童票 - 与学生票在同一位置，因为它们是互斥的
                 { "TicketTypeOnlineBoxedMargin", new Thickness(345, 185, 0, 0) },// 网票
-                { "TicketTypeDiscountBoxedMargin", new Thickness(375, 185, 0, 0) },// 折扣票
+                { "TicketTypeDiscountBoxedMargin", new Thickness(380, 185, 0, 0) },// 折扣票
+                // 支付渠道位置 - 带框
+                { "PaymentAlipayBoxedMargin", new Thickness(345, 185, 0, 0) }, // 支付宝，与网票在同一位置
+                { "PaymentWeChatBoxedMargin", new Thickness(345, 185, 0, 0) }, // 微信，与网票在同一位置
+                { "PaymentABCBoxedMargin", new Thickness(415, 185, 0, 0) },    // 农业银行，在惠字旁边
+                { "PaymentCCBBoxedMargin", new Thickness(415, 185, 0, 0) },    // 建设银行，在惠字旁边
+                { "PaymentICBCBoxedMargin", new Thickness(415, 185, 0, 0) },   // 工商银行，在惠字旁边
             };
 
             // 红色车票布局参数 - 部分参数与蓝色不同
@@ -1082,7 +1180,7 @@ namespace TA_WPF.ViewModels
             _redTicketLayout["SeatNumberWordMargin"] = new Thickness(654, 160, 0, 0);
             _redTicketLayout["MoneySymbolMargin"] = new Thickness(55, 190, 0, 0);
             _redTicketLayout["MoneyValueMargin"] = new Thickness(74, 190, 0, 0);
-            _redTicketLayout["MoneyUnitParam"] = "350,330,0,0";
+            _redTicketLayout["MoneyUnitParam"] = "74,190,0,0";  // 修改为与MoneyValueMargin相同的坐标
             _redTicketLayout["SeatTypeMargin"] = new Thickness(600, 200, 0, 0);
             _redTicketLayout["SeatTypeMarginNoSeat"] = new Thickness(530, 195, 0, 0);
             _redTicketLayout["AdditionalInfoMargin"] = new Thickness(55, 265, 0, 0);
@@ -1097,13 +1195,26 @@ namespace TA_WPF.ViewModels
             // 更新红色车票的票种信息位置
             _redTicketLayout["TicketTypeStudentMargin"] = new Thickness(310, 185, 0, 0);
             _redTicketLayout["TicketTypeChildMargin"] = new Thickness(310, 185, 0, 0);
-            _redTicketLayout["TicketTypeOnlineMargin"] = new Thickness(345, 185, 0, 0);
-            _redTicketLayout["TicketTypeDiscountMargin"] = new Thickness(375, 185, 0, 0);
+            _redTicketLayout["TicketTypeOnlineMargin"] = new Thickness(335, 185, 0, 0);
+            _redTicketLayout["TicketTypeDiscountMargin"] = new Thickness(360, 185, 0, 0);
             
             _redTicketLayout["TicketTypeStudentBoxedMargin"] = new Thickness(310, 185, 0, 0);
             _redTicketLayout["TicketTypeChildBoxedMargin"] = new Thickness(310, 185, 0, 0);
             _redTicketLayout["TicketTypeOnlineBoxedMargin"] = new Thickness(345, 185, 0, 0);
-            _redTicketLayout["TicketTypeDiscountBoxedMargin"] = new Thickness(375, 185, 0, 0);
+            _redTicketLayout["TicketTypeDiscountBoxedMargin"] = new Thickness(380, 185, 0, 0);
+
+            // 更新红色车票的支付渠道位置
+            _redTicketLayout["PaymentAlipayMargin"] = new Thickness(335, 185, 0, 0);
+            _redTicketLayout["PaymentWeChatMargin"] = new Thickness(335, 185, 0, 0);
+            _redTicketLayout["PaymentABCMargin"] = new Thickness(385, 185, 0, 0);
+            _redTicketLayout["PaymentCCBMargin"] = new Thickness(385, 185, 0, 0);
+            _redTicketLayout["PaymentICBCMargin"] = new Thickness(385, 185, 0, 0);
+            
+            _redTicketLayout["PaymentAlipayBoxedMargin"] = new Thickness(345, 185, 0, 0);
+            _redTicketLayout["PaymentWeChatBoxedMargin"] = new Thickness(345, 185, 0, 0);
+            _redTicketLayout["PaymentABCBoxedMargin"] = new Thickness(415, 185, 0, 0);
+            _redTicketLayout["PaymentCCBBoxedMargin"] = new Thickness(415, 185, 0, 0);
+            _redTicketLayout["PaymentICBCBoxedMargin"] = new Thickness(415, 185, 0, 0);
         }
 
         // 更新所有布局相关属性
@@ -1161,6 +1272,13 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(DepartStationPinyinPosition));
             OnPropertyChanged(nameof(ArriveStationPinyinPosition));
             OnPropertyChanged(nameof(TrainNumberCenterPosition));
+
+            // 支付渠道位置
+            OnPropertyChanged(nameof(PaymentAlipayMargin));
+            OnPropertyChanged(nameof(PaymentWeChatMargin));
+            OnPropertyChanged(nameof(PaymentABCMargin));
+            OnPropertyChanged(nameof(PaymentCCBMargin));
+            OnPropertyChanged(nameof(PaymentICBCMargin));
 
             // 刷新整个视图，确保所有转换器都能重新计算
             Application.Current.Dispatcher.Invoke(() =>
@@ -1301,6 +1419,27 @@ namespace TA_WPF.ViewModels
         // 二维码位置
         public Thickness QRCodeMargin => (Thickness)_currentLayout["QRCodeMargin"];
 
+        // 支付渠道位置信息
+        public Thickness PaymentAlipayMargin => ShowBoxedTicketType 
+            ? (Thickness)_currentLayout["PaymentAlipayBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentAlipayMargin"];
+
+        public Thickness PaymentWeChatMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["PaymentWeChatBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentWeChatMargin"];
+
+        public Thickness PaymentABCMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["PaymentABCBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentABCMargin"];
+
+        public Thickness PaymentCCBMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["PaymentCCBBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentCCBMargin"];
+
+        public Thickness PaymentICBCMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["PaymentICBCBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentICBCMargin"];
+
         // 根据原始票种信息初始化票种显示选项并锁定
         private void InitializeTicketTypeOptions()
         {
@@ -1313,7 +1452,15 @@ namespace TA_WPF.ViewModels
                 _showOnlineTicket = false;
                 _showChildTicket = false;
 
+                // 清除所有支付渠道显示选项
+                _showAlipayPayment = false;
+                _showWeChatPayment = false;
+                _showABCPayment = false;
+                _showCCBPayment = false;
+                _showICBCPayment = false;
+
                 var ticketTypeFlags = _selectedTicket.TicketTypeFlags;
+                var paymentChannelFlags = _selectedTicket.PaymentChannelFlags;
 
                 // 根据原始票种信息设置显示选项
                 if ((ticketTypeFlags & (int)Models.TicketTypeFlags.StudentTicket) != 0)
@@ -1326,7 +1473,23 @@ namespace TA_WPF.ViewModels
                     _showDiscountTicket = true;
                 }
                 
-                if ((ticketTypeFlags & (int)Models.TicketTypeFlags.OnlineTicket) != 0)
+                // 先检查是否有支付宝或微信支付
+                bool hasOnlinePayment = false;
+                
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.Alipay) != 0)
+                {
+                    _showAlipayPayment = true;
+                    hasOnlinePayment = true;
+                }
+                
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.WeChat) != 0)
+                {
+                    _showWeChatPayment = true;
+                    hasOnlinePayment = true;
+                }
+                
+                // 只有当没有支付宝和微信支付渠道时，才显示网络售票标识
+                if (!hasOnlinePayment && (ticketTypeFlags & (int)Models.TicketTypeFlags.OnlineTicket) != 0)
                 {
                     _showOnlineTicket = true;
                 }
@@ -1336,11 +1499,32 @@ namespace TA_WPF.ViewModels
                     _showChildTicket = true;
                 }
 
+                // 设置银行类支付渠道
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.ABC) != 0)
+                {
+                    _showABCPayment = true;
+                }
+                
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.CCB) != 0)
+                {
+                    _showCCBPayment = true;
+                }
+                
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.ICBC) != 0)
+                {
+                    _showICBCPayment = true;
+                }
+                
                 // 通知UI更新
                 OnPropertyChanged(nameof(ShowStudentTicket));
                 OnPropertyChanged(nameof(ShowDiscountTicket));
                 OnPropertyChanged(nameof(ShowOnlineTicket));
                 OnPropertyChanged(nameof(ShowChildTicket));
+                OnPropertyChanged(nameof(ShowAlipayPayment));
+                OnPropertyChanged(nameof(ShowWeChatPayment));
+                OnPropertyChanged(nameof(ShowABCPayment));
+                OnPropertyChanged(nameof(ShowCCBPayment));
+                OnPropertyChanged(nameof(ShowICBCPayment));
                 OnPropertyChanged(nameof(IsTicketTypeOptionsLocked));
             }
             else
