@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Controls;
 using MySql.Data.MySqlClient;
 using TA_WPF.Models;
 using TA_WPF.Services;
@@ -32,11 +33,24 @@ namespace TA_WPF.ViewModels
         public event EventHandler CloseWindow;
 
         /// <summary>
+        /// 文本框聚焦事件
+        /// </summary>
+        public event EventHandler<TextBoxFocusEventArgs> FocusTextBox;
+
+        /// <summary>
         /// 触发窗口关闭事件
         /// </summary>
         protected virtual void OnCloseWindow()
         {
             CloseWindow?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// 触发文本框聚焦事件
+        /// </summary>
+        protected virtual void OnFocusTextBox(string tag)
+        {
+            FocusTextBox?.Invoke(this, new TextBoxFocusEventArgs(tag));
         }
 
         // 基本信息
@@ -947,7 +961,6 @@ namespace TA_WPF.ViewModels
             if (station != null)
             {
                 UpdateStationInfo(station.StationName, isDepartStation);
-                CheckStationInfoCompleteness(station, isDepartStation);
             }
         }
 
@@ -982,7 +995,7 @@ namespace TA_WPF.ViewModels
                 // 如果找到匹配的站点，更新站点信息
                 if (station != null)
                 {
-                    CheckStationInfoCompleteness(station, isDepartStation);
+                    // 移除对CheckStationInfoCompleteness的调用
                 }
             }
             catch (Exception ex)
@@ -1368,23 +1381,24 @@ namespace TA_WPF.ViewModels
             if (station == null)
                 return;
                 
-            // 确保车站名称不包含"站"字
+            // 获取选择的车站名称
             string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
             
-            // 先关闭下拉框，防止触发搜索
+            // 关闭下拉框
             IsDepartStationDropdownOpen = false;
             
-            // 更新属性
-            DepartStation = stationName;
-            
-            // 暂时取消DepartStationSearchText的PropertyChanged事件触发
+            // 设置出发站文本
             _isUpdatingDepartStation = true;
             DepartStationSearchText = stationName;
+            DepartStation = stationName;
             _isUpdatingDepartStation = false;
             
-            // 直接更新站点信息，无需等待失去焦点
+            // 直接从选择的站点对象获取信息
             DepartStationPinyin = station.StationPinyin ?? string.Empty;
             DepartStationCode = station.StationCode ?? string.Empty;
+            
+            // 选择后立即检查站点信息完整性
+            CheckStationInfoCompleteness(station, true);
         }
 
         private void SelectArriveStation(StationInfo station)
@@ -1392,61 +1406,74 @@ namespace TA_WPF.ViewModels
             if (station == null)
                 return;
                 
-            // 确保车站名称不包含"站"字
+            // 获取选择的车站名称
             string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
             
-            // 先关闭下拉框，防止触发搜索
+            // 关闭下拉框
             IsArriveStationDropdownOpen = false;
             
-            // 更新属性
-            ArriveStation = stationName;
-            
-            // 暂时取消ArriveStationSearchText的PropertyChanged事件触发
+            // 设置到达站文本
             _isUpdatingArriveStation = true;
             ArriveStationSearchText = stationName;
+            ArriveStation = stationName;
             _isUpdatingArriveStation = false;
             
-            // 直接更新站点信息，无需等待失去焦点
+            // 直接从选择的站点对象获取信息
             ArriveStationPinyin = station.StationPinyin ?? string.Empty;
             ArriveStationCode = station.StationCode ?? string.Empty;
+            
+            // 选择后立即检查站点信息完整性
+            CheckStationInfoCompleteness(station, false);
         }
 
-        // 检查车站信息是否完整
+        /// <summary>
+        /// 检查站点信息完整性
+        /// </summary>
+        /// <param name="station">站点信息</param>
+        /// <param name="isDepartStation">是否为出发站</param>
         private void CheckStationInfoCompleteness(StationInfo station, bool isDepartStation)
         {
-            if (station == null)
-                return;
-                
-            // 如果已经设置忽略车站检查，则直接返回
-            if (Services.StationCheckService.Instance.IgnoreStationCheck)
-                return;
-                
-            string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
-            
-            // 检查车站信息是否完整
-            bool isPinyinMissing = string.IsNullOrEmpty(station.StationPinyin);
-            bool isCodeMissing = string.IsNullOrEmpty(station.StationCode);
-            
-            if (isPinyinMissing || isCodeMissing)
+            try
             {
-                string message = $"车站\"{stationName}站\"的信息不完整，";
-                if (isPinyinMissing && isCodeMissing)
-                    message += "缺少拼音和代码信息。";
-                else if (isPinyinMissing)
-                    message += "缺少拼音信息。";
-                else
-                    message += "缺少代码信息。";
-                    
-                message += "建议在车站管理中完善车站信息。";
+                if (station == null) return;
                 
-                MessageBoxHelper.ShowWarning(message, "车站信息不完整");
+                // 确保不是用户点击了命令按钮
+                if (Mouse.DirectlyOver is Button button)
+                {
+                    // 如果当前鼠标悬停在命令按钮上，则不进行校验
+                    if (button.Command != null && 
+                        (button.Command == SaveCommand || button.Command == ResetCommand ||
+                         button.Name == "MinimizeButton" || button.Name == "CloseButton"))
+                    {
+                        return;
+                    }
+                }
+                
+                // 检查车站信息是否完整
+                bool hasStationCode = !string.IsNullOrWhiteSpace(station.StationCode);
+                bool hasStationPinyin = !string.IsNullOrWhiteSpace(station.StationPinyin);
+                
+                if (!hasStationCode || !hasStationPinyin)
+                {
+                    // 构建缺失信息列表
+                    List<string> missingInfo = new List<string>();
+                    if (!hasStationCode) missingInfo.Add("station_code");
+                    if (!hasStationPinyin) missingInfo.Add("station_pinyin");
+                    
+                    string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
+                    string missingItems = string.Join("、", missingInfo);
+                    
+                    // 弹出警告
+                    MessageBoxHelper.ShowWarning($"车站【{stationName}站】信息不完整，缺少：{missingItems}，请在车站中心中完善该车站信息", "车站信息不完整");
+                    
+                    // 将焦点设回文本框
+                    OnFocusTextBox(isDepartStation ? "Depart" : "Arrive");
+                }
             }
-        }
-
-        private void UpdateArriveStationSuggestions()
-        {
-            // 实现更新建议列表的逻辑
-            // 这里可以根据需要调用SearchArriveStations方法来更新建议列表
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"检查站点信息完整性时出错: {ex.Message}", ex);
+            }
         }
 
         // 添加字体大小变化处理方法
@@ -1619,40 +1646,94 @@ namespace TA_WPF.ViewModels
         {
             try
             {
+                // 确保不是用户点击了命令按钮（如重置、确定、关闭）
+                if (Mouse.DirectlyOver is Button button)
+                {
+                    // 如果当前鼠标悬停在命令按钮上，则不进行校验
+                    if (button.Command != null && 
+                        (button.Command == SaveCommand || button.Command == ResetCommand ||
+                         button.Name == "MinimizeButton" || button.Name == "CloseButton"))
+                    {
+                        return;
+                    }
+                }
+                
+                // 检查是否在下拉框上操作
+                if (isDepartStation && IsDepartStationDropdownOpen)
+                {
+                    // 如果下拉框正在打开，不触发校验
+                    return;
+                }
+                else if (!isDepartStation && IsArriveStationDropdownOpen)
+                {
+                    // 如果下拉框正在打开，不触发校验
+                    return;
+                }
+
                 string stationName = isDepartStation ? DepartStation : ArriveStation;
                 if (!string.IsNullOrWhiteSpace(stationName))
                 {
-                    // 使用StationSearchService处理失去焦点事件
-                    var station = _stationSearchService.HandleStationLostFocus(stationName, isDepartStation);
-                    
-                    if (station != null)
+                    // 校验车站信息的完整性
+                    var validateTask = _stationSearchService.ValidateStationCompleteAsync(stationName);
+                    validateTask.ContinueWith(task =>
                     {
-                        // 更新站点信息
-                        if (isDepartStation)
+                        if (task.IsFaulted)
                         {
-                            // 更新出发站信息
-                            DepartStationPinyin = station.StationPinyin ?? string.Empty;
-                            DepartStationCode = station.StationCode ?? string.Empty;
-                            
-                            // 检查站点信息完整性，与原有逻辑保持一致
-                            CheckStationInfoCompleteness(station, true);
+                            LogHelper.LogError($"校验车站信息时出错: {task.Exception?.Message}", task.Exception);
+                            return;
                         }
-                        else
+
+                        var (status, station) = task.Result;
+
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            // 更新到达站信息
-                            ArriveStationPinyin = station.StationPinyin ?? string.Empty;
-                            ArriveStationCode = station.StationCode ?? string.Empty;
-                            
-                            // 检查站点信息完整性，与原有逻辑保持一致
-                            CheckStationInfoCompleteness(station, false);
-                        }
-                    }
-                    else
-                    {
-                        // 如果找不到匹配的站点，也执行原有的验证逻辑
-                        ValidateStationName(stationName, isDepartStation);
-                        UpdateStationInfo(stationName, isDepartStation);
-                    }
+                            switch (status)
+                            {
+                                case 0: // 校验通过
+                                    // 更新车站信息
+                                    if (isDepartStation)
+                                    {
+                                        DepartStationPinyin = station.StationPinyin ?? string.Empty;
+                                        DepartStationCode = station.StationCode ?? string.Empty;
+                                    }
+                                    else
+                                    {
+                                        ArriveStationPinyin = station.StationPinyin ?? string.Empty;
+                                        ArriveStationCode = station.StationCode ?? string.Empty;
+                                    }
+                                    break;
+
+                                case 1: // 车站不存在
+                                    if (Stations.Count == 0)
+                                    {
+                                        // 车站表为空
+                                        MessageBoxHelper.ShowWarning("车站表为空，请在车站中心中添加一些车站再来添加车票", "车站信息不完整");
+                                    }
+                                    else
+                                    {
+                                        // 车站不存在
+                                        MessageBoxHelper.ShowWarning($"车站表内不存在车站【{stationName}】，请确认是否输入错误或者在车站中心中添加该车站信息", "车站不存在");
+                                    }
+                                    // 将焦点设回文本框
+                                    OnFocusTextBox(isDepartStation ? "Depart" : "Arrive");
+                                    break;
+
+                                case 2: // 车站信息不完整
+                                    // 检查缺少哪些信息
+                                    List<string> missingInfo = new List<string>();
+                                    if (string.IsNullOrWhiteSpace(station.StationCode))
+                                        missingInfo.Add("station_code");
+                                    if (string.IsNullOrWhiteSpace(station.StationPinyin))
+                                        missingInfo.Add("station_pinyin");
+
+                                    string missingItems = string.Join("、", missingInfo);
+                                    MessageBoxHelper.ShowWarning($"车站【{stationName}】信息不完整，缺少：{missingItems}，请在车站中心中完善该车站信息", "车站信息不完整");
+                                    // 将焦点设回文本框
+                                    OnFocusTextBox(isDepartStation ? "Depart" : "Arrive");
+                                    break;
+                            }
+                        });
+                    });
                 }
             }
             catch (Exception ex)
@@ -1725,6 +1806,17 @@ namespace TA_WPF.ViewModels
         {
             OldSize = oldSize;
             NewSize = newSize;
+        }
+    }
+
+    // 文本框焦点事件参数
+    public class TextBoxFocusEventArgs : EventArgs
+    {
+        public string TextBoxTag { get; }
+        
+        public TextBoxFocusEventArgs(string textBoxTag)
+        {
+            TextBoxTag = textBoxTag;
         }
     }
 } 

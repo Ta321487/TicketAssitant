@@ -62,15 +62,6 @@
         <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
-            <Button x:Name="IgnoreButton"
-                    Content="暂时忽略"
-                    Style="{StaticResource MaterialDesignOutlinedButton}"
-                    FontFamily="Microsoft YaHei"
-                    Padding="16,8"
-                    Click="IgnoreButton_Click"
-                    Margin="0,0,16,0"
-                    IsEnabled="{Binding IsIgnoreButtonEnabled}"
-                    Visibility="{Binding IsIgnoreButtonVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <Button x:Name="OkButton"
                     Content="确定"
                     Style="{StaticResource MaterialDesignRaisedButton}"

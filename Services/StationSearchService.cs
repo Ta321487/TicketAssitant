@@ -170,15 +170,64 @@ namespace TA_WPF.Services
                     loadTask.Wait();
                 }
                 
-                // 在站点列表中查找匹配的站点
-                var station = ValidateStationName(stationName);
-                
-                return station;
+                // 在站点列表中查找匹配的站点，不进行校验
+                return ValidateStationName(stationName);
             }
             catch (Exception ex)
             {
                 Utils.LogHelper.LogError($"处理站点输入框失去焦点事件时出错: {stationName}", ex);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// 校验车站信息完整性（包含station_code和station_pinyin）
+        /// </summary>
+        /// <param name="stationName">车站名称</param>
+        /// <returns>校验结果：0-校验通过，1-车站不存在，2-车站信息不完整</returns>
+        public async Task<(int status, StationInfo station)> ValidateStationCompleteAsync(string stationName)
+        {
+            if (string.IsNullOrWhiteSpace(stationName))
+            {
+                return (1, null); // 车站不存在
+            }
+
+            try
+            {
+                // 确保站点数据已加载
+                if (!_isInitialized)
+                {
+                    await LoadStationsAsync();
+                }
+
+                // 检查车站表是否为空
+                if (_stations.Count == 0)
+                {
+                    return (1, null); // 车站表为空
+                }
+
+                // 查找匹配的车站
+                var station = ValidateStationName(stationName);
+                if (station == null)
+                {
+                    return (1, null); // 车站不存在
+                }
+
+                // 检查车站信息是否完整
+                bool hasStationCode = !string.IsNullOrWhiteSpace(station.StationCode);
+                bool hasStationPinyin = !string.IsNullOrWhiteSpace(station.StationPinyin);
+
+                if (!hasStationCode || !hasStationPinyin)
+                {
+                    return (2, station); // 车站信息不完整
+                }
+
+                return (0, station); // 校验通过
+            }
+            catch (Exception ex)
+            {
+                Utils.LogHelper.LogError($"校验车站信息完整性时出错: {stationName}", ex);
+                return (1, null); // 出错时默认为车站不存在
             }
         }
     }

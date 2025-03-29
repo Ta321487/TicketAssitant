@@ -1026,8 +1026,8 @@ namespace TA_WPF.Views
                         themeService.ApplyTheme(isDarkMode);
 
                         // 重置车站检查服务的忽略状态
-                        StationCheckService.Instance.ResetIgnoreStationCheck();
-                        LogHelper.LogInfo("已重置车站检查忽略状态");
+                        // StationCheckService.Instance.ResetIgnoreStationCheck();
+                        LogHelper.LogInfo("已登录成功");
 
                         // 强制刷新主窗口
                         _mainWindow.UpdateLayout();

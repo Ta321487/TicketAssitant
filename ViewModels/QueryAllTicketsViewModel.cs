@@ -441,6 +441,14 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 验证车站信息是否完整
+        /// </summary>
+        private void ValidateStation(StationInfo station)
+        {
+            // 移除验证车站信息完整性的代码
+        }
+
+        /// <summary>
         /// 选择自定义年份
         /// </summary>
         private void SelectCustomYear()

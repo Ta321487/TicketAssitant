@@ -17,6 +17,7 @@ namespace TA_WPF.Views
     {
         private readonly EditTicketViewModel _viewModel;
         private ThemeService _themeService;
+        private bool _isClosing = false; // 添加窗口关闭标志
         
         public EditTicketWindow(DatabaseService databaseService, MainViewModel mainViewModel, TrainRideInfo ticket)
         {
@@ -51,6 +52,9 @@ namespace TA_WPF.Views
                         LogHelper.LogError("关闭修改车票窗口时出错", ex);
                     }
                 };
+                
+                // 订阅文本框聚焦事件
+                _viewModel.FocusTextBox += ViewModel_FocusTextBox;
                 
                 // 订阅窗口加载事件
                 this.Loaded += EditTicketWindow_Loaded;
@@ -267,6 +271,9 @@ namespace TA_WPF.Views
 
         protected override void OnClosing(CancelEventArgs e)
         {
+            // 标记窗口正在关闭
+            _isClosing = true;
+            
             base.OnClosing(e);
             
             try
@@ -338,6 +345,9 @@ namespace TA_WPF.Views
         {
             try
             {
+                // 如果窗口正在关闭，不触发校验
+                if (_isClosing) return;
+
                 // 调用ViewModel中的处理方法，传入参数表示这是出发站
                 _viewModel.OnStationLostFocus(true);
             }
@@ -354,12 +364,46 @@ namespace TA_WPF.Views
         {
             try
             {
+                // 如果窗口正在关闭，不触发校验
+                if (_isClosing) return;
+
                 // 调用ViewModel中的处理方法，传入参数表示这是到达站
                 _viewModel.OnStationLostFocus(false);
             }
             catch (Exception ex)
             {
                 LogHelper.LogError("处理到达站失去焦点事件时出错", ex);
+            }
+        }
+
+        /// <summary>
+        /// 处理ViewModel的文本框聚焦事件
+        /// </summary>
+        private void ViewModel_FocusTextBox(object sender, TextBoxFocusEventArgs e)
+        {
+            try
+            {
+                // 在UI线程上执行聚焦操作
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    // 根据tag查找对应的TextBox
+                    var textBoxes = FindVisualChildren<TextBox>(this);
+                    var targetTextBox = textBoxes.FirstOrDefault(tb => tb.Tag?.ToString() == e.TextBoxTag);
+                    
+                    // 如果找到了目标TextBox，将焦点设置到该TextBox
+                    if (targetTextBox != null)
+                    {
+                        targetTextBox.Focus();
+                        // 将光标移到末尾
+                        targetTextBox.CaretIndex = targetTextBox.Text?.Length ?? 0;
+                        // 选中全部文本，方便用户重新输入
+                        targetTextBox.SelectAll();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"设置文本框焦点时出错: {ex.Message}", ex);
             }
         }
     }

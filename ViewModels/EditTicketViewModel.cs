@@ -55,14 +55,14 @@ namespace TA_WPF.ViewModels
                 // 设置检票口
                 CheckInLocation = _originalTicket.CheckInLocation;
                 
-                // 设置出发站
+                // 设置出发站，直接赋值不触发校验
                 _isUpdatingDepartStation = true;
                 DepartStation = _originalTicket.DepartStation?.Replace("站", "");
                 DepartStationPinyin = _originalTicket.DepartStationPinyin;
                 DepartStationCode = _originalTicket.DepartStationCode;
                 _isUpdatingDepartStation = false;
                 
-                // 设置到达站
+                // 设置到达站，直接赋值不触发校验
                 _isUpdatingArriveStation = true;
                 ArriveStation = _originalTicket.ArriveStation?.Replace("站", "");
                 ArriveStationPinyin = _originalTicket.ArriveStationPinyin;
@@ -274,10 +274,114 @@ namespace TA_WPF.ViewModels
         /// <param name="isDepartStation">是否为出发站</param>
         public override void OnStationLostFocus(bool isDepartStation)
         {
-            if (_isInitialLoad) return;  // 初始加载时不执行验证
+            // 初始加载时不执行任何操作
+            if (_isInitializing || _isInitialLoad)
+                return;
             
-            // 调用基类方法
-            base.OnStationLostFocus(isDepartStation);
+            try
+            {
+                // 确保不是用户点击了命令按钮（如重置、确定、关闭）
+                if (System.Windows.Input.Mouse.DirectlyOver is System.Windows.Controls.Button button)
+                {
+                    // 如果当前鼠标悬停在命令按钮上，则不进行校验
+                    if (button.Command != null && 
+                        (button.Command == SaveCommand || button.Command == ResetCommand ||
+                         button.Name == "MinimizeButton" || button.Name == "CloseButton"))
+                    {
+                        return;
+                    }
+                }
+                
+                // 检查是否在下拉框上操作
+                if (isDepartStation && IsDepartStationDropdownOpen)
+                {
+                    // 如果下拉框正在打开，不触发校验
+                    return;
+                }
+                else if (!isDepartStation && IsArriveStationDropdownOpen)
+                {
+                    // 如果下拉框正在打开，不触发校验
+                    return;
+                }
+
+                string stationName = isDepartStation ? DepartStation : ArriveStation;
+                if (!string.IsNullOrWhiteSpace(stationName))
+                {
+                    // 校验车站信息的完整性
+                    var validateTask = _stationSearchService.ValidateStationCompleteAsync(stationName);
+                    validateTask.ContinueWith(task =>
+                    {
+                        if (task.IsFaulted)
+                        {
+                            LogHelper.LogError($"校验车站信息时出错: {task.Exception?.Message}", task.Exception);
+                            return;
+                        }
+
+                        var (status, station) = task.Result;
+
+                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            switch (status)
+                            {
+                                case 0: // 校验通过
+                                    // 更新车站信息
+                                    if (isDepartStation)
+                                    {
+                                        DepartStationPinyin = station.StationPinyin ?? string.Empty;
+                                        DepartStationCode = station.StationCode ?? string.Empty;
+                                    }
+                                    else
+                                    {
+                                        ArriveStationPinyin = station.StationPinyin ?? string.Empty;
+                                        ArriveStationCode = station.StationCode ?? string.Empty;
+                                    }
+                                    break;
+
+                                case 1: // 车站不存在
+                                    if (Stations.Count == 0)
+                                    {
+                                        // 车站表为空
+                                        MessageBoxHelper.ShowWarning("车站表为空，请在车站中心中添加一些车站再来添加车票", "车站信息不完整");
+                                    }
+                                    else
+                                    {
+                                        // 车站不存在
+                                        MessageBoxHelper.ShowWarning($"车站表内不存在车站【{stationName}站】，请确认是否输入错误或者在车站中心中添加该车站信息", "车站不存在");
+                                    }
+                                    // 将焦点设回文本框
+                                    OnFocusTextBox(isDepartStation ? "Depart" : "Arrive");
+                                    break;
+
+                                case 2: // 车站信息不完整
+                                    // 检查缺少哪些信息
+                                    List<string> missingInfo = new List<string>();
+                                    if (string.IsNullOrWhiteSpace(station.StationCode))
+                                        missingInfo.Add("车站代码");
+                                    if (string.IsNullOrWhiteSpace(station.StationPinyin))
+                                        missingInfo.Add("车站拼音");
+
+                                    string missingItems = string.Join("、", missingInfo);
+                                    MessageBoxHelper.ShowWarning($"车站【{stationName}站】信息不完整，缺少：{missingItems}，请在车站中心中完善该车站信息", "车站信息不完整");
+                                    // 将焦点设回文本框
+                                    OnFocusTextBox(isDepartStation ? "Depart" : "Arrive");
+                                    break;
+                            }
+                        });
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"处理站点输入框失去焦点事件时出错: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 重置表单修改状态
+        /// </summary>
+        private void ResetFormModifiedState()
+        {
+            base.ResetFormModifiedState();
         }
     }
 } 

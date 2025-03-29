@@ -438,9 +438,6 @@ namespace TA_WPF
                 
                 System.Diagnostics.Debug.WriteLine($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
                 LogHelper.LogInfo($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
-                
-                // 重置StationCheckService的状态
-                Services.StationCheckService.Instance.ResetIgnoreStationCheck();
             }
             catch (Exception ex)
             {
