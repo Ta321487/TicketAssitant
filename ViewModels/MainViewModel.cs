@@ -60,6 +60,10 @@ namespace TA_WPF.ViewModels
                 TicketListCommand = new RelayCommand(async () => await QueryAllAsync());
                 ShowDashboardCommand = new RelayCommand(ShowDashboard);
                 
+                // 新增添加车票相关命令
+                OcrTicketCommand = new RelayCommand(ShowOcrTicketFeatureNotAvailable);
+                Import12306TicketCommand = new RelayCommand(Show12306ImportFeatureNotAvailable);
+                
                 // 检查必要的表是否存在
                 _databaseCheckService.CheckRequiredTablesAsync();
             }
@@ -216,6 +220,16 @@ namespace TA_WPF.ViewModels
         public ICommand ShowDashboardCommand { get; }
 
         /// <summary>
+        /// OCR识别车票命令
+        /// </summary>
+        public ICommand OcrTicketCommand { get; }
+
+        /// <summary>
+        /// 从12306导入车票命令
+        /// </summary>
+        public ICommand Import12306TicketCommand { get; }
+
+        /// <summary>
         /// 修改连接命令
         /// </summary>
         public ICommand ModifyConnectionCommand => _settingsViewModel.ModifyConnectionCommand;
@@ -351,6 +365,22 @@ namespace TA_WPF.ViewModels
         private void ShowDashboard()
         {
             ShowDashboardView = true;
+        }
+
+        /// <summary>
+        /// 显示OCR识别车票功能暂未开通提示
+        /// </summary>
+        private void ShowOcrTicketFeatureNotAvailable()
+        {
+            MessageBoxHelper.ShowInfo("OCR识别车票功能暂未开通，敬请期待！");
+        }
+        
+        /// <summary>
+        /// 显示12306导入车票功能暂未开通提示
+        /// </summary>
+        private void Show12306ImportFeatureNotAvailable()
+        {
+            MessageBoxHelper.ShowInfo("从12306导入车票功能暂未开通，敬请期待！");
         }
     }
 

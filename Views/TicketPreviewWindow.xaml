@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:TA_WPF.Converters"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         d:DataContext="{d:DesignInstance Type=viewmodels:TicketPreviewViewModel, IsDesignTimeCreatable=True}"
-        d:DesignHeight="900" d:DesignWidth="1100"
+        d:DesignHeight="1080" d:DesignWidth="1100"
         mc:Ignorable="d"
         Title="车票预览" 
         Height="700" 
@@ -392,7 +392,7 @@
                                 <Setter Property="Foreground" Value="Black" />
                             </Style>
                         </Grid.Resources>
-                        
+
                         <!-- 车票背景，根据主题切换深色/浅色 -->
                         <Image Source="{Binding TicketBackgroundSource}" Stretch="Fill">
                             <!-- 根据主题切换不透明度 -->
@@ -1007,7 +1007,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding StudentText}" 
                                     FontWeight="Bold" 
@@ -1035,7 +1035,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding DiscountText}" 
                                     FontWeight="Bold" 
@@ -1063,7 +1063,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding OnlineText}" 
                                     FontWeight="Bold" 
@@ -1091,7 +1091,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding ChildText}" 
                                     FontWeight="Bold" 
@@ -1119,7 +1119,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding AlipayText}" 
                                     FontWeight="Bold" 
@@ -1147,7 +1147,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding WeChatText}" 
                                     FontWeight="Bold" 
@@ -1175,7 +1175,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding ABCText}" 
                                     FontWeight="Bold" 
@@ -1203,7 +1203,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding CCBText}" 
                                     FontWeight="Bold" 
@@ -1231,7 +1231,7 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <!-- 不带框模式 -->
                             <TextBlock Text="{Binding ICBCText}" 
                                     FontWeight="Bold" 
