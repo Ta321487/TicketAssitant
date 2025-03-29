@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Windows.Input;
-using System.Linq;
 using TA_WPF.Models;
 using System.Windows.Media.Imaging;
 using QRCoder;
@@ -17,7 +13,6 @@ using Point = System.Windows.Point;
 using Size = System.Windows.Size;
 using Color = System.Windows.Media.Color;
 using Brushes = System.Windows.Media.Brushes;
-using System.Drawing.Imaging;
 using Bitmap = System.Drawing.Bitmap;
 
 namespace TA_WPF.ViewModels

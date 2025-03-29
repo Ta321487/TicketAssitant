@@ -162,14 +162,15 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- 第一行：车票号、检票口 -->
+                <!-- 第一行：取票号、检票位置 -->
                 <TextBlock Grid.Row="0" Grid.Column="0" 
-                           Text="车票号:" 
+                           Text="取票号:" 
                            Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Grid.Row="0" Grid.Column="1" 
                          Text="{Binding TicketNumber, UpdateSourceTrigger=PropertyChanged}" 
                          Style="{StaticResource FormTextBoxStyle}"
-                         materialDesign:HintAssist.Hint="车票号"
+                         materialDesign:HintAssist.Hint="取票号"
+                         Tag="TicketNumber"
                          Margin="0,8,16,8"/>
 
                 <TextBlock Grid.Row="0" Grid.Column="2" 

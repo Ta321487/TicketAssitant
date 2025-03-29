@@ -1,7 +1,4 @@
-using System;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.ViewModels;
 

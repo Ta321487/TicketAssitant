@@ -1,5 +1,3 @@
-using System;
-
 namespace TA_WPF.Models
 {
     [Flags]

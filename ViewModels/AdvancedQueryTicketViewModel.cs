@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Windows;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;

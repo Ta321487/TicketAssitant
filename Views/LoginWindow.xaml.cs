@@ -8,16 +8,12 @@ using Microsoft.Win32;
 using System.IO;
 using System.Text;
 using System.Windows.Input;
-using System.Globalization;
 using System.Data;
 using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using TA_WPF.Utils;
 using TA_WPF.ViewModels;
-using Theme = MaterialDesignThemes.Wpf.Theme;
-using BaseTheme = MaterialDesignThemes.Wpf.BaseTheme;
 using System.Windows.Threading;
-using ITheme = MaterialDesignThemes.Wpf.ITheme;
 using TA_WPF.Services;
 using System.Diagnostics;
 

@@ -1,9 +1,7 @@
 using System.Data.Common;
 using MySql.Data.MySqlClient;
 using TA_WPF.Models;
-using System.Text;
 using TA_WPF.Utils;
-using System.Diagnostics;
 
 namespace TA_WPF.Services
 {

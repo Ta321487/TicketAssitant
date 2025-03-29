@@ -4,9 +4,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using TA_WPF.Utils;
 using TA_WPF.Views;
-using System.Linq;
 using System.IO;
-using System.Xml;
 using TA_WPF.Services;
 
 namespace TA_WPF

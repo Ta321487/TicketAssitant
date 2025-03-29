@@ -1,11 +1,8 @@
-using System.Configuration;
 using System.Windows;
 using System.Windows.Media;
 using MaterialDesignThemes.Wpf;
 using TA_WPF.Utils;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
 using Theme = MaterialDesignThemes.Wpf.Theme;
 
 namespace TA_WPF.Services

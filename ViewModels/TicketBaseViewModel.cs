@@ -10,6 +10,337 @@ using System.Windows.Threading;
 namespace TA_WPF.ViewModels
 {
     /// <summary>
+    /// 支付渠道视图模型基类，处理支付渠道的选择逻辑
+    /// </summary>
+    /// <remarks>
+    /// 该类实现了支付渠道选择的业务逻辑，包括：
+    /// 1. 支付宝售票和微信售票互斥（只能选择其中一个）
+    /// 2. 农业银行、建设银行、工商银行三选一
+    /// 
+    /// 如需添加新的支付渠道，请按照以下步骤操作：
+    /// 1. 在 Models/PaymentChannelFlags.cs 中的枚举中添加新的支付渠道标志，例如：
+    ///    PSBC = 32       // 邮政银行
+    ///    
+    /// 2. 在本类中添加新的属性，例如：
+    ///    private bool _isPSBCPayment;
+    ///    public bool IsPSBCPayment
+    ///    {
+    ///        get => _isPSBCPayment;
+    ///        set
+    ///        {
+    ///            if (_isPSBCPayment != value)
+    ///            {
+    ///                _isPSBCPayment = value;
+    ///                OnPropertyChanged(nameof(IsPSBCPayment));
+    ///                
+    ///                // 如果需要与其他银行互斥
+    ///                if (!_isInitializing && value)
+    ///                {
+    ///                    IsABCPayment = false;
+    ///                    IsCCBPayment = false;
+    ///                    IsICBCPayment = false;
+    ///                }
+    ///                
+    ///                if (!_isInitializing) OnPaymentChannelChanged();
+    ///            }
+    ///        }
+    ///    }
+    ///    
+    /// 3. 修改其他互斥的支付渠道属性，确保它们也与新添加的支付渠道互斥
+    /// 
+    /// 4. 在 GetPaymentChannelFlags() 和 SetPaymentChannelFlags() 方法中添加对新支付渠道的处理
+    /// 
+    /// 5. 在XAML文件(Views/AddTicketWindow.xaml和Views/EditTicketWindow.xaml)中添加新的复选框
+    ///    <CheckBox Content="邮政银行" 
+    ///              IsChecked="{Binding IsPSBCPayment}" 
+    ///              Margin="0,0,24,0"
+    ///              VerticalAlignment="Center"/>
+    /// </remarks>
+    public class PaymentChannelViewModel : INotifyPropertyChanged
+    {
+        protected bool _isInitializing = true; // 初始化标志
+        
+        // 票种类型启用/禁用状态
+        private bool _isStudentTicketEnabled;
+        private bool _isChildTicketEnabled;
+        
+        private bool _isAlipayPayment;
+        private bool _isWeChatPayment;
+        private bool _isABCPayment;
+        private bool _isCCBPayment;
+        private bool _isICBCPayment;
+
+        public PaymentChannelViewModel()
+        {
+            // 初始化票种和支付渠道启用状态
+            _isStudentTicketEnabled = true;
+            _isChildTicketEnabled = true;
+            _isAlipayPaymentEnabled = true;
+            _isWeChatPaymentEnabled = true;
+            
+            _isInitializing = false;
+        }
+
+        // 支付渠道属性
+        public bool IsAlipayPayment
+        {
+            get => _isAlipayPayment;
+            set
+            {
+                if (_isAlipayPayment != value)
+                {
+                    _isAlipayPayment = value;
+                    OnPropertyChanged(nameof(IsAlipayPayment));
+                    
+                    // 如果勾选了支付宝售票，那么微信售票不可选择
+                    if (!_isInitializing && value)
+                    {
+                        IsWeChatPaymentEnabled = false;
+                    }
+                    else if (!_isInitializing && !value)
+                    {
+                        IsWeChatPaymentEnabled = true;
+                    }
+                    
+                    if (!_isInitializing) OnPaymentChannelChanged();
+                }
+            }
+        }
+
+        public bool IsWeChatPayment
+        {
+            get => _isWeChatPayment;
+            set
+            {
+                if (_isWeChatPayment != value)
+                {
+                    _isWeChatPayment = value;
+                    OnPropertyChanged(nameof(IsWeChatPayment));
+                    
+                    // 如果勾选了微信售票，那么支付宝售票不可选择
+                    if (!_isInitializing && value)
+                    {
+                        IsAlipayPaymentEnabled = false;
+                    }
+                    else if (!_isInitializing && !value)
+                    {
+                        IsAlipayPaymentEnabled = true;
+                    }
+                    
+                    if (!_isInitializing) OnPaymentChannelChanged();
+                }
+            }
+        }
+
+        public bool IsABCPayment
+        {
+            get => _isABCPayment;
+            set
+            {
+                if (_isABCPayment != value)
+                {
+                    _isABCPayment = value;
+                    OnPropertyChanged(nameof(IsABCPayment));
+                    
+                    // 农业银行、建设银行、工商银行只能选择一个
+                    if (!_isInitializing && value)
+                    {
+                        IsCCBPayment = false;
+                        IsICBCPayment = false;
+                    }
+                    
+                    if (!_isInitializing) OnPaymentChannelChanged();
+                }
+            }
+        }
+
+        public bool IsCCBPayment
+        {
+            get => _isCCBPayment;
+            set
+            {
+                if (_isCCBPayment != value)
+                {
+                    _isCCBPayment = value;
+                    OnPropertyChanged(nameof(IsCCBPayment));
+                    
+                    // 农业银行、建设银行、工商银行只能选择一个
+                    if (!_isInitializing && value)
+                    {
+                        IsABCPayment = false;
+                        IsICBCPayment = false;
+                    }
+                    
+                    if (!_isInitializing) OnPaymentChannelChanged();
+                }
+            }
+        }
+
+        public bool IsICBCPayment
+        {
+            get => _isICBCPayment;
+            set
+            {
+                if (_isICBCPayment != value)
+                {
+                    _isICBCPayment = value;
+                    OnPropertyChanged(nameof(IsICBCPayment));
+                    
+                    // 农业银行、建设银行、工商银行只能选择一个
+                    if (!_isInitializing && value)
+                    {
+                        IsABCPayment = false;
+                        IsCCBPayment = false;
+                    }
+                    
+                    if (!_isInitializing) OnPaymentChannelChanged();
+                }
+            }
+        }
+
+        // 控制支付宝售票是否可用
+        private bool _isAlipayPaymentEnabled = true;
+        public bool IsAlipayPaymentEnabled
+        {
+            get => _isAlipayPaymentEnabled;
+            set
+            {
+                if (_isAlipayPaymentEnabled != value)
+                {
+                    _isAlipayPaymentEnabled = value;
+                    OnPropertyChanged(nameof(IsAlipayPaymentEnabled));
+                }
+            }
+        }
+
+        // 控制微信售票是否可用
+        private bool _isWeChatPaymentEnabled = true;
+        public bool IsWeChatPaymentEnabled
+        {
+            get => _isWeChatPaymentEnabled;
+            set
+            {
+                if (_isWeChatPaymentEnabled != value)
+                {
+                    _isWeChatPaymentEnabled = value;
+                    OnPropertyChanged(nameof(IsWeChatPaymentEnabled));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取支付渠道标志位
+        /// </summary>
+        /// <remarks>
+        /// 当添加新的支付渠道时，需要在此方法中添加对应的标志位处理。
+        /// 例如添加邮政银行后，需要添加如下代码：
+        /// if (IsPSBCPayment) flags |= (int)PaymentChannelFlags.PSBC;
+        /// </remarks>
+        /// <returns>支付渠道标志位的整数表示</returns>
+        public int GetPaymentChannelFlags()
+        {
+            int flags = 0;
+            if (IsAlipayPayment) flags |= (int)PaymentChannelFlags.Alipay;
+            if (IsWeChatPayment) flags |= (int)PaymentChannelFlags.WeChat;
+            if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
+            if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
+            if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
+            return flags;
+        }
+
+        /// <summary>
+        /// 设置支付渠道标志位
+        /// </summary>
+        /// <remarks>
+        /// 当添加新的支付渠道时，需要在此方法中添加对应的标志位处理。
+        /// 例如添加邮政银行后，需要添加如下代码：
+        /// IsPSBCPayment = (flags & (int)PaymentChannelFlags.PSBC) != 0;
+        /// 
+        /// 如果新添加的支付渠道与现有支付渠道有互斥关系，还需要在应用互斥逻辑部分添加相应处理。
+        /// </remarks>
+        /// <param name="flags">支付渠道标志位的整数表示</param>
+        public void SetPaymentChannelFlags(int flags)
+        {
+            _isInitializing = true;
+            
+            IsAlipayPayment = (flags & (int)PaymentChannelFlags.Alipay) != 0;
+            IsWeChatPayment = (flags & (int)PaymentChannelFlags.WeChat) != 0;
+            IsABCPayment = (flags & (int)PaymentChannelFlags.ABC) != 0;
+            IsCCBPayment = (flags & (int)PaymentChannelFlags.CCB) != 0;
+            IsICBCPayment = (flags & (int)PaymentChannelFlags.ICBC) != 0;
+            
+            _isInitializing = false;
+            
+            // 应用互斥逻辑
+            if (IsAlipayPayment)
+            {
+                IsWeChatPaymentEnabled = false;
+            }
+            else
+            {
+                IsWeChatPaymentEnabled = true;
+            }
+            
+            if (IsWeChatPayment)
+            {
+                IsAlipayPaymentEnabled = false;
+            }
+            else
+            {
+                IsAlipayPaymentEnabled = true;
+            }
+        }
+
+        /// <summary>
+        /// 支付渠道变更事件
+        /// </summary>
+        public event EventHandler PaymentChannelChanged;
+
+        /// <summary>
+        /// 触发支付渠道变更事件
+        /// </summary>
+        protected virtual void OnPaymentChannelChanged()
+        {
+            PaymentChannelChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        // 控制学生票是否可用
+        public bool IsStudentTicketEnabled
+        {
+            get => _isStudentTicketEnabled;
+            set
+            {
+                if (_isStudentTicketEnabled != value)
+                {
+                    _isStudentTicketEnabled = value;
+                    OnPropertyChanged(nameof(IsStudentTicketEnabled));
+                }
+            }
+        }
+
+        // 控制儿童票是否可用
+        public bool IsChildTicketEnabled
+        {
+            get => _isChildTicketEnabled;
+            set
+            {
+                if (_isChildTicketEnabled != value)
+                {
+                    _isChildTicketEnabled = value;
+                    OnPropertyChanged(nameof(IsChildTicketEnabled));
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// 车票视图模型基类，提供所有车票相关视图模型共用的功能
     /// </summary>
     public abstract class TicketBaseViewModel : BaseViewModel
@@ -18,6 +349,13 @@ namespace TA_WPF.ViewModels
         protected readonly PaginationViewModel _paginationViewModel;
         protected readonly MainViewModel _mainViewModel;
         protected readonly NavigationService _navigationService;
+        
+        // 票种类型启用/禁用状态
+        private bool _isStudentTicketEnabled;
+        private bool _isChildTicketEnabled;
+        
+        // 是否正在初始化
+        protected bool _isTicketTypeInitializing = false;
         
         // 选中项数量
         private int _selectedItemsCount = 0;
@@ -36,6 +374,10 @@ namespace TA_WPF.ViewModels
             _paginationViewModel = paginationViewModel ?? throw new ArgumentNullException(nameof(paginationViewModel));
             _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
             _navigationService = new NavigationService();
+
+            // 初始化票种类型启用状态
+            _isStudentTicketEnabled = true;
+            _isChildTicketEnabled = true;
 
             // 设置为车票查询视图
             IsTicketQuery = true;
@@ -846,6 +1188,64 @@ namespace TA_WPF.ViewModels
         /// 主视图模型
         /// </summary>
         public MainViewModel MainViewModel => _mainViewModel;
+
+        // 票种类型互斥逻辑属性
+        
+        // 控制学生票是否可用
+        public bool IsStudentTicketEnabled
+        {
+            get => _isStudentTicketEnabled;
+            set
+            {
+                if (_isStudentTicketEnabled != value)
+                {
+                    _isStudentTicketEnabled = value;
+                    OnPropertyChanged(nameof(IsStudentTicketEnabled));
+                }
+            }
+        }
+
+        // 控制儿童票是否可用
+        public bool IsChildTicketEnabled
+        {
+            get => _isChildTicketEnabled;
+            set
+            {
+                if (_isChildTicketEnabled != value)
+                {
+                    _isChildTicketEnabled = value;
+                    OnPropertyChanged(nameof(IsChildTicketEnabled));
+                }
+            }
+        }
+
+        // 学生票选择状态变更方法
+        protected virtual void OnStudentTicketChanged(bool value)
+        {
+            // 如果选择了学生票，则儿童票不可选择
+            if (!_isTicketTypeInitializing && value)
+            {
+                IsChildTicketEnabled = false;
+            }
+            else if (!_isTicketTypeInitializing && !value)
+            {
+                IsChildTicketEnabled = true;
+            }
+        }
+
+        // 儿童票选择状态变更方法
+        protected virtual void OnChildTicketChanged(bool value)
+        {
+            // 如果选择了儿童票，则学生票不可选择
+            if (!_isTicketTypeInitializing && value)
+            {
+                IsStudentTicketEnabled = false;
+            }
+            else if (!_isTicketTypeInitializing && !value)
+            {
+                IsStudentTicketEnabled = true;
+            }
+        }
 
         #endregion
 

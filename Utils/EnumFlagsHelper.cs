@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace TA_WPF.Utils
 {
     public static class EnumFlagsHelper

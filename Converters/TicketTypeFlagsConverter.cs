@@ -1,9 +1,6 @@
-using System;
 using System.Globalization;
 using System.Windows.Data;
 using TA_WPF.Models;
-using TA_WPF.Utils;
-using System.Collections.Generic;
 
 namespace TA_WPF.Converters
 {

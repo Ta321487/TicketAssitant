@@ -6,7 +6,6 @@ using System.Windows.Controls.Primitives;
 using TA_WPF.Models;
 using System.Windows.Media;
 using TA_WPF.Utils;
-using System.Text.RegularExpressions;
 
 namespace TA_WPF.Views
 {

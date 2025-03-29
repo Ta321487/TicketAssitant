@@ -4,7 +4,6 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using System.Windows.Input;
-using System.Linq;
 
 namespace TA_WPF.ViewModels
 {

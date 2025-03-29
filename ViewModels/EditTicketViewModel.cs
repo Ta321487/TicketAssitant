@@ -4,6 +4,11 @@ using MySql.Data.MySqlClient;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
+using System.Windows.Threading;
+using System.Windows.Input;
 
 namespace TA_WPF.ViewModels
 {
@@ -15,6 +20,8 @@ namespace TA_WPF.ViewModels
         private bool _isUpdatingArriveStation = false;
         private bool _isInitialLoad = true;  // 添加初始加载标志
         private bool _isInitializing = true;  // 添加初始化标志
+        private bool _isResetting = false;  // 添加重置标志
+        private CancellationTokenSource _validationCancellationTokenSource = new CancellationTokenSource();  // 添加验证取消令牌源
 
         public EditTicketViewModel(DatabaseService databaseService, MainViewModel mainViewModel, TrainRideInfo ticket) 
             : base(databaseService, mainViewModel)
@@ -274,111 +281,80 @@ namespace TA_WPF.ViewModels
         /// <param name="isDepartStation">是否为出发站</param>
         public override void OnStationLostFocus(bool isDepartStation)
         {
-            // 初始加载时不执行任何操作
-            if (_isInitializing || _isInitialLoad)
-                return;
-            
+            if (_isInitialLoad) return;  // 初始加载时不执行校验
+
+            // 调用基类的方法
+            base.OnStationLostFocus(isDepartStation);
+        }
+
+        /// <summary>
+        /// 准备重置表单，在执行实际重置前设置标志并取消所有校验任务
+        /// </summary>
+        private new void PrepareReset()
+        {
             try
             {
-                // 确保不是用户点击了命令按钮（如重置、确定、关闭）
-                if (System.Windows.Input.Mouse.DirectlyOver is System.Windows.Controls.Button button)
+                // 先设置重置标志为true
+                _isResetting = true;
+                
+                // 取消所有正在进行的校验任务
+                if (_validationCancellationTokenSource != null)
                 {
-                    // 如果当前鼠标悬停在命令按钮上，则不进行校验
-                    if (button.Command != null && 
-                        (button.Command == SaveCommand || button.Command == ResetCommand ||
-                         button.Name == "MinimizeButton" || button.Name == "CloseButton"))
-                    {
-                        return;
-                    }
+                    _validationCancellationTokenSource.Cancel();
+                    _validationCancellationTokenSource.Dispose();
+                    _validationCancellationTokenSource = new CancellationTokenSource();
                 }
                 
-                // 检查是否在下拉框上操作
-                if (isDepartStation && IsDepartStationDropdownOpen)
-                {
-                    // 如果下拉框正在打开，不触发校验
-                    return;
-                }
-                else if (!isDepartStation && IsArriveStationDropdownOpen)
-                {
-                    // 如果下拉框正在打开，不触发校验
-                    return;
-                }
-
-                string stationName = isDepartStation ? DepartStation : ArriveStation;
-                if (!string.IsNullOrWhiteSpace(stationName))
-                {
-                    // 校验车站信息的完整性
-                    var validateTask = _stationSearchService.ValidateStationCompleteAsync(stationName);
-                    validateTask.ContinueWith(task =>
-                    {
-                        if (task.IsFaulted)
-                        {
-                            LogHelper.LogError($"校验车站信息时出错: {task.Exception?.Message}", task.Exception);
-                            return;
-                        }
-
-                        var (status, station) = task.Result;
-
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            switch (status)
-                            {
-                                case 0: // 校验通过
-                                    // 更新车站信息
-                                    if (isDepartStation)
-                                    {
-                                        DepartStationPinyin = station.StationPinyin ?? string.Empty;
-                                        DepartStationCode = station.StationCode ?? string.Empty;
-                                    }
-                                    else
-                                    {
-                                        ArriveStationPinyin = station.StationPinyin ?? string.Empty;
-                                        ArriveStationCode = station.StationCode ?? string.Empty;
-                                    }
-                                    break;
-
-                                case 1: // 车站不存在
-                                    if (Stations.Count == 0)
-                                    {
-                                        // 车站表为空
-                                        MessageBoxHelper.ShowWarning("车站表为空，请在车站中心中添加一些车站再来添加车票", "车站信息不完整");
-                                    }
-                                    else
-                                    {
-                                        // 车站不存在
-                                        MessageBoxHelper.ShowWarning($"车站表内不存在车站【{stationName}站】，请确认是否输入错误或者在车站中心中添加该车站信息", "车站不存在");
-                                    }
-                                    // 将焦点设回文本框
-                                    OnFocusTextBox(isDepartStation ? "Depart" : "Arrive");
-                                    break;
-
-                                case 2: // 车站信息不完整
-                                    // 检查缺少哪些信息
-                                    List<string> missingInfo = new List<string>();
-                                    if (string.IsNullOrWhiteSpace(station.StationCode))
-                                        missingInfo.Add("车站代码");
-                                    if (string.IsNullOrWhiteSpace(station.StationPinyin))
-                                        missingInfo.Add("车站拼音");
-
-                                    string missingItems = string.Join("、", missingInfo);
-                                    MessageBoxHelper.ShowWarning($"车站【{stationName}站】信息不完整，缺少：{missingItems}，请在车站中心中完善该车站信息", "车站信息不完整");
-                                    // 将焦点设回文本框
-                                    OnFocusTextBox(isDepartStation ? "Depart" : "Arrive");
-                                    break;
-                            }
-                        });
-                    });
-                }
+                // 直接同步执行重置操作，不再使用异步方式
+                ResetForm();
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"处理站点输入框失去焦点事件时出错: {ex.Message}", ex);
+                LogHelper.LogError($"准备重置表单时出错: {ex.Message}", ex);
+                // 确保标志被重置
+                _isResetting = false;
             }
         }
-        
+
         /// <summary>
-        /// 重置表单修改状态
+        /// 重置表单
         /// </summary>
+        public override void ResetForm()
+        {
+            try
+            {
+                Debug.WriteLine("开始重置编辑车票表单...");
+                
+                // 重新加载原始车票数据
+                LoadTicketData();
+                
+                // 重置表单修改状态
+                IsFormModified = false;
+                
+                // 重置验证错误列表
+                _validationErrors.Clear();
+                
+                // 将焦点设置到取票号输入框
+                OnFocusTextBox("TicketNumber");
+                
+                // 使用Dispatcher确保焦点设置在UI更新后执行
+                Application.Current.Dispatcher.InvokeAsync(() => {
+                    OnFocusTextBox("TicketNumber");
+                }, DispatcherPriority.Render);
+                
+                Debug.WriteLine("编辑车票表单重置完成，焦点已设置到取票号输入框");
+                
+                // 重置完成，设置重置标志为false
+                _isResetting = false;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("重置表单时出错", ex);
+                MessageBoxHelper.ShowError("重置表单时出错: " + ex.Message);
+                _isResetting = false;
+            }
+        }
+
         private void ResetFormModifiedState()
         {
             base.ResetFormModifiedState();

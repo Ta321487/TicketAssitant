@@ -8,7 +8,6 @@ using TA_WPF.Services;
 using LiveCharts;
 using LiveCharts.Wpf;
 using TA_WPF.Utils;
-using LiveCharts.Defaults;
 
 namespace TA_WPF.ViewModels
 {

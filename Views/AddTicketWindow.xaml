@@ -135,6 +135,7 @@
                          Text="{Binding TicketNumber, UpdateSourceTrigger=PropertyChanged}" 
                          Style="{StaticResource FormTextBoxStyle}"
                          materialDesign:HintAssist.Hint="取票号"
+                         Tag="TicketNumber"
                          Margin="0,8,16,8"/>
 
                 <TextBlock Grid.Row="0" Grid.Column="2" 
