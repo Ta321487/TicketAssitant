@@ -32,6 +32,7 @@ namespace TA_WPF.ViewModels
         private Dictionary<string, object> _blueTicketLayout;
         // 当前使用的布局参数
         private Dictionary<string, object> _currentLayout;
+        private bool _showBoxedTicketType;
 
         // 设计时构造函数
         public TicketPreviewViewModel() : this(new TrainRideInfo
@@ -52,7 +53,8 @@ namespace TA_WPF.ViewModels
             AdditionalInfo = "限乘当日当次车",
             TicketPurpose = "仅供报销使用",
             Hint = "这是一条提示信息|这也是一条提示信息",
-            TicketModificationType = "始发改签"
+            TicketModificationType = "始发改签",
+            TicketTypeFlags = (int)Models.TicketTypeFlags.ChildTicket // 设计时默认为儿童票
         })
         {
             // 为设计视图添加默认的身份信息和编码区内容
@@ -82,9 +84,13 @@ namespace TA_WPF.ViewModels
             // 初始化蓝色和红色车票布局
             InitializeTicketLayouts();
 
-            // 默认使用蓝色车票
+            // 默认使用蓝色车票和不带框模式
             _isRedTicket = false;
+            _showBoxedTicketType = false;
             _currentLayout = _blueTicketLayout;
+            
+            // 根据票种信息初始化显示选项
+            InitializeTicketTypeOptions();
         }
 
         // 加载主题设置
@@ -252,6 +258,9 @@ namespace TA_WPF.ViewModels
                 {
                     _selectedTicket = value;
                     OnPropertyChanged(nameof(SelectedTicket));
+                    
+                    // 根据车票的票种信息初始化票种显示选项
+                    InitializeTicketTypeOptions();
                 }
             }
         }
@@ -598,6 +607,204 @@ namespace TA_WPF.ViewModels
             }
         }
 
+        // 票种信息显示属性
+        private bool _showStudentTicket;
+        private bool _isTicketTypeOptionsLocked; // 是否锁定票种选项
+
+        public bool IsTicketTypeOptionsLocked => _isTicketTypeOptionsLocked;
+
+        public bool ShowStudentTicket
+        {
+            get => _showStudentTicket;
+            set
+            {
+                // 如果选项被锁定，则忽略设置请求
+                if (_isTicketTypeOptionsLocked)
+                    return;
+                    
+                if (_showStudentTicket != value)
+                {
+                    _showStudentTicket = value;
+                    if (value && _showChildTicket) ShowChildTicket = false;
+                    OnPropertyChanged(nameof(ShowStudentTicket));
+                }
+            }
+        }
+
+        private bool _showDiscountTicket;
+        public bool ShowDiscountTicket
+        {
+            get => _showDiscountTicket;
+            set
+            {
+                // 如果选项被锁定，则忽略设置请求
+                if (_isTicketTypeOptionsLocked)
+                    return;
+                    
+                if (_showDiscountTicket != value)
+                {
+                    _showDiscountTicket = value;
+                    OnPropertyChanged(nameof(ShowDiscountTicket));
+                }
+            }
+        }
+
+        private bool _showOnlineTicket;
+        public bool ShowOnlineTicket
+        {
+            get => _showOnlineTicket;
+            set
+            {
+                // 如果选项被锁定，则忽略设置请求
+                if (_isTicketTypeOptionsLocked)
+                    return;
+                    
+                if (_showOnlineTicket != value)
+                {
+                    _showOnlineTicket = value;
+                    OnPropertyChanged(nameof(ShowOnlineTicket));
+                }
+            }
+        }
+
+        private bool _showChildTicket;
+        public bool ShowChildTicket
+        {
+            get => _showChildTicket;
+            set
+            {
+                // 如果选项被锁定，则忽略设置请求
+                if (_isTicketTypeOptionsLocked)
+                    return;
+                    
+                if (_showChildTicket != value)
+                {
+                    _showChildTicket = value;
+                    if (value && _showStudentTicket) ShowStudentTicket = false;
+                    OnPropertyChanged(nameof(ShowChildTicket));
+                }
+            }
+        }
+
+        private bool _useDiscountAsDiscount; // 是否使用"折"代替"惠"
+        public bool UseDiscountAsDiscount
+        {
+            get => _useDiscountAsDiscount;
+            set
+            {
+                if (_useDiscountAsDiscount != value)
+                {
+                    _useDiscountAsDiscount = value;
+                    OnPropertyChanged(nameof(UseDiscountAsDiscount));
+                    OnPropertyChanged(nameof(DiscountText));
+                }
+            }
+        }
+
+        public bool ShowBoxedTicketType
+        {
+            get => _showBoxedTicketType;
+            set
+            {
+                if (_showBoxedTicketType != value)
+                {
+                    _showBoxedTicketType = value;
+                    // 通知所有相关绑定更新
+                    OnPropertyChanged(nameof(ShowBoxedTicketType));
+                    // 直接通知所有票种边距属性更新
+                    OnPropertyChanged(nameof(TicketTypeStudentMargin));
+                    OnPropertyChanged(nameof(TicketTypeDiscountMargin));
+                    OnPropertyChanged(nameof(TicketTypeOnlineMargin));
+                    OnPropertyChanged(nameof(TicketTypeChildMargin));
+                    OnPropertyChanged(nameof(TicketTypeBoxStyle));
+                    
+                    // 强制刷新UI，确保边框样式正确应用
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
+                        if (window != null)
+                        {
+                            var grid = window.FindName("PreviewGrid") as Grid;
+                            if (grid != null)
+                            {
+                                // 强制重新绘制整个Grid
+                                grid.InvalidateVisual();
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        // 票种文本
+        public string StudentText => "学";
+        public string DiscountText => UseDiscountAsDiscount ? "折" : "惠";
+        public string OnlineText => "网";
+        public string ChildText => "孩";
+
+        // 票种框样式
+        public Style TicketTypeBoxStyle
+        {
+            get
+            {
+                Style style = null;
+                if (IsRedTicket)
+                {
+                    // 使用方形边框样式
+                    style = Application.Current.Resources["TicketTypeSquareBoxStyle"] as Style;
+                }
+                else
+                {
+                    // 使用圆形边框样式
+                    style = Application.Current.Resources["TicketTypeCircleBoxStyle"] as Style;
+                }
+                
+                // 确保返回有效的样式
+                if (style == null)
+                {
+                    // 创建一个基本的边框样式作为后备
+                    style = new Style(typeof(Border));
+                    style.Setters.Add(new Setter(Border.WidthProperty, 30.0));
+                    style.Setters.Add(new Setter(Border.HeightProperty, 30.0));
+                    style.Setters.Add(new Setter(Border.BorderThicknessProperty, new Thickness(1.5)));
+                    style.Setters.Add(new Setter(Border.BorderBrushProperty, Brushes.Black));
+                    style.Setters.Add(new Setter(Border.BackgroundProperty, Brushes.Transparent));
+                    style.Setters.Add(new Setter(Border.HorizontalAlignmentProperty, HorizontalAlignment.Left));
+                    style.Setters.Add(new Setter(Border.VerticalAlignmentProperty, VerticalAlignment.Top));
+                    
+                    if (!IsRedTicket)
+                    {
+                        // 为蓝色票添加圆角
+                        style.Setters.Add(new Setter(Border.CornerRadiusProperty, new CornerRadius(15)));
+                    }
+                    else
+                    {
+                        // 为红色票添加小圆角
+                        style.Setters.Add(new Setter(Border.CornerRadiusProperty, new CornerRadius(3)));
+                    }
+                }
+                
+                return style;
+            }
+        }
+
+        // 票种位置信息
+        public Thickness TicketTypeStudentMargin => ShowBoxedTicketType 
+            ? (Thickness)_currentLayout["TicketTypeStudentBoxedMargin"]
+            : (Thickness)_currentLayout["TicketTypeStudentMargin"];
+
+        public Thickness TicketTypeDiscountMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["TicketTypeDiscountBoxedMargin"]
+            : (Thickness)_currentLayout["TicketTypeDiscountMargin"];
+
+        public Thickness TicketTypeOnlineMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["TicketTypeOnlineBoxedMargin"]
+            : (Thickness)_currentLayout["TicketTypeOnlineMargin"];
+
+        public Thickness TicketTypeChildMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["TicketTypeChildBoxedMargin"]
+            : (Thickness)_currentLayout["TicketTypeChildMargin"];
+
         // 车票背景图片源
         public string TicketBackgroundSource
         {
@@ -758,6 +965,13 @@ namespace TA_WPF.ViewModels
         private void ToggleTicketColor()
         {
             IsRedTicket = !IsRedTicket;
+            
+            // 强制刷新票种信息边框样式
+            OnPropertyChanged(nameof(TicketTypeBoxStyle));
+            OnPropertyChanged(nameof(TicketTypeStudentMargin));
+            OnPropertyChanged(nameof(TicketTypeDiscountMargin));
+            OnPropertyChanged(nameof(TicketTypeOnlineMargin));
+            OnPropertyChanged(nameof(TicketTypeChildMargin));
         }
 
         // 初始化车票布局参数
@@ -829,7 +1043,18 @@ namespace TA_WPF.ViewModels
                 // 提示信息框位置
                 { "HintBoxMargin", new Thickness(-170, 390, 0, 0) },
                 // 二维码位置
-                { "QRCodeMargin", new Thickness(0, 0, 50, 80) }
+                { "QRCodeMargin", new Thickness(0, 0, 50, 80) },
+                // 票种信息位置 - 不带框
+                { "TicketTypeStudentMargin", new Thickness(310, 185, 0, 0) },// 学生票
+                { "TicketTypeChildMargin", new Thickness(310, 185, 0, 0) },// 儿童票 - 与学生票在同一位置，因为它们是互斥的
+                { "TicketTypeOnlineMargin", new Thickness(345, 185, 0, 0) },// 网票
+                { "TicketTypeDiscountMargin", new Thickness(375, 185, 0, 0) },// 折扣票
+                
+                // 票种信息位置 - 带框
+                { "TicketTypeStudentBoxedMargin", new Thickness(310, 185, 0, 0) },// 学生票
+                { "TicketTypeChildBoxedMargin", new Thickness(310, 185, 0, 0) },// 儿童票 - 与学生票在同一位置，因为它们是互斥的
+                { "TicketTypeOnlineBoxedMargin", new Thickness(345, 185, 0, 0) },// 网票
+                { "TicketTypeDiscountBoxedMargin", new Thickness(375, 185, 0, 0) },// 折扣票
             };
 
             // 红色车票布局参数 - 部分参数与蓝色不同
@@ -868,6 +1093,17 @@ namespace TA_WPF.ViewModels
             _redTicketLayout["EncodingAreaMargin"] = new Thickness(44, 450, 0, 0);
             _redTicketLayout["HintBoxMargin"] = new Thickness(-170, 395, 0, 0);
             _redTicketLayout["QRCodeMargin"] = new Thickness(0, 0, 75, 45);
+
+            // 更新红色车票的票种信息位置
+            _redTicketLayout["TicketTypeStudentMargin"] = new Thickness(310, 185, 0, 0);
+            _redTicketLayout["TicketTypeChildMargin"] = new Thickness(310, 185, 0, 0);
+            _redTicketLayout["TicketTypeOnlineMargin"] = new Thickness(345, 185, 0, 0);
+            _redTicketLayout["TicketTypeDiscountMargin"] = new Thickness(375, 185, 0, 0);
+            
+            _redTicketLayout["TicketTypeStudentBoxedMargin"] = new Thickness(310, 185, 0, 0);
+            _redTicketLayout["TicketTypeChildBoxedMargin"] = new Thickness(310, 185, 0, 0);
+            _redTicketLayout["TicketTypeOnlineBoxedMargin"] = new Thickness(345, 185, 0, 0);
+            _redTicketLayout["TicketTypeDiscountBoxedMargin"] = new Thickness(375, 185, 0, 0);
         }
 
         // 更新所有布局相关属性
@@ -906,6 +1142,13 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(EncodingAreaMargin));
             OnPropertyChanged(nameof(HintBoxMargin));
             OnPropertyChanged(nameof(QRCodeMargin));
+
+            // 票种信息位置
+            OnPropertyChanged(nameof(TicketTypeStudentMargin));
+            OnPropertyChanged(nameof(TicketTypeDiscountMargin));
+            OnPropertyChanged(nameof(TicketTypeOnlineMargin));
+            OnPropertyChanged(nameof(TicketTypeChildMargin));
+            OnPropertyChanged(nameof(TicketTypeBoxStyle));
 
             // 然后触发使用转换器的属性的更新通知
             // 这些属性在XAML中绑定了MultiBinding，需要特别触发
@@ -1057,6 +1300,56 @@ namespace TA_WPF.ViewModels
 
         // 二维码位置
         public Thickness QRCodeMargin => (Thickness)_currentLayout["QRCodeMargin"];
+
+        // 根据原始票种信息初始化票种显示选项并锁定
+        private void InitializeTicketTypeOptions()
+        {
+            if (_selectedTicket != null)
+            {
+                // 清除所有票种显示选项
+                _isTicketTypeOptionsLocked = true;
+                _showStudentTicket = false;
+                _showDiscountTicket = false;
+                _showOnlineTicket = false;
+                _showChildTicket = false;
+
+                var ticketTypeFlags = _selectedTicket.TicketTypeFlags;
+
+                // 根据原始票种信息设置显示选项
+                if ((ticketTypeFlags & (int)Models.TicketTypeFlags.StudentTicket) != 0)
+                {
+                    _showStudentTicket = true;
+                }
+                
+                if ((ticketTypeFlags & (int)Models.TicketTypeFlags.DiscountTicket) != 0)
+                {
+                    _showDiscountTicket = true;
+                }
+                
+                if ((ticketTypeFlags & (int)Models.TicketTypeFlags.OnlineTicket) != 0)
+                {
+                    _showOnlineTicket = true;
+                }
+                
+                if ((ticketTypeFlags & (int)Models.TicketTypeFlags.ChildTicket) != 0)
+                {
+                    _showChildTicket = true;
+                }
+
+                // 通知UI更新
+                OnPropertyChanged(nameof(ShowStudentTicket));
+                OnPropertyChanged(nameof(ShowDiscountTicket));
+                OnPropertyChanged(nameof(ShowOnlineTicket));
+                OnPropertyChanged(nameof(ShowChildTicket));
+                OnPropertyChanged(nameof(IsTicketTypeOptionsLocked));
+            }
+            else
+            {
+                // 如果没有票种信息，则解锁选项
+                _isTicketTypeOptionsLocked = false;
+                OnPropertyChanged(nameof(IsTicketTypeOptionsLocked));
+            }
+        }
 
         public event EventHandler RequestClose;
 

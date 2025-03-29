@@ -83,6 +83,30 @@
         <!-- 系统常量 -->
         <sys:Double x:Key="Ten">10</sys:Double>
         <sys:Double x:Key="Twenty">20</sys:Double>
+
+        <!-- 圆形框样式 - 蓝色车票 -->
+        <Style x:Key="TicketTypeCircleBoxStyle" TargetType="Border">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="CornerRadius" Value="15"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="BorderBrush" Value="Black"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+
+        <!-- 方形框样式 - 红色车票 -->
+        <Style x:Key="TicketTypeSquareBoxStyle" TargetType="Border">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="BorderBrush" Value="Black"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="12">
@@ -139,21 +163,25 @@
                     <RowDefinition Height="Auto" />
                     <!-- 18: 票种信息 文本框 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 19: 支付渠道 标签 -->
+                    <!-- 19: 票种显示选项 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 20: 支付渠道 文本框 -->
+                    <!-- 20: 票种显示选项 控件 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 21: 提示 标签 -->
+                    <!-- 21: 支付渠道 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 22: 提示 文本框 -->
+                    <!-- 22: 支付渠道 文本框 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 23: 身份信息 标签 -->
+                    <!-- 23: 提示 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 24: 身份信息 文本框 -->
+                    <!-- 24: 提示 文本框 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 25: 编码区 标签 -->
+                    <!-- 25: 身份信息 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 26: 编码区 文本框 -->
+                    <!-- 26: 身份信息 文本框 -->
+                    <RowDefinition Height="Auto" />
+                    <!-- 27: 编码区 标签 -->
+                    <RowDefinition Height="Auto" />
+                    <!-- 28: 编码区 文本框 -->
                 </Grid.RowDefinitions>
 
                 <!-- 标题 - 跨所有列 -->
@@ -272,18 +300,55 @@
                         Grid.Row="18" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
-                <!-- 支付渠道 - 跨所有列 -->
-                <TextBlock Text="支付渠道" 
+                <!-- 票种显示选项 - 新增部分，添加新的行 -->
+                <TextBlock Text="票种显示选项" 
                            Grid.Row="19" Grid.Column="0" 
                            Grid.ColumnSpan="3"
                            Style="{StaticResource FormLabelStyle}"/>
+                <Grid Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="3" Margin="2,0,2,8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <WrapPanel Grid.Row="0" Margin="8,4,0,4">
+                        <CheckBox Content="学生票" 
+                                  IsChecked="{Binding ShowStudentTicket, Mode=TwoWay}" 
+                                  IsEnabled="{Binding IsTicketTypeOptionsLocked, Converter={StaticResource InverseBooleanConverter}}"
+                                  Margin="0,0,10,0"/>
+                        <CheckBox Content="优惠票" 
+                                  IsChecked="{Binding ShowDiscountTicket, Mode=TwoWay}" 
+                                  IsEnabled="{Binding IsTicketTypeOptionsLocked, Converter={StaticResource InverseBooleanConverter}}"
+                                  Margin="0,0,10,0"/>
+                        <CheckBox Content="网络售票" 
+                                  IsChecked="{Binding ShowOnlineTicket, Mode=TwoWay}" 
+                                  IsEnabled="{Binding IsTicketTypeOptionsLocked, Converter={StaticResource InverseBooleanConverter}}"
+                                  Margin="0,0,10,0"/>
+                        <CheckBox Content="儿童票" 
+                                  IsChecked="{Binding ShowChildTicket, Mode=TwoWay}" 
+                                  IsEnabled="{Binding IsTicketTypeOptionsLocked, Converter={StaticResource InverseBooleanConverter}}"
+                                  Margin="0,0,10,0"/>
+                    </WrapPanel>
+                    <CheckBox Grid.Row="1" Content="使用'折'字替代'惠'字" 
+                              IsChecked="{Binding UseDiscountAsDiscount, Mode=TwoWay}" 
+                              Margin="8,0,0,4"/>
+                    <CheckBox Grid.Row="2" Content="显示带框票种信息" 
+                              IsChecked="{Binding ShowBoxedTicketType, Mode=TwoWay}" 
+                              Margin="8,0,0,4"/>
+                </Grid>
+
+                <!-- 支付渠道 - 跨所有列，调整行号 -->
+                <TextBlock Text="支付渠道" 
+                           Grid.Row="21" Grid.Column="0" 
+                           Grid.ColumnSpan="3"
+                           Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding SelectedTicket.PaymentChannelFlags, Converter={StaticResource PaymentChannelFlagsConverter}}" 
-                        Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="3"
+                        Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
-                <!-- 提示 - 跨所有列 -->
+                <!-- 提示 - 跨所有列，调整行号 -->
                 <TextBlock Text="提示信息" 
-                           Grid.Row="21" Grid.Column="0" 
+                           Grid.Row="23" Grid.Column="0" 
                            Grid.ColumnSpan="3"
                            Style="{StaticResource FormLabelStyle}">
                     <TextBlock.ToolTip>
@@ -291,20 +356,20 @@
                     </TextBlock.ToolTip>
                 </TextBlock>
                 <TextBox Text="{Binding SelectedTicket.Hint, Mode=OneWay}" 
-                        Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="3"
+                        Grid.Row="24" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
-                <!-- 身份信息 - 移到提示和编码之间 -->
-                <TextBlock Text="身份信息" Grid.Row="23" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
+                <!-- 身份信息 - 移到提示和编码之间，调整行号 -->
+                <TextBlock Text="身份信息" Grid.Row="25" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding IdentityInfo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                        Grid.Row="24" Grid.Column="0" Grid.ColumnSpan="3"
+                        Grid.Row="26" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"
                         IsEnabled="True"/>
 
-                <!-- 编码区 - 跨所有列 -->
-                <TextBlock Text="编码区" Grid.Row="25" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
+                <!-- 编码区 - 跨所有列，调整行号 -->
+                <TextBlock Text="编码区" Grid.Row="27" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding EncodingArea, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                        Grid.Row="26" Grid.Column="0" Grid.ColumnSpan="3"
+                        Grid.Row="28" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource FormTextBoxStyle}"
                         IsEnabled="True"/>
             </Grid>
@@ -926,6 +991,118 @@
                                HorizontalAlignment="Right" 
                                VerticalAlignment="Bottom" 
                                Margin="{Binding QRCodeMargin}"/>
+
+                        <!-- 票种信息显示 - 学生票 -->
+                        <Grid Visibility="{Binding ShowStudentTicket, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="StudentTicketBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding TicketTypeStudentMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding StudentText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding StudentText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding TicketTypeStudentMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <!-- 票种信息显示 - 优惠票 -->
+                        <Grid Visibility="{Binding ShowDiscountTicket, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="DiscountTicketBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding TicketTypeDiscountMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding DiscountText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding DiscountText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding TicketTypeDiscountMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <!-- 票种信息显示 - 网络售票 -->
+                        <Grid Visibility="{Binding ShowOnlineTicket, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="OnlineTicketBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding TicketTypeOnlineMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding OnlineText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding OnlineText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding TicketTypeOnlineMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <!-- 票种信息显示 - 儿童票 -->
+                        <Grid Visibility="{Binding ShowChildTicket, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <!-- 带框模式 -->
+                            <Border x:Name="ChildTicketBox"
+                                    Style="{Binding TicketTypeBoxStyle}" 
+                                    Margin="{Binding TicketTypeChildMargin}"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding ChildText}" 
+                                        FontWeight="Bold" 
+                                        Foreground="Black" 
+                                        FontSize="18"
+                                        FontFamily="SimHei"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 不带框模式 -->
+                            <TextBlock Text="{Binding ChildText}" 
+                                    FontWeight="Bold" 
+                                    Foreground="Black" 
+                                    FontSize="24"
+                                    FontFamily="SimHei"
+                                    Margin="{Binding TicketTypeChildMargin}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding ShowBoxedTicketType, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
                     </Grid>
                 </Viewbox>
             </Grid>
