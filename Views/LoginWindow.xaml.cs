@@ -464,11 +464,12 @@ namespace TA_WPF.Views
                 string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306";
 
                 // 检查MySQL是否已安装或可连接
-                if (!await IsMySqlInstalledOrConnectable(serverAddress, port))
+                var connectionStatus = await CheckMySqlConnectionStatus(serverAddress, port);
+                if (connectionStatus != MySqlConnectionStatus.Connected)
                 {
-                    System.Diagnostics.Debug.WriteLine($"未检测到MySQL安装或无法连接到{serverAddress}，显示警告");
-                    LogHelper.LogWarning($"未检测到MySQL安装或无法连接到{serverAddress}，无法继续登录");
-                    await ShowMySqlNotInstalledWarning(serverAddress);
+                    System.Diagnostics.Debug.WriteLine($"MySQL连接状态: {connectionStatus}");
+                    LogHelper.LogWarning($"MySQL连接状态: {connectionStatus}，无法继续登录");
+                    await ShowDatabaseConnectionError(serverAddress, port, connectionStatus);
                     return;
                 }
 
@@ -1776,19 +1777,30 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
+        /// 添加枚举以区分MySQL连接问题的不同情况
+        /// </summary>
+        private enum MySqlConnectionStatus
+        {
+            Connected,                // 成功连接
+            NotInstalled,             // MySQL未安装
+            PortError,                // 端口错误
+            ConnectionError           // 其他连接错误
+        }
+
+        /// <summary>
         /// 检查MySQL是否已安装或远程服务器是否可连接
         /// </summary>
         /// <param name="serverAddress">服务器地址</param>
-        /// <param name="port">端口号</param>
-        /// <returns>MySQL是否已安装或远程服务器是否可连接</returns>
-        private async Task<bool> IsMySqlInstalledOrConnectable(string serverAddress, string port)
+        /// <param name="port">端口</param>
+        /// <returns>MySQL连接状态</returns>
+        private async Task<MySqlConnectionStatus> CheckMySqlConnectionStatus(string serverAddress, string port)
         {
             // 测试模式：模拟MySQL未安装的情况
             bool testMode = false;
             if (testMode)
             {
                 System.Diagnostics.Debug.WriteLine("测试模式：模拟MySQL未安装");
-                return false;
+                return MySqlConnectionStatus.NotInstalled;
             }
 
             try
@@ -1828,12 +1840,42 @@ namespace TA_WPF.Views
                     if (canConnect)
                     {
                         System.Diagnostics.Debug.WriteLine($"成功连接到远程MySQL服务器: {serverAddress}:{port}");
-                        return true;
+                        return MySqlConnectionStatus.Connected;
                     }
                     else
                     {
+                        // 对于远程连接，判断是否为端口问题
+                        // 尝试使用默认端口3306连接
+                        if (port != "3306" && CustomPortCheckBox.IsChecked == true)
+                        {
+                            bool defaultPortWorks = await Task.Run(() =>
+                            {
+                                try
+                                {
+                                    using (var client = new System.Net.Sockets.TcpClient())
+                                    {
+                                        var connectTask = client.ConnectAsync(serverAddress, 3306);
+                                        var timeoutTask = Task.Delay(2000);
+                                        var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
+                                        return completedTask == connectTask && client.Connected;
+                                    }
+                                }
+                                catch
+                                {
+                                    return false;
+                                }
+                            });
+
+                            if (defaultPortWorks)
+                            {
+                                // 如果默认端口可以连接，说明是端口号问题
+                                System.Diagnostics.Debug.WriteLine($"默认端口3306可连接，但自定义端口{port}不可连接");
+                                return MySqlConnectionStatus.PortError;
+                            }
+                        }
+                        
                         System.Diagnostics.Debug.WriteLine($"无法连接到远程MySQL服务器: {serverAddress}:{port}");
-                        return false;
+                        return MySqlConnectionStatus.ConnectionError;
                     }
                 }
 
@@ -1932,22 +1974,70 @@ namespace TA_WPF.Views
                         }
                     });
 
-                    return canConnect;
+                    if (canConnect)
+                    {
+                        return MySqlConnectionStatus.Connected;
+                    }
+                    else if (port != "3306" && CustomPortCheckBox.IsChecked == true)
+                    {
+                        // 检查默认端口是否可连接
+                        bool defaultPortWorks = await Task.Run(() =>
+                        {
+                            try
+                            {
+                                using (var client = new System.Net.Sockets.TcpClient())
+                                {
+                                    var connectTask = client.ConnectAsync("127.0.0.1", 3306);
+                                    var timeoutTask = Task.Delay(1000);
+                                    var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
+                                    return completedTask == connectTask && client.Connected;
+                                }
+                            }
+                            catch
+                            {
+                                return false;
+                            }
+                        });
+
+                        if (defaultPortWorks)
+                        {
+                            // 如果默认端口可以连接，说明是端口号问题
+                            System.Diagnostics.Debug.WriteLine($"默认端口3306可连接，但自定义端口{port}不可连接");
+                            return MySqlConnectionStatus.PortError;
+                        }
+                        else
+                        {
+                            // MySQL已安装但服务未启动
+                            return MySqlConnectionStatus.ConnectionError;
+                        }
+                    }
+                    else
+                    {
+                        // MySQL已安装但服务未启动
+                        return MySqlConnectionStatus.ConnectionError;
+                    }
                 }
 
-                return false;
+                return MySqlConnectionStatus.NotInstalled;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"检查MySQL安装或连接时出错: {ex.Message}");
-                return false;
+                return MySqlConnectionStatus.ConnectionError;
             }
         }
 
+        // 保留旧方法，但内部调用新方法，以保持兼容性
+        private async Task<bool> IsMySqlInstalledOrConnectable(string serverAddress, string port)
+        {
+            var status = await CheckMySqlConnectionStatus(serverAddress, port);
+            return status == MySqlConnectionStatus.Connected;
+        }
+
         /// <summary>
-        /// 显示MySQL未安装或无法连接提示
+        /// 显示数据库连接错误提示
         /// </summary>
-        private async Task ShowMySqlNotInstalledWarning(string serverAddress = "")
+        private async Task ShowDatabaseConnectionError(string serverAddress, string port, MySqlConnectionStatus status)
         {
             try
             {
@@ -1977,19 +2067,55 @@ namespace TA_WPF.Views
                 // 添加标题和消息
                 string titleText, messageText;
 
-                if (!isLocalConnection)
+                // 根据连接状态设置不同的错误消息
+                switch (status)
                 {
-                    titleText = $"无法连接到MySQL服务器 {serverAddress}";
-                    messageText = $"无法连接到指定的MySQL服务器。请确认以下几点：\n\n" +
-                                  $"1. 服务器地址 {serverAddress} 是否正确\n" +
-                                  $"2. MySQL服务是否在该服务器上运行\n" +
-                                  $"3. 服务器防火墙是否允许MySQL端口连接\n" +
-                                  $"4. 网络连接是否正常";
-                }
-                else
-                {
-                    titleText = "未检测到MySQL数据库";
-                    messageText = "系统未检测到MySQL数据库服务器。本系统需要MySQL才能正常运行。\n\n请安装MySQL数据库服务器后再使用本系统。";
+                    case MySqlConnectionStatus.PortError:
+                        titleText = "MySQL端口号错误";
+                        
+                        if (isLocalConnection)
+                        {
+                            messageText = $"无法连接到本地MySQL服务器的端口 {port}。\n\n" +
+                                          $"您的MySQL服务器似乎运行在默认端口（3306）上，而不是您指定的端口 {port} 上。\n\n" +
+                                          $"请修改端口号为3306或取消勾选\"自定义端口号\"选项。";
+                        }
+                        else
+                        {
+                            messageText = $"无法连接到MySQL服务器 {serverAddress} 的端口 {port}。\n\n" +
+                                          $"请确认服务器上的MySQL实例是否正在使用端口 {port}。\n" +
+                                          $"您可能需要：\n" +
+                                          $"1. 使用默认端口3306\n" +
+                                          $"2. 确认服务器防火墙是否允许该端口连接\n" +
+                                          $"3. 联系服务器管理员确认正确的端口号";
+                        }
+                        break;
+
+                    case MySqlConnectionStatus.NotInstalled:
+                        titleText = "未检测到MySQL数据库";
+                        messageText = "系统未检测到MySQL数据库服务器。本系统需要MySQL才能正常运行。\n\n请安装MySQL数据库服务器后再使用本系统。";
+                        break;
+
+                    case MySqlConnectionStatus.ConnectionError:
+                    default:
+                        if (!isLocalConnection)
+                        {
+                            titleText = $"无法连接到MySQL服务器 {serverAddress}";
+                            messageText = $"无法连接到指定的MySQL服务器。请确认以下几点：\n\n" +
+                                          $"1. 服务器地址 {serverAddress} 是否正确\n" +
+                                          $"2. MySQL服务是否在该服务器上运行\n" +
+                                          $"3. 服务器防火墙是否允许MySQL端口连接\n" +
+                                          $"4. 网络连接是否正常";
+                        }
+                        else
+                        {
+                            titleText = "MySQL服务未运行";
+                            messageText = "检测到MySQL已安装，但服务未运行或无法访问。\n\n" +
+                                          "请确认以下几点：\n" +
+                                          "1. MySQL服务是否已启动（可在服务管理器中检查）\n" +
+                                          "2. 防火墙是否允许MySQL连接\n" +
+                                          "3. MySQL是否配置正确";
+                        }
+                        break;
                 }
 
                 var title = new TextBlock
@@ -2012,8 +2138,8 @@ namespace TA_WPF.Views
                 };
                 content.Children.Add(message);
 
-                // 对于本地连接，添加安装步骤
-                if (isLocalConnection)
+                // 对于MySQL未安装的情况，添加安装步骤
+                if (status == MySqlConnectionStatus.NotInstalled)
                 {
                     var stepsTitle = new TextBlock
                     {
@@ -2082,14 +2208,20 @@ namespace TA_WPF.Views
                 await MaterialDesignThemes.Wpf.DialogHost.Show(content, "LoginDialogHost");
 
                 // 记录日志
-                LogHelper.LogWarning("用户尝试登录，但未检测到MySQL安装");
+                LogHelper.LogWarning($"用户尝试登录，但MySQL连接状态为: {status}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"显示MySQL未安装提示时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"显示数据库连接错误提示时出错: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
-                MessageBox.Show("未检测到MySQL数据库服务器。请安装MySQL后再使用本系统。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("连接数据库时发生错误。请检查您的连接设置。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+
+        // 保留旧方法，但内部调用新方法，以保持兼容性
+        private async Task ShowMySqlNotInstalledWarning(string serverAddress = "")
+        {
+            await ShowDatabaseConnectionError(serverAddress, "3306", MySqlConnectionStatus.NotInstalled);
         }
     }
 }
