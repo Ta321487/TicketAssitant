@@ -17,7 +17,7 @@ using System.Diagnostics; // 添加用于调试输出
 
 namespace TA_WPF.ViewModels
 {
-    public class AddTicketViewModel : PaymentChannelViewModel
+    public class AddTicketViewModel : INotifyPropertyChanged
     {
         protected readonly DatabaseService _databaseService;
         protected readonly StationSearchService _stationSearchService;
@@ -99,6 +99,19 @@ namespace TA_WPF.ViewModels
         private string? _selectedTicketModificationType;
         private ObservableCollection<string> _ticketModificationTypes;
 
+        // 票种类型
+        private bool _isStudentTicket;
+        private bool _isDiscountTicket;
+        private bool _isOnlineTicket;
+        private bool _isChildTicket;
+
+        // 支付渠道
+        private bool _isAlipayPayment;
+        private bool _isWeChatPayment;
+        private bool _isABCPayment;
+        private bool _isCCBPayment;
+        private bool _isICBCPayment;
+
         // 车站数据
         private ObservableCollection<StationInfo> _stations;
 
@@ -109,9 +122,9 @@ namespace TA_WPF.ViewModels
         private bool _isArriveStationDropdownOpen;
         private string _departStationSearchText;
         private string _arriveStationSearchText;
-        private double _dataGridHeaderFontSize = 14; // 默认表头字体大小
-        private double _dataGridRowHeight = 40; // 默认行高
-        private double _dataGridCellFontSize = 13; // 默认单元格字体大小
+        private double _dataGridHeaderFontSize = 15; // 表头字体大小
+        private double _dataGridRowHeight = 40;     // 行高
+        private double _dataGridCellFontSize = 14;  // 单元格字体大小
 
         private bool _isUpdatingDepartStation = false;
         private bool _isUpdatingArriveStation = false;
@@ -214,11 +227,49 @@ namespace TA_WPF.ViewModels
                 // 加载车站数据
                 LoadStationsAsync();
                 
-                // 确保初始化字体大小相关属性
+                // 初始化字体大小
                 InitializeFontSizes();
                 
-                // 初始化完成
+                // 初始化完成后，设置初始化标志为false
                 _isInitializing = false;
+                
+                // 应用支付渠道互斥逻辑
+                if (IsAlipayPayment)
+                {
+                    IsWeChatPaymentEnabled = false;
+                }
+                
+                if (IsWeChatPayment)
+                {
+                    IsAlipayPaymentEnabled = false;
+                }
+                
+                // 确保银行三选一逻辑正确应用
+                if (IsABCPayment)
+                {
+                    IsCCBPayment = false;
+                    IsICBCPayment = false;
+                }
+                else if (IsCCBPayment)
+                {
+                    IsABCPayment = false;
+                    IsICBCPayment = false;
+                }
+                else if (IsICBCPayment)
+                {
+                    IsABCPayment = false;
+                    IsCCBPayment = false;
+                }
+                
+                // 确保学生票和儿童票互斥逻辑正确应用
+                if (IsStudentTicket)
+                {
+                    IsChildTicket = false;
+                }
+                else if (IsChildTicket)
+                {
+                    IsStudentTicket = false;
+                }
             }
             catch (Exception ex)
             {
@@ -781,6 +832,225 @@ namespace TA_WPF.ViewModels
             }
         }
 
+        // 票种类型属性
+        public bool IsStudentTicket
+        {
+            get => _isStudentTicket;
+            set
+            {
+                if (_isStudentTicket != value)
+                {
+                    _isStudentTicket = value;
+                    OnPropertyChanged(nameof(IsStudentTicket));
+                    
+                    // 学生票和儿童票互斥关系
+                    if (!_isInitializing && value)
+                    {
+                        IsChildTicket = false; // 如果选择了学生票，取消儿童票选择
+                    }
+                    
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsDiscountTicket
+        {
+            get => _isDiscountTicket;
+            set
+            {
+                if (_isDiscountTicket != value)
+                {
+                    _isDiscountTicket = value;
+                    OnPropertyChanged(nameof(IsDiscountTicket));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsOnlineTicket
+        {
+            get => _isOnlineTicket;
+            set
+            {
+                if (_isOnlineTicket != value)
+                {
+                    _isOnlineTicket = value;
+                    OnPropertyChanged(nameof(IsOnlineTicket));
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsChildTicket
+        {
+            get => _isChildTicket;
+            set
+            {
+                if (_isChildTicket != value)
+                {
+                    _isChildTicket = value;
+                    OnPropertyChanged(nameof(IsChildTicket));
+                    
+                    // 学生票和儿童票互斥关系
+                    if (!_isInitializing && value)
+                    {
+                        IsStudentTicket = false; // 如果选择了儿童票，取消学生票选择
+                    }
+                    
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        // 支付渠道属性
+        public bool IsAlipayPayment
+        {
+            get => _isAlipayPayment;
+            set
+            {
+                if (_isAlipayPayment != value)
+                {
+                    _isAlipayPayment = value;
+                    OnPropertyChanged(nameof(IsAlipayPayment));
+                    
+                    // 如果勾选了支付宝售票，那么微信售票不可选择
+                    if (!_isInitializing && value)
+                    {
+                        IsWeChatPayment = false; // 取消选中微信支付
+                        IsWeChatPaymentEnabled = false; // 禁用微信支付选择
+                    }
+                    else if (!_isInitializing && !value)
+                    {
+                        IsWeChatPaymentEnabled = true; // 启用微信支付选择
+                    }
+                    
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsWeChatPayment
+        {
+            get => _isWeChatPayment;
+            set
+            {
+                if (_isWeChatPayment != value)
+                {
+                    _isWeChatPayment = value;
+                    OnPropertyChanged(nameof(IsWeChatPayment));
+                    
+                    // 如果勾选了微信售票，那么支付宝售票不可选择
+                    if (!_isInitializing && value)
+                    {
+                        IsAlipayPayment = false; // 取消选中支付宝支付
+                        IsAlipayPaymentEnabled = false; // 禁用支付宝支付选择
+                    }
+                    else if (!_isInitializing && !value)
+                    {
+                        IsAlipayPaymentEnabled = true; // 启用支付宝支付选择
+                    }
+                    
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        // 控制支付渠道启用/禁用状态的属性
+        private bool _isAlipayPaymentEnabled = true;
+        public bool IsAlipayPaymentEnabled
+        {
+            get => _isAlipayPaymentEnabled;
+            set
+            {
+                if (_isAlipayPaymentEnabled != value)
+                {
+                    _isAlipayPaymentEnabled = value;
+                    OnPropertyChanged(nameof(IsAlipayPaymentEnabled));
+                }
+            }
+        }
+
+        private bool _isWeChatPaymentEnabled = true;
+        public bool IsWeChatPaymentEnabled
+        {
+            get => _isWeChatPaymentEnabled;
+            set
+            {
+                if (_isWeChatPaymentEnabled != value)
+                {
+                    _isWeChatPaymentEnabled = value;
+                    OnPropertyChanged(nameof(IsWeChatPaymentEnabled));
+                }
+            }
+        }
+
+        public bool IsABCPayment
+        {
+            get => _isABCPayment;
+            set
+            {
+                if (_isABCPayment != value)
+                {
+                    _isABCPayment = value;
+                    OnPropertyChanged(nameof(IsABCPayment));
+                    
+                    // 农业银行、建设银行、工商银行只能选择一个
+                    if (!_isInitializing && value)
+                    {
+                        IsCCBPayment = false;
+                        IsICBCPayment = false;
+                    }
+                    
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsCCBPayment
+        {
+            get => _isCCBPayment;
+            set
+            {
+                if (_isCCBPayment != value)
+                {
+                    _isCCBPayment = value;
+                    OnPropertyChanged(nameof(IsCCBPayment));
+                    
+                    // 农业银行、建设银行、工商银行只能选择一个
+                    if (!_isInitializing && value)
+                    {
+                        IsABCPayment = false;
+                        IsICBCPayment = false;
+                    }
+                    
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
+        public bool IsICBCPayment
+        {
+            get => _isICBCPayment;
+            set
+            {
+                if (_isICBCPayment != value)
+                {
+                    _isICBCPayment = value;
+                    OnPropertyChanged(nameof(IsICBCPayment));
+                    
+                    // 农业银行、建设银行、工商银行只能选择一个
+                    if (!_isInitializing && value)
+                    {
+                        IsABCPayment = false;
+                        IsCCBPayment = false;
+                    }
+                    
+                    if (!_isInitializing) _isFormModified = true;
+                }
+            }
+        }
+
         #endregion
 
         #region 集合属性
@@ -1212,11 +1482,16 @@ namespace TA_WPF.ViewModels
                 SelectedHint = null;
                 CustomHint = null;
                 
-                // 重置票种类型
                 IsStudentTicket = false;
                 IsDiscountTicket = false;
                 IsOnlineTicket = false;
                 IsChildTicket = false;
+                
+                IsAlipayPayment = false;
+                IsWeChatPayment = false;
+                IsABCPayment = false;
+                IsCCBPayment = false;
+                IsICBCPayment = false;
                 
                 SelectedTicketModificationType = null;
 

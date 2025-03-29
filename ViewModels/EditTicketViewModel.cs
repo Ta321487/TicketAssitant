@@ -166,10 +166,18 @@ namespace TA_WPF.ViewModels
                 
                 // 设置票种类型
                 int ticketTypeFlags = _originalTicket.TicketTypeFlags;
-                SetTicketTypeFlags(ticketTypeFlags);
+                IsStudentTicket = (ticketTypeFlags & (int)TicketTypeFlags.StudentTicket) != 0;
+                IsDiscountTicket = (ticketTypeFlags & (int)TicketTypeFlags.DiscountTicket) != 0;
+                IsOnlineTicket = (ticketTypeFlags & (int)TicketTypeFlags.OnlineTicket) != 0;
+                IsChildTicket = (ticketTypeFlags & (int)TicketTypeFlags.ChildTicket) != 0;
                 
                 // 设置支付渠道
-                SetPaymentChannelFlags(_originalTicket.PaymentChannelFlags);
+                int paymentChannelFlags = _originalTicket.PaymentChannelFlags;
+                IsAlipayPayment = (paymentChannelFlags & (int)PaymentChannelFlags.Alipay) != 0;
+                IsWeChatPayment = (paymentChannelFlags & (int)PaymentChannelFlags.WeChat) != 0;
+                IsABCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.ABC) != 0;
+                IsCCBPayment = (paymentChannelFlags & (int)PaymentChannelFlags.CCB) != 0;
+                IsICBCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.ICBC) != 0;
                 
                 // 初始化完成
                 _isInitializing = false;
@@ -252,6 +260,18 @@ namespace TA_WPF.ViewModels
             if (IsDiscountTicket) flags |= (int)TicketTypeFlags.DiscountTicket;
             if (IsOnlineTicket) flags |= (int)TicketTypeFlags.OnlineTicket;
             if (IsChildTicket) flags |= (int)TicketTypeFlags.ChildTicket;
+            return flags;
+        }
+        
+        // 获取支付渠道标志位
+        private int GetPaymentChannelFlags()
+        {
+            int flags = 0;
+            if (IsAlipayPayment) flags |= (int)PaymentChannelFlags.Alipay;
+            if (IsWeChatPayment) flags |= (int)PaymentChannelFlags.WeChat;
+            if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
+            if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
+            if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
             return flags;
         }
 
