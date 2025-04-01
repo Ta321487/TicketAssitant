@@ -368,11 +368,20 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 显示OCR识别车票功能暂未开通提示
+        /// 显示OCR识别车票功能
         /// </summary>
         private void ShowOcrTicketFeatureNotAvailable()
         {
-            MessageBoxHelper.ShowInfo("OCR识别车票功能暂未开通，敬请期待！");
+            // 不再显示未开通提示，而是打开OCR识别车票窗口
+            try
+            {
+                _navigationService.OpenOcrTicketWindow(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"打开OCR识别车票窗口时出错: {ex.Message}");
+                LogHelper.LogError($"打开OCR识别车票窗口时出错: {ex.Message}");
+            }
         }
         
         /// <summary>

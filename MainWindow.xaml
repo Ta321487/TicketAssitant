@@ -260,7 +260,7 @@
                                         </TreeViewItem>
                                         <TreeViewItem>
                                             <TreeViewItem.Header>
-                                                <Button Content="OCR识别车票" 
+                                                <Button Content="OCR导入车票" 
                                                         Command="{Binding OcrTicketCommand}" 
                                                         Style="{StaticResource MaterialDesignFlatButton}"
                                                         HorizontalContentAlignment="Left"

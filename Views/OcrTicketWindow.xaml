@@ -1,0 +1,357 @@
+<Window x:Class="TA_WPF.Views.OcrTicketWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TA_WPF.Views"
+        xmlns:converters="clr-namespace:TA_WPF.Converters"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels"
+        mc:Ignorable="d"
+        Title="OCR导入车票" 
+        Height="700" Width="1000"
+        WindowStartupLocation="CenterOwner"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="{Binding MainViewModel.FontSize}"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="Microsoft YaHei"
+        Closed="Window_Closed"
+        materialDesign:ThemeAssist.Theme="{Binding MainViewModel.IsDarkMode, Converter={StaticResource BooleanToThemeConverter}}">
+    
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Card.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Button.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:PathToFileNameConverter x:Key="PathToFileNameConverter" />
+            <converters:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter" />
+            <converters:FontSizeDecreaseConverter x:Key="FontSizeSmallConverter" />
+            <converters:FontSizeDecreaseConverter x:Key="FontSizeExtraSmallConverter" />
+            <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        
+        <!-- 顶部工具栏 -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+            <Button Command="{Binding SelectImageCommand}" 
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Margin="0,0,8,0"
+                    ToolTip="选择车票图片">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="FileImageOutline" Margin="0,0,8,0"/>
+                    <TextBlock Text="导入车票图片"/>
+                </StackPanel>
+            </Button>
+            
+            <Button Command="{Binding RunOcrCommand}" 
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Background="{DynamicResource PrimaryHueMidBrush}"
+                    BorderBrush="{DynamicResource PrimaryHueMidBrush}"
+                    Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                    Margin="0,0,8,0"
+                    ToolTip="执行OCR识别">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="TextRecognition" Margin="0,0,8,0"/>
+                    <TextBlock Text="开始识别"/>
+                </StackPanel>
+            </Button>
+            
+            <Button Command="{Binding CheckEnvironmentCommand}" 
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Margin="0,0,8,0"
+                    ToolTip="检查Python和cnocr环境">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="CheckCircleOutline" Margin="0,0,8,0"/>
+                    <TextBlock Text="检查环境"/>
+                </StackPanel>
+            </Button>
+            
+            <Button Command="{Binding OpenCnocrInstallGuideCommand}" 
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Margin="0,0,8,0"
+                    ToolTip="打开cnocr安装指南">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="HelpCircleOutline" Margin="0,0,8,0"/>
+                    <TextBlock Text="安装指南"/>
+                </StackPanel>
+            </Button>
+            
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                <TextBlock Text="Python: " VerticalAlignment="Center" Margin="0,0,4,0" />
+                <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1" Margin="0,0,12,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="Red" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsPythonInstalled}" Value="True">
+                                    <Setter Property="Fill" Value="Green" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                
+                <TextBlock Text="cnocr: " VerticalAlignment="Center" Margin="0,0,4,0" />
+                <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1" Margin="0,0,12,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="Red" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCnocrInstalled}" Value="True">
+                                    <Setter Property="Fill" Value="Green" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                
+                <TextBlock Text="OCR模型: " VerticalAlignment="Center" Margin="0,0,4,0" />
+                <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="Orange" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsOcrModelInstalled}" Value="True">
+                                    <Setter Property="Fill" Value="Green" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+            </StackPanel>
+        </StackPanel>
+        
+        <!-- 主内容区 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+            
+            <!-- 左侧图片显示区 -->
+            <materialDesign:Card Grid.Column="0" Margin="0,0,8,0" Padding="8" 
+                                 materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                <Grid>
+                    <!-- 未选择图片时显示的提示 -->
+                    <Border x:Name="NoImageBorder" Background="{DynamicResource MaterialDesignPaper}" BorderThickness="0" 
+                            Visibility="{Binding SelectedImage, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <materialDesign:PackIcon Kind="ImageOutline" 
+                                                    Width="48" 
+                                                    Height="48" 
+                                                    Opacity="0.5" 
+                                                    HorizontalAlignment="Center"/>
+                            <TextBlock Text="请选择车票图片..." 
+                                      HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"
+                                      Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                      FontSize="{Binding MainViewModel.FontSize}"
+                                      Margin="0,8,0,0"/>
+                            <TextBlock Text="点击顶部【导入车票图片】按钮" 
+                                      HorizontalAlignment="Center" 
+                                      TextAlignment="Center"
+                                      Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                      FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
+                                      Margin="0,8,0,0"
+                                      Opacity="0.7"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- 已选择图片时显示的内容 -->
+                    <Grid x:Name="ImageContainer" Visibility="{Binding SelectedImage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        
+                        <!-- 图片标题和信息 - 修改为单独一行 -->
+                        <DockPanel Grid.Row="0" VerticalAlignment="Top" LastChildFill="False">
+                            <!-- 左侧标题 -->
+                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="TicketOutline" 
+                                                       Margin="4,0,4,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                <TextBlock Text="车票图片" 
+                                          FontWeight="Medium"
+                                          VerticalAlignment="Center"
+                                          FontSize="{Binding MainViewModel.FontSize}"
+                                          Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                            </StackPanel>
+                            
+                            <!-- 右侧状态 -->
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <TextBlock Text="{Binding AverageConfidence, StringFormat=置信度: {0:P2}}" 
+                                          FontWeight="Normal"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,8,0"
+                                          Foreground="{DynamicResource SecondaryHueMidBrush}"
+                                          FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
+                                          Visibility="{Binding AverageConfidence, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                                <TextBlock Text="[图片已加载]" 
+                                          FontWeight="Normal"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,4,0"
+                                          Foreground="{DynamicResource PrimaryHueLightBrush}"
+                                          FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"/>
+                            </StackPanel>
+                        </DockPanel>
+                        
+                        <!-- 图片路径信息 - 简化为单行显示 -->
+                        <Border Grid.Row="1" 
+                               Background="{DynamicResource MaterialDesignChipBackground}" 
+                               Margin="0,8,0,0"
+                               Padding="8,4">
+                            <!-- 只显示文件名，不显示完整路径 -->
+                            <TextBlock Text="{Binding SelectedImagePath, StringFormat=文件: {0}}"
+                                     TextWrapping="Wrap"
+                                     TextTrimming="CharacterEllipsis"
+                                     FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
+                                     ToolTip="{Binding SelectedImagePath}"
+                                     Margin="0,0,0,0"
+                                     Foreground="{DynamicResource MaterialDesignBody}"/>
+                        </Border>
+
+                        <!-- 图片显示容器 -->
+                        <Border Grid.Row="2" 
+                               BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                               BorderThickness="1" 
+                               Margin="0,8,0,0" 
+                               Background="{DynamicResource MaterialDesignPaper}">
+                            <!-- 使用Grid和ViewBox结合实现更好的缩放效果 -->
+                            <Grid>
+                                <!-- 添加提示文本 -->
+                                <TextBlock Text="[图片已加载]" 
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                          FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
+                                          Opacity="0.2"
+                                          Panel.ZIndex="0"/>
+                                
+                                <!-- 使用ViewBox进行自适应缩放 -->
+                                <Viewbox Stretch="Uniform" 
+                                        StretchDirection="DownOnly"
+                                        Margin="10">
+                                    <Image x:Name="DisplayImage"
+                                          MaxWidth="600"
+                                          MaxHeight="600"
+                                          RenderOptions.BitmapScalingMode="HighQuality"
+                                          SnapsToDevicePixels="True"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                                </Viewbox>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </materialDesign:Card>
+            
+            <!-- 右侧OCR结果显示区 -->
+            <Grid Grid.Column="1" Margin="8,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+                
+                <!-- OCR识别结果列表 -->
+                <materialDesign:Card Grid.Row="0" Margin="0,0,0,8" Padding="8"
+                                    materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Text="OCR识别结果" 
+                                  Grid.Row="0" 
+                                  Margin="8,4,8,8" 
+                                  FontWeight="Medium"
+                                  FontSize="{Binding MainViewModel.FontSize}"
+                                  Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                        
+                        <ListView Grid.Row="1" 
+                                 ItemsSource="{Binding OcrResults}" 
+                                 Margin="4,0,4,4"
+                                 FontSize="{Binding MainViewModel.FontSize}"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Text}" 
+                                             ToolTip="{Binding Score, StringFormat=可信度: {0:P2}}"
+                                             TextWrapping="Wrap"
+                                             Margin="0,4" />
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </materialDesign:Card>
+                
+                <!-- JSON结果显示 -->
+                <materialDesign:Card Grid.Row="1" Margin="0,8,0,0" Padding="8"
+                                    materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Text="JSON结果" 
+                                  Grid.Row="0" 
+                                  Margin="8,4,8,8" 
+                                  FontWeight="Medium"
+                                  FontSize="{Binding MainViewModel.FontSize}"
+                                  Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                        
+                        <TextBox Grid.Row="1"
+                                Text="{Binding JsonResult, Mode=OneWay}" 
+                                IsReadOnly="True"
+                                VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Auto"
+                                TextWrapping="NoWrap"
+                                FontFamily="Consolas"
+                                FontSize="{Binding MainViewModel.FontSize}"
+                                Margin="4,0,4,4" />
+                    </Grid>
+                </materialDesign:Card>
+            </Grid>
+            
+            <!-- 加载指示器 -->
+            <Grid Grid.ColumnSpan="2" 
+                 Background="#80000000" 
+                 Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" 
+                                Width="60" 
+                                Height="60"
+                                Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                Margin="0,0,0,16" />
+                    <TextBlock Text="{Binding LoadingMessage}" 
+                             Foreground="White" 
+                             FontSize="{Binding MainViewModel.FontSize}"
+                             HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window> 

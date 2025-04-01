@@ -130,5 +130,42 @@ namespace TA_WPF.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// 打开OCR识别车票窗口
+        /// </summary>
+        /// <param name="mainViewModel">主视图模型</param>
+        /// <returns>是否成功识别车票</returns>
+        public bool OpenOcrTicketWindow(MainViewModel mainViewModel)
+        {
+            try
+            {
+                var ocrTicketWindow = new Views.OcrTicketWindow(mainViewModel);
+                
+                // 确保主窗口已初始化并且可见
+                if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)
+                {
+                    ocrTicketWindow.Owner = Application.Current.MainWindow;
+                    ocrTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                }
+                else
+                {
+                    // 如果主窗口不可用，使用CenterScreen
+                    ocrTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                }
+                
+                // 显示窗口
+                bool? result = ocrTicketWindow.ShowDialog();
+                
+                // 返回是否成功识别车票
+                return result == true;
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"打开OCR识别车票窗口时出错: {ex.Message}");
+                LogHelper.LogError($"打开OCR识别车票窗口时出错: {ex.Message}");
+                return false;
+            }
+        }
     }
 } 

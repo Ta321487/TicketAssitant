@@ -11,7 +11,7 @@
         d:DataContext="{d:DesignInstance Type=viewmodels:AddTicketViewModel}"
         mc:Ignorable="d"
         d:DesignHeight="1200" d:DesignWidth="900"
-        Title="添加车票" Height="1050" Width="900"
+        Title="手工录入车票" Height="1050" Width="900"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -93,7 +93,7 @@
 
         <!-- 标题 -->
         <TextBlock Grid.Row="0" 
-                   Text="添加车票" 
+                   Text="手工录入车票" 
                    Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
                    Margin="0,0,0,16"/>
 
