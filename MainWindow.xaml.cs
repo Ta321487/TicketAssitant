@@ -99,7 +99,7 @@ namespace TA_WPF
                 _menuToggleButton = this.FindName("MenuToggleButton") as ToggleButton;
                 _settingsButton = this.FindName("SettingsButton") as Button;
                 
-                // 检查控件引用是否有效
+                // 检测控件引用是否有效
                 if (_menuToggleButton == null)
                 {
                     System.Diagnostics.Debug.WriteLine("警告: MenuToggleButton引用为空");
@@ -301,7 +301,7 @@ namespace TA_WPF
         {
             try
             {
-                // 检查是否是用户手动关闭窗口
+                // 检测是否是用户手动关闭窗口
                 if (Application.Current.MainWindow == this && Owner == null)
                 {
                     // 取消当前关闭操作
@@ -364,7 +364,7 @@ namespace TA_WPF
                     // 显示对话框并等待结果
                     MaterialDesignThemes.Wpf.DialogHost.Show(dialogContent, "RootDialog", (sender, args) =>
                     {
-                        // 检查用户选择
+                        // 检测用户选择
                         if (args.Parameter is bool result && result)
                         {
                             // 用户确认退出，清理资源

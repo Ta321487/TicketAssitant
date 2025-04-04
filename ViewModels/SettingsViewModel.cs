@@ -791,7 +791,7 @@ namespace TA_WPF.ViewModels
                     writer.WriteLine();
                     writer.WriteLine("提交步骤：");
                     writer.WriteLine("1. 将整个文件夹压缩为ZIP格式");
-                    writer.WriteLine("2. 发送邮件至：support@ticketassist.com");
+                    writer.WriteLine("2. 发送邮件至：tl_5099@163.com");
                     writer.WriteLine("3. 在邮件中详细描述您遇到的问题，包括：");
                     writer.WriteLine("   - 问题发生的时间");
                     writer.WriteLine("   - 问题发生前您正在执行的操作");

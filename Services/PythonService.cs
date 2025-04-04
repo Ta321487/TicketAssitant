@@ -32,7 +32,7 @@ namespace TA_WPF.Services
         }
         
         /// <summary>
-        /// 检查Python是否已安装
+        /// 检测Python是否已安装
         /// </summary>
         public async Task<bool> CheckPythonInstalled()
         {
@@ -59,7 +59,7 @@ namespace TA_WPF.Services
         }
         
         /// <summary>
-        /// 检查指定的Python包是否已安装
+        /// 检测指定的Python包是否已安装
         /// </summary>
         /// <param name="packageName">包名</param>
         public async Task<bool> CheckPackageInstalled(string packageName)
@@ -88,29 +88,29 @@ namespace TA_WPF.Services
         }
         
         /// <summary>
-        /// 检查OCR模型是否已安装
+        /// 检测OCR模型是否已安装
         /// </summary>
         public async Task<bool> CheckOcrModelInstalled()
         {
             try
             {
-                // 检查多个可能的模型路径
+                // 检测多个可能的模型路径
                 
-                // 1. 检查用户主目录下的.cnocr目录
+                // 1. 检测用户主目录下的.cnocr目录
                 string userDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 string modelDir1 = Path.Combine(userDir, ".cnocr");
                 
-                // 2. 检查AppData/Roaming下的cnocr目录
+                // 2. 检测AppData/Roaming下的cnocr目录
                 string appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string modelDir2 = Path.Combine(appDataDir, "cnocr");
                 string versionModelDir = Path.Combine(modelDir2, "2.3"); // 特定版本目录
                 
-                // 检查所有可能的模型目录
+                // 检测所有可能的模型目录
                 foreach (string dir in new[] { modelDir1, modelDir2, versionModelDir })
                 {
                     if (Directory.Exists(dir))
                     {
-                        // 检查是否包含模型文件
+                        // 检测是否包含模型文件
                         string[] modelFiles = Directory.GetFiles(dir, "*.onnx", SearchOption.AllDirectories);
                         if (modelFiles.Length > 0)
                         {

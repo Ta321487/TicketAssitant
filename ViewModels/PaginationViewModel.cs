@@ -43,7 +43,7 @@ namespace TA_WPF.ViewModels
         /// <returns>如果成功获取到缓存数据返回true，否则返回false</returns>
         public bool TryGetCachedPage(out List<TrainRideInfo> cachedItems)
         {
-            // 检查缓存中是否已有当前页数据，且页大小未变
+            // 检测缓存中是否已有当前页数据，且页大小未变
             if (_pageCache.ContainsKey(_currentPage) && _cachePageSize == _pageSize)
             {
                 // 从缓存加载数据

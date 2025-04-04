@@ -9,6 +9,8 @@ using System.Threading;
 using System.Diagnostics;
 using System.Windows.Threading;
 using System.Windows.Input;
+using System.Text;
+using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -196,15 +198,207 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 验证表单
-                if (!ValidateForm())
+                // 创建一个错误消息列表，用于保存所有验证错误
+                _validationErrors.Clear();
+                StringBuilder errorMessages = new StringBuilder();
+                
+                // 创建TrainRideInfo对象用于验证
+                var ticket = new TrainRideInfo
                 {
-                    MessageBoxHelper.ShowWarning(FormValidationHelper.GetFormattedValidationErrors(_validationErrors));
+                    Id = _ticketId,
+                    TicketNumber = TicketNumber,
+                    CheckInLocation = CheckInLocation,
+                    DepartStation = DepartStation,
+                    ArriveStation = ArriveStation,
+                    DepartStationPinyin = DepartStationPinyin,
+                    ArriveStationPinyin = ArriveStationPinyin,
+                    DepartStationCode = DepartStationCode,
+                    ArriveStationCode = ArriveStationCode,
+                    DepartDate = DepartDate,
+                    DepartTime = new TimeSpan(DepartHour, DepartMinute, 0),
+                    TrainNo = FormValidationHelper.FormatTrainNo(SelectedTrainType, TrainNumber),
+                    CoachNo = IsExtraCoach ? $"加{CoachNo}车" : $"{CoachNo}车",
+                    SeatNo = FormValidationHelper.FormatSeatNo(IsNoSeat, SeatNo, SelectedSeatPosition),
+                    Money = Money,
+                    SeatType = SelectedSeatType,
+                    AdditionalInfo = SelectedAdditionalInfo,
+                    TicketPurpose = SelectedTicketPurpose,
+                    Hint = SelectedHint == "自定义" ? CustomHint : SelectedHint,
+                    TicketModificationType = SelectedTicketModificationType,
+                    TicketTypeFlags = GetTicketTypeFlags(),
+                    PaymentChannelFlags = GetPaymentChannelFlags()
+                };
+
+                // 1. 收集所有必填项错误，但不立即返回
+                bool isBasicValidationPassed = FormValidationHelper.ValidateTicketForm(ticket, _validationErrors);
+                
+                // 2. 验证车站外键关系前，确保StationSearchService已初始化
+                if (!_stationSearchService.IsInitialized)
+                {
+                    var initTask = _stationSearchService.InitializeAsync();
+                    initTask.Wait(); // 在UI线程中谨慎使用Wait()
+                }
+                
+                bool departHasError = false;
+                bool arriveHasError = false;
+                
+                // 3. 检测出发站和到达站信息
+                // 只有在用户填写了站名的情况下才检测代码和拼音是否匹配
+                if (!string.IsNullOrWhiteSpace(DepartStation))
+                {
+                    // 通过站名查找出发站信息
+                    var departByName = _stationSearchService.Stations
+                        .FirstOrDefault(s => s.StationName == DepartStation || 
+                                            s.StationName == DepartStation + "站" || 
+                                            s.StationName?.Replace("站", "") == DepartStation);
+                    
+                    // 通过代码查找出发站信息
+                    var departByCode = !string.IsNullOrWhiteSpace(DepartStationCode) ? 
+                        _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == DepartStationCode) : null;
+                    
+                    // 如果站名能找到，但代码不匹配或为空
+                    if (departByName != null)
+                    {
+                        // 检测代码是否匹配或为空
+                        if (string.IsNullOrWhiteSpace(DepartStationCode))
+                        {
+                            // 将代码为空的情况添加到验证错误
+                            if (!_validationErrors.Any(e => e.Contains("未填写出发站代码")))
+                            {
+                                _validationErrors.Add("未填写出发站代码");
+                            }
+                        }
+                        else if (departByCode == null || departByName.Id != departByCode.Id)
+                        {
+                            // 代码不匹配
+                            departHasError = true;
+                            errorMessages.AppendLine($"出发站【{DepartStation}】的代码错误：");
+                            errorMessages.AppendLine($"- 当前填写的代码【{DepartStationCode}】与车站不匹配");
+                            errorMessages.AppendLine($"- 正确的代码应为：【{departByName.StationCode}】");
+                            errorMessages.AppendLine();
+                        }
+                        
+                        // 检测拼音是否匹配或为空
+                        if (string.IsNullOrWhiteSpace(DepartStationPinyin))
+                        {
+                            // 将拼音为空的情况添加到验证错误
+                            if (!_validationErrors.Any(e => e.Contains("未填写出发站拼音")))
+                            {
+                                _validationErrors.Add("未填写出发站拼音");
+                            }
+                        }
+                        else if (DepartStationPinyin != departByName.StationPinyin)
+                        {
+                            // 拼音不匹配
+                            departHasError = true;
+                            errorMessages.AppendLine($"出发站【{DepartStation}】的拼音错误：");
+                            errorMessages.AppendLine($"- 当前填写的拼音【{DepartStationPinyin}】与车站记录不匹配");
+                            errorMessages.AppendLine($"- 正确的拼音应为：【{departByName.StationPinyin}】");
+                            errorMessages.AppendLine();
+                        }
+                    }
+                    // 如果无法通过站名找到匹配的车站
+                    else if (departByName == null && departByCode == null)
+                    {
+                        departHasError = true;
+                        errorMessages.AppendLine($"出发站【{DepartStation}】在车站中心不存在，请先添加该车站信息。");
+                        errorMessages.AppendLine();
+                    }
+                }
+                
+                // 检测到达站，逻辑与出发站类似
+                if (!string.IsNullOrWhiteSpace(ArriveStation))
+                {
+                    // 通过站名查找到达站信息
+                    var arriveByName = _stationSearchService.Stations
+                        .FirstOrDefault(s => s.StationName == ArriveStation || 
+                                            s.StationName == ArriveStation + "站" || 
+                                            s.StationName?.Replace("站", "") == ArriveStation);
+                    
+                    // 通过代码查找到达站信息
+                    var arriveByCode = !string.IsNullOrWhiteSpace(ArriveStationCode) ? 
+                        _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == ArriveStationCode) : null;
+                    
+                    // 如果站名能找到，但代码不匹配或为空
+                    if (arriveByName != null)
+                    {
+                        // 检测代码是否匹配或为空
+                        if (string.IsNullOrWhiteSpace(ArriveStationCode))
+                        {
+                            // 将代码为空的情况添加到验证错误
+                            if (!_validationErrors.Any(e => e.Contains("未填写到达站代码")))
+                            {
+                                _validationErrors.Add("未填写到达站代码");
+                            }
+                        }
+                        else if (arriveByCode == null || arriveByName.Id != arriveByCode.Id)
+                        {
+                            // 代码不匹配
+                            arriveHasError = true;
+                            errorMessages.AppendLine($"到达站【{ArriveStation}】的代码错误：");
+                            errorMessages.AppendLine($"- 当前填写的代码【{ArriveStationCode}】与车站不匹配");
+                            errorMessages.AppendLine($"- 正确的代码应为：【{arriveByName.StationCode}】");
+                            errorMessages.AppendLine();
+                        }
+                        
+                        // 检测拼音是否匹配或为空
+                        if (string.IsNullOrWhiteSpace(ArriveStationPinyin))
+                        {
+                            // 将拼音为空的情况添加到验证错误
+                            if (!_validationErrors.Any(e => e.Contains("未填写到达站拼音")))
+                            {
+                                _validationErrors.Add("未填写到达站拼音");
+                            }
+                        }
+                        else if (ArriveStationPinyin != arriveByName.StationPinyin)
+                        {
+                            // 拼音不匹配
+                            arriveHasError = true;
+                            errorMessages.AppendLine($"到达站【{ArriveStation}】的拼音错误：");
+                            errorMessages.AppendLine($"- 当前填写的拼音【{ArriveStationPinyin}】与车站记录不匹配");
+                            errorMessages.AppendLine($"- 正确的拼音应为：【{arriveByName.StationPinyin}】");
+                            errorMessages.AppendLine();
+                        }
+                    }
+                    // 如果无法通过站名找到匹配的车站
+                    else if (arriveByName == null && arriveByCode == null)
+                    {
+                        arriveHasError = true;
+                        errorMessages.AppendLine($"到达站【{ArriveStation}】在车站中心不存在，请先添加该车站信息。");
+                        errorMessages.AppendLine();
+                    }
+                }
+                
+                // 4. 组合所有错误信息
+                if (_validationErrors.Count > 0 || departHasError || arriveHasError)
+                {
+                    // 构建完整的错误信息
+                    StringBuilder fullErrorMessage = new StringBuilder("请修正以下错误：\n");
+                    
+                    // 先添加必填项错误
+                    foreach (var error in _validationErrors)
+                    {
+                        fullErrorMessage.AppendLine($"- {error}");
+                    }
+                    
+                    // 如果有必填项错误和其他错误，添加一个分隔行
+                    if (_validationErrors.Count > 0 && (departHasError || arriveHasError))
+                    {
+                        fullErrorMessage.AppendLine();
+                    }
+                    
+                    // 添加车站匹配错误
+                    if (departHasError || arriveHasError)
+                    {
+                        fullErrorMessage.Append(errorMessages);
+                    }
+                    
+                    MessageBoxHelper.ShowWarning(fullErrorMessage.ToString(), "保存验证");
                     return;
                 }
 
-                // 创建TrainRideInfo对象
-                var ticket = new TrainRideInfo
+                // 5. 验证都通过，创建最终要保存的TrainRideInfo对象
+                var finalTicket = new TrainRideInfo
                 {
                     Id = _ticketId,
                     TicketNumber = TicketNumber,
@@ -231,7 +425,7 @@ namespace TA_WPF.ViewModels
                 };
 
                 // 更新车票
-                bool result = await _databaseService.UpdateTicketAsync(ticket);
+                bool result = await _databaseService.UpdateTicketAsync(finalTicket);
                 
                 if (result)
                 {
@@ -248,7 +442,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"保存车票时出错: {ex.Message}");
-                LogHelper.LogTicketError("修改", $"修改车票ID:{_ticketId}时出错", ex);
+                LogHelper.LogTicketError("修改", $"保存车票ID:{_ticketId}时出错", ex);
             }
         }
 

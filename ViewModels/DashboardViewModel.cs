@@ -256,7 +256,7 @@ namespace TA_WPF.ViewModels
                         OnPropertyChanged(nameof(MonthlyTicketChartMessage));
                         OnPropertyChanged(nameof(ExpenseChartMessage));
                         
-                        // 检查开始日期是否大于结束日期
+                        // 检测开始日期是否大于结束日期
                         if (_startDate > _endDate)
                         {
                             // 显示警告对话框
@@ -305,7 +305,7 @@ namespace TA_WPF.ViewModels
                         OnPropertyChanged(nameof(MonthlyTicketChartMessage));
                         OnPropertyChanged(nameof(ExpenseChartMessage));
                         
-                        // 检查结束日期是否小于开始日期
+                        // 检测结束日期是否小于开始日期
                         if (_endDate < _startDate)
                         {
                             // 显示警告对话框
@@ -885,7 +885,7 @@ namespace TA_WPF.ViewModels
                             EndDate = temp;
                         }
                         
-                        // 检查时间跨度是否过大（超过20年）
+                        // 检测时间跨度是否过大（超过20年）
                         TimeSpan timeSpan = EndDate - StartDate;
                         if (timeSpan.TotalDays > 365 * 20)
                         {
@@ -1204,7 +1204,7 @@ namespace TA_WPF.ViewModels
                     else
                     {
                         // 跨越多年的情况
-                        // 检查是否跨越了超过5年
+                        // 检测是否跨越了超过5年
                         int yearDiff = endDate.Year - startDate.Year;
                         if (yearDiff >= 5)
                         {
@@ -1644,7 +1644,7 @@ namespace TA_WPF.ViewModels
             // 记录调试信息
             System.Diagnostics.Debug.WriteLine($"开始加载月度支出数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
             
-            // 检查是否有数据
+            // 检测是否有数据
             bool hasData = tickets != null && tickets.Any(t => t.Money > 0);
             System.Diagnostics.Debug.WriteLine($"费用支出分析：总共有 {tickets?.Count ?? 0} 条车票数据，其中有费用的车票数量：{tickets?.Count(t => t.Money > 0) ?? 0}");
             
@@ -1748,7 +1748,7 @@ namespace TA_WPF.ViewModels
                 return;
             }
             
-            // 检查当前时间范围内是否有数据
+            // 检测当前时间范围内是否有数据
             var ticketsInRange = tickets.Where(t => t.DepartDate.HasValue && 
                                               t.DepartDate.Value >= startDate && 
                                               t.DepartDate.Value <= endDate).ToList();

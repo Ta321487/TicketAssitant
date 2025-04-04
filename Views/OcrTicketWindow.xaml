@@ -166,10 +166,10 @@
                     Style="{StaticResource MaterialDesignOutlinedButton}"
                     materialDesign:ButtonAssist.CornerRadius="4"
                     Margin="0,0,8,0"
-                    ToolTip="检查Python和cnocr环境">
+                    ToolTip="检测Python和cnocr环境">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="CheckCircleOutline" Margin="0,0,8,0"/>
-                    <TextBlock Text="检查环境"/>
+                    <TextBlock Text="检测环境"/>
                 </StackPanel>
             </Button>
             
@@ -1309,6 +1309,7 @@
                     Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
                     Width="120"
                     Height="40"
+                    IsEnabled="{Binding IsEnvironmentReady}"
                     Margin="0,0,0,8">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>

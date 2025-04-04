@@ -20,7 +20,7 @@ namespace TA_WPF.Utils
                 if (flagValue == 0)
                     continue;
                 
-                // 检查该位是否设置
+                // 检测该位是否设置
                 if ((flags & flagValue) == flagValue)
                 {
                     descriptions.Add(value.ToString());

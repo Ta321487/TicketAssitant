@@ -200,7 +200,7 @@ namespace TA_WPF.Services
                     await LoadStationsAsync();
                 }
 
-                // 检查车站表是否为空
+                // 检测车站表是否为空
                 if (_stations.Count == 0)
                 {
                     return (1, null); // 车站表为空
@@ -213,7 +213,7 @@ namespace TA_WPF.Services
                     return (1, null); // 车站不存在
                 }
 
-                // 检查车站信息是否完整
+                // 检测车站信息是否完整
                 bool hasStationCode = !string.IsNullOrWhiteSpace(station.StationCode);
                 bool hasStationPinyin = !string.IsNullOrWhiteSpace(station.StationPinyin);
 
@@ -243,7 +243,7 @@ namespace TA_WPF.Services
         }
         
         /// <summary>
-        /// 检查是否为有效的车站名
+        /// 检测是否为有效的车站名
         /// </summary>
         /// <param name="stationName">车站名称</param>
         /// <returns>是否有效</returns>
@@ -262,7 +262,7 @@ namespace TA_WPF.Services
                 loadTask.Wait();
             }
             
-            // 检查车站表是否为空
+            // 检测车站表是否为空
             if (_stations.Count == 0)
             {
                 return false;

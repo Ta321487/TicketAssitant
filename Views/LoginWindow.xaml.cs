@@ -112,7 +112,7 @@ namespace TA_WPF.Views
         {
             try
             {
-                // 检查服务器地址和数据库名称是否有内容
+                // 检测服务器地址和数据库名称是否有内容
                 bool hasServerAddress = !string.IsNullOrWhiteSpace(ServerAddressTextBox.Text);
                 bool hasDatabaseName = !string.IsNullOrWhiteSpace(DatabaseNameComboBox.Text);
 
@@ -314,7 +314,7 @@ namespace TA_WPF.Views
         {
             try
             {
-                // 检查ThemeIcon是否已初始化
+                // 检测ThemeIcon是否已初始化
                 if (ThemeIcon == null)
                 {
                     System.Diagnostics.Debug.WriteLine("UpdateThemeIcon: ThemeIcon为空");
@@ -355,7 +355,7 @@ namespace TA_WPF.Views
         {
             try
             {
-                // 检查ThemeIcon是否已初始化
+                // 检测ThemeIcon是否已初始化
                 if (ThemeIcon == null)
                 {
                     System.Diagnostics.Debug.WriteLine("ThemeToggleButton_Click: ThemeIcon为空");
@@ -397,25 +397,25 @@ namespace TA_WPF.Views
                 e.Handled = true;
             }
 
-            // 检查大写锁定状态
+            // 检测大写锁定状态
             CheckCapsLock();
         }
 
         private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
         {
-            // 检查大写锁定状态
+            // 检测大写锁定状态
             CheckCapsLock();
         }
 
         private void PasswordBox_KeyUp(object sender, KeyEventArgs e)
         {
-            // 检查大写锁定状态
+            // 检测大写锁定状态
             CheckCapsLock();
         }
 
         private void CheckCapsLock()
         {
-            // 检查大写锁定是否开启
+            // 检测大写锁定是否开启
             bool isCapsLockOn = Keyboard.IsKeyToggled(Key.CapsLock);
 
             // 只有在密码框获得焦点时才显示大写锁定图标
@@ -463,7 +463,7 @@ namespace TA_WPF.Views
                 string password = PasswordBox.Password;
                 string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306";
 
-                // 检查MySQL是否已安装或可连接
+                // 检测MySQL是否已安装或可连接
                 var connectionStatus = await CheckMySqlConnectionStatus(serverAddress, port);
                 if (connectionStatus != MySqlConnectionStatus.Connected)
                 {
@@ -563,7 +563,7 @@ namespace TA_WPF.Views
 
                 try
                 {
-                    // 检查服务器是否可达（仅对非本地连接进行Ping测试）
+                    // 检测服务器是否可达（仅对非本地连接进行Ping测试）
                     // 注意：许多云服务器会禁用ICMP协议（Ping），但实际上数据库连接（TCP）可能正常
                     bool serverReachable = true;
                     if (!isLocalConnection)
@@ -613,7 +613,7 @@ namespace TA_WPF.Views
                             }
                         });
 
-                        // 对于本地连接，检查MySQL服务是否在运行
+                        // 对于本地连接，检测MySQL服务是否在运行
                         bool mysqlServiceRunning = await Task.Run(() =>
                         {
                             try
@@ -670,7 +670,7 @@ namespace TA_WPF.Views
                                 connection.Open();
                                 connected = true;
 
-                                // 检查必要的表是否存在
+                                // 检测必要的表是否存在
                                 tablesExist = CheckRequiredTables(connection);
                             }
                             catch (MySqlException ex)
@@ -710,10 +710,10 @@ namespace TA_WPF.Views
                         SaveLastServerAddress(serverAddress);
                         SaveDatabaseNameToHistory(databaseName);
 
-                        // 如果必要的表不存在，检查SQL文件夹中是否有对应的SQL文件
+                        // 如果必要的表不存在，检测SQL文件夹中是否有对应的SQL文件
                         if (!tablesExist)
                         {
-                            // 检查SqlData文件夹是否存在
+                            // 检测SqlData文件夹是否存在
                             string sqlDataFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SqlData");
 
                             // 如果在应用程序目录中找不到SqlData文件夹，尝试在当前目录中查找
@@ -756,7 +756,7 @@ namespace TA_WPF.Views
 
                             System.Diagnostics.Debug.WriteLine($"找到SqlData文件夹: {sqlDataFolderPath}");
 
-                            // 检查必要的SQL文件是否存在
+                            // 检测必要的SQL文件是否存在
                             bool allSqlFilesExist = true;
                             List<string> missingSqlFiles = new List<string>();
 
@@ -912,7 +912,7 @@ namespace TA_WPF.Views
                                             bool tablesImported = CheckRequiredTables(connection);
                                             if (!tablesImported)
                                             {
-                                                importException = new Exception("表结构导入后验证失败，请检查SQL文件是否正确。");
+                                                importException = new Exception("表结构导入后验证失败，请检测SQL文件是否正确。");
                                             }
                                         }
                                     }
@@ -1022,7 +1022,7 @@ namespace TA_WPF.Views
                         // 强制应用主题
                         themeService.ApplyTheme(isDarkMode);
 
-                        // 重置车站检查服务的忽略状态
+                        // 重置车站检测服务的忽略状态
                         // StationCheckService.Instance.ResetIgnoreStationCheck();
                         LogHelper.LogInfo("已登录成功");
 
@@ -1101,7 +1101,7 @@ namespace TA_WPF.Views
             }
         }
 
-        // 检查必要的表是否存在
+        // 检测必要的表是否存在
         private bool CheckRequiredTables(MySqlConnection connection)
         {
             try
@@ -1116,7 +1116,7 @@ namespace TA_WPF.Views
                     existingTables.Add(tableName);
                 }
 
-                // 检查必要的表是否都存在
+                // 检测必要的表是否都存在
                 foreach (string requiredTable in _requiredTables)
                 {
                     if (!existingTables.Contains(requiredTable.ToLower()))
@@ -1256,9 +1256,9 @@ namespace TA_WPF.Views
             if (originalMessage.Contains("Unknown database") || originalMessage.Contains("Unknown schema"))
             {
                 string dbName = DatabaseNameComboBox.Text.Trim();
-                return $"数据库 '{dbName}' 不存在，请检查数据库名称是否正确。\n" +
+                return $"数据库 '{dbName}' 不存在，请检测数据库名称是否正确。\n" +
                        "如果确认数据库名称正确，您可以：\n" +
-                       "1. 检查数据库是否已创建\n" +
+                       "1. 检测数据库是否已创建\n" +
                        "2. 使用正确的数据库名称\n" +
                        "3. 点击\"创建数据库\"按钮创建新数据库";
             }
@@ -1270,16 +1270,16 @@ namespace TA_WPF.Views
                 originalMessage.Contains("Authentication plugin") ||
                 originalMessage.Contains("is not supported"))
             {
-                // 首先检查是否是访问被拒绝的错误
+                // 首先检测是否是访问被拒绝的错误
                 if (originalMessage.Contains("Access denied for user"))
                 {
                     string username = UsernameTextBox.Text.Trim();
                     return $"登录失败：用户'{username}'的用户名或密码错误。\n" +
-                           "请检查：\n" +
+                           "请检测：\n" +
                            "1. 用户名拼写是否正确\n" +
                            "2. 密码是否正确\n" +
                            "3. 该用户是否有权限访问MySQL服务器\n" +
-                           "4. 如果确认用户名密码无误，请联系数据库管理员检查用户权限";
+                           "4. 如果确认用户名密码无误，请联系数据库管理员检测用户权限";
                 }
 
                 return "认证方式不兼容，请尝试以下解决方案：\n" +
@@ -1295,23 +1295,23 @@ namespace TA_WPF.Views
             {
                 string username = UsernameTextBox.Text.Trim();
                 return $"登录失败：用户'{username}'的用户名或密码错误。\n" +
-                       "请检查：\n" +
+                       "请检测：\n" +
                        "1. 用户名拼写是否正确\n" +
                        "2. 密码是否正确\n" +
                        "3. 该用户是否有权限访问MySQL服务器\n" +
-                       "4. 如果确认用户名密码无误，请联系数据库管理员检查用户权限";
+                       "4. 如果确认用户名密码无误，请联系数据库管理员检测用户权限";
             }
 
             // 连接超时
             if (originalMessage.Contains("Connection timeout") || originalMessage.Contains("Reading from the stream has timed out"))
             {
-                return "连接服务器超时，请检查网络连接或服务器地址是否正确。";
+                return "连接服务器超时，请检测网络连接或服务器地址是否正确。";
             }
 
             // 无法连接到服务器
             if (originalMessage.Contains("Unable to connect") || originalMessage.Contains("Could not connect to MySQL server"))
             {
-                // 检查是否是本地连接
+                // 检测是否是本地连接
                 string serverAddress = ServerAddressTextBox.Text.Trim();
                 if (serverAddress == "localhost" || serverAddress == "127.0.0.1")
                 {
@@ -1319,7 +1319,7 @@ namespace TA_WPF.Views
                 }
                 else
                 {
-                    return "无法连接到MySQL服务器，请检查服务器地址是否正确或服务器是否在线。";
+                    return "无法连接到MySQL服务器，请检测服务器地址是否正确或服务器是否在线。";
                 }
             }
 
@@ -1328,14 +1328,14 @@ namespace TA_WPF.Views
                 originalMessage.Contains("Connection refused"))
             {
                 string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306";
-                return $"连接被拒绝，请检查端口号({port})是否正确或MySQL服务是否已在该端口启动。";
+                return $"连接被拒绝，请检测端口号({port})是否正确或MySQL服务是否已在该端口启动。";
             }
 
             // 主机名解析错误
             if (originalMessage.Contains("Unknown MySQL server host") || originalMessage.Contains("No such host is known"))
             {
                 string serverAddress = ServerAddressTextBox.Text.Trim();
-                return $"无法解析服务器地址'{serverAddress}'，请检查拼写是否正确或网络DNS设置。";
+                return $"无法解析服务器地址'{serverAddress}'，请检测拼写是否正确或网络DNS设置。";
             }
 
             // 认证方式错误
@@ -1347,13 +1347,13 @@ namespace TA_WPF.Views
             // 字符集错误
             if (originalMessage.Contains("Unknown character set"))
             {
-                return "未知的字符集，请检查数据库配置或连接字符串设置。";
+                return "未知的字符集，请检测数据库配置或连接字符串设置。";
             }
 
             // SSL连接错误
             if (originalMessage.Contains("SSL connection error"))
             {
-                return "SSL连接错误，请检查SSL配置或尝试禁用SSL连接。";
+                return "SSL连接错误，请检测SSL配置或尝试禁用SSL连接。";
             }
 
             // 服务器已关闭连接
@@ -1410,7 +1410,7 @@ namespace TA_WPF.Views
                 // 获取配置文件
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
-                // 检查连接字符串是否已存在
+                // 检测连接字符串是否已存在
                 if (config.ConnectionStrings.ConnectionStrings["DefaultConnection"] != null)
                 {
                     // 更新现有连接字符串
@@ -1518,7 +1518,7 @@ namespace TA_WPF.Views
 
         private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            // 密码框获得焦点时检查大写锁定状态
+            // 密码框获得焦点时检测大写锁定状态
             CheckCapsLock();
         }
 
@@ -1653,7 +1653,7 @@ namespace TA_WPF.Views
         {
             try
             {
-                // 禁用外键约束检查
+                // 禁用外键约束检测
                 using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
                 {
                     disableChecksCmd.ExecuteNonQuery();
@@ -1725,7 +1725,7 @@ namespace TA_WPF.Views
                     cmd.ExecuteNonQuery();
                 }
 
-                // 重新启用外键约束检查
+                // 重新启用外键约束检测
                 using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
                 {
                     enableChecksCmd.ExecuteNonQuery();
@@ -1788,7 +1788,7 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 检查MySQL是否已安装或远程服务器是否可连接
+        /// 检测MySQL是否已安装或远程服务器是否可连接
         /// </summary>
         /// <param name="serverAddress">服务器地址</param>
         /// <param name="port">端口</param>
@@ -1805,13 +1805,13 @@ namespace TA_WPF.Views
 
             try
             {
-                // 检查是否是远程连接
+                // 检测是否是远程连接
                 bool isLocalConnection = string.IsNullOrEmpty(serverAddress) ||
                                          serverAddress.ToLower() == "localhost" ||
                                          serverAddress == "127.0.0.1" ||
                                          serverAddress == "::1";
 
-                // 如果是远程连接，检查远程服务器是否可达
+                // 如果是远程连接，检测远程服务器是否可达
                 if (!isLocalConnection)
                 {
                     System.Diagnostics.Debug.WriteLine($"检测远程MySQL连接: {serverAddress}:{port}");
@@ -1879,10 +1879,10 @@ namespace TA_WPF.Views
                     }
                 }
 
-                // 对于本地连接，检查本地MySQL安装
+                // 对于本地连接，检测本地MySQL安装
                 System.Diagnostics.Debug.WriteLine("检测本地MySQL安装");
 
-                // 检查MySQL服务是否存在
+                // 检测MySQL服务是否存在
                 bool serviceExists = false;
                 try
                 {
@@ -1908,10 +1908,10 @@ namespace TA_WPF.Views
                 }
                 catch
                 {
-                    // 忽略服务检查错误
+                    // 忽略服务检测错误
                 }
 
-                // 检查MySQL注册表项
+                // 检测MySQL注册表项
                 bool registryExists = false;
                 try
                 {
@@ -1930,10 +1930,10 @@ namespace TA_WPF.Views
                 }
                 catch
                 {
-                    // 忽略注册表检查错误
+                    // 忽略注册表检测错误
                 }
 
-                // 检查MySQL程序文件夹
+                // 检测MySQL程序文件夹
                 bool folderExists = false;
                 string[] possiblePaths = new string[]
                 {
@@ -1951,7 +1951,7 @@ namespace TA_WPF.Views
                     }
                 }
 
-                // 如果本地任何一项检查通过，检查MySQL服务端口是否可连接
+                // 如果本地任何一项检测通过，检测MySQL服务端口是否可连接
                 if (serviceExists || registryExists || folderExists)
                 {
                     bool canConnect = await Task.Run(() =>
@@ -1980,7 +1980,7 @@ namespace TA_WPF.Views
                     }
                     else if (port != "3306" && CustomPortCheckBox.IsChecked == true)
                     {
-                        // 检查默认端口是否可连接
+                        // 检测默认端口是否可连接
                         bool defaultPortWorks = await Task.Run(() =>
                         {
                             try
@@ -2022,7 +2022,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"检查MySQL安装或连接时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"检测MySQL安装或连接时出错: {ex.Message}");
                 return MySqlConnectionStatus.ConnectionError;
             }
         }
@@ -2111,7 +2111,7 @@ namespace TA_WPF.Views
                             titleText = "MySQL服务未运行";
                             messageText = "检测到MySQL已安装，但服务未运行或无法访问。\n\n" +
                                           "请确认以下几点：\n" +
-                                          "1. MySQL服务是否已启动（可在服务管理器中检查）\n" +
+                                          "1. MySQL服务是否已启动（可在服务管理器中检测）\n" +
                                           "2. 防火墙是否允许MySQL连接\n" +
                                           "3. MySQL是否配置正确";
                         }
@@ -2214,7 +2214,7 @@ namespace TA_WPF.Views
             {
                 System.Diagnostics.Debug.WriteLine($"显示数据库连接错误提示时出错: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
-                MessageBox.Show("连接数据库时发生错误。请检查您的连接设置。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("连接数据库时发生错误。请检测您的连接设置。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 

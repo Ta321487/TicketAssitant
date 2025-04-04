@@ -304,7 +304,7 @@ namespace TA_WPF.Services
                 // 设置加载状态
                 IsLoading = true;
                 
-                // 检查缓存中是否已有当前页数据，且页大小未变
+                // 检测缓存中是否已有当前页数据，且页大小未变
                 if (_pageCache.ContainsKey(CurrentPage) && _cachePageSize == PageSize)
                 {
                     // 从缓存返回数据

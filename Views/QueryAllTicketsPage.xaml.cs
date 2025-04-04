@@ -123,7 +123,7 @@ namespace TA_WPF.Views
                 return;
             }
 
-            // 检查输入的数字是否在有效范围内
+            // 检测输入的数字是否在有效范围内
             var textBox = sender as TextBox;
             var viewModel = DataContext as QueryAllTicketsViewModel;
             if (textBox != null && viewModel != null)
@@ -153,14 +153,14 @@ namespace TA_WPF.Views
                 // 获取剪贴板内容
                 string clipboardText = Clipboard.GetText();
                 
-                // 检查是否为数字
+                // 检测是否为数字
                 if (!int.TryParse(clipboardText, out _))
                 {
                     e.Handled = true;
                     return;
                 }
                 
-                // 检查粘贴后的数字是否在有效范围内
+                // 检测粘贴后的数字是否在有效范围内
                 var textBox = sender as TextBox;
                 var viewModel = DataContext as QueryAllTicketsViewModel;
                 if (textBox != null && viewModel != null)
@@ -273,7 +273,7 @@ namespace TA_WPF.Views
                 item.IsSelected = false;
             }
             
-            // 检查是否需要更新全选状态
+            // 检测是否需要更新全选状态
             if (viewModel is TicketBaseViewModel ticketViewModel)
             {
                 // 获取当前页的所有项
@@ -281,7 +281,7 @@ namespace TA_WPF.Views
                 
                 if (items != null && items.Count > 0)
                 {
-                    // 检查是否所有项都被选中
+                    // 检测是否所有项都被选中
                     bool allSelected = items.All(item => item.IsSelected);
                     int selectedCount = items.Count(item => item.IsSelected);
                     
@@ -401,7 +401,7 @@ namespace TA_WPF.Views
                 // 如果内容是TextBlock，则设置工具提示
                 if (content is TextBlock textBlock)
                 {
-                    // 检查文本是否被截断
+                    // 检测文本是否被截断
                     if (IsTextTrimmed(textBlock))
                     {
                         // 创建自定义ToolTip
@@ -429,7 +429,7 @@ namespace TA_WPF.Views
         }
         
         /// <summary>
-        /// 检查TextBlock的文本是否被截断
+        /// 检测TextBlock的文本是否被截断
         /// </summary>
         private bool IsTextTrimmed(TextBlock textBlock)
         {

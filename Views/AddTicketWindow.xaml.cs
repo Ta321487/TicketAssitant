@@ -271,7 +271,7 @@ namespace TA_WPF.Views
                 Regex regex = new Regex("[^0-9.]+");
                 e.Handled = regex.IsMatch(e.Text);
                 
-                // 如果输入的是小数点，检查是否已经有小数点
+                // 如果输入的是小数点，检测是否已经有小数点
                 if (e.Text == ".")
                 {
                     TextBox textBox = sender as TextBox;

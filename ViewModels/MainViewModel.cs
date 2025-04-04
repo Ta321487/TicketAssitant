@@ -64,7 +64,7 @@ namespace TA_WPF.ViewModels
                 OcrTicketCommand = new RelayCommand(ShowOcrTicketFeatureNotAvailable);
                 Import12306TicketCommand = new RelayCommand(Show12306ImportFeatureNotAvailable);
                 
-                // 检查必要的表是否存在
+                // 检测必要的表是否存在
                 _databaseCheckService.CheckRequiredTablesAsync();
             }
             catch (Exception ex)

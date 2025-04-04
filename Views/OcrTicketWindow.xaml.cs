@@ -39,7 +39,7 @@ namespace TA_WPF.Views
         {
             if (e.PropertyName == "SelectedImage")
             {
-                // 当图片变更时检查图片加载状态
+                // 当图片变更时检测图片加载状态
                 CheckImageLoaded();
             }
             else if (e.PropertyName == "SelectedImagePath")
@@ -162,7 +162,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                LogHelper.LogError("检查图片加载状态时出错", ex);
+                LogHelper.LogError("检测图片加载状态时出错", ex);
             }
         }
         

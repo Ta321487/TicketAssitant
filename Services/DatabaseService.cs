@@ -326,7 +326,7 @@ namespace TA_WPF.Services
                     else
                     {
                         // 对于AND条件，如果年份为空，使用IS NULL条件
-                        // 使用YEAR()函数对NULL值返回NULL，所以需要检查日期是否为NULL
+                        // 使用YEAR()函数对NULL值返回NULL，所以需要检测日期是否为NULL
                         conditions.Add("depart_date IS NULL");
                     }
                 }
@@ -458,7 +458,7 @@ namespace TA_WPF.Services
                     else
                     {
                         // 对于AND条件，如果年份为空，使用IS NULL条件
-                        // 使用YEAR()函数对NULL值返回NULL，所以需要检查日期是否为NULL
+                        // 使用YEAR()函数对NULL值返回NULL，所以需要检测日期是否为NULL
                         conditions.Add("depart_date IS NULL");
                     }
                 }
@@ -656,7 +656,7 @@ namespace TA_WPF.Services
         }
 
         /// <summary>
-        /// 检查数据库中是否存在指定的表
+        /// 检测数据库中是否存在指定的表
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <returns>表是否存在</returns>

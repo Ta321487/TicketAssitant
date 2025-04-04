@@ -525,7 +525,7 @@ namespace TA_WPF.ViewModels
                 // 获取筛选条件
                 var (departStation, fullTrainNo, yearValue, isAndCondition) = GetCurrentFilterConditions();
                 
-                // 检查是否存在筛选条件
+                // 检测是否存在筛选条件
                 bool hasFilter = departStation != null || !string.IsNullOrWhiteSpace(fullTrainNo) || yearValue.HasValue;
                 
                 // 更新活跃筛选条件标记
@@ -569,7 +569,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 检查是否有任何激活的筛选条件
+        /// 检测是否有任何激活的筛选条件
         /// </summary>
         private bool HasAnyActiveFilter()
         {

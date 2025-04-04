@@ -197,7 +197,7 @@ namespace TA_WPF.ViewModels
                 // 确保加载状态已设置
                 _paginationViewModel.IsLoading = true;
                 
-                // 检查缓存中是否已有当前页数据，且页大小未变
+                // 检测缓存中是否已有当前页数据，且页大小未变
                 if (_paginationViewModel.PageCache.ContainsKey(_paginationViewModel.CurrentPage) && 
                     _paginationViewModel.CachePageSize == _paginationViewModel.PageSize)
                 {

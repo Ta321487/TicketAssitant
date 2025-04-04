@@ -3,7 +3,7 @@ using TA_WPF.Utils;
 namespace TA_WPF.Services
 {
     /// <summary>
-    /// 数据库检查服务，负责检查数据库表是否存在
+    /// 数据库检测服务，负责检测数据库表是否存在
     /// </summary>
     public class DatabaseCheckService
     {
@@ -19,7 +19,7 @@ namespace TA_WPF.Services
         }
 
         /// <summary>
-        /// 检查必要的表是否存在，如果不存在则提示用户创建
+        /// 检测必要的表是否存在，如果不存在则提示用户创建
         /// </summary>
         public async Task CheckRequiredTablesAsync()
         {
@@ -71,10 +71,10 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"检查表时出错: {ex.Message}");
-                LogHelper.LogError($"检查表时出错: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"检测表时出错: {ex.Message}");
+                LogHelper.LogError($"检测表时出错: {ex.Message}");
                 TA_WPF.Views.MessageDialog.Show(
-                    $"检查数据库表时出错: {ex.Message}",
+                    $"检测数据库表时出错: {ex.Message}",
                     "错误",
                     TA_WPF.Views.MessageType.Error,
                     TA_WPF.Views.MessageButtons.Ok);

@@ -33,7 +33,7 @@ namespace TA_WPF.Utils
                 
                 _isInitialized = true;
                 
-                // 启动自动导出系统日志的定时器（每小时检查一次）
+                // 启动自动导出系统日志的定时器（每小时检测一次）
                 _autoExportTimer = new Timer(CheckAndRotateSystemLog, null, TimeSpan.Zero, TimeSpan.FromHours(1));
             }
             catch (Exception ex)
@@ -421,7 +421,7 @@ namespace TA_WPF.Utils
         }
         
         /// <summary>
-        /// 检查并轮换系统日志
+        /// 检测并轮换系统日志
         /// </summary>
         private static void CheckAndRotateSystemLog(object state)
         {

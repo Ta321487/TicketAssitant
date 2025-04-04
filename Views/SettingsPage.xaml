@@ -344,7 +344,7 @@
                                        Text="2024-03-10"/>
                         </Grid>
                         
-                        <Button Content="检查更新" 
+                        <Button Content="检测更新" 
                                 Style="{StaticResource MaterialDesignFlatButton}"
                                 materialDesign:ButtonAssist.CornerRadius="4"
                                 Foreground="{DynamicResource GlobalAccentBrush}"

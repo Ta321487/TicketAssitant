@@ -12,11 +12,11 @@ namespace TA_WPF.Converters
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            // 检查是否所有值都是布尔值且都为true
+            // 检测是否所有值都是布尔值且都为true
             if (values == null || values.Length == 0)
                 return Visibility.Collapsed;
 
-            // 检查是否有任何值为null或不是布尔值
+            // 检测是否有任何值为null或不是布尔值
             foreach (var value in values)
             {
                 if (value == null || !(value is bool))

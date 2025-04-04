@@ -605,7 +605,7 @@ namespace TA_WPF.ViewModels
             // 更新选中项计数
             UpdateSelectedItemsCount();
             
-            // 检查是否所有项都被选中或取消选中，以更新IsAllSelected属性
+            // 检测是否所有项都被选中或取消选中，以更新IsAllSelected属性
             bool allSelected = TrainRideInfos.Count > 0 && TrainRideInfos.All(item => item.IsSelected);
             
             // 避免触发ApplySelectionToAll
@@ -994,7 +994,7 @@ namespace TA_WPF.ViewModels
             {
                 UpdateSelectedItemsCount();
                 
-                // 检查是否所有项都被选中或取消选中，以更新IsAllSelected属性
+                // 检测是否所有项都被选中或取消选中，以更新IsAllSelected属性
                 if (TrainRideInfos != null && TrainRideInfos.Count > 0)
                 {
                     bool allSelected = TrainRideInfos.All(item => item.IsSelected);

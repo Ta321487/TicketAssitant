@@ -670,7 +670,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 检查是否有任何激活的筛选条件
+        /// 检测是否有任何激活的筛选条件
         /// </summary>
         private bool HasAnyActiveFilter()
         {
@@ -688,7 +688,7 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 检查是否有筛选条件
+                // 检测是否有筛选条件
                 HasActiveFilters = HasAnyActiveFilter();
                 
                 // 构建完整的车次号

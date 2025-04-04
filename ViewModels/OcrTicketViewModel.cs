@@ -42,6 +42,7 @@ namespace TA_WPF.ViewModels
         private ObservableCollection<OcrResult> _ocrResults;
         private double _averageConfidence;
         private bool _isTicketFormExpanded;
+        private bool _isEnvironmentReady;
         
         // 表单相关私有字段
         // 基本信息
@@ -145,7 +146,7 @@ namespace TA_WPF.ViewModels
             _mainViewModel = mainViewModel;
             _pythonService = new PythonService();
             _ocrResults = new ObservableCollection<OcrResult>();
-            _loadingMessage = "正在检查环境，请稍候...";
+            _loadingMessage = "正在检测环境，请稍候...";
             _averageConfidence = 0;
             _isTicketFormExpanded = false;
             
@@ -232,7 +233,7 @@ namespace TA_WPF.ViewModels
             // 根据默认座位类型更新座位位置选项
             UpdateSeatPositions();
             
-            // 启动时自动检查环境（使用ConfigureAwait(false)避免死锁）
+            // 启动时自动检测环境（使用ConfigureAwait(false)避免死锁）
             _ = CheckEnvironment();
             
             // 加载车站数据
@@ -283,7 +284,7 @@ namespace TA_WPF.ViewModels
         public ICommand RunOcrCommand { get; }
         
         /// <summary>
-        /// 检查环境命令
+        /// 检测环境命令
         /// </summary>
         public ICommand CheckEnvironmentCommand { get; }
         
@@ -1756,6 +1757,22 @@ namespace TA_WPF.ViewModels
         #endregion
 
         /// <summary>
+        /// 环境是否准备完毕
+        /// </summary>
+        public bool IsEnvironmentReady
+        {
+            get => _isEnvironmentReady;
+            set
+            {
+                if (_isEnvironmentReady != value)
+                {
+                    _isEnvironmentReady = value;
+                    OnPropertyChanged(nameof(IsEnvironmentReady));
+                }
+            }
+        }
+
+        /// <summary>
         /// 选择图片
         /// </summary>
         private async Task SelectImage()
@@ -1823,6 +1840,7 @@ namespace TA_WPF.ViewModels
                 StatusMessage = "正在执行OCR识别...";
                 LoadingMessage = "正在进行OCR图像识别，请稍候...";
                 IsLoading = true;
+                IsEnvironmentReady = false;
                 JsonResult = string.Empty;
                 OcrResults.Clear();
                 AverageConfidence = 0;
@@ -1832,7 +1850,7 @@ namespace TA_WPF.ViewModels
                 
                 string result = await _pythonService.RunOcrWithExternalProcess(SelectedImagePath);
                 
-                // 检查是否有错误
+                // 检测是否有错误
                 try
                 {
                     var error = JsonConvert.DeserializeObject<OcrError>(result);
@@ -1878,8 +1896,9 @@ namespace TA_WPF.ViewModels
                         StatusMessage = $"OCR识别完成，识别到 {OcrResults.Count} 个文本块";
                         MessageBoxHelper.ShowInfo($"OCR识别完成，识别到 {OcrResults.Count} 个文本块");
 
-                        // OCR识别成功后启用问号按钮
+                        // OCR识别成功后启用问号按钮和保存按钮
                         IsQuestionButtonEnabled = true;
+                        IsEnvironmentReady = true;
                         
                         // 处理OCR结果并填充表单
                         ProcessOcrResultsAndFillForm(ocrResults);
@@ -1917,20 +1936,22 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 检查环境
+        /// 检测环境
         /// </summary>
         private async Task CheckEnvironment()
         {
             // 在UI线程设置状态
             await Application.Current.Dispatcher.InvokeAsync(() => {
-                StatusMessage = "正在检查Python环境...";
-                LoadingMessage = "正在检查Python和OCR环境，请稍候...";
+                StatusMessage = "正在检测Python环境...";
+                LoadingMessage = "正在检测Python和OCR环境，请稍候...";
                 IsLoading = true;
+                // 在环境检测过程中禁用保存按钮
+                IsEnvironmentReady = false;
             });
 
             try
             {
-                // 检查Python是否安装（在后台线程）
+                // 检测Python是否安装（在后台线程）
                 bool pythonInstalled = await _pythonService.CheckPythonInstalled();
                 
                 // 在UI线程更新状态
@@ -1947,7 +1968,7 @@ namespace TA_WPF.ViewModels
                     return;
                 }
                 
-                // 检查cnocr包是否安装（在后台线程）
+                // 检测cnocr包是否安装（在后台线程）
                 bool cnocrInstalled = await _pythonService.CheckPackageInstalled("cnocr");
                 
                 // 在UI线程更新状态
@@ -1964,7 +1985,7 @@ namespace TA_WPF.ViewModels
                     return;
                 }
                 
-                // 检查OCR模型是否安装（在后台线程）
+                // 检测OCR模型是否安装（在后台线程）
                 bool ocrModelInstalled = await _pythonService.CheckOcrModelInstalled();
                 
                 // 在UI线程更新最终状态
@@ -1978,16 +1999,19 @@ namespace TA_WPF.ViewModels
                     }
                     else
                     {
-                        StatusMessage = "环境检查完成，Python和cnocr包已正确安装";
-                        MessageBoxHelper.ShowInfo("环境检查完成，Python和cnocr包已正确安装");
+                        StatusMessage = "环境检测完成，Python和cnocr包已正确安装";
+                        MessageBoxHelper.ShowInfo("环境检测完成，Python和cnocr包已正确安装");
                     }
+                    
+                    // 环境检测成功后启用保存按钮
+                    IsEnvironmentReady = IsPythonInstalled && IsCnocrInstalled;
                 });
             }
             catch (Exception ex)
             {
                 await Application.Current.Dispatcher.InvokeAsync(() => {
-                    StatusMessage = $"检查环境时出错: {ex.Message}";
-                    MessageBoxHelper.ShowError($"检查环境时出错: {ex.Message}");
+                    StatusMessage = $"检测环境时出错: {ex.Message}";
+                    MessageBoxHelper.ShowError($"检测环境时出错: {ex.Message}");
                 });
             }
             finally
@@ -2046,7 +2070,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public bool CanImportTicket()
         {
-            // 添加检查，确保在环境检查过程中不能导入
+            // 添加检测，确保在环境检测过程中不能导入
             return !IsLoading;
         }
         
@@ -2158,7 +2182,7 @@ namespace TA_WPF.ViewModels
                 string stationName = isDepartStation ? DepartStationSearchText : ArriveStationSearchText;
                 System.Diagnostics.Debug.WriteLine($"[OCR窗口] OnStationLostFocus 当前站名: {stationName}");
                 
-                // 检查是否在下拉框上操作
+                // 检测是否在下拉框上操作
                 if (isDepartStation && IsDepartStationDropdownOpen)
                 {
                     // 如果下拉框正在打开，不触发校验
@@ -2231,7 +2255,7 @@ namespace TA_WPF.ViewModels
                     return;
                 }
                 
-                // 检查是否是用户选择的值，避免清空正确选择的站名
+                // 检测是否是用户选择的值，避免清空正确选择的站名
                 string currentValue = isDepartStation ? DepartStation : ArriveStation;
                 
                 // 如果与已设置的值匹配，则不需要验证
@@ -2241,7 +2265,7 @@ namespace TA_WPF.ViewModels
                     return;
                 }
                 
-                // 检查是否是有效站点
+                // 检测是否是有效站点
                 bool isValid = _stationSearchService.IsValidStation(stationName);
                 System.Diagnostics.Debug.WriteLine($"[OCR窗口] 站名 {stationName} 验证结果: {isValid}");
                 
@@ -2607,8 +2631,287 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void SaveTicket()
         {
-            // 保存车票信息的逻辑将在此处实现
-            MessageBoxHelper.ShowInfo("车票保存功能正在开发中...");
+            try
+            {
+                // 创建一个错误消息列表，用于保存所有验证错误
+                var validationErrors = new List<string>();
+                StringBuilder errorMessages = new StringBuilder();
+                
+                // 创建TrainRideInfo对象用于验证
+                var ticket = new TrainRideInfo
+                {
+                    TicketNumber = TicketNumber,
+                    CheckInLocation = CheckInLocation,
+                    DepartStation = DepartStation.EndsWith("站") ? DepartStation : DepartStation + "站",
+                    ArriveStation = ArriveStation.EndsWith("站") ? ArriveStation : ArriveStation + "站",
+                    DepartStationPinyin = DepartStationPinyin,
+                    ArriveStationPinyin = ArriveStationPinyin,
+                    DepartStationCode = DepartStationCode,
+                    ArriveStationCode = ArriveStationCode,
+                    DepartDate = DepartDate,
+                    DepartTime = new TimeSpan(DepartHour, DepartMinute, 0),
+                    TrainNo = FormValidationHelper.FormatTrainNo(SelectedTrainType, TrainNumber),
+                    CoachNo = IsExtraCoach ? $"加{CoachNo}车" : $"{CoachNo}车",
+                    SeatNo = FormValidationHelper.FormatSeatNo(IsNoSeat, SeatNo, SelectedSeatPosition),
+                    Money = Money,
+                    SeatType = SelectedSeatType,
+                    AdditionalInfo = SelectedAdditionalInfo,
+                    TicketPurpose = SelectedTicketPurpose,
+                    Hint = SelectedHint == "自定义" ? CustomHint : SelectedHint,
+                    TicketModificationType = SelectedTicketModificationType,
+                    TicketTypeFlags = GetTicketTypeFlags(),
+                    PaymentChannelFlags = GetPaymentChannelFlags()
+                };
+
+                // 1. 收集所有必填项错误，但不立即返回
+                bool isBasicValidationPassed = FormValidationHelper.ValidateTicketForm(ticket, validationErrors);
+                
+                // 2. 验证车站外键关系前，确保StationSearchService已初始化
+                if (!_stationSearchService.IsInitialized)
+                {
+                    var initTask = _stationSearchService.InitializeAsync();
+                    initTask.Wait(); // 在UI线程中谨慎使用Wait()
+                }
+                
+                bool departHasError = false;
+                bool arriveHasError = false;
+                
+                // 3. 检测出发站和到达站信息
+                // 只有在用户填写了站名的情况下才检测代码和拼音是否匹配
+                if (!string.IsNullOrWhiteSpace(DepartStation))
+                {
+                    // 通过站名查找出发站信息
+                    var departByName = _stationSearchService.Stations
+                        .FirstOrDefault(s => s.StationName == DepartStation || 
+                                            s.StationName == DepartStation + "站" || 
+                                            s.StationName?.Replace("站", "") == DepartStation);
+                    
+                    // 通过代码查找出发站信息
+                    var departByCode = !string.IsNullOrWhiteSpace(DepartStationCode) ? 
+                        _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == DepartStationCode) : null;
+                    
+                    // 如果站名能找到，但代码不匹配或为空
+                    if (departByName != null)
+                    {
+                        // 检测代码是否匹配或为空
+                        if (string.IsNullOrWhiteSpace(DepartStationCode))
+                        {
+                            // 将代码为空的情况添加到验证错误
+                            if (!validationErrors.Any(e => e.Contains("未填写出发站代码")))
+                            {
+                                validationErrors.Add("未填写出发站代码");
+                            }
+                        }
+                        else if (departByCode == null || departByName.Id != departByCode.Id)
+                        {
+                            // 代码不匹配
+                            departHasError = true;
+                            errorMessages.AppendLine($"出发站【{DepartStation}】的代码错误：");
+                            errorMessages.AppendLine($"- 当前填写的代码【{DepartStationCode}】与车站不匹配");
+                            errorMessages.AppendLine($"- 正确的代码应为：【{departByName.StationCode}】");
+                            errorMessages.AppendLine();
+                        }
+                        
+                        // 检测拼音是否匹配或为空
+                        if (string.IsNullOrWhiteSpace(DepartStationPinyin))
+                        {
+                            // 将拼音为空的情况添加到验证错误
+                            if (!validationErrors.Any(e => e.Contains("未填写出发站拼音")))
+                            {
+                                validationErrors.Add("未填写出发站拼音");
+                            }
+                        }
+                        else if (DepartStationPinyin != departByName.StationPinyin)
+                        {
+                            // 拼音不匹配
+                            departHasError = true;
+                            errorMessages.AppendLine($"出发站【{DepartStation}】的拼音错误：");
+                            errorMessages.AppendLine($"- 当前填写的拼音【{DepartStationPinyin}】与车站记录不匹配");
+                            errorMessages.AppendLine($"- 正确的拼音应为：【{departByName.StationPinyin}】");
+                            errorMessages.AppendLine();
+                        }
+                    }
+                    // 如果无法通过站名找到匹配的车站
+                    else if (departByName == null && departByCode == null)
+                    {
+                        departHasError = true;
+                        errorMessages.AppendLine($"出发站【{DepartStation}】在车站中心不存在，请先添加该车站信息。");
+                        errorMessages.AppendLine();
+                    }
+                }
+                
+                // 检测到达站，逻辑与出发站类似
+                if (!string.IsNullOrWhiteSpace(ArriveStation))
+                {
+                    // 通过站名查找到达站信息
+                    var arriveByName = _stationSearchService.Stations
+                        .FirstOrDefault(s => s.StationName == ArriveStation || 
+                                            s.StationName == ArriveStation + "站" || 
+                                            s.StationName?.Replace("站", "") == ArriveStation);
+                    
+                    // 通过代码查找到达站信息
+                    var arriveByCode = !string.IsNullOrWhiteSpace(ArriveStationCode) ? 
+                        _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == ArriveStationCode) : null;
+                    
+                    // 如果站名能找到，但代码不匹配或为空
+                    if (arriveByName != null)
+                    {
+                        // 检测代码是否匹配或为空
+                        if (string.IsNullOrWhiteSpace(ArriveStationCode))
+                        {
+                            // 将代码为空的情况添加到验证错误
+                            if (!validationErrors.Any(e => e.Contains("未填写到达站代码")))
+                            {
+                                validationErrors.Add("未填写到达站代码");
+                            }
+                        }
+                        else if (arriveByCode == null || arriveByName.Id != arriveByCode.Id)
+                        {
+                            // 代码不匹配
+                            arriveHasError = true;
+                            errorMessages.AppendLine($"到达站【{ArriveStation}】的代码错误：");
+                            errorMessages.AppendLine($"- 当前填写的代码【{ArriveStationCode}】与车站不匹配");
+                            errorMessages.AppendLine($"- 正确的代码应为：【{arriveByName.StationCode}】");
+                            errorMessages.AppendLine();
+                        }
+                        
+                        // 检测拼音是否匹配或为空
+                        if (string.IsNullOrWhiteSpace(ArriveStationPinyin))
+                        {
+                            // 将拼音为空的情况添加到验证错误
+                            if (!validationErrors.Any(e => e.Contains("未填写到达站拼音")))
+                            {
+                                validationErrors.Add("未填写到达站拼音");
+                            }
+                        }
+                        else if (ArriveStationPinyin != arriveByName.StationPinyin)
+                        {
+                            // 拼音不匹配
+                            arriveHasError = true;
+                            errorMessages.AppendLine($"到达站【{ArriveStation}】的拼音错误：");
+                            errorMessages.AppendLine($"- 当前填写的拼音【{ArriveStationPinyin}】与车站记录不匹配");
+                            errorMessages.AppendLine($"- 正确的拼音应为：【{arriveByName.StationPinyin}】");
+                            errorMessages.AppendLine();
+                        }
+                    }
+                    // 如果无法通过站名找到匹配的车站
+                    else if (arriveByName == null && arriveByCode == null)
+                    {
+                        arriveHasError = true;
+                        errorMessages.AppendLine($"到达站【{ArriveStation}】在车站中心不存在，请先添加该车站信息。");
+                        errorMessages.AppendLine();
+                    }
+                }
+                
+                // 4. 组合所有错误信息
+                if (validationErrors.Count > 0 || departHasError || arriveHasError)
+                {
+                    // 构建完整的错误信息
+                    StringBuilder fullErrorMessage = new StringBuilder("请修正以下错误：\n");
+                    
+                    // 先添加必填项错误
+                    foreach (var error in validationErrors)
+                    {
+                        fullErrorMessage.AppendLine($"- {error}");
+                    }
+                    
+                    // 如果有必填项错误和其他错误，添加一个分隔行
+                    if (validationErrors.Count > 0 && (departHasError || arriveHasError))
+                    {
+                        fullErrorMessage.AppendLine();
+                    }
+                    
+                    // 添加车站匹配错误
+                    if (departHasError || arriveHasError)
+                    {
+                        fullErrorMessage.Append(errorMessages);
+                    }
+                    
+                    MessageBoxHelper.ShowWarning(fullErrorMessage.ToString(), "保存验证");
+                    return;
+                }
+                
+                // 5. 验证都通过，创建最终要保存的TrainRideInfo对象
+                var finalTicket = new TrainRideInfo
+                {
+                    TicketNumber = TicketNumber,
+                    CheckInLocation = CheckInLocation,
+                    DepartStation = DepartStation.EndsWith("站") ? DepartStation : DepartStation + "站",
+                    ArriveStation = ArriveStation.EndsWith("站") ? ArriveStation : ArriveStation + "站",
+                    DepartStationPinyin = DepartStationPinyin,
+                    ArriveStationPinyin = ArriveStationPinyin,
+                    DepartStationCode = DepartStationCode,
+                    ArriveStationCode = ArriveStationCode,
+                    DepartDate = DepartDate,
+                    DepartTime = new TimeSpan(DepartHour, DepartMinute, 0),
+                    TrainNo = FormValidationHelper.FormatTrainNo(SelectedTrainType, TrainNumber),
+                    CoachNo = IsExtraCoach ? $"加{CoachNo}车" : $"{CoachNo}车",
+                    SeatNo = FormValidationHelper.FormatSeatNo(IsNoSeat, SeatNo, SelectedSeatPosition),
+                    Money = Money,
+                    SeatType = SelectedSeatType,
+                    AdditionalInfo = SelectedAdditionalInfo,
+                    TicketPurpose = SelectedTicketPurpose,
+                    Hint = SelectedHint == "自定义" ? CustomHint : SelectedHint,
+                    TicketModificationType = SelectedTicketModificationType,
+                    TicketTypeFlags = GetTicketTypeFlags(),
+                    PaymentChannelFlags = GetPaymentChannelFlags()
+                };
+
+                // 保存车票到数据库
+                _databaseService.AddTicketAsync(finalTicket).ContinueWith(task =>
+                {
+                    // 在UI线程上执行操作
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (task.IsCompleted && !task.IsFaulted)
+                        {
+                            MessageBoxHelper.ShowInformation("车票已成功保存！", "成功");
+                            
+                            // 重置表单状态
+                            ResetFormState();
+                            
+                            // 通知主窗口刷新数据
+                            _mainViewModel.TicketListCommand.Execute(null);
+                        }
+                        else
+                        {
+                            MessageBoxHelper.ShowError($"保存车票时出错: {task.Exception?.InnerException?.Message}");
+                        }
+                    });
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"保存车票时出错: {ex.Message}");
+                LogHelper.LogTicketError("OCR导入", "保存车票时出错", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 获取票种类型标志位
+        /// </summary>
+        private int GetTicketTypeFlags()
+        {
+            int flags = 0;
+            if (IsStudentTicket) flags |= (int)TicketTypeFlags.StudentTicket;
+            if (IsDiscountTicket) flags |= (int)TicketTypeFlags.DiscountTicket;
+            if (IsOnlineTicket) flags |= (int)TicketTypeFlags.OnlineTicket;
+            if (IsChildTicket) flags |= (int)TicketTypeFlags.ChildTicket;
+            return flags;
+        }
+        
+        /// <summary>
+        /// 获取支付渠道标志位
+        /// </summary>
+        private int GetPaymentChannelFlags()
+        {
+            int flags = 0;
+            if (IsAlipayPayment) flags |= (int)PaymentChannelFlags.Alipay;
+            if (IsWeChatPayment) flags |= (int)PaymentChannelFlags.WeChat;
+            if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
+            if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
+            if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
+            return flags;
         }
         
         /// <summary>
@@ -2702,7 +3005,7 @@ namespace TA_WPF.ViewModels
                     string possibleDepartStation = ocrResults[1].Text;
                     LogHelper.LogInfo($"JSON第二个元素可能是出发站: {possibleDepartStation}");
                     
-                    // 检查是否包含"检票"或"候车"关键词，防止误识别检票信息为出发站
+                    // 检测是否包含"检票"或"候车"关键词，防止误识别检票信息为出发站
                     if (possibleDepartStation.Contains("检票") || possibleDepartStation.Contains("候车"))
                     {
                         LogHelper.LogInfo($"第二个元素是检票信息，不用作出发站: {possibleDepartStation}");
@@ -2776,7 +3079,7 @@ namespace TA_WPF.ViewModels
                     string possibleArriveStation = ocrResults[arriveStationIndex].Text;
                     LogHelper.LogInfo($"尝试使用第{arriveStationIndex + 1}个OCR文本作为到达站: {possibleArriveStation}");
                     
-                    // 检查是否是车次号，避免将K1020等误识别为站名
+                    // 检测是否是车次号，避免将K1020等误识别为站名
                     if (Regex.IsMatch(possibleArriveStation, @"^([GCDZTKLSY])(\d{1,4})$"))
                     {
                         LogHelper.LogInfo($"疑似车次号，不用作到达站: {possibleArriveStation}");
@@ -2982,7 +3285,7 @@ namespace TA_WPF.ViewModels
                                 
                             LogHelper.LogInfo($"备选方式从OCR结果中提取到达站: {arriveStationNameWithoutStation}");
                             
-                            // 检查是否是有效站点
+                            // 检测是否是有效站点
                             if (_stationSearchService.IsValidStation(arriveStationNameWithoutStation))
                             {
                                 // 设置去掉站字的名称
@@ -3086,7 +3389,7 @@ namespace TA_WPF.ViewModels
                     {
                         CoachNo = coachMatch.Groups[1].Value;
                         
-                        // 检查是否有"加"字
+                        // 检测是否有"加"字
                         IsExtraCoach = text.Contains("加");
                         break;
                     }
@@ -3239,7 +3542,7 @@ namespace TA_WPF.ViewModels
                             // 只有在没有找到座位类型时才尝试设置座位类型
                             if (!seatTypeFound)
                             {
-                                // 检查是否有座位类型指示
+                                // 检测是否有座位类型指示
                                 if (text.Contains("A") || text.Contains("B") || text.Contains("C") || 
                                     text.Contains("D") || text.Contains("F"))
                                 {
@@ -3378,7 +3681,7 @@ namespace TA_WPF.ViewModels
                         var pureNumberMatch = Regex.Match(text, @"^(\d{1,3})$");
                         if (pureNumberMatch.Success && text.Length <= 3)
                         {
-                            // 检查是否可能是车号或其他编号而非座位号
+                            // 检测是否可能是车号或其他编号而非座位号
                             bool isLikelySeatNumber = true;
                             
                             // 排除可能是车厢号的情况（车厢号通常会有"车"字）
@@ -3518,16 +3821,16 @@ namespace TA_WPF.ViewModels
                 // 标记是否找到匹配的预设提示信息
                 bool foundPredefinedHint = false;
                 
-                // 检查是否匹配预设的提示信息选项
+                // 检测是否匹配预设的提示信息选项
                 foreach (var hint in HintOptions)
                 {
                     // 跳过自定义选项
                     if (hint == "自定义")
                         continue;
                         
-                    LogHelper.LogInfo($"检查预设提示选项: {hint}");
+                    LogHelper.LogInfo($"检测预设提示选项: {hint}");
                     
-                    // 检查组合后的文本是否包含所有预设提示的部分
+                    // 检测组合后的文本是否包含所有预设提示的部分
                     string[] hintParts = hint.Split('|');
                     bool allPartsFound = true;
                     int matchedParts = 0;
@@ -3541,7 +3844,7 @@ namespace TA_WPF.ViewModels
                         break;
                     }
                     
-                    // 检查"报销凭证"和"退票改签"特殊情况 - 这些关键词高度指示是预设选项
+                    // 检测"报销凭证"和"退票改签"特殊情况 - 这些关键词高度指示是预设选项
                     if (hint.Contains("报销凭证") && combinedHintText.Contains("报销") && combinedHintText.Contains("凭证")
                         && hint.Contains("退票") && hint.Contains("改签") && combinedHintText.Contains("退票") && combinedHintText.Contains("改签"))
                     {
@@ -3553,14 +3856,14 @@ namespace TA_WPF.ViewModels
                     
                     foreach (var part in hintParts)
                     {
-                        // 检查组合文本是否包含这部分
+                        // 检测组合文本是否包含这部分
                         if (combinedHintText.Contains(part))
                         {
                             matchedParts++;
                         }
                         else
                         {
-                            // 检查原始OCR结果是否有任何一个文本包含这部分
+                            // 检测原始OCR结果是否有任何一个文本包含这部分
                             bool partFoundInOriginal = false;
                             foreach (var text in allTexts)
                             {

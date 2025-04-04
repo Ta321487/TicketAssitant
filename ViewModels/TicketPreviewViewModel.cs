@@ -938,7 +938,7 @@ namespace TA_WPF.ViewModels
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // 检查用户是否输入了文件名
+                    // 检测用户是否输入了文件名
                     string fileName = Path.GetFileNameWithoutExtension(saveFileDialog.FileName);
                     if (string.IsNullOrWhiteSpace(fileName))
                     {
@@ -1473,7 +1473,7 @@ namespace TA_WPF.ViewModels
                     _showDiscountTicket = true;
                 }
                 
-                // 先检查是否有支付宝或微信支付
+                // 先检测是否有支付宝或微信支付
                 bool hasOnlinePayment = false;
                 
                 if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.Alipay) != 0)

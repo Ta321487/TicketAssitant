@@ -305,7 +305,7 @@ namespace TA_WPF.Services
                 LogHelper.LogSystem("主题", $"加载主题设置时出错: {ex.Message}");
                 LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
                 
-                // 如果加载失败，检查当前主题
+                // 如果加载失败，检测当前主题
                 bool currentTheme = IsDarkThemeActive();
                 
                 // 更新资源字典中的主题标志
@@ -323,7 +323,7 @@ namespace TA_WPF.Services
         }
 
         /// <summary>
-        /// 检查当前是否为深色主题
+        /// 检测当前是否为深色主题
         /// </summary>
         /// <returns>是否为深色主题</returns>
         public bool IsDarkThemeActive()

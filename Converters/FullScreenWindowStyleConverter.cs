@@ -19,7 +19,7 @@ namespace TA_WPF.Converters
         /// <returns>如果是全屏则返回None（隐藏标题栏），否则返回SingleBorderWindow</returns>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            // 检查是否为全屏模式
+            // 检测是否为全屏模式
             if (value is bool isFullScreen && isFullScreen)
             {
                 // 全屏模式下隐藏标题栏

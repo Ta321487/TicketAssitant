@@ -25,7 +25,7 @@ namespace TA_WPF.Views
             Regex regex = new Regex("[^0-9]+");
             bool isNotNumber = regex.IsMatch(e.Text);
             
-            // 检查是否是数字
+            // 检测是否是数字
             if (isNotNumber)
             {
                 e.Handled = true;

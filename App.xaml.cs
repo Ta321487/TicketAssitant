@@ -322,7 +322,7 @@ namespace TA_WPF
                     string knownDllConfig = System.IO.Path.Combine(baseDir, "以车票标记时光：旅程归档.dll.config");
                     string knownExeConfig = System.IO.Path.Combine(baseDir, "以车票标记时光：旅程归档.exe.config");
                     
-                    // 检查文件是否存在
+                    // 检测文件是否存在
                     bool dllConfigExists = System.IO.File.Exists(dllConfigPath);
                     bool exeConfigExists = System.IO.File.Exists(exeConfigPath);
                     bool knownDllExists = System.IO.File.Exists(knownDllConfig);
