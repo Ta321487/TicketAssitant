@@ -1,11 +1,11 @@
 ﻿using System.Configuration;
 using System.Globalization;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.Views;
-using System.IO;
-using TA_WPF.Services;
 
 namespace TA_WPF
 {
@@ -33,12 +33,12 @@ namespace TA_WPF
             try
             {
                 base.OnStartup(e);
-                
+
                 // 添加全局异常处理
                 AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
                 DispatcherUnhandledException += App_DispatcherUnhandledException;
                 TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-                
+
                 // 初始化COM - 使用try-catch包裹
                 try
                 {
@@ -50,64 +50,64 @@ namespace TA_WPF
                     LogHelper.LogError($"COM初始化失败: {ex.Message}");
                     // 继续执行，不要因COM初始化失败而中断应用程序启动
                 }
-                
+
                 // 设置应用程序的区域设置为中国
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("zh-CN");
                 Thread.CurrentThread.CurrentUICulture = new CultureInfo("zh-CN");
-                
+
                 // 确保所有新线程也使用相同的区域设置
                 CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("zh-CN");
                 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("zh-CN");
-                
+
                 // 初始化主题服务并应用主题设置
                 try
                 {
                     var themeService = Services.ThemeService.Instance;
-                    
+
                     // 从当前运行的可执行文件配置中获取主题设置
                     bool isDarkMode = themeService.LoadThemeFromConfig();
-                    
+
                     System.Diagnostics.Debug.WriteLine($"应用程序启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
                     LogHelper.LogSystem("应用程序", $"启动时加载的主题设置: {(isDarkMode ? "深色" : "浅色")}");
-                    
+
                     // 确保资源字典中的主题标志被正确设置
                     if (Resources != null)
                     {
                         Resources["Theme.Dark"] = isDarkMode;
                         Resources["Theme.Light"] = !isDarkMode;
-                        
+
                         // 获取BundledTheme
                         var bundledTheme = Resources.MergedDictionaries
                             .OfType<MaterialDesignThemes.Wpf.BundledTheme>()
                             .FirstOrDefault();
-                        
+
                         if (bundledTheme != null)
                         {
                             // 设置基本主题
-                            bundledTheme.BaseTheme = isDarkMode ? 
-                                MaterialDesignThemes.Wpf.BaseTheme.Dark : 
+                            bundledTheme.BaseTheme = isDarkMode ?
+                                MaterialDesignThemes.Wpf.BaseTheme.Dark :
                                 MaterialDesignThemes.Wpf.BaseTheme.Light;
-                            
+
                             System.Diagnostics.Debug.WriteLine($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
                             LogHelper.LogSystem("应用程序", $"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
                         }
                     }
-                    
+
                     // 应用主题
                     themeService.ApplyTheme(isDarkMode);
-                    
+
                     // 验证主题是否已正确应用
                     bool verifyIsDarkMode = themeService.IsDarkThemeActive();
                     System.Diagnostics.Debug.WriteLine($"应用程序启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
                     LogHelper.LogSystem("应用程序", $"启动时验证主题设置: {(verifyIsDarkMode ? "深色" : "浅色")}");
-                    
+
                     if (isDarkMode != verifyIsDarkMode)
                     {
                         System.Diagnostics.Debug.WriteLine($"警告: 主题设置验证失败，重新应用主题");
                         LogHelper.LogSystemWarning("应用程序", "主题设置验证失败，重新应用主题");
                         themeService.ApplyTheme(isDarkMode);
                     }
-                    
+
                     LogHelper.LogSystem("应用程序", $"已应用{(isDarkMode ? "深色" : "浅色")}主题");
                 }
                 catch (Exception ex)
@@ -115,7 +115,7 @@ namespace TA_WPF
                     System.Diagnostics.Debug.WriteLine($"初始化主题服务时出错: {ex.Message}");
                     LogHelper.LogSystemError("应用程序", "初始化主题服务时出错", ex);
                 }
-                
+
                 // 从配置文件加载字体大小设置
                 try
                 {
@@ -133,20 +133,20 @@ namespace TA_WPF
                                 config.Save(ConfigurationSaveMode.Modified);
                                 ConfigurationManager.RefreshSection("appSettings");
                             }
-                            
+
                             // 设置字体大小
                             Resources["MaterialDesignFontSize"] = fontSize;
                             Resources["MaterialDesignSubtitle1FontSize"] = fontSize + 2;
                             Resources["MaterialDesignSubtitle2FontSize"] = fontSize + 1;
                             Resources["MaterialDesignHeadline6FontSize"] = fontSize + 4;
                             Resources["MaterialDesignHeadline5FontSize"] = fontSize + 6;
-                            
+
                             // 设置自定义字体大小资源 - 使用动态缩放因子
                             double scaleFactor = Math.Min(3.0, Math.Max(1.5, 4.0 - fontSize / 10.0)); // 字体越大，缩放因子越小
                             Resources["LargeFontSize"] = fontSize * scaleFactor;
                             Resources["MediumLargeFontSize"] = fontSize * (scaleFactor * 0.7);
                             Resources["MediumFontSize"] = fontSize * (scaleFactor * 0.5);
-                            
+
                             // 记录日志
                             LogHelper.LogSystem("应用程序", $"从配置文件加载字体大小: {fontSize}pt，缩放因子: {scaleFactor}");
                         }
@@ -165,23 +165,23 @@ namespace TA_WPF
                         }
                         config.Save(ConfigurationSaveMode.Modified);
                         ConfigurationManager.RefreshSection("appSettings");
-                        
+
                         // 设置默认字体大小
                         Resources["MaterialDesignFontSize"] = defaultFontSize;
                         Resources["MaterialDesignSubtitle1FontSize"] = defaultFontSize + 2;
                         Resources["MaterialDesignSubtitle2FontSize"] = defaultFontSize + 1;
                         Resources["MaterialDesignHeadline6FontSize"] = defaultFontSize + 4;
                         Resources["MaterialDesignHeadline5FontSize"] = defaultFontSize + 6;
-                        
+
                         // 设置自定义字体大小资源 - 使用动态缩放因子
                         double scaleFactor = Math.Min(3.0, Math.Max(1.5, 4.0 - defaultFontSize / 10.0)); // 字体越大，缩放因子越小
                         Resources["LargeFontSize"] = defaultFontSize * scaleFactor;
                         Resources["MediumLargeFontSize"] = defaultFontSize * (scaleFactor * 0.7);
                         Resources["MediumFontSize"] = defaultFontSize * (scaleFactor * 0.5);
-                        
+
                         LogHelper.LogSystem("应用程序", $"使用默认字体大小: {defaultFontSize}pt，缩放因子: {scaleFactor}");
                     }
-                    
+
                     // 确保App.xaml中的资源字典与配置文件一致
                     double currentFontSize = (double)Resources["MaterialDesignFontSize"];
                     if (config.AppSettings.Settings["FontSize"] != null)
@@ -196,13 +196,13 @@ namespace TA_WPF
                                 Resources["MaterialDesignSubtitle2FontSize"] = configFontSize + 1;
                                 Resources["MaterialDesignHeadline6FontSize"] = configFontSize + 4;
                                 Resources["MaterialDesignHeadline5FontSize"] = configFontSize + 6;
-                                
+
                                 // 设置自定义字体大小资源 - 使用动态缩放因子
                                 double scaleFactor = Math.Min(3.0, Math.Max(1.5, 4.0 - configFontSize / 10.0)); // 字体越大，缩放因子越小
                                 Resources["LargeFontSize"] = configFontSize * scaleFactor;
                                 Resources["MediumLargeFontSize"] = configFontSize * (scaleFactor * 0.7);
                                 Resources["MediumFontSize"] = configFontSize * (scaleFactor * 0.5);
-                                
+
                                 LogHelper.LogSystem("应用程序", $"已同步字体大小设置: {configFontSize}pt，缩放因子: {scaleFactor}");
                             }
                         }
@@ -216,10 +216,10 @@ namespace TA_WPF
 
                 // 创建并显示登录窗口
                 _loginWindow = new LoginWindow();
-                
+
                 // 设置登录窗口为主窗口
                 Current.MainWindow = _loginWindow;
-                
+
                 // 显示登录窗口
                 _loginWindow.Show();
 
@@ -235,7 +235,7 @@ namespace TA_WPF
                     {
                         // 登录成功后，将_loginWindow设为null，以便垃圾回收
                         _loginWindow = null;
-                        
+
                         // 强制垃圾回收
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
@@ -262,11 +262,11 @@ namespace TA_WPF
             {
                 // 获取数据库连接字符串
                 string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString ?? "Server=localhost;Database=ta_wpf;User ID=root;Password=";
-                
+
                 // 初始化站点搜索服务
                 var databaseService = new DatabaseService(connectionString);
                 _stationSearchService = new StationSearchService(databaseService);
-                
+
                 // 记录日志
                 LogHelper.LogSystem("应用程序", "服务初始化完成");
             }
@@ -285,49 +285,49 @@ namespace TA_WPF
                 // 确保在退出时保存当前主题设置
                 var themeService = Services.ThemeService.Instance;
                 bool isDarkMode = themeService.IsDarkThemeActive();
-                
+
                 System.Diagnostics.Debug.WriteLine($"应用程序退出时检测到的主题: {(isDarkMode ? "深色" : "浅色")}");
                 LogHelper.LogInfo($"应用程序退出时检测到的主题: {(isDarkMode ? "深色" : "浅色")}");
-                
+
                 // 保存主题设置
                 themeService.ApplyTheme(isDarkMode); // 这会触发保存配置
-                
+
                 // 强制保存一次主题设置
                 try
                 {
                     // 获取可执行文件的配置文件路径
-                    string exePath = System.Reflection.Assembly.GetEntryAssembly()?.Location ?? 
+                    string exePath = System.Reflection.Assembly.GetEntryAssembly()?.Location ??
                                     System.Reflection.Assembly.GetExecutingAssembly().Location;
                     string exeName = System.IO.Path.GetFileNameWithoutExtension(exePath);
                     string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                    
+
                     // 动态获取可能的配置文件名称
                     string[] configNames = Directory.GetFiles(baseDir, "*.config")
                         .Where(file => !file.EndsWith(".vshost.exe.config")) // 排除VS主机配置
                         .ToArray();
-                    
+
                     System.Diagnostics.Debug.WriteLine($"应用程序退出时 - 找到的配置文件数量: {configNames.Length}");
                     LogHelper.LogInfo($"应用程序退出时 - 找到的配置文件数量: {configNames.Length}");
-                    
+
                     foreach (var configFile in configNames)
                     {
                         System.Diagnostics.Debug.WriteLine($"应用程序退出时 - 找到配置文件: {configFile}");
                     }
-                    
+
                     // 首先尝试dll.config和exe.config
                     string dllConfigPath = System.IO.Path.Combine(baseDir, exeName + ".dll.config");
                     string exeConfigPath = System.IO.Path.Combine(baseDir, exeName + ".exe.config");
-                    
+
                     // 也尝试已知可能的应用程序名称
                     string knownDllConfig = System.IO.Path.Combine(baseDir, "以车票标记时光：旅程归档.dll.config");
                     string knownExeConfig = System.IO.Path.Combine(baseDir, "以车票标记时光：旅程归档.exe.config");
-                    
+
                     // 检测文件是否存在
                     bool dllConfigExists = System.IO.File.Exists(dllConfigPath);
                     bool exeConfigExists = System.IO.File.Exists(exeConfigPath);
                     bool knownDllExists = System.IO.File.Exists(knownDllConfig);
                     bool knownExeExists = System.IO.File.Exists(knownExeConfig);
-                    
+
                     // 选择要使用的配置文件
                     string configPath = null;
                     if (dllConfigExists)
@@ -351,23 +351,23 @@ namespace TA_WPF
                         // 如果没有找到预期的配置文件，但目录中存在其他配置文件，使用第一个
                         configPath = configNames[0];
                     }
-                    
+
                     System.Diagnostics.Debug.WriteLine($"应用程序退出时使用的配置文件路径: {configPath}");
                     LogHelper.LogInfo($"应用程序退出时使用的配置文件路径: {configPath}");
-                    
+
                     if (configPath != null && System.IO.File.Exists(configPath))
                     {
                         // 使用XmlDocument直接操作XML配置文件
                         var xmlDoc = new System.Xml.XmlDocument();
                         xmlDoc.Load(configPath);
-                        
+
                         // 获取appSettings节点
                         var appSettingsNode = xmlDoc.SelectSingleNode("//appSettings");
                         if (appSettingsNode != null)
                         {
                             // 查找IsDarkMode设置
                             var isDarkModeNode = appSettingsNode.SelectSingleNode("//add[@key='IsDarkMode']");
-                            
+
                             if (isDarkModeNode != null)
                             {
                                 // 更新已存在的IsDarkMode设置
@@ -383,20 +383,20 @@ namespace TA_WPF
                                 keyAttr.Value = "IsDarkMode";
                                 var valueAttr = xmlDoc.CreateAttribute("value");
                                 valueAttr.Value = isDarkMode.ToString().ToLower();
-                                
+
                                 newNode.Attributes.Append(keyAttr);
                                 newNode.Attributes.Append(valueAttr);
                                 appSettingsNode.AppendChild(newNode);
-                                
+
                                 System.Diagnostics.Debug.WriteLine($"应用程序退出时创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
                                 LogHelper.LogInfo($"应用程序退出时创建新的IsDarkMode设置: {isDarkMode.ToString().ToLower()}");
                             }
-                            
+
                             // 保存XML文档
                             xmlDoc.Save(configPath);
                             System.Diagnostics.Debug.WriteLine($"应用程序退出时已保存配置文件: {configPath}");
                             LogHelper.LogInfo($"应用程序退出时已保存配置文件: {configPath}");
-                            
+
                             // 刷新配置
                             ConfigurationManager.RefreshSection("appSettings");
                         }
@@ -419,7 +419,7 @@ namespace TA_WPF
                     LogHelper.LogError($"应用程序退出时直接操作配置文件出错: {ex.Message}");
                     LogHelper.LogError($"异常堆栈: {ex.StackTrace}");
                 }
-                
+
                 // 验证配置是否已保存
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 if (config.AppSettings.Settings["IsDarkMode"] != null)
@@ -433,7 +433,7 @@ namespace TA_WPF
                     System.Diagnostics.Debug.WriteLine("应用程序退出时验证失败：配置文件中不存在IsDarkMode设置");
                     LogHelper.LogWarning("应用程序退出时验证失败：配置文件中不存在IsDarkMode设置");
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
                 LogHelper.LogInfo($"应用程序退出时保存主题设置: {(isDarkMode ? "深色" : "浅色")}");
             }
@@ -444,10 +444,10 @@ namespace TA_WPF
                 LogHelper.LogError($"退出时保存主题设置出错: {ex.Message}");
                 LogHelper.LogError($"退出时保存主题设置出错: {ex.StackTrace}");
             }
-            
+
             // 释放COM
             CoUninitialize();
-            
+
             base.OnExit(e);
         }
 
@@ -469,7 +469,7 @@ namespace TA_WPF
                 e.Handled = true; // 标记为已处理，防止应用程序崩溃
                 return;
             }
-            
+
             LogHelper.LogSystemError("异常处理", "未处理的UI线程异常", e.Exception);
             MessageBox.Show($"程序发生错误: {e.Exception.Message}\n\n请联系开发人员并提供日志文件。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             e.Handled = true; // 标记为已处理，防止应用程序崩溃

@@ -34,7 +34,7 @@ namespace TA_WPF.Utils
                 errors.Add("未填写取票号");
                 isValid = false;
             }
-            
+
             // 验证出发站和到达站
             if (string.IsNullOrWhiteSpace(ticket.DepartStation))
             {
@@ -95,7 +95,7 @@ namespace TA_WPF.Utils
             {
                 // 解析车次号
                 var (trainType, trainNumber) = ParseTrainNo(ticket.TrainNo);
-                
+
                 // 验证车次号格式
                 if (!string.IsNullOrWhiteSpace(trainNumber))
                 {
@@ -104,7 +104,7 @@ namespace TA_WPF.Utils
                         errors.Add("车次号必须为1-4位数字");
                         isValid = false;
                     }
-                    
+
                     // 车次号不能以0开头或只有0
                     if (trainNumber.StartsWith("0") || trainNumber.All(c => c == '0'))
                     {
@@ -140,14 +140,14 @@ namespace TA_WPF.Utils
                     errors.Add("车厢号必须为数字");
                     isValid = false;
                 }
-                
+
                 // 车厢号不能只有0
                 if (coachNoWithoutSuffix.All(c => c == '0'))
                 {
                     errors.Add("车厢号不能只有0");
                     isValid = false;
                 }
-                
+
                 // 车厢号只能是00~99
                 if (Regex.IsMatch(coachNoWithoutSuffix, @"^\d+$"))
                 {
@@ -166,7 +166,7 @@ namespace TA_WPF.Utils
             if (ticket.SeatNo != "无座")
             {
                 var (seatNumber, position, _) = ParseSeatNo(ticket.SeatNo);
-                
+
                 if (string.IsNullOrWhiteSpace(seatNumber))
                 {
                     errors.Add("未填写座位号");
@@ -179,7 +179,7 @@ namespace TA_WPF.Utils
                         errors.Add("座位号必须为1-3位数字");
                         isValid = false;
                     }
-                    
+
                     // 座位号可以以0开头，但不能只有0
                     if (seatNumber.All(c => c == '0'))
                     {
@@ -328,7 +328,7 @@ namespace TA_WPF.Utils
             // 如果无法解析，返回原始值作为号码，位置为空
             return (seatNo, string.Empty, false);
         }
-        
+
         /// <summary>
         /// 确保车票号首字母大写
         /// </summary>
@@ -340,9 +340,9 @@ namespace TA_WPF.Utils
             {
                 return string.Empty;
             }
-            
+
             // 将首字母转换为大写
             return char.ToUpper(ticketNumber[0]) + ticketNumber.Substring(1);
         }
     }
-} 
+}

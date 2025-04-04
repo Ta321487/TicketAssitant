@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using TA_WPF.Models;
 
@@ -31,7 +31,7 @@ namespace TA_WPF.ViewModels
             PreviousPageCommand = new RelayCommand(PreviousPage, () => CanNavigateToPreviousPage);
             NextPageCommand = new RelayCommand(NextPage, () => CanNavigateToNextPage);
             LastPageCommand = new RelayCommand(LastPage, () => CanNavigateToLastPage);
-            
+
             // 初始化页大小选项
             PageSizeOptions = new[] { 25, 50, 75, 100 };
         }
@@ -50,11 +50,11 @@ namespace TA_WPF.ViewModels
                 cachedItems = _pageCache[_currentPage];
                 return true;
             }
-            
+
             cachedItems = null;
             return false;
         }
-        
+
         /// <summary>
         /// 更新页面缓存
         /// </summary>
@@ -65,23 +65,24 @@ namespace TA_WPF.ViewModels
             _pageCache[_currentPage] = items;
             _cachePageSize = _pageSize;
         }
-        
+
         /// <summary>
         /// 清除缓存
         /// </summary>
         public void ClearCache()
         {
             _pageCache.Clear();
-            
+
             // 在清除缓存后，确保UI状态与缓存状态一致
             // 异步执行以避免阻塞主线程
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => {
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
                 // 刷新导航按钮状态
                 OnPropertyChanged(nameof(CanNavigateToFirstPage));
                 OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                 OnPropertyChanged(nameof(CanNavigateToNextPage));
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
-                
+
                 // 刷新命令状态
                 CommandManager.InvalidateRequerySuggested();
             }));
@@ -99,31 +100,32 @@ namespace TA_WPF.ViewModels
                 {
                     _currentPage = value;
                     OnPropertyChanged(nameof(CurrentPage));
-                    
+
                     // 通知导航按钮状态可能已更改
                     OnPropertyChanged(nameof(CanNavigateToFirstPage));
                     OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                     OnPropertyChanged(nameof(CanNavigateToNextPage));
                     OnPropertyChanged(nameof(CanNavigateToLastPage));
-                    
+
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
-                    
+
                     if (_isInitialized)
                     {
                         // 使用Dispatcher以较高优先级触发页面变更事件
                         Application.Current.Dispatcher.BeginInvoke(
                             DispatcherPriority.Normal,
-                            new Action(() => {
+                            new Action(() =>
+                            {
                                 // 再次刷新按钮状态
                                 OnPropertyChanged(nameof(CanNavigateToFirstPage));
                                 OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                                 OnPropertyChanged(nameof(CanNavigateToNextPage));
                                 OnPropertyChanged(nameof(CanNavigateToLastPage));
-                                
+
                                 // 再次刷新命令状态
                                 CommandManager.InvalidateRequerySuggested();
-                                
+
                                 // 触发页面变更事件
                                 PageChanged?.Invoke(this, EventArgs.Empty);
                             }));
@@ -144,11 +146,11 @@ namespace TA_WPF.ViewModels
                 {
                     _totalPages = value;
                     OnPropertyChanged(nameof(TotalPages));
-                    
+
                     // 通知导航按钮状态可能已更改
                     OnPropertyChanged(nameof(CanNavigateToNextPage));
                     OnPropertyChanged(nameof(CanNavigateToLastPage));
-                    
+
                     // 通知命令状态可能已更改
                     CommandManager.InvalidateRequerySuggested();
                 }
@@ -167,17 +169,17 @@ namespace TA_WPF.ViewModels
                 {
                     _totalItems = value;
                     OnPropertyChanged(nameof(TotalItems));
-                    
+
                     // 重新计算总页数
                     CalculateTotalPages();
-                    
+
                     // 通知UI更新相关属性
                     OnPropertyChanged(nameof(TotalPages));
                     OnPropertyChanged(nameof(CanNavigateToFirstPage));
                     OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                     OnPropertyChanged(nameof(CanNavigateToNextPage));
                     OnPropertyChanged(nameof(CanNavigateToLastPage));
-                    
+
                     // 通知命令状态可能已更改
                     CommandManager.InvalidateRequerySuggested();
                 }
@@ -197,20 +199,20 @@ namespace TA_WPF.ViewModels
                     // 记录旧的页码和总页数
                     int oldCurrentPage = _currentPage;
                     int oldTotalPages = _totalPages;
-                    
+
                     // 设置加载状态
                     IsLoading = true;
-                    
+
                     _pageSize = value;
                     OnPropertyChanged(nameof(PageSize));
-                    
+
                     // 清除缓存，因为页大小变了
                     _pageCache.Clear();
                     _cachePageSize = value;
-                    
+
                     // 重新计算总页数
                     CalculateTotalPages();
-                    
+
                     // 计算新的当前页，尽量保持在相同的数据区域
                     // 例如：如果在第2页，每页25条，现在改为每页50条，应该保持在第1页
                     if (oldTotalPages > 0 && _totalPages > 0)
@@ -229,20 +231,20 @@ namespace TA_WPF.ViewModels
                         // 如果没有足够信息计算，则设为第一页
                         _currentPage = 1;
                     }
-                    
+
                     // 通知UI更新相关属性
                     OnPropertyChanged(nameof(TotalPages));
                     OnPropertyChanged(nameof(CurrentPage));
-                    
+
                     // 通知导航按钮状态可能已更改
                     OnPropertyChanged(nameof(CanNavigateToFirstPage));
                     OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                     OnPropertyChanged(nameof(CanNavigateToNextPage));
                     OnPropertyChanged(nameof(CanNavigateToLastPage));
-                    
+
                     // 通知命令状态可能已更改
                     CommandManager.InvalidateRequerySuggested();
-                    
+
                     // 通知页大小已更改
                     PageSizeChanged?.Invoke(this, EventArgs.Empty);
                 }
@@ -266,10 +268,10 @@ namespace TA_WPF.ViewModels
                 {
                     _isLoading = value;
                     OnPropertyChanged(nameof(IsLoading));
-                    
+
                     // 注意：我们不再在这里更新导航按钮状态
                     // 因为我们修改了导航按钮的启用条件
-                    
+
                     // 刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
                 }
@@ -390,14 +392,15 @@ namespace TA_WPF.ViewModels
             {
                 // 先设置加载状态，确保UI立即响应
                 IsLoading = true;
-                
+
                 // 使用Dispatcher确保加载状态能够立即更新到UI
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+                {
                     CurrentPage = 1;
-                    
+
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
-                    
+
                     // 触发页面变更事件，确保数据被刷新
                     PageChanged?.Invoke(this, EventArgs.Empty);
                 }));
@@ -413,14 +416,15 @@ namespace TA_WPF.ViewModels
             {
                 // 先设置加载状态，确保UI立即响应
                 IsLoading = true;
-                
+
                 // 使用Dispatcher确保加载状态能够立即更新到UI
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+                {
                     CurrentPage--;
-                    
+
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
-                    
+
                     // 触发页面变更事件，确保数据被刷新
                     PageChanged?.Invoke(this, EventArgs.Empty);
                 }));
@@ -436,14 +440,15 @@ namespace TA_WPF.ViewModels
             {
                 // 先设置加载状态，确保UI立即响应
                 IsLoading = true;
-                
+
                 // 使用Dispatcher确保加载状态能够立即更新到UI
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+                {
                     CurrentPage++;
-                    
+
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
-                    
+
                     // 触发页面变更事件，确保数据被刷新
                     PageChanged?.Invoke(this, EventArgs.Empty);
                 }));
@@ -459,14 +464,15 @@ namespace TA_WPF.ViewModels
             {
                 // 先设置加载状态，确保UI立即响应
                 IsLoading = true;
-                
+
                 // 使用Dispatcher确保加载状态能够立即更新到UI
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() => {
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+                {
                     CurrentPage = TotalPages;
-                    
+
                     // 强制刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
-                    
+
                     // 触发页面变更事件，确保数据被刷新
                     PageChanged?.Invoke(this, EventArgs.Empty);
                 }));
@@ -486,7 +492,7 @@ namespace TA_WPF.ViewModels
 
             // 确保TotalItems不为负数
             int itemCount = Math.Max(0, TotalItems);
-            
+
             // 计算总页数
             int pages = itemCount / PageSize;
             if (itemCount % PageSize > 0)
@@ -496,7 +502,7 @@ namespace TA_WPF.ViewModels
 
             // 确保至少有一页
             TotalPages = Math.Max(1, pages);
-            
+
             // 确保当前页在有效范围内
             if (CurrentPage > TotalPages)
             {
@@ -506,28 +512,29 @@ namespace TA_WPF.ViewModels
             {
                 CurrentPage = 1;
             }
-            
+
             // 通知UI更新
             OnPropertyChanged(nameof(TotalPages));
-            
+
             // 通知导航按钮状态可能已更改
             OnPropertyChanged(nameof(CanNavigateToFirstPage));
             OnPropertyChanged(nameof(CanNavigateToPreviousPage));
             OnPropertyChanged(nameof(CanNavigateToNextPage));
             OnPropertyChanged(nameof(CanNavigateToLastPage));
-            
+
             // 通知命令状态可能已更改
             CommandManager.InvalidateRequerySuggested();
-            
+
             // 使用Dispatcher确保UI状态更新
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => {
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
                 // 再次刷新状态，确保UI完全更新
                 OnPropertyChanged(nameof(TotalPages));
                 OnPropertyChanged(nameof(CanNavigateToFirstPage));
                 OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                 OnPropertyChanged(nameof(CanNavigateToNextPage));
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
-                
+
                 // 再次刷新命令状态
                 CommandManager.InvalidateRequerySuggested();
             }));
@@ -545,7 +552,7 @@ namespace TA_WPF.ViewModels
             ClearCache();
             Items.Clear();
         }
-        
+
         /// <summary>
         /// 刷新总记录数
         /// </summary>
@@ -556,4 +563,4 @@ namespace TA_WPF.ViewModels
             await Task.CompletedTask;
         }
     }
-} 
+}

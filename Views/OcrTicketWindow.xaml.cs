@@ -1,12 +1,10 @@
-using System;
-using System.Windows;
-using System.Windows.Media.Imaging;
 using System.IO;
-using TA_WPF.Services;
+using System.Text.RegularExpressions;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using TA_WPF.Utils;
 using TA_WPF.ViewModels;
-using System.Text.RegularExpressions;
-using System.Windows.Input;
 
 namespace TA_WPF.Views
 {
@@ -16,7 +14,7 @@ namespace TA_WPF.Views
     public partial class OcrTicketWindow : Window
     {
         private readonly OcrTicketViewModel _viewModel;
-        
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -24,17 +22,17 @@ namespace TA_WPF.Views
         public OcrTicketWindow(MainViewModel mainViewModel)
         {
             InitializeComponent();
-            
+
             // 创建视图模型
             _viewModel = new OcrTicketViewModel(mainViewModel);
-            
+
             // 设置数据上下文
             DataContext = _viewModel;
-            
+
             // 添加图片变更监听
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
         }
-        
+
         private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "SelectedImage")
@@ -48,7 +46,7 @@ namespace TA_WPF.Views
                 LoadImageFromPath();
             }
         }
-        
+
         private void LoadImageFromPath()
         {
             try
@@ -67,10 +65,10 @@ namespace TA_WPF.Views
                 }
 
                 LogHelper.LogInfo($"尝试加载图片: {_viewModel.SelectedImagePath}");
-                
+
                 // 重要：创建一个新的BitmapImage并显式设置属性
                 var bitmap = new BitmapImage();
-                
+
                 try
                 {
                     // 使用FileStream方式加载图片
@@ -83,23 +81,23 @@ namespace TA_WPF.Views
                         bitmap.EndInit();
                         bitmap.Freeze(); // 确保可以跨线程访问
                     }
-                    
+
                     // 设置图像控件
                     DisplayImage.Source = bitmap;
-                    
+
                     // 更新SelectedImage属性（可能在其他地方有用）
                     _viewModel.SelectedImage = bitmap;
-                    
+
                     // 显示图片容器
                     ImageContainer.Visibility = Visibility.Visible;
                     NoImageBorder.Visibility = Visibility.Collapsed;
-                    
+
                     LogHelper.LogInfo($"成功加载图片: {Path.GetFileName(_viewModel.SelectedImagePath)}");
                 }
                 catch (Exception ex)
                 {
                     LogHelper.LogError($"加载图片失败，详细错误: {ex.GetType().Name} - {ex.Message}", ex);
-                    
+
                     // 尝试备用方式加载
                     TryAlternativeImageLoading();
                 }
@@ -110,7 +108,7 @@ namespace TA_WPF.Views
                 MessageBoxHelper.ShowError($"加载图片失败: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 尝试备用方式加载图片（使用本地绝对路径方式）
         /// </summary>
@@ -119,18 +117,18 @@ namespace TA_WPF.Views
             try
             {
                 LogHelper.LogInfo("尝试使用备用方式加载图片...");
-                
+
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.UriSource = new Uri(_viewModel.SelectedImagePath, UriKind.Absolute);
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
                 bitmap.EndInit();
-                
+
                 // 设置图像
                 DisplayImage.Source = bitmap;
                 _viewModel.SelectedImage = bitmap;
-                
+
                 LogHelper.LogInfo("备用方式成功加载图片");
             }
             catch (Exception ex)
@@ -139,7 +137,7 @@ namespace TA_WPF.Views
                 MessageBoxHelper.ShowError($"无法加载图片，请尝试其他图片: {ex.Message}");
             }
         }
-        
+
         private void CheckImageLoaded()
         {
             try
@@ -147,7 +145,7 @@ namespace TA_WPF.Views
                 if (_viewModel.SelectedImage != null)
                 {
                     LogHelper.LogInfo("窗口检测到图片已被加载");
-                    
+
                     // 尝试确保图片在UI上显示
                     var image = _viewModel.SelectedImage;
                     if (image.Width > 0 && image.Height > 0)
@@ -165,7 +163,7 @@ namespace TA_WPF.Views
                 LogHelper.LogError("检测图片加载状态时出错", ex);
             }
         }
-        
+
         /// <summary>
         /// 窗口关闭时清理资源
         /// </summary>
@@ -173,7 +171,7 @@ namespace TA_WPF.Views
         {
             _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
         }
-        
+
         /// <summary>
         /// 出发站失去焦点时处理
         /// </summary>
@@ -181,7 +179,7 @@ namespace TA_WPF.Views
         {
             _viewModel.OnStationLostFocus(true);
         }
-        
+
         /// <summary>
         /// 到达站失去焦点时处理
         /// </summary>
@@ -189,7 +187,7 @@ namespace TA_WPF.Views
         {
             _viewModel.OnStationLostFocus(false);
         }
-        
+
         /// <summary>
         /// 金额输入验证
         /// </summary>
@@ -199,7 +197,7 @@ namespace TA_WPF.Views
             Regex regex = new Regex(@"^[0-9]+(\.[0-9]{0,2})?$");
             e.Handled = !regex.IsMatch(e.Text);
         }
-        
+
         /// <summary>
         /// 金额失去焦点时处理格式化
         /// </summary>
@@ -211,7 +209,7 @@ namespace TA_WPF.Views
                 _viewModel.Money = Math.Round(_viewModel.Money, 2);
             }
         }
-        
+
         /// <summary>
         /// 座位号输入验证
         /// </summary>
@@ -222,4 +220,4 @@ namespace TA_WPF.Views
             e.Handled = regex.IsMatch(e.Text);
         }
     }
-} 
+}

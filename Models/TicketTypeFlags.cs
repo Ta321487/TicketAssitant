@@ -9,4 +9,4 @@ namespace TA_WPF.Models
         OnlineTicket = 4,     // 网络售票
         ChildTicket = 8       // 儿童票
     }
-} 
+}

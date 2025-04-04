@@ -11,7 +11,7 @@ namespace TA_WPF.Converters
                 return 0;
 
             double width = System.Convert.ToDouble(value);
-            
+
             // 计算箭头头部起始位置，从末端往回20单位
             return Math.Max(0, width - 20);
         }
@@ -21,4 +21,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

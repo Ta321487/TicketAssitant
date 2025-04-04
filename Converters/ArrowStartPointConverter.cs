@@ -13,17 +13,17 @@ namespace TA_WPF.Converters
 
             // 获取箭头总宽度
             double width = System.Convert.ToDouble(value);
-            
+
             // 计算箭头头部的起始点（从箭头总宽度减去20个单位）
             double arrowHeadPosition = width - 20;
-            
+
             // 如果目标类型是Point，则创建Point对象
             if (targetType == typeof(Point) && parameter != null)
             {
                 double y = System.Convert.ToDouble(parameter);
                 return new Point(arrowHeadPosition, y);
             }
-            
+
             // 否则返回X坐标
             return arrowHeadPosition;
         }
@@ -33,4 +33,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

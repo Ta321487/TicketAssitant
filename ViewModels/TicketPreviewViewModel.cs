@@ -1,19 +1,19 @@
-using System.Windows.Input;
-using TA_WPF.Models;
-using System.Windows.Media.Imaging;
+using Microsoft.Win32;
 using QRCoder;
+using System.Configuration;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Configuration;
-using Microsoft.Win32;
+using System.Windows.Input;
 // 使用别名避免命名冲突
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using TA_WPF.Models;
+using Bitmap = System.Drawing.Bitmap;
+using Brushes = System.Windows.Media.Brushes;
+using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
-using Color = System.Windows.Media.Color;
-using Brushes = System.Windows.Media.Brushes;
-using Bitmap = System.Drawing.Bitmap;
 
 namespace TA_WPF.ViewModels
 {
@@ -35,7 +35,7 @@ namespace TA_WPF.ViewModels
         private bool _showBoxedTicketType;
         // 支付渠道显示属性
         private bool _showAlipayPayment;
-        private bool _showWeChatPayment;  
+        private bool _showWeChatPayment;
         private bool _showABCPayment;
         private bool _showCCBPayment;
         private bool _showICBCPayment;
@@ -95,7 +95,7 @@ namespace TA_WPF.ViewModels
             _isRedTicket = false;
             _showBoxedTicketType = false;
             _currentLayout = _blueTicketLayout;
-            
+
             // 根据票种信息初始化显示选项
             InitializeTicketTypeOptions();
         }
@@ -265,7 +265,7 @@ namespace TA_WPF.ViewModels
                 {
                     _selectedTicket = value;
                     OnPropertyChanged(nameof(SelectedTicket));
-                    
+
                     // 根据车票的票种信息初始化票种显示选项
                     InitializeTicketTypeOptions();
                 }
@@ -628,7 +628,7 @@ namespace TA_WPF.ViewModels
                 // 如果选项被锁定，则忽略设置请求
                 if (_isTicketTypeOptionsLocked)
                     return;
-                    
+
                 if (_showStudentTicket != value)
                 {
                     _showStudentTicket = value;
@@ -647,7 +647,7 @@ namespace TA_WPF.ViewModels
                 // 如果选项被锁定，则忽略设置请求
                 if (_isTicketTypeOptionsLocked)
                     return;
-                    
+
                 if (_showDiscountTicket != value)
                 {
                     _showDiscountTicket = value;
@@ -665,7 +665,7 @@ namespace TA_WPF.ViewModels
                 // 如果选项被锁定，则忽略设置请求
                 if (_isTicketTypeOptionsLocked)
                     return;
-                    
+
                 if (_showOnlineTicket != value)
                 {
                     _showOnlineTicket = value;
@@ -683,7 +683,7 @@ namespace TA_WPF.ViewModels
                 // 如果选项被锁定，则忽略设置请求
                 if (_isTicketTypeOptionsLocked)
                     return;
-                    
+
                 if (_showChildTicket != value)
                 {
                     _showChildTicket = value;
@@ -730,7 +730,7 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(PaymentABCMargin));
                     OnPropertyChanged(nameof(PaymentCCBMargin));
                     OnPropertyChanged(nameof(PaymentICBCMargin));
-                    
+
                     // 强制刷新UI，确保边框样式正确应用
                     Application.Current.Dispatcher.InvokeAsync(() =>
                     {
@@ -775,7 +775,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         public bool ShowWeChatPayment
         {
             get => _showWeChatPayment;
@@ -788,7 +788,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         public bool ShowABCPayment
         {
             get => _showABCPayment;
@@ -801,7 +801,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         public bool ShowCCBPayment
         {
             get => _showCCBPayment;
@@ -814,7 +814,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         public bool ShowICBCPayment
         {
             get => _showICBCPayment;
@@ -844,7 +844,7 @@ namespace TA_WPF.ViewModels
                     // 使用圆形边框样式
                     style = Application.Current.Resources["TicketTypeCircleBoxStyle"] as Style;
                 }
-                
+
                 // 确保返回有效的样式
                 if (style == null)
                 {
@@ -857,7 +857,7 @@ namespace TA_WPF.ViewModels
                     style.Setters.Add(new Setter(Border.BackgroundProperty, Brushes.Transparent));
                     style.Setters.Add(new Setter(Border.HorizontalAlignmentProperty, HorizontalAlignment.Left));
                     style.Setters.Add(new Setter(Border.VerticalAlignmentProperty, VerticalAlignment.Top));
-                    
+
                     if (!IsRedTicket)
                     {
                         // 为蓝色票添加圆角
@@ -869,13 +869,13 @@ namespace TA_WPF.ViewModels
                         style.Setters.Add(new Setter(Border.CornerRadiusProperty, new CornerRadius(3)));
                     }
                 }
-                
+
                 return style;
             }
         }
 
         // 票种位置信息
-        public Thickness TicketTypeStudentMargin => ShowBoxedTicketType 
+        public Thickness TicketTypeStudentMargin => ShowBoxedTicketType
             ? (Thickness)_currentLayout["TicketTypeStudentBoxedMargin"]
             : (Thickness)_currentLayout["TicketTypeStudentMargin"];
 
@@ -1051,7 +1051,7 @@ namespace TA_WPF.ViewModels
         private void ToggleTicketColor()
         {
             IsRedTicket = !IsRedTicket;
-            
+
             // 强制刷新票种信息边框样式
             OnPropertyChanged(nameof(TicketTypeBoxStyle));
             OnPropertyChanged(nameof(TicketTypeStudentMargin));
@@ -1197,7 +1197,7 @@ namespace TA_WPF.ViewModels
             _redTicketLayout["TicketTypeChildMargin"] = new Thickness(310, 185, 0, 0);
             _redTicketLayout["TicketTypeOnlineMargin"] = new Thickness(335, 185, 0, 0);
             _redTicketLayout["TicketTypeDiscountMargin"] = new Thickness(360, 185, 0, 0);
-            
+
             _redTicketLayout["TicketTypeStudentBoxedMargin"] = new Thickness(310, 185, 0, 0);
             _redTicketLayout["TicketTypeChildBoxedMargin"] = new Thickness(310, 185, 0, 0);
             _redTicketLayout["TicketTypeOnlineBoxedMargin"] = new Thickness(345, 185, 0, 0);
@@ -1209,7 +1209,7 @@ namespace TA_WPF.ViewModels
             _redTicketLayout["PaymentABCMargin"] = new Thickness(385, 185, 0, 0);
             _redTicketLayout["PaymentCCBMargin"] = new Thickness(385, 185, 0, 0);
             _redTicketLayout["PaymentICBCMargin"] = new Thickness(385, 185, 0, 0);
-            
+
             _redTicketLayout["PaymentAlipayBoxedMargin"] = new Thickness(345, 185, 0, 0);
             _redTicketLayout["PaymentWeChatBoxedMargin"] = new Thickness(345, 185, 0, 0);
             _redTicketLayout["PaymentABCBoxedMargin"] = new Thickness(415, 185, 0, 0);
@@ -1420,7 +1420,7 @@ namespace TA_WPF.ViewModels
         public Thickness QRCodeMargin => (Thickness)_currentLayout["QRCodeMargin"];
 
         // 支付渠道位置信息
-        public Thickness PaymentAlipayMargin => ShowBoxedTicketType 
+        public Thickness PaymentAlipayMargin => ShowBoxedTicketType
             ? (Thickness)_currentLayout["PaymentAlipayBoxedMargin"]
             : (Thickness)_currentLayout["PaymentAlipayMargin"];
 
@@ -1467,33 +1467,33 @@ namespace TA_WPF.ViewModels
                 {
                     _showStudentTicket = true;
                 }
-                
+
                 if ((ticketTypeFlags & (int)Models.TicketTypeFlags.DiscountTicket) != 0)
                 {
                     _showDiscountTicket = true;
                 }
-                
+
                 // 先检测是否有支付宝或微信支付
                 bool hasOnlinePayment = false;
-                
+
                 if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.Alipay) != 0)
                 {
                     _showAlipayPayment = true;
                     hasOnlinePayment = true;
                 }
-                
+
                 if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.WeChat) != 0)
                 {
                     _showWeChatPayment = true;
                     hasOnlinePayment = true;
                 }
-                
+
                 // 只有当没有支付宝和微信支付渠道时，才显示网络售票标识
                 if (!hasOnlinePayment && (ticketTypeFlags & (int)Models.TicketTypeFlags.OnlineTicket) != 0)
                 {
                     _showOnlineTicket = true;
                 }
-                
+
                 if ((ticketTypeFlags & (int)Models.TicketTypeFlags.ChildTicket) != 0)
                 {
                     _showChildTicket = true;
@@ -1504,17 +1504,17 @@ namespace TA_WPF.ViewModels
                 {
                     _showABCPayment = true;
                 }
-                
+
                 if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.CCB) != 0)
                 {
                     _showCCBPayment = true;
                 }
-                
+
                 if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.ICBC) != 0)
                 {
                     _showICBCPayment = true;
                 }
-                
+
                 // 通知UI更新
                 OnPropertyChanged(nameof(ShowStudentTicket));
                 OnPropertyChanged(nameof(ShowDiscountTicket));

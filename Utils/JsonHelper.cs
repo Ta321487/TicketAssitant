@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TA_WPF.Models;
@@ -27,26 +25,26 @@ namespace TA_WPF.Utils
                     NullValueHandling = NullValueHandling.Ignore,
                     MissingMemberHandling = MissingMemberHandling.Ignore
                 };
-                
+
                 var results = JsonConvert.DeserializeObject<List<OcrResult>>(json, settings);
                 if (results != null && results.Count > 0)
                 {
                     return results;
                 }
-                
+
                 // 如果直接解析失败，尝试分析JSON结构并手动创建OcrResult对象
                 var jToken = JToken.Parse(json);
-                
+
                 if (jToken is JArray jArray)
                 {
                     results = new List<OcrResult>();
-                    
+
                     foreach (var item in jArray)
                     {
                         if (item is JObject jObject)
                         {
                             var result = new OcrResult();
-                            
+
                             // 处理text字段
                             if (jObject.TryGetValue("text", out var textToken) && textToken.Type == JTokenType.String)
                             {
@@ -57,14 +55,14 @@ namespace TA_WPF.Utils
                             {
                                 result.Text = textJObj.ToString(Formatting.None);
                             }
-                            
+
                             // 处理score字段
-                            if (jObject.TryGetValue("score", out var scoreToken) && 
+                            if (jObject.TryGetValue("score", out var scoreToken) &&
                                 (scoreToken.Type == JTokenType.Float || scoreToken.Type == JTokenType.Integer))
                             {
                                 result.Score = scoreToken.Value<double>();
                             }
-                            
+
                             // 处理position字段
                             if (jObject.TryGetValue("position", out var posToken) && posToken is JArray posArray)
                             {
@@ -82,7 +80,7 @@ namespace TA_WPF.Utils
                                     }
                                 }
                             }
-                            
+
                             // 如果有文本则添加结果
                             if (!string.IsNullOrEmpty(result.Text))
                             {
@@ -90,7 +88,7 @@ namespace TA_WPF.Utils
                             }
                         }
                     }
-                    
+
                     return results;
                 }
             }
@@ -98,8 +96,8 @@ namespace TA_WPF.Utils
             {
                 // 解析失败，返回空列表
             }
-            
+
             return new List<OcrResult>();
         }
     }
-} 
+}

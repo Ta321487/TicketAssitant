@@ -1,21 +1,21 @@
+using MaterialDesignThemes.Wpf;
+using Microsoft.Win32;
+using MySql.Data.MySqlClient;
 using System.Configuration;
+using System.Data;
+using System.Diagnostics;
+using System.IO;
+using System.Net.NetworkInformation;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using MaterialDesignThemes.Wpf;
-using MySql.Data.MySqlClient;
-using Microsoft.Win32;
-using System.IO;
-using System.Text;
 using System.Windows.Input;
-using System.Data;
-using System.Net.NetworkInformation;
-using System.Text.RegularExpressions;
-using TA_WPF.Utils;
-using TA_WPF.ViewModels;
+using System.Windows.Media;
 using System.Windows.Threading;
 using TA_WPF.Services;
-using System.Diagnostics;
+using TA_WPF.Utils;
+using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
 {
@@ -165,7 +165,7 @@ namespace TA_WPF.Views
             {
                 // 从配置文件中加载字体大小设置
                 double fontSize = ConfigUtils.GetDoubleValue("FontSize", 13);
-                
+
                 // 确保字体大小不小于最小可读值
                 if (fontSize < 12)
                 {
@@ -985,21 +985,25 @@ namespace TA_WPF.Views
                         themeService.ApplyTheme(isDarkMode);
 
                         // 显式应用字体大小设置，确保在连接数据库切换后，所有UI元素都能正确应用设置
-                        try {
+                        try
+                        {
                             // 从配置文件中获取当前字体大小
                             double fontSize = ConfigUtils.GetDoubleValue("FontSize", 13);
-                            
+
                             // 创建UIService实例并应用字体大小
                             var uiService = new UIService();
                             uiService.ApplyFontSize(fontSize);
-                            
+
                             // 在应用级别同步字体大小设置
-                            if (Application.Current is App app) {
+                            if (Application.Current is App app)
+                            {
                                 app.SyncFontSizeSettings(fontSize);
                             }
-                            
+
                             LogHelper.LogInfo($"重新登录后应用字体大小设置: {fontSize}pt");
-                        } catch (Exception ex) {
+                        }
+                        catch (Exception ex)
+                        {
                             LogHelper.LogError($"重新登录后应用字体大小设置时出错: {ex.Message}", ex);
                         }
 
@@ -1873,7 +1877,7 @@ namespace TA_WPF.Views
                                 return MySqlConnectionStatus.PortError;
                             }
                         }
-                        
+
                         System.Diagnostics.Debug.WriteLine($"无法连接到远程MySQL服务器: {serverAddress}:{port}");
                         return MySqlConnectionStatus.ConnectionError;
                     }
@@ -2072,7 +2076,7 @@ namespace TA_WPF.Views
                 {
                     case MySqlConnectionStatus.PortError:
                         titleText = "MySQL端口号错误";
-                        
+
                         if (isLocalConnection)
                         {
                             messageText = $"无法连接到本地MySQL服务器的端口 {port}。\n\n" +

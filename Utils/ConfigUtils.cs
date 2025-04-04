@@ -20,7 +20,7 @@ namespace TA_WPF.Utils
             {
                 if (string.IsNullOrEmpty(key))
                     return false;
-                    
+
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
                 if (config.AppSettings.Settings[key] == null)
@@ -42,7 +42,7 @@ namespace TA_WPF.Utils
                 return false;
             }
         }
-        
+
         /// <summary>
         /// 保存数值到配置文件
         /// </summary>
@@ -53,7 +53,7 @@ namespace TA_WPF.Utils
         {
             return SaveStringValue(key, value.ToString(CultureInfo.InvariantCulture));
         }
-        
+
         /// <summary>
         /// 保存布尔值到配置文件
         /// </summary>
@@ -64,7 +64,7 @@ namespace TA_WPF.Utils
         {
             return SaveStringValue(key, value.ToString().ToLower());
         }
-        
+
         /// <summary>
         /// 从配置文件读取字符串值
         /// </summary>
@@ -77,14 +77,14 @@ namespace TA_WPF.Utils
             {
                 if (string.IsNullOrEmpty(key))
                     return defaultValue;
-                    
+
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                
+
                 if (config.AppSettings.Settings[key] != null)
                 {
                     return config.AppSettings.Settings[key].Value;
                 }
-                
+
                 return defaultValue;
             }
             catch (Exception ex)
@@ -93,7 +93,7 @@ namespace TA_WPF.Utils
                 return defaultValue;
             }
         }
-        
+
         /// <summary>
         /// 从配置文件读取数值
         /// </summary>
@@ -103,15 +103,15 @@ namespace TA_WPF.Utils
         public static double GetDoubleValue(string key, double defaultValue = 0)
         {
             string value = GetStringValue(key);
-            
+
             if (string.IsNullOrEmpty(value) || !double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
             {
                 return defaultValue;
             }
-            
+
             return result;
         }
-        
+
         /// <summary>
         /// 从配置文件读取布尔值
         /// </summary>
@@ -121,13 +121,13 @@ namespace TA_WPF.Utils
         public static bool GetBoolValue(string key, bool defaultValue = false)
         {
             string value = GetStringValue(key);
-            
+
             if (string.IsNullOrEmpty(value) || !bool.TryParse(value, out bool result))
             {
                 return defaultValue;
             }
-            
+
             return result;
         }
     }
-} 
+}

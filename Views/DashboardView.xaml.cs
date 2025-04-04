@@ -1,10 +1,10 @@
-using System.Windows.Controls;
-using System.Windows;
 using LiveCharts;
 using LiveCharts.Wpf;
-using TA_WPF.ViewModels;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
 {
@@ -16,26 +16,26 @@ namespace TA_WPF.Views
         public DashboardView()
         {
             InitializeComponent();
-            
+
             // 注册数据上下文变更事件
             DataContextChanged += DashboardView_DataContextChanged;
-            
+
             // 注册加载事件
             Loaded += DashboardView_Loaded;
         }
-        
+
         private void DashboardView_Loaded(object sender, RoutedEventArgs e)
         {
             if (DataContext is DashboardViewModel viewModel)
             {
                 // 初始化图表数据
                 InitializeCharts(viewModel);
-                
+
                 // 加载数据
                 viewModel.RefreshDataAsync();
             }
         }
-        
+
         /// <summary>
         /// 数据上下文变更事件处理
         /// </summary>
@@ -47,7 +47,7 @@ namespace TA_WPF.Views
                 InitializeCharts(viewModel);
             }
         }
-        
+
         /// <summary>
         /// 初始化图表数据
         /// </summary>
@@ -73,19 +73,19 @@ namespace TA_WPF.Views
                     Fill = System.Windows.Media.Brushes.Transparent
                 }
             };
-            
+
             // 月度车票标签
             viewModel.MonthlyTicketLabels = new string[6];
-            
+
             // 更新月度车票数据
             UpdateMonthlyTicketChart(viewModel);
-            
+
             // 车票类型饼图
             viewModel.TicketTypeSeries = new SeriesCollection();
-            
+
             // 更新车票类型数据
             UpdateTicketTypeChart(viewModel);
-            
+
             // 月度支出图表
             viewModel.ExpenseSeries = new SeriesCollection
             {
@@ -104,17 +104,17 @@ namespace TA_WPF.Views
                     Fill = System.Windows.Media.Brushes.Transparent
                 }
             };
-            
+
             // 月度支出标签
             viewModel.ExpenseLabels = new string[12];
-            
+
             // 更新月度支出数据
             UpdateExpenseChart(viewModel);
-            
+
             // 设置Y轴格式化器
             viewModel.MonthlyTicketYFormatter = value => value.ToString("N0");
             viewModel.ExpenseYFormatter = value => $"¥{value:N0}";
-            
+
             // 订阅数据变更事件
             viewModel.PropertyChanged += (s, e) =>
             {
@@ -132,7 +132,7 @@ namespace TA_WPF.Views
                 }
             };
         }
-        
+
         /// <summary>
         /// 更新月度车票图表
         /// </summary>
@@ -161,7 +161,7 @@ namespace TA_WPF.Views
                 .Select(d => d.Month.Split('/')[1] + "月")
                 .ToArray();
         }
-        
+
         /// <summary>
         /// 更新车票类型图表
         /// </summary>
@@ -186,7 +186,7 @@ namespace TA_WPF.Views
                 viewModel.TicketTypeSeries.Add(series);
             }
         }
-        
+
         /// <summary>
         /// 更新月度支出图表
         /// </summary>
@@ -209,7 +209,7 @@ namespace TA_WPF.Views
                 .Select(d => d.Month.Split('/')[1] + "月")
                 .ToArray();
         }
-        
+
         /// <summary>
         /// 饼图点击事件处理
         /// </summary>
@@ -332,4 +332,4 @@ namespace TA_WPF.Views
             return parent as ScrollViewer;
         }
     }
-} 
+}

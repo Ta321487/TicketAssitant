@@ -1,8 +1,8 @@
+using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
 using System.Windows;
-using TA_WPF.Services;
-using MaterialDesignThemes.Wpf;
 using TA_WPF.Models;
+using TA_WPF.Services;
 
 namespace TA_WPF.ViewModels
 {

@@ -13,7 +13,7 @@ namespace TA_WPF.Services
     {
         private readonly DatabaseService _databaseService;
         private readonly Action _updateDataCallback;
-        
+
         private int _currentPage = 1;
         private int _totalPages;
         private int _totalItems;
@@ -31,13 +31,13 @@ namespace TA_WPF.Services
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _updateDataCallback = updateDataCallback ?? throw new ArgumentNullException(nameof(updateDataCallback));
-            
+
             // 初始化命令
             FirstPageCommand = new RelayCommand(FirstPage, () => CanNavigateToFirstPage);
             PreviousPageCommand = new RelayCommand(PreviousPage, () => CanNavigateToPreviousPage);
             NextPageCommand = new RelayCommand(NextPage, () => CanNavigateToNextPage);
             LastPageCommand = new RelayCommand(LastPage, () => CanNavigateToLastPage);
-            
+
             // 初始化页大小选项
             PageSizeOptions = new[] { 25, 50, 75, 100 };
         }
@@ -56,13 +56,13 @@ namespace TA_WPF.Services
                 {
                     _currentPage = value;
                     OnPropertyChanged();
-                    
+
                     // 通知导航按钮状态可能已更改
                     OnPropertyChanged(nameof(CanNavigateToFirstPage));
                     OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                     OnPropertyChanged(nameof(CanNavigateToNextPage));
                     OnPropertyChanged(nameof(CanNavigateToLastPage));
-                    
+
                     // 更新页面数据
                     _updateDataCallback?.Invoke();
                 }
@@ -81,7 +81,7 @@ namespace TA_WPF.Services
                 {
                     _totalPages = value;
                     OnPropertyChanged();
-                    
+
                     // 通知命令状态可能已更改
                     CommandManager.InvalidateRequerySuggested();
                 }
@@ -100,7 +100,7 @@ namespace TA_WPF.Services
                 {
                     _totalItems = value;
                     OnPropertyChanged();
-                    
+
                     // 重新计算总页数
                     CalculateTotalPages();
                 }
@@ -119,20 +119,20 @@ namespace TA_WPF.Services
                 {
                     _pageSize = value;
                     OnPropertyChanged();
-                    
+
                     // 清除缓存，因为页大小变了
                     _pageCache.Clear();
                     _cachePageSize = value;
-                    
+
                     // 重新计算总页数
                     CalculateTotalPages();
-                    
+
                     // 确保当前页在有效范围内
                     if (CurrentPage > TotalPages)
                     {
                         CurrentPage = TotalPages;
                     }
-                    
+
                     // 更新页面数据
                     _updateDataCallback?.Invoke();
                 }
@@ -156,7 +156,7 @@ namespace TA_WPF.Services
                 {
                     _isLoading = value;
                     OnPropertyChanged();
-                    
+
                     // 通知导航按钮状态可能已更改
                     OnPropertyChanged(nameof(CanNavigateToFirstPage));
                     OnPropertyChanged(nameof(CanNavigateToPreviousPage));
@@ -232,7 +232,7 @@ namespace TA_WPF.Services
             }
 
             TotalPages = Math.Max(1, pages);
-            
+
             // 确保当前页在有效范围内
             if (CurrentPage > TotalPages)
             {
@@ -303,21 +303,21 @@ namespace TA_WPF.Services
             {
                 // 设置加载状态
                 IsLoading = true;
-                
+
                 // 检测缓存中是否已有当前页数据，且页大小未变
                 if (_pageCache.ContainsKey(CurrentPage) && _cachePageSize == PageSize)
                 {
                     // 从缓存返回数据
                     return _pageCache[CurrentPage];
                 }
-                
+
                 // 直接从数据库加载当前页的数据
                 var pageData = await _databaseService.GetPagedTrainRideInfosAsync(CurrentPage, PageSize);
-                
+
                 // 更新缓存
                 _pageCache[CurrentPage] = new List<TrainRideInfo>(pageData);
                 _cachePageSize = PageSize;
-                
+
                 return pageData;
             }
             catch (Exception ex)
@@ -361,4 +361,4 @@ namespace TA_WPF.Services
 
         #endregion
     }
-} 
+}

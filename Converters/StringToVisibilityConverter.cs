@@ -16,7 +16,7 @@ namespace TA_WPF.Converters
             {
                 return string.IsNullOrEmpty(stringValue) ? Visibility.Collapsed : Visibility.Visible;
             }
-            
+
             return Visibility.Collapsed;
         }
 
@@ -25,4 +25,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

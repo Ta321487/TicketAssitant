@@ -24,15 +24,15 @@ namespace TA_WPF.Utils
                 {
                     Directory.CreateDirectory(LogFilePath);
                 }
-                
+
                 // 确保系统日志目录存在
                 if (!Directory.Exists(SystemLogPath))
                 {
                     Directory.CreateDirectory(SystemLogPath);
                 }
-                
+
                 _isInitialized = true;
-                
+
                 // 启动自动导出系统日志的定时器（每小时检测一次）
                 _autoExportTimer = new Timer(CheckAndRotateSystemLog, null, TimeSpan.Zero, TimeSpan.FromHours(1));
             }
@@ -65,13 +65,13 @@ namespace TA_WPF.Utils
                 Log("ERROR", message);
                 return;
             }
-            
+
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(message);
             sb.AppendLine($"异常类型: {exception.GetType().FullName}");
             sb.AppendLine($"异常消息: {exception.Message}");
             sb.AppendLine($"堆栈跟踪: {exception.StackTrace}");
-            
+
             // 记录内部异常
             var innerException = exception.InnerException;
             int depth = 0;
@@ -82,7 +82,7 @@ namespace TA_WPF.Utils
                 sb.AppendLine($"内部异常堆栈: {innerException.StackTrace}");
                 innerException = innerException.InnerException;
             }
-            
+
             Log("ERROR", sb.ToString());
         }
 
@@ -121,7 +121,7 @@ namespace TA_WPF.Utils
                 sb.AppendLine($"异常类型: {exception.GetType().FullName}");
                 sb.AppendLine($"异常消息: {exception.Message}");
                 sb.AppendLine($"堆栈跟踪: {exception.StackTrace}");
-                
+
                 Log("ERROR", sb.ToString());
             }
         }
@@ -161,7 +161,7 @@ namespace TA_WPF.Utils
                 sb.AppendLine($"异常类型: {exception.GetType().FullName}");
                 sb.AppendLine($"异常消息: {exception.Message}");
                 sb.AppendLine($"堆栈跟踪: {exception.StackTrace}");
-                
+
                 Log("ERROR", sb.ToString());
             }
         }
@@ -173,15 +173,15 @@ namespace TA_WPF.Utils
                 System.Diagnostics.Debug.WriteLine($"[{level}] {message} (日志系统未初始化)");
                 return;
             }
-            
+
             try
             {
                 string logEntry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{level}] {message}";
-                
+
                 // 使用多次重试机制
                 int retryCount = 0;
                 bool success = false;
-                
+
                 while (!success && retryCount < 3)
                 {
                     try
@@ -191,7 +191,7 @@ namespace TA_WPF.Utils
                             // 判断是否为系统相关日志或车票相关日志
                             bool isSystemLog = IsSystemLog(message);
                             bool isTicketLog = IsTicketLog(message);
-                            
+
                             // 系统级别日志仅写入系统日志文件
                             if (isSystemLog)
                             {
@@ -210,7 +210,7 @@ namespace TA_WPF.Utils
                                 // 写入应用程序日志
                                 string appLogPath = Path.Combine(LogFilePath, LogFileName);
                                 File.AppendAllText(appLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
-                                
+
                                 // 写入系统日志
                                 string systemLogPath = Path.Combine(SystemLogPath, SystemLogFileName);
                                 File.AppendAllText(systemLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
@@ -225,7 +225,7 @@ namespace TA_WPF.Utils
                         Thread.Sleep(100 * retryCount);
                     }
                 }
-                
+
                 // 输出到控制台（调试用）
                 System.Diagnostics.Debug.WriteLine(logEntry);
             }
@@ -241,13 +241,13 @@ namespace TA_WPF.Utils
         private static bool IsSystemLog(string message)
         {
             // 系统级别：数据库、创建窗口等相关日志
-            string[] systemKeywords = 
+            string[] systemKeywords =
             {
                 "数据库", "连接", "MySQL", "初始化", "配置", "窗口",
                 "服务器", "IP", "目录", "文件", "配置文件", "设置",
                 "COM初始化", "异常堆栈", "System", "Database", "Window"
             };
-            
+
             foreach (var keyword in systemKeywords)
             {
                 if (message.Contains(keyword))
@@ -255,7 +255,7 @@ namespace TA_WPF.Utils
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -265,13 +265,13 @@ namespace TA_WPF.Utils
         private static bool IsTicketLog(string message)
         {
             // 车票相关：车票操作、查询等相关日志
-            string[] ticketKeywords = 
+            string[] ticketKeywords =
             {
                 "车票", "添加车票", "修改车票", "删除车票", "查询车票",
                 "保存车票", "加载车票", "刷新车票", "导出车票",
                 "Ticket", "车站", "座位", "金额", "出发", "到达"
             };
-            
+
             foreach (var keyword in ticketKeywords)
             {
                 if (message.Contains(keyword))
@@ -279,7 +279,7 @@ namespace TA_WPF.Utils
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -292,7 +292,7 @@ namespace TA_WPF.Utils
             {
                 return new string[] { "日志系统未初始化" };
             }
-            
+
             try
             {
                 string fullPath = Path.Combine(LogFilePath, LogFileName);
@@ -305,7 +305,7 @@ namespace TA_WPF.Utils
             {
                 System.Diagnostics.Debug.WriteLine($"读取日志时出错: {ex.Message}");
             }
-            
+
             return new string[0];
         }
 
@@ -318,7 +318,7 @@ namespace TA_WPF.Utils
             {
                 return false;
             }
-            
+
             try
             {
                 // 确保目标目录存在
@@ -326,10 +326,10 @@ namespace TA_WPF.Utils
                 {
                     Directory.CreateDirectory(targetPath);
                 }
-                
+
                 string appLogPath = Path.Combine(LogFilePath, LogFileName);
                 string targetFile = Path.Combine(targetPath, $"app_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-                
+
                 if (File.Exists(appLogPath))
                 {
                     File.Copy(appLogPath, targetFile, true);
@@ -361,10 +361,10 @@ namespace TA_WPF.Utils
                     // 忽略写入错误的异常
                 }
             }
-            
+
             return false;
         }
-        
+
         /// <summary>
         /// 导出系统日志到指定路径
         /// </summary>
@@ -374,7 +374,7 @@ namespace TA_WPF.Utils
             {
                 return false;
             }
-            
+
             try
             {
                 // 确保目标目录存在
@@ -382,10 +382,10 @@ namespace TA_WPF.Utils
                 {
                     Directory.CreateDirectory(targetPath);
                 }
-                
+
                 string systemLogPath = Path.Combine(SystemLogPath, SystemLogFileName);
                 string targetFile = Path.Combine(targetPath, $"system_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-                
+
                 if (File.Exists(systemLogPath))
                 {
                     File.Copy(systemLogPath, targetFile, true);
@@ -416,10 +416,10 @@ namespace TA_WPF.Utils
                     // 忽略写入错误的异常  
                 }
             }
-            
+
             return false;
         }
-        
+
         /// <summary>
         /// 检测并轮换系统日志
         /// </summary>
@@ -428,11 +428,11 @@ namespace TA_WPF.Utils
             try
             {
                 string systemLogPath = Path.Combine(SystemLogPath, SystemLogFileName);
-                
+
                 if (File.Exists(systemLogPath))
                 {
                     FileInfo fileInfo = new FileInfo(systemLogPath);
-                    
+
                     // 如果日志文件超过最大大小，进行轮换
                     if (fileInfo.Length > MaxSystemLogSizeBytes)
                     {
@@ -442,18 +442,18 @@ namespace TA_WPF.Utils
                         {
                             Directory.CreateDirectory(archivePath);
                         }
-                        
+
                         // 移动当前日志文件到归档目录
                         string archiveFile = Path.Combine(archivePath, $"system_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
                         File.Move(systemLogPath, archiveFile);
-                        
+
                         // 创建新的日志文件
                         using (File.Create(systemLogPath)) { }
-                        
+
                         // 记录日志轮换信息
                         string logEntry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [INFO] 系统日志已轮换，旧日志已归档到: {archiveFile}";
                         File.AppendAllText(systemLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
-                        
+
                         // 清理过期的归档日志（保留最近30天的）
                         CleanupOldArchives(archivePath, 30);
                     }
@@ -482,7 +482,7 @@ namespace TA_WPF.Utils
                 }
             }
         }
-        
+
         /// <summary>
         /// 清理过期的归档日志
         /// </summary>
@@ -492,9 +492,9 @@ namespace TA_WPF.Utils
             {
                 if (!Directory.Exists(archivePath))
                     return;
-                
+
                 DateTime cutoffDate = DateTime.Now.AddDays(-daysToKeep);
-                
+
                 foreach (string file in Directory.GetFiles(archivePath, "system_log_*.txt"))
                 {
                     FileInfo fileInfo = new FileInfo(file);
@@ -509,7 +509,7 @@ namespace TA_WPF.Utils
                 System.Diagnostics.Debug.WriteLine($"清理过期归档日志时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 获取系统日志路径
         /// </summary>
@@ -517,7 +517,7 @@ namespace TA_WPF.Utils
         {
             return SystemLogPath;
         }
-        
+
         /// <summary>
         /// 获取应用程序日志路径
         /// </summary>
@@ -525,7 +525,7 @@ namespace TA_WPF.Utils
         {
             return LogFilePath;
         }
-        
+
         /// <summary>
         /// 获取应用程序日志文件名
         /// </summary>
@@ -533,7 +533,7 @@ namespace TA_WPF.Utils
         {
             return LogFileName;
         }
-        
+
         /// <summary>
         /// 获取系统日志文件名
         /// </summary>
@@ -542,4 +542,4 @@ namespace TA_WPF.Utils
             return SystemLogFileName;
         }
     }
-} 
+}

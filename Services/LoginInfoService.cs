@@ -17,10 +17,10 @@ namespace TA_WPF.Services
             {
                 // 获取当前时间
                 string currentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                
+
                 // 保存到配置文件
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                
+
                 if (config.AppSettings.Settings["LastLoginTime"] == null)
                 {
                     config.AppSettings.Settings.Add("LastLoginTime", currentTime);
@@ -29,10 +29,10 @@ namespace TA_WPF.Services
                 {
                     config.AppSettings.Settings["LastLoginTime"].Value = currentTime;
                 }
-                
+
                 config.Save(ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
-                
+
                 // 记录日志
                 LogHelper.LogSystem("登录", $"用户登录成功，登录时间：{currentTime}");
             }
@@ -42,7 +42,7 @@ namespace TA_WPF.Services
                 LogHelper.LogSystemError("登录", $"保存登录时间时出错", ex);
             }
         }
-        
+
         /// <summary>
         /// 获取上次登录时间
         /// </summary>
@@ -62,10 +62,10 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"获取上次登录时间时出错: {ex.Message}");
                 LogHelper.LogSystemError("登录", $"获取上次登录时间时出错", ex);
             }
-            
+
             return string.Empty;
         }
-        
+
         /// <summary>
         /// 从连接字符串中提取数据库名称
         /// </summary>
@@ -85,7 +85,7 @@ namespace TA_WPF.Services
                     {
                         var key = keyValue[0].ToLower().Trim();
                         var value = keyValue[1].Trim();
-                        
+
                         if (key == "database" || key == "initial catalog")
                         {
                             return value;
@@ -98,8 +98,8 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"提取数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("登录", $"提取数据库名称时出错", ex);
             }
-            
+
             return "未知";
         }
     }
-} 
+}

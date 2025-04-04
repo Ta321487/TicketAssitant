@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows.Input;
 
 namespace TA_WPF.ViewModels
 {
@@ -50,22 +50,22 @@ namespace TA_WPF.ViewModels
             ClearTrainNumberCommand = new RelayCommand(ClearTrainNumber);
             ClearYearCommand = new RelayCommand(ClearYear);
             SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
-            
+
             // 设置设计时数据
             _isQueryPanelVisible = true;
-            
+
             // 初始化车次前缀
             InitializeTrainPrefixes();
-            
+
             // 初始化年份选项
             InitializeYearOptions();
-            
+
             // 初始化站点建议列表
             DepartStationSuggestions = new ObservableCollection<StationInfo>();
-            
+
             // 设计时不加载数据，但创建空的出发站列表
             DepartStations = new ObservableCollection<DepartStationItem>();
-            
+
             // 设计时的数据库服务为空
             _databaseService = null;
         }
@@ -73,7 +73,7 @@ namespace TA_WPF.ViewModels
         public AdvancedQueryTicketViewModel(DatabaseService databaseService)
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
-            
+
             // 初始化命令
             ToggleQueryPanelCommand = new RelayCommand(ToggleQueryPanel);
             ApplyFilterCommand = new RelayCommand(ApplyFilter);
@@ -83,16 +83,16 @@ namespace TA_WPF.ViewModels
             ClearTrainNumberCommand = new RelayCommand(ClearTrainNumber);
             ClearYearCommand = new RelayCommand(ClearYear);
             SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
-            
+
             // 初始化年份选项
             InitializeYearOptions();
-            
+
             // 初始化车次前缀
             InitializeTrainPrefixes();
-            
+
             // 初始化站点建议列表
             DepartStationSuggestions = new ObservableCollection<StationInfo>();
-            
+
             // 异步加载出发站列表
             LoadDepartStationsAsync();
         }
@@ -106,7 +106,7 @@ namespace TA_WPF.ViewModels
         {
             // 获取当前年份
             int currentYear = DateTime.Now.Year;
-            
+
             // 创建年份选项列表
             YearOptions = new List<YearOption>
             {
@@ -129,7 +129,7 @@ namespace TA_WPF.ViewModels
             {
                 "G", "C", "D", "Z", "T", "K", "L", "S", "纯数字"
             };
-            
+
             // 默认选择G
             SelectedTrainPrefix = TrainPrefixes.FirstOrDefault();
         }
@@ -143,16 +143,16 @@ namespace TA_WPF.ViewModels
             {
                 // 获取已有的出发站点
                 var departStations = await _databaseService.GetDistinctDepartStationsAsync();
-                
+
                 // 转换为DepartStationItem列表
                 var departStationItems = departStations
                     .Where(s => !string.IsNullOrEmpty(s))
                     .Select(s => new DepartStationItem(s))
                     .ToList();
-                
+
                 // 添加一个表示"不筛选"的选项，使用空字符串
                 departStationItems.Insert(0, new DepartStationItem(string.Empty));
-                
+
                 DepartStations = new ObservableCollection<DepartStationItem>(departStationItems);
             }
             catch (Exception ex)
@@ -259,13 +259,13 @@ namespace TA_WPF.ViewModels
                 {
                     _selectedYearOption = value;
                     IsCustomYearSelected = value?.IsCustom ?? false;
-                    
+
                     // 如果选择了自定义年份选项，直接弹出对话框
                     if (value?.IsCustom == true)
                     {
                         SelectCustomYear();
                     }
-                    
+
                     OnPropertyChanged(nameof(SelectedYearOption));
                     OnPropertyChanged(nameof(QueryButtonText));
                 }
@@ -392,7 +392,7 @@ namespace TA_WPF.ViewModels
                 {
                     _departStationSearchText = value;
                     OnPropertyChanged(nameof(DepartStationSearchText));
-                    
+
                     // 如果是通过选择项更新的，不触发搜索
                     if (!_isUpdatingDepartStation)
                     {
@@ -540,7 +540,7 @@ namespace TA_WPF.ViewModels
                 {
                     DepartStationSuggestions.Add(station);
                 }
-                
+
                 // 如果有结果，显示下拉框
                 IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
             }
@@ -557,18 +557,18 @@ namespace TA_WPF.ViewModels
         {
             if (station == null)
                 return;
-                
+
             // 确保车站名称不包含"站"字
             string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
-            
+
             // 先关闭下拉框，防止触发搜索
             IsDepartStationDropdownOpen = false;
-            
+
             // 暂时取消DepartStationSearchText的PropertyChanged事件触发
             _isUpdatingDepartStation = true;
             DepartStationSearchText = stationName;
             _isUpdatingDepartStation = false;
-            
+
             // 创建并设置选中的出发站
             SelectedDepartStation = new DepartStationItem(stationName);
         }
@@ -582,16 +582,16 @@ namespace TA_WPF.ViewModels
             string title = "输入自定义年份";
             string prompt = "请输入年份 (1900-2099):";
             string initialValue = CustomYear?.ToString() ?? DateTime.Now.Year.ToString();
-            
+
             var result = MessageBoxHelper.ShowInputDialog(title, prompt, initialValue);
-            
+
             if (result.IsConfirmed)
             {
                 // 验证年份输入
                 if (int.TryParse(result.InputText, out int year) && year >= 1900 && year <= 2099)
                 {
                     CustomYear = year;
-                    
+
                     // 更新自定义年份选项
                     if (YearOptions != null && YearOptions.Count > 0)
                     {
@@ -677,7 +677,7 @@ namespace TA_WPF.ViewModels
             bool hasDepartStation = _selectedDepartStation != null && !string.IsNullOrWhiteSpace(_selectedDepartStation.DepartStation);
             bool hasTrainNumber = !string.IsNullOrWhiteSpace(_trainNumberFilter);
             bool hasYear = _selectedYearOption != null && _selectedYearOption.Year.HasValue;
-            
+
             return hasDepartStation || hasTrainNumber || hasYear;
         }
 
@@ -690,28 +690,28 @@ namespace TA_WPF.ViewModels
             {
                 // 检测是否有筛选条件
                 HasActiveFilters = HasAnyActiveFilter();
-                
+
                 // 构建完整的车次号
                 string fullTrainNo = null;
                 if (!string.IsNullOrWhiteSpace(_trainNumberFilter))
                 {
                     fullTrainNo = GetFullTrainNo();
                 }
-                
+
                 // 获取年份值
                 int? yearValue = null;
                 if (_selectedYearOption != null && _selectedYearOption.Year.HasValue)
                 {
                     yearValue = _selectedYearOption.Year.Value;
                 }
-                
+
                 // 获取出发站
                 string departStation = null;
                 if (_selectedDepartStation != null)
                 {
                     departStation = _selectedDepartStation.DepartStation;
                 }
-                
+
                 // 记录查询条件
                 System.Diagnostics.Debug.WriteLine("应用查询条件:");
                 System.Diagnostics.Debug.WriteLine($"  出发站: {departStation}");
@@ -746,9 +746,9 @@ namespace TA_WPF.ViewModels
             SelectedTrainPrefix = TrainPrefixes.FirstOrDefault() ?? "G";
             IsAndCondition = true;
             DepartStationSearchText = string.Empty;
-            
+
             HasActiveFilters = false;
-            
+
             // 触发事件
             FilterApplied?.Invoke(this, new QueryFilterEventArgs
             {
@@ -769,7 +769,7 @@ namespace TA_WPF.ViewModels
             // 不要自动应用筛选，等待用户点击查询按钮
             // ApplyFilter();
         }
-        
+
         /// <summary>
         /// 清空车次号条件
         /// </summary>
@@ -780,7 +780,7 @@ namespace TA_WPF.ViewModels
             // 不要自动应用筛选，等待用户点击查询按钮
             // ApplyFilter();
         }
-        
+
         /// <summary>
         /// 清空年份条件
         /// </summary>
@@ -805,4 +805,4 @@ namespace TA_WPF.ViewModels
         public int? Year { get; set; }
         public bool IsAndCondition { get; set; }
     }
-} 
+}

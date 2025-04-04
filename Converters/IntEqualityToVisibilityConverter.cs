@@ -15,7 +15,7 @@ namespace TA_WPF.Converters
                 return Visibility.Collapsed;
 
             // 尝试将value和parameter转换为int进行比较
-            if (int.TryParse(value.ToString(), out int intValue) && 
+            if (int.TryParse(value.ToString(), out int intValue) &&
                 int.TryParse(parameter.ToString(), out int compareValue))
             {
                 return intValue == compareValue ? Visibility.Visible : Visibility.Collapsed;
@@ -29,4 +29,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

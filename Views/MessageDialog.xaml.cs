@@ -1,9 +1,9 @@
+using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
 using System.Windows;
-using System.Windows.Media;
-using MaterialDesignThemes.Wpf;
-using TA_WPF.Services;
 using System.Windows.Input;
+using System.Windows.Media;
+using TA_WPF.Services;
 
 namespace TA_WPF.Views
 {
@@ -93,18 +93,18 @@ namespace TA_WPF.Views
         {
             InitializeComponent();
             DataContext = this;
-            
+
             Message = message;
             Title = title;
             Buttons = buttons;
-            
+
             // 获取主题服务
             _themeService = ThemeService.Instance;
-            
+
             // 应用当前主题
             bool isDarkMode = _themeService.IsDarkThemeActive();
             ApplyTheme(isDarkMode);
-            
+
             // 设置图标和颜色
             switch (type)
             {
@@ -125,41 +125,42 @@ namespace TA_WPF.Views
                     IconBrush = new SolidColorBrush(Colors.DodgerBlue);
                     break;
             }
-            
+
             // 订阅主题变更事件
             _themeService.ThemeChanged += OnThemeChanged;
-            
+
             // 窗口关闭时取消订阅事件
-            this.Closed += (s, e) => {
+            this.Closed += (s, e) =>
+            {
                 _themeService.ThemeChanged -= OnThemeChanged;
             };
-            
+
             // 添加键盘事件处理
             this.KeyDown += MessageDialog_KeyDown;
-            
+
             // 添加窗口加载事件处理
             this.Loaded += MessageDialog_Loaded;
         }
-        
+
         private void ApplyTheme(bool isDarkMode)
         {
             // 设置窗口主题
             ThemeAssist.SetTheme(this, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
-            
+
             // 获取当前资源字典
             var paletteHelper = new PaletteHelper();
             var theme = paletteHelper.GetTheme();
-            
+
             // 设置深色/浅色模式
             theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
-            
+
             // 应用主题到窗口
             paletteHelper.SetTheme(theme);
-            
+
             // 强制刷新窗口
             this.UpdateLayout();
         }
-        
+
         private void OnThemeChanged(object sender, bool isDarkMode)
         {
             // 更新窗口主题
@@ -229,7 +230,7 @@ namespace TA_WPF.Views
             // 确保窗口处于激活状态并显示在前面
             this.Activate();
             this.Focus();
-            
+
             // 根据按钮类型设置焦点
             switch (Buttons)
             {
@@ -254,10 +255,10 @@ namespace TA_WPF.Views
         public static bool? Show(string message, string title = "提示", MessageType type = MessageType.Information, MessageButtons buttons = MessageButtons.Ok, Window owner = null)
         {
             var dialog = new MessageDialog(message, title, type, buttons);
-            
+
             // 设置为始终在最前
             dialog.Topmost = true;
-            
+
             if (owner != null)
             {
                 dialog.Owner = owner;
@@ -272,12 +273,12 @@ namespace TA_WPF.Views
             {
                 dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
-            
+
             // 显示对话框，并在显示后强制激活窗口
             dialog.ShowInTaskbar = false;
             var result = dialog.ShowDialog();
-            
+
             return result;
         }
     }
-} 
+}

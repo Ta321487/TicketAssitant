@@ -21,29 +21,29 @@ namespace TA_WPF.Services
             {
                 // 获取当前主窗口
                 var mainWindow = Application.Current.MainWindow;
-                
+
                 // 创建并显示登录窗口
                 var loginWindow = new LoginWindow();
-                
+
                 // 设置数据库名称
                 if (!string.IsNullOrEmpty(databaseName))
                 {
                     loginWindow.SetDatabaseName(databaseName);
                 }
-                
+
                 // 设置登录窗口为主窗口
                 Application.Current.MainWindow = loginWindow;
-                
+
                 // 显示登录窗口
                 loginWindow.Show();
-                
+
                 // 关闭当前主窗口
                 mainWindow?.Close();
-                
+
                 // 强制垃圾回收
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
-                
+
                 // 记录日志
                 LogHelper.LogInfo("已返回登录界面");
             }
@@ -65,7 +65,7 @@ namespace TA_WPF.Services
             try
             {
                 var addTicketWindow = new AddTicketWindow(databaseService, mainViewModel);
-                
+
                 // 确保主窗口已初始化并且可见
                 if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)
                 {
@@ -77,10 +77,10 @@ namespace TA_WPF.Services
                     // 如果主窗口不可用，使用CenterScreen
                     addTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 }
-                
+
                 // 显示窗口
                 bool? result = addTicketWindow.ShowDialog();
-                
+
                 // 返回是否成功添加车票
                 return result == true;
             }
@@ -104,7 +104,7 @@ namespace TA_WPF.Services
             try
             {
                 var editTicketWindow = new EditTicketWindow(databaseService, mainViewModel, ticket);
-                
+
                 // 确保主窗口已初始化并且可见
                 if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)
                 {
@@ -116,10 +116,10 @@ namespace TA_WPF.Services
                     // 如果主窗口不可用，使用CenterScreen
                     editTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 }
-                
+
                 // 显示窗口
                 bool? result = editTicketWindow.ShowDialog();
-                
+
                 // 返回是否成功修改车票
                 return result == true;
             }
@@ -141,7 +141,7 @@ namespace TA_WPF.Services
             try
             {
                 var ocrTicketWindow = new Views.OcrTicketWindow(mainViewModel);
-                
+
                 // 确保主窗口已初始化并且可见
                 if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)
                 {
@@ -153,10 +153,10 @@ namespace TA_WPF.Services
                     // 如果主窗口不可用，使用CenterScreen
                     ocrTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 }
-                
+
                 // 显示窗口
                 bool? result = ocrTicketWindow.ShowDialog();
-                
+
                 // 返回是否成功识别车票
                 return result == true;
             }
@@ -168,4 +168,4 @@ namespace TA_WPF.Services
             }
         }
     }
-} 
+}

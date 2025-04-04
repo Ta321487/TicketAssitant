@@ -10,4 +10,4 @@ namespace TA_WPF.Models
         CCB = 8,          // 建设银行
         ICBC = 16         // 工商银行
     }
-} 
+}

@@ -27,7 +27,7 @@ namespace TA_WPF.Services
             {
                 bool stationTableExists = await _databaseService.TableExistsAsync("station_info");
                 bool ticketTableExists = await _databaseService.TableExistsAsync("train_ride_info");
-                
+
                 if (!stationTableExists || !ticketTableExists)
                 {
                     // 构建提示消息
@@ -41,14 +41,14 @@ namespace TA_WPF.Services
                         message += "- 车票信息表 (train_ride_info)\n";
                     }
                     message += "\n是否立即创建这些表？";
-                    
+
                     // 显示确认对话框
                     var result = TA_WPF.Views.MessageDialog.Show(
                         message,
                         "缺少必要的表",
                         TA_WPF.Views.MessageType.Question,
                         TA_WPF.Views.MessageButtons.YesNo);
-                    
+
                     if (result == true)
                     {
                         // 创建缺少的表
@@ -60,7 +60,7 @@ namespace TA_WPF.Services
                         {
                             await _databaseService.CreateTrainRideInfoTableAsync();
                         }
-                        
+
                         TA_WPF.Views.MessageDialog.Show(
                             "表创建成功！",
                             "操作成功",
@@ -81,4 +81,4 @@ namespace TA_WPF.Services
             }
         }
     }
-} 
+}

@@ -48,10 +48,10 @@ namespace TA_WPF.Converters
 
             // 计算中心点位置
             double centerPosition = (departStationEndPosition + arriveStationStartPosition) / 2;
-            
+
             // 计算车次号的宽度（假设每个字符约30个单位宽度）
             double trainNoWidth = trainNo.Length * 30;
-            
+
             // 计算最终位置，使箭头居中于车次号下方
             horizontalPosition = centerPosition - (trainNoWidth / 2); // 根据车次号宽度调整居中
 
@@ -63,4 +63,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

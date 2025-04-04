@@ -29,7 +29,7 @@ namespace TA_WPF.Converters
                 foreach (PaymentChannelFlags flag in Enum.GetValues(typeof(PaymentChannelFlags)))
                 {
                     if (flag == PaymentChannelFlags.None) continue;
-                    
+
                     if ((flags & (int)flag) == (int)flag)
                     {
                         if (_paymentChannelNames.TryGetValue(flag, out string? name))
@@ -42,7 +42,7 @@ namespace TA_WPF.Converters
                         }
                     }
                 }
-                
+
                 return string.Join("、", names);
             }
             return string.Empty;
@@ -53,4 +53,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

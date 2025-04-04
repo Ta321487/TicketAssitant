@@ -28,7 +28,7 @@ namespace TA_WPF.Converters
                 foreach (TicketTypeFlags flag in Enum.GetValues(typeof(TicketTypeFlags)))
                 {
                     if (flag == TicketTypeFlags.None) continue;
-                    
+
                     if ((flags & (int)flag) == (int)flag)
                     {
                         if (_ticketTypeNames.TryGetValue(flag, out string? name))
@@ -41,7 +41,7 @@ namespace TA_WPF.Converters
                         }
                     }
                 }
-                
+
                 return string.Join("、", names);
             }
             return string.Empty;
@@ -52,4 +52,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

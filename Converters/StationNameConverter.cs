@@ -19,4 +19,4 @@ namespace TA_WPF.Converters
             return value;
         }
     }
-} 
+}

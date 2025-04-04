@@ -62,11 +62,11 @@ namespace TA_WPF.Services
         private void UpdateFontSizeForAllElements(DependencyObject parent, double fontSize)
         {
             int count = VisualTreeHelper.GetChildrenCount(parent);
-            
+
             for (int i = 0; i < count; i++)
             {
                 DependencyObject child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 // 更新控件的字体大小
                 if (child is Control control)
                 {
@@ -80,7 +80,7 @@ namespace TA_WPF.Services
                 {
                     dataGrid.FontSize = fontSize;
                 }
-                
+
                 // 递归处理子元素
                 UpdateFontSizeForAllElements(child, fontSize);
             }
@@ -119,4 +119,4 @@ namespace TA_WPF.Services
             return fontSize + 1;
         }
     }
-} 
+}

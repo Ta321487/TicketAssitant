@@ -19,13 +19,13 @@ namespace TA_WPF.Services
             {
                 // 保存字体大小到配置文件
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                
+
                 // 确保字体大小不小于最小可读值
                 if (fontSize < 12)
                 {
                     fontSize = 12;
                 }
-                
+
                 if (config.AppSettings.Settings["FontSize"] == null)
                 {
                     config.AppSettings.Settings.Add("FontSize", fontSize.ToString(CultureInfo.InvariantCulture));
@@ -34,10 +34,10 @@ namespace TA_WPF.Services
                 {
                     config.AppSettings.Settings["FontSize"].Value = fontSize.ToString(CultureInfo.InvariantCulture);
                 }
-                
+
                 config.Save(ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
-                
+
                 // 确保配置文件被正确写入
                 try
                 {
@@ -80,7 +80,7 @@ namespace TA_WPF.Services
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 if (config.AppSettings.Settings["FontSize"] != null)
                 {
-                    if (double.TryParse(config.AppSettings.Settings["FontSize"].Value, 
+                    if (double.TryParse(config.AppSettings.Settings["FontSize"].Value,
                         NumberStyles.Any, CultureInfo.InvariantCulture, out double fontSize))
                     {
                         // 确保字体大小不小于最小可读值
@@ -97,7 +97,7 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"加载字体大小设置时出错: {ex.Message}");
                 LogHelper.LogError($"加载字体大小设置时出错: {ex.Message}");
             }
-            
+
             // 如果加载失败，返回默认值
             return 13;
         }
@@ -113,7 +113,7 @@ namespace TA_WPF.Services
                 // 从配置文件中读取历史数据库名称
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 List<string> historyList = new List<string>();
-                
+
                 // 读取现有历史记录
                 if (config.AppSettings.Settings["DatabaseHistory"] != null)
                 {
@@ -123,22 +123,22 @@ namespace TA_WPF.Services
                         historyList = history.Split(',').ToList();
                     }
                 }
-                
+
                 // 如果历史记录中已存在该数据库名称，则移除它
                 historyList.Remove(databaseName);
-                
+
                 // 将新的数据库名称添加到列表开头
                 historyList.Insert(0, databaseName);
-                
+
                 // 只保留最近的10个记录
                 if (historyList.Count > 10)
                 {
                     historyList = historyList.Take(10).ToList();
                 }
-                
+
                 // 保存回配置文件
                 string newHistory = string.Join(",", historyList);
-                
+
                 if (config.AppSettings.Settings["DatabaseHistory"] == null)
                 {
                     config.AppSettings.Settings.Add("DatabaseHistory", newHistory);
@@ -147,10 +147,10 @@ namespace TA_WPF.Services
                 {
                     config.AppSettings.Settings["DatabaseHistory"].Value = newHistory;
                 }
-                
+
                 config.Save(ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
-                
+
                 // 记录日志
                 LogHelper.LogSystem("配置", $"已将数据库名称 {databaseName} 添加到历史记录");
             }
@@ -171,7 +171,7 @@ namespace TA_WPF.Services
             {
                 // 保存数据库名称到配置文件
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                
+
                 if (config.AppSettings.Settings["LastDatabaseName"] == null)
                 {
                     config.AppSettings.Settings.Add("LastDatabaseName", databaseName);
@@ -180,7 +180,7 @@ namespace TA_WPF.Services
                 {
                     config.AppSettings.Settings["LastDatabaseName"].Value = databaseName;
                 }
-                
+
                 config.Save(ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
             }
@@ -210,7 +210,7 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"加载数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"加载数据库名称时出错", ex);
             }
-            
+
             return string.Empty;
         }
 
@@ -237,7 +237,7 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"加载数据库历史记录时出错", ex);
             }
-            
+
             return new List<string>();
         }
 
@@ -260,7 +260,7 @@ namespace TA_WPF.Services
                     {
                         var key = keyValue[0].ToLower().Trim();
                         var value = keyValue[1].Trim();
-                        
+
                         if (key == "database" || key == "initial catalog")
                         {
                             return value;
@@ -273,7 +273,7 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"提取数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"提取数据库名称时出错", ex);
             }
-            
+
             return string.Empty;
         }
 
@@ -287,7 +287,7 @@ namespace TA_WPF.Services
             string serverAddress = "localhost";
             string username = "root";
             string password = "password";
-            
+
             try
             {
                 // 解析MySQL连接字符串
@@ -300,7 +300,7 @@ namespace TA_WPF.Services
                     {
                         var key = keyValue[0].ToLower().Trim();
                         var value = keyValue[1].Trim();
-                        
+
                         switch (key)
                         {
                             case "server":
@@ -319,7 +319,7 @@ namespace TA_WPF.Services
                         }
                     }
                 }
-                
+
                 // 记录日志
                 LogHelper.LogSystem("配置", "数据库连接信息已解析");
             }
@@ -328,7 +328,7 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"解析连接字符串时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"解析连接字符串时出错", ex);
             }
-            
+
             return (serverAddress, username, password);
         }
 
@@ -341,7 +341,7 @@ namespace TA_WPF.Services
             try
             {
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                
+
                 if (config.AppSettings.Settings["BudgetAmount"] == null)
                 {
                     config.AppSettings.Settings.Add("BudgetAmount", budgetAmount.ToString(CultureInfo.InvariantCulture));
@@ -350,7 +350,7 @@ namespace TA_WPF.Services
                 {
                     config.AppSettings.Settings["BudgetAmount"].Value = budgetAmount.ToString(CultureInfo.InvariantCulture);
                 }
-                
+
                 config.Save(ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
             }
@@ -359,7 +359,7 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"保存预算金额时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 从配置文件加载预算金额
         /// </summary>
@@ -370,8 +370,8 @@ namespace TA_WPF.Services
             {
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 var budgetSetting = config.AppSettings.Settings["BudgetAmount"];
-                
-                if (budgetSetting != null && 
+
+                if (budgetSetting != null &&
                     double.TryParse(budgetSetting.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double budget))
                 {
                     return budget;
@@ -381,8 +381,8 @@ namespace TA_WPF.Services
             {
                 System.Diagnostics.Debug.WriteLine($"加载预算金额时出错: {ex.Message}");
             }
-            
+
             return 2000; // 默认预算金额
         }
     }
-} 
+}

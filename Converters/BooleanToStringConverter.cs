@@ -20,16 +20,16 @@ namespace TA_WPF.Converters
         {
             if (!(parameter is string parameterString))
                 return value;
-                
+
             var parts = parameterString.Split('|');
             if (parts.Length != 2)
                 return value;
-                
+
             if (value is bool boolValue)
             {
                 return boolValue ? parts[0] : parts[1];
             }
-            
+
             return value;
         }
 
@@ -45,12 +45,12 @@ namespace TA_WPF.Converters
         {
             if (!(parameter is string parameterString) || !(value is string valueString))
                 return false;
-                
+
             var parts = parameterString.Split('|');
             if (parts.Length != 2)
                 return false;
-                
+
             return valueString == parts[0];
         }
     }
-} 
+}

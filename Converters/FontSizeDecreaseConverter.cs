@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Windows.Data;
 
@@ -23,7 +22,7 @@ namespace TA_WPF.Converters
             {
                 // 默认减小2
                 double decreaseAmount = 2;
-                
+
                 // 如果提供了参数，尝试将其解析为减小值
                 if (parameter != null)
                 {
@@ -32,11 +31,11 @@ namespace TA_WPF.Converters
                         decreaseAmount = paramValue;
                     }
                 }
-                
+
                 // 确保字体大小不小于最小可读值
                 return Math.Max(10, fontSize - decreaseAmount);
             }
-            
+
             return value;
         }
 
@@ -49,7 +48,7 @@ namespace TA_WPF.Converters
             {
                 // 默认增加2
                 double increaseAmount = 2;
-                
+
                 // 如果提供了参数，尝试将其解析为增加值
                 if (parameter != null)
                 {
@@ -58,11 +57,11 @@ namespace TA_WPF.Converters
                         increaseAmount = paramValue;
                     }
                 }
-                
+
                 return fontSize + increaseAmount;
             }
-            
+
             return value;
         }
     }
-} 
+}

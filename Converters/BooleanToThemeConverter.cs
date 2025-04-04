@@ -1,6 +1,6 @@
+using MaterialDesignThemes.Wpf;
 using System.Globalization;
 using System.Windows.Data;
-using MaterialDesignThemes.Wpf;
 
 namespace TA_WPF.Converters
 {
@@ -27,4 +27,4 @@ namespace TA_WPF.Converters
             return false; // 默认返回浅色主题（false）
         }
     }
-} 
+}

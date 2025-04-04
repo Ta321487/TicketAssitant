@@ -19,7 +19,7 @@ namespace TA_WPF.Converters
                 {
                     bool.TryParse(paramString, out invert);
                 }
-                
+
                 if (invert)
                 {
                     return boolValue ? Visibility.Visible : Visibility.Hidden;
@@ -29,10 +29,10 @@ namespace TA_WPF.Converters
                     return boolValue ? Visibility.Hidden : Visibility.Visible;
                 }
             }
-            
+
             return Visibility.Visible;
         }
-        
+
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is Visibility visibility)
@@ -43,7 +43,7 @@ namespace TA_WPF.Converters
                 {
                     bool.TryParse(paramString, out invert);
                 }
-                
+
                 if (invert)
                 {
                     return visibility == Visibility.Visible;
@@ -53,8 +53,8 @@ namespace TA_WPF.Converters
                     return visibility != Visibility.Visible;
                 }
             }
-            
+
             return false;
         }
     }
-} 
+}

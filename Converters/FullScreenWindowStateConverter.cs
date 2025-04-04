@@ -25,9 +25,9 @@ namespace TA_WPF.Converters
                 // 全屏模式下使用最大化状态
                 return WindowState.Maximized;
             }
-            
+
             // 尝试从绑定源获取DashboardViewModel
-            if (value is bool && Application.Current.MainWindow?.DataContext is MainViewModel mainViewModel && 
+            if (value is bool && Application.Current.MainWindow?.DataContext is MainViewModel mainViewModel &&
                 mainViewModel.DashboardViewModel != null)
             {
                 WindowState previousState = mainViewModel.DashboardViewModel.PreviousWindowState;
@@ -36,7 +36,7 @@ namespace TA_WPF.Converters
                     return previousState;
                 }
             }
-            
+
             return WindowState.Normal; // 默认返回普通状态
         }
 
@@ -54,8 +54,8 @@ namespace TA_WPF.Converters
             {
                 return state == WindowState.Maximized;
             }
-            
+
             return false;
         }
     }
-} 
+}

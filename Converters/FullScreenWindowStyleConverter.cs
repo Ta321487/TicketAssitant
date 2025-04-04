@@ -25,7 +25,7 @@ namespace TA_WPF.Converters
                 // 全屏模式下隐藏标题栏
                 return WindowStyle.None;
             }
-            
+
             // 非全屏模式下显示标题栏
             return WindowStyle.SingleBorderWindow;
         }
@@ -44,8 +44,8 @@ namespace TA_WPF.Converters
             {
                 return style == WindowStyle.None;
             }
-            
+
             return false;
         }
     }
-} 
+}

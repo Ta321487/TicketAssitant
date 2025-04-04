@@ -13,32 +13,32 @@ namespace TA_WPF.Converters
                 // 提取车站名称和参数
                 string stationName = values[0] as string;
                 string paramString = values[1] as string;
-                
+
                 if (string.IsNullOrEmpty(stationName) || string.IsNullOrEmpty(paramString))
                 {
                     return new Thickness(0);
                 }
-                
+
                 // 解析参数 - 格式为 "baseX,baseY,unused1,unused2"
                 string[] parts = paramString.Split(',');
                 if (parts.Length != 4)
                 {
                     return new Thickness(0);
                 }
-                
+
                 double baseX = double.Parse(parts[0]);
                 double baseY = double.Parse(parts[1]);
                 double unused1 = double.Parse(parts[2]); // 用于判断是出发站还是到达站
-                
+
                 // 车站名称长度
                 int length = stationName.Length;
-                
+
                 // 判断是出发站还是到达站
                 bool isDepartStation = unused1 > 400; // 出发站的第三个参数通常大于400
-                
+
                 // 根据站名字数和位置调整"站"字水平位置
                 double adjustedX = baseX;
-                
+
                 if (isDepartStation)
                 {
                     // 出发站调整 - 根据实际图片中的位置
@@ -89,7 +89,7 @@ namespace TA_WPF.Converters
                             break;
                     }
                 }
-                
+
                 // 返回调整后的位置，使用原始Y坐标
                 return new Thickness(adjustedX, baseY, 0, 0);
             }
@@ -98,7 +98,7 @@ namespace TA_WPF.Converters
                 return new Thickness(0);
             }
         }
-        
+
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();

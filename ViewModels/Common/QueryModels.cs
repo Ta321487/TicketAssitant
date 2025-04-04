@@ -9,12 +9,12 @@ namespace TA_WPF.ViewModels
         /// 获取或设置年份值，null 表示不筛选年份
         /// </summary>
         public int? Year { get; set; }
-        
+
         /// <summary>
         /// 获取或设置显示名称
         /// </summary>
         public string DisplayName { get; set; }
-        
+
         /// <summary>
         /// 获取或设置是否为自定义年份选项
         /// </summary>
@@ -33,7 +33,7 @@ namespace TA_WPF.ViewModels
             IsCustom = isCustom;
         }
     }
-    
+
     /// <summary>
     /// 出发站选项类，用于表示出发站筛选下拉列表中的选项
     /// </summary>
@@ -43,7 +43,7 @@ namespace TA_WPF.ViewModels
         /// 获取或设置出发站名称
         /// </summary>
         public string DepartStation { get; set; }
-        
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -53,4 +53,4 @@ namespace TA_WPF.ViewModels
             DepartStation = departStation;
         }
     }
-} 
+}

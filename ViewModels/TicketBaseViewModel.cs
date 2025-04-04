@@ -2,10 +2,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows.Threading;
 
 namespace TA_WPF.ViewModels
 {
@@ -59,11 +59,11 @@ namespace TA_WPF.ViewModels
     public class PaymentChannelViewModel : INotifyPropertyChanged
     {
         protected bool _isInitializing = true; // 初始化标志
-        
+
         // 票种类型启用/禁用状态
         private bool _isStudentTicketEnabled;
         private bool _isChildTicketEnabled;
-        
+
         private bool _isAlipayPayment;
         private bool _isWeChatPayment;
         private bool _isABCPayment;
@@ -77,7 +77,7 @@ namespace TA_WPF.ViewModels
             _isChildTicketEnabled = true;
             _isAlipayPaymentEnabled = true;
             _isWeChatPaymentEnabled = true;
-            
+
             _isInitializing = false;
         }
 
@@ -91,7 +91,7 @@ namespace TA_WPF.ViewModels
                 {
                     _isAlipayPayment = value;
                     OnPropertyChanged(nameof(IsAlipayPayment));
-                    
+
                     // 如果勾选了支付宝售票，那么微信售票不可选择
                     if (!_isInitializing && value)
                     {
@@ -102,7 +102,7 @@ namespace TA_WPF.ViewModels
                     {
                         IsWeChatPaymentEnabled = true; // 启用微信支付选择
                     }
-                    
+
                     if (!_isInitializing) OnPaymentChannelChanged();
                 }
             }
@@ -117,7 +117,7 @@ namespace TA_WPF.ViewModels
                 {
                     _isWeChatPayment = value;
                     OnPropertyChanged(nameof(IsWeChatPayment));
-                    
+
                     // 如果勾选了微信售票，那么支付宝售票不可选择
                     if (!_isInitializing && value)
                     {
@@ -128,7 +128,7 @@ namespace TA_WPF.ViewModels
                     {
                         IsAlipayPaymentEnabled = true; // 启用支付宝支付选择
                     }
-                    
+
                     if (!_isInitializing) OnPaymentChannelChanged();
                 }
             }
@@ -143,14 +143,14 @@ namespace TA_WPF.ViewModels
                 {
                     _isABCPayment = value;
                     OnPropertyChanged(nameof(IsABCPayment));
-                    
+
                     // 农业银行、建设银行、工商银行只能选择一个
                     if (!_isInitializing && value)
                     {
                         IsCCBPayment = false;
                         IsICBCPayment = false;
                     }
-                    
+
                     if (!_isInitializing) OnPaymentChannelChanged();
                 }
             }
@@ -165,14 +165,14 @@ namespace TA_WPF.ViewModels
                 {
                     _isCCBPayment = value;
                     OnPropertyChanged(nameof(IsCCBPayment));
-                    
+
                     // 农业银行、建设银行、工商银行只能选择一个
                     if (!_isInitializing && value)
                     {
                         IsABCPayment = false;
                         IsICBCPayment = false;
                     }
-                    
+
                     if (!_isInitializing) OnPaymentChannelChanged();
                 }
             }
@@ -187,14 +187,14 @@ namespace TA_WPF.ViewModels
                 {
                     _isICBCPayment = value;
                     OnPropertyChanged(nameof(IsICBCPayment));
-                    
+
                     // 农业银行、建设银行、工商银行只能选择一个
                     if (!_isInitializing && value)
                     {
                         IsABCPayment = false;
                         IsCCBPayment = false;
                     }
-                    
+
                     if (!_isInitializing) OnPaymentChannelChanged();
                 }
             }
@@ -264,15 +264,15 @@ namespace TA_WPF.ViewModels
         public void SetPaymentChannelFlags(int flags)
         {
             _isInitializing = true;
-            
+
             IsAlipayPayment = (flags & (int)PaymentChannelFlags.Alipay) != 0;
             IsWeChatPayment = (flags & (int)PaymentChannelFlags.WeChat) != 0;
             IsABCPayment = (flags & (int)PaymentChannelFlags.ABC) != 0;
             IsCCBPayment = (flags & (int)PaymentChannelFlags.CCB) != 0;
             IsICBCPayment = (flags & (int)PaymentChannelFlags.ICBC) != 0;
-            
+
             _isInitializing = false;
-            
+
             // 应用互斥逻辑
             // 支付宝和微信互斥
             if (IsAlipayPayment)
@@ -283,7 +283,7 @@ namespace TA_WPF.ViewModels
             {
                 IsWeChatPaymentEnabled = true;
             }
-            
+
             if (IsWeChatPayment)
             {
                 IsAlipayPaymentEnabled = false;
@@ -352,14 +352,14 @@ namespace TA_WPF.ViewModels
         protected readonly PaginationViewModel _paginationViewModel;
         protected readonly MainViewModel _mainViewModel;
         protected readonly NavigationService _navigationService;
-        
+
         // 票种类型启用/禁用状态
         private bool _isStudentTicketEnabled;
         private bool _isChildTicketEnabled;
-        
+
         // 是否正在初始化
         protected bool _isTicketTypeInitializing = false;
-        
+
         // 选中项数量
         private int _selectedItemsCount = 0;
         // 标记是否正在更新IsAllSelected属性，避免循环调用
@@ -388,7 +388,7 @@ namespace TA_WPF.ViewModels
             // 订阅分页事件
             _paginationViewModel.PageChanged += OnPageChanged;
             _paginationViewModel.PageSizeChanged += OnPageSizeChanged;
-            
+
             // 订阅MainViewModel的字体大小变更事件
             _mainViewModel.PropertyChanged += (s, e) =>
             {
@@ -397,24 +397,24 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(DataGridRowHeight));
                 }
             };
-            
+
             // 初始化添加车票命令
             AddTicketCommand = new RelayCommand(AddTicket);
-            
+
             // 初始化选择相关命令
             SelectAllCommand = new RelayCommand(SelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll);
             ToggleSelectionCommand = new RelayCommand(ToggleSelection);
             InvertSelectionCommand = new RelayCommand(InvertSelection);
             ClearSelectionCommand = new RelayCommand(ClearSelection);
-            
+
             // 初始化删除车票命令
             DeleteTicketsCommand = new RelayCommand(DeleteTickets, () => SelectedItemsCount > 0);
-            
+
             // 初始化修改车票命令
             EditTicketCommand = new RelayCommand(EditTicket, () => SelectedItemsCount == 1);
             DoubleClickEditCommand = new RelayCommand<TrainRideInfo>(EditTicketByDoubleClick);
-            
+
             // 订阅TrainRideInfo的属性变更事件
             _paginationViewModel.Items.CollectionChanged += (s, e) =>
             {
@@ -426,7 +426,7 @@ namespace TA_WPF.ViewModels
                         item.PropertyChanged += OnTrainRideInfoPropertyChanged;
                     }
                 }
-                
+
                 // 当项被移除时，取消订阅属性变更事件
                 if (e.OldItems != null)
                 {
@@ -435,11 +435,11 @@ namespace TA_WPF.ViewModels
                         item.PropertyChanged -= OnTrainRideInfoPropertyChanged;
                     }
                 }
-                
+
                 // 更新选中项计数
                 UpdateSelectedItemsCount();
             };
-            
+
             // 为现有项订阅属性变更事件
             foreach (var item in _paginationViewModel.Items)
             {
@@ -451,17 +451,17 @@ namespace TA_WPF.ViewModels
         /// 添加车票命令
         /// </summary>
         public ICommand AddTicketCommand { get; }
-        
+
         /// <summary>
         /// 修改车票命令
         /// </summary>
         public ICommand EditTicketCommand { get; }
-        
+
         /// <summary>
         /// 双击修改车票命令
         /// </summary>
         public ICommand DoubleClickEditCommand { get; }
-        
+
         /// <summary>
         /// 添加车票
         /// </summary>
@@ -471,7 +471,7 @@ namespace TA_WPF.ViewModels
             {
                 // 打开添加车票窗口
                 bool result = _navigationService.OpenAddTicketWindow(_databaseService, _mainViewModel);
-                
+
                 // 如果用户保存了车票，刷新数据
                 if (result)
                 {
@@ -485,7 +485,7 @@ namespace TA_WPF.ViewModels
                 LogHelper.LogTicketError("添加", "打开添加车票窗口时失败", ex);
             }
         }
-        
+
         /// <summary>
         /// 修改车票
         /// </summary>
@@ -505,7 +505,7 @@ namespace TA_WPF.ViewModels
                 LogHelper.LogTicketError("修改", "执行车票修改操作时失败", ex);
             }
         }
-        
+
         /// <summary>
         /// 通过双击修改车票
         /// </summary>
@@ -518,7 +518,7 @@ namespace TA_WPF.ViewModels
                 {
                     // 打开修改车票窗口
                     bool result = _navigationService.OpenEditTicketWindow(_databaseService, _mainViewModel, ticket);
-                    
+
                     // 如果用户保存了修改，刷新数据
                     if (result)
                     {
@@ -533,7 +533,7 @@ namespace TA_WPF.ViewModels
                 LogHelper.LogTicketError("修改", $"双击修改车票(ID:{ticket?.Id})时失败", ex);
             }
         }
-        
+
         /// <summary>
         /// 全选
         /// </summary>
@@ -541,10 +541,10 @@ namespace TA_WPF.ViewModels
         {
             // 设置全选状态
             IsAllSelected = true;
-            
+
             // 确保所有项都被选中
             ApplySelectionToAll(true);
-            
+
             // 通知UI更新
             OnPropertyChanged(nameof(IsAllSelected));
             OnPropertyChanged(nameof(SelectionToggleText));
@@ -559,10 +559,10 @@ namespace TA_WPF.ViewModels
         {
             // 设置取消全选状态
             IsAllSelected = false;
-            
+
             // 确保所有项都被取消选中
             ApplySelectionToAll(false);
-            
+
             // 通知UI更新
             OnPropertyChanged(nameof(IsAllSelected));
             OnPropertyChanged(nameof(SelectionToggleText));
@@ -577,10 +577,10 @@ namespace TA_WPF.ViewModels
         {
             // 切换全选状态
             IsAllSelected = !IsAllSelected;
-            
+
             // 应用选择状态到所有项
             ApplySelectionToAll(IsAllSelected);
-            
+
             // 通知UI更新
             OnPropertyChanged(nameof(IsAllSelected));
             OnPropertyChanged(nameof(SelectionToggleText));
@@ -604,15 +604,15 @@ namespace TA_WPF.ViewModels
 
             // 更新选中项计数
             UpdateSelectedItemsCount();
-            
+
             // 检测是否所有项都被选中或取消选中，以更新IsAllSelected属性
             bool allSelected = TrainRideInfos.Count > 0 && TrainRideInfos.All(item => item.IsSelected);
-            
+
             // 避免触发ApplySelectionToAll
             _isUpdatingAllSelected = true;
             IsAllSelected = allSelected;
             _isUpdatingAllSelected = false;
-            
+
             // 通知UI更新
             OnPropertyChanged(nameof(IsAllSelected));
             OnPropertyChanged(nameof(SelectionToggleText));
@@ -663,7 +663,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(SelectionToggleText));
             OnPropertyChanged(nameof(SelectionToggleIcon));
             OnPropertyChanged(nameof(SelectionToggleTooltip));
-            
+
             // 刷新命令状态
             CommandManager.InvalidateRequerySuggested();
         }
@@ -675,7 +675,7 @@ namespace TA_WPF.ViewModels
         public void UpdateSelectedItemsCountExternal(int count)
         {
             SelectedItemsCount = count;
-            
+
             // 刷新命令状态，确保EditTicketCommand可用性正确更新
             CommandManager.InvalidateRequerySuggested();
         }
@@ -692,14 +692,14 @@ namespace TA_WPF.ViewModels
             }
 
             SelectedItemsCount = TrainRideInfos.Count(item => item.IsSelected);
-            
+
             // 通知UI更新HasSelectedItems属性
             OnPropertyChanged(nameof(HasSelectedItems));
-            
+
             // 刷新命令状态
             CommandManager.InvalidateRequerySuggested();
         }
-        
+
         /// <summary>
         /// 删除选中的车票
         /// </summary>
@@ -710,27 +710,27 @@ namespace TA_WPF.ViewModels
 
             // 获取选中的车票
             var selectedTickets = TrainRideInfos.Where(item => item.IsSelected).ToList();
-            
+
             // 构建确认消息
             string confirmMessage = SelectedItemsCount == 1
                 ? "确定要删除选中的车票吗？此操作不可撤销。"
                 : $"确定要删除选中的 {SelectedItemsCount} 张车票吗？此操作不可撤销。";
-            
+
             // 显示确认对话框
             var result = TA_WPF.Views.MessageDialog.Show(
                 confirmMessage,
                 "删除确认",
                 TA_WPF.Views.MessageType.Warning,
                 TA_WPF.Views.MessageButtons.YesNo);
-            
+
             if (result != true)
                 return;
-            
+
             try
             {
                 // 设置加载状态
                 _paginationViewModel.IsLoading = true;
-                
+
                 // 删除车票
                 int deletedCount = 0;
                 foreach (var ticket in selectedTickets)
@@ -740,26 +740,26 @@ namespace TA_WPF.ViewModels
                     if (success)
                         deletedCount++;
                 }
-                
+
                 // 显示结果
                 if (deletedCount > 0)
                 {
                     string resultMessage = deletedCount == 1
                         ? "已成功删除1张车票。"
                         : $"已成功删除{deletedCount}张车票。";
-                    
+
                     TA_WPF.Views.MessageDialog.Show(
                         resultMessage,
                         "删除成功",
                         TA_WPF.Views.MessageType.Information,
                         TA_WPF.Views.MessageButtons.Ok);
-                    
+
                     // 清除所有缓存数据
                     _paginationViewModel.ClearCache();
-                    
+
                     // 重新获取总记录数
                     await RefreshTotalItemsAsync();
-                    
+
                     // 计算当前页是否超出总页数
                     if (_paginationViewModel.CurrentPage > _paginationViewModel.TotalPages && _paginationViewModel.TotalPages > 0)
                     {
@@ -771,10 +771,10 @@ namespace TA_WPF.ViewModels
                         // 如果没有数据，则跳转到第一页
                         _paginationViewModel.CurrentPage = 1;
                     }
-                    
+
                     // 刷新数据
                     await RefreshDataAsync();
-                    
+
                     // 删除后，重置全选状态
                     if (IsAllSelected)
                     {
@@ -803,7 +803,7 @@ namespace TA_WPF.ViewModels
                 _paginationViewModel.IsLoading = false;
             }
         }
-        
+
         /// <summary>
         /// 刷新数据
         /// </summary>
@@ -813,33 +813,33 @@ namespace TA_WPF.ViewModels
             {
                 // 设置加载状态
                 _paginationViewModel.IsLoading = true;
-                
+
                 // 清除缓存
                 _paginationViewModel.ClearCache();
-                
+
                 // 保存当前的全选状态
                 bool wasAllSelected = IsAllSelected;
-                
+
                 // 重新加载当前页数据
                 await LoadPageDataAsync();
-                
+
                 // 如果之前是全选状态，则在数据刷新后重新应用全选
                 if (wasAllSelected)
                 {
                     ApplySelectionToAll(true);
                 }
-                
+
                 // 手动触发属性变更通知，确保UI更新
                 OnPropertyChanged(nameof(TotalPages));
                 OnPropertyChanged(nameof(CurrentPage));
                 OnPropertyChanged(nameof(TrainRideInfos));
-                
+
                 // 手动触发导航按钮状态更新
                 OnPropertyChanged(nameof(CanNavigateToFirstPage));
                 OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                 OnPropertyChanged(nameof(CanNavigateToNextPage));
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
-                
+
                 // 手动刷新命令状态
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
             }
@@ -854,7 +854,7 @@ namespace TA_WPF.ViewModels
                 _paginationViewModel.IsLoading = false;
             }
         }
-        
+
         /// <summary>
         /// 页码变更事件处理
         /// </summary>
@@ -864,33 +864,33 @@ namespace TA_WPF.ViewModels
             {
                 // 确保加载状态已设置
                 _paginationViewModel.IsLoading = true;
-                
+
                 // 手动触发属性变更通知，确保UI更新
                 OnPropertyChanged(nameof(CurrentPage));
                 OnPropertyChanged(nameof(CanNavigateToFirstPage));
                 OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                 OnPropertyChanged(nameof(CanNavigateToNextPage));
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
-                
+
                 // 刷新命令状态
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
-                
+
                 // 翻页时，确保重置全选状态
                 _isUpdatingAllSelected = true;
                 IsAllSelected = false;
                 _isUpdatingAllSelected = false;
-                
+
                 // 使用Dispatcher以更高优先级执行数据加载
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
                 {
-                    try 
+                    try
                     {
                         // 加载新的页面数据
                         await LoadPageDataAsync();
-                        
+
                         // 更新选中项计数
                         UpdateSelectedItemsCount();
-                        
+
                         // 再次触发UI更新通知
                         OnPropertyChanged(nameof(TrainRideInfos));
                         OnPropertyChanged(nameof(IsAllSelected));
@@ -916,7 +916,7 @@ namespace TA_WPF.ViewModels
                 _paginationViewModel.IsLoading = false;
             }
         }
-        
+
         /// <summary>
         /// 页大小变更事件处理
         /// </summary>
@@ -926,36 +926,36 @@ namespace TA_WPF.ViewModels
             {
                 // 确保加载状态已设置
                 _paginationViewModel.IsLoading = true;
-                
+
                 // 手动触发属性变更通知，确保UI更新
                 OnPropertyChanged(nameof(CurrentPage));
                 OnPropertyChanged(nameof(CanNavigateToFirstPage));
                 OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                 OnPropertyChanged(nameof(CanNavigateToNextPage));
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
-                
+
                 // 刷新命令状态
                 System.Windows.Input.CommandManager.InvalidateRequerySuggested();
-                
+
                 // 页大小改变时，重置全选状态
                 _isUpdatingAllSelected = true;
                 IsAllSelected = false;
                 _isUpdatingAllSelected = false;
-                
+
                 // 使用Dispatcher以更高优先级执行数据加载
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(async () =>
                 {
-                    try 
+                    try
                     {
                         // 先刷新总记录数，确保总页数计算正确
                         await RefreshTotalItemsAsync();
-                        
+
                         // 加载新的页面数据
                         await LoadPageDataAsync();
-                        
+
                         // 更新选中项计数
                         UpdateSelectedItemsCount();
-                        
+
                         // 再次触发UI更新通知
                         OnPropertyChanged(nameof(TotalPages));
                         OnPropertyChanged(nameof(TrainRideInfos));
@@ -993,13 +993,13 @@ namespace TA_WPF.ViewModels
             if (e.PropertyName == nameof(TrainRideInfo.IsSelected))
             {
                 UpdateSelectedItemsCount();
-                
+
                 // 检测是否所有项都被选中或取消选中，以更新IsAllSelected属性
                 if (TrainRideInfos != null && TrainRideInfos.Count > 0)
                 {
                     bool allSelected = TrainRideInfos.All(item => item.IsSelected);
                     bool noneSelected = TrainRideInfos.All(item => !item.IsSelected);
-                    
+
                     if (allSelected && !IsAllSelected)
                     {
                         // 避免触发ApplySelectionToAll
@@ -1105,7 +1105,7 @@ namespace TA_WPF.ViewModels
         /// 数据表格行高
         /// </summary>
         public double DataGridRowHeight => _mainViewModel.DataGridRowHeight;
-        
+
         /// <summary>
         /// 选中项数量
         /// </summary>
@@ -1132,8 +1132,8 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 选择摘要信息
         /// </summary>
-        public string SelectionSummary => SelectedItemsCount > 0 
-            ? $"已选择 {SelectedItemsCount} 项" 
+        public string SelectionSummary => SelectedItemsCount > 0
+            ? $"已选择 {SelectedItemsCount} 项"
             : string.Empty;
 
         /// <summary>
@@ -1162,20 +1162,20 @@ namespace TA_WPF.ViewModels
                 if (base.IsAllSelected != value)
                 {
                     base.IsAllSelected = value;
-                    
+
                     // 避免循环调用
                     if (!_isUpdatingAllSelected)
                     {
                         // 应用选择状态到所有项
                         ApplySelectionToAll(value);
                     }
-                    
+
                     // 通知UI更新切换按钮的文本和图标
                     OnPropertyChanged(nameof(IsAllSelected));
                     OnPropertyChanged(nameof(SelectionToggleText));
                     OnPropertyChanged(nameof(SelectionToggleIcon));
                     OnPropertyChanged(nameof(SelectionToggleTooltip));
-                    
+
                     // 刷新命令状态
                     CommandManager.InvalidateRequerySuggested();
                 }
@@ -1193,7 +1193,7 @@ namespace TA_WPF.ViewModels
         public MainViewModel MainViewModel => _mainViewModel;
 
         // 票种类型互斥逻辑属性
-        
+
         // 控制学生票是否可用
         public bool IsStudentTicketEnabled
         {
@@ -1273,7 +1273,7 @@ namespace TA_WPF.ViewModels
         /// 末页命令
         /// </summary>
         public System.Windows.Input.ICommand LastPageCommand => _paginationViewModel.LastPageCommand;
-        
+
         /// <summary>
         /// 全选命令
         /// </summary>
@@ -1306,4 +1306,4 @@ namespace TA_WPF.ViewModels
 
         #endregion
     }
-} 
+}

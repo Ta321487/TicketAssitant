@@ -1,16 +1,10 @@
-using System.Text.RegularExpressions;
+using System.Diagnostics;
+using System.Text;
 using System.Windows;
-using MySql.Data.MySqlClient;
+using System.Windows.Threading;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Diagnostics;
-using System.Windows.Threading;
-using System.Windows.Input;
-using System.Text;
-using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -25,7 +19,7 @@ namespace TA_WPF.ViewModels
         private bool _isResetting = false;  // 添加重置标志
         private CancellationTokenSource _validationCancellationTokenSource = new CancellationTokenSource();  // 添加验证取消令牌源
 
-        public EditTicketViewModel(DatabaseService databaseService, MainViewModel mainViewModel, TrainRideInfo ticket) 
+        public EditTicketViewModel(DatabaseService databaseService, MainViewModel mainViewModel, TrainRideInfo ticket)
             : base(databaseService, mainViewModel)
         {
             _originalTicket = ticket;
@@ -33,10 +27,10 @@ namespace TA_WPF.ViewModels
 
             // 加载原始车票数据
             LoadTicketData();
-            
+
             // 初始加载完成
             _isInitialLoad = false;
-            
+
             // 重置表单修改状态，因为这是初始加载，不应该被视为用户修改
             ResetFormModifiedState();
         }
@@ -57,40 +51,40 @@ namespace TA_WPF.ViewModels
             {
                 // 设置正在初始化标志
                 _isInitializing = true;
-                
+
                 // 设置车票号
                 TicketNumber = _originalTicket.TicketNumber;
-                
+
                 // 设置检票口
                 CheckInLocation = _originalTicket.CheckInLocation;
-                
+
                 // 设置出发站，直接赋值不触发校验
                 _isUpdatingDepartStation = true;
                 DepartStation = _originalTicket.DepartStation?.Replace("站", "");
                 DepartStationPinyin = _originalTicket.DepartStationPinyin;
                 DepartStationCode = _originalTicket.DepartStationCode;
                 _isUpdatingDepartStation = false;
-                
+
                 // 设置到达站，直接赋值不触发校验
                 _isUpdatingArriveStation = true;
                 ArriveStation = _originalTicket.ArriveStation?.Replace("站", "");
                 ArriveStationPinyin = _originalTicket.ArriveStationPinyin;
                 ArriveStationCode = _originalTicket.ArriveStationCode;
                 _isUpdatingArriveStation = false;
-                
+
                 // 设置车票改签类型
                 SelectedTicketModificationType = _originalTicket.TicketModificationType;
-                
+
                 // 设置日期和时间
                 if (_originalTicket.DepartDate.HasValue)
                     DepartDate = _originalTicket.DepartDate.Value;
-                
+
                 if (_originalTicket.DepartTime.HasValue)
                 {
                     DepartHour = _originalTicket.DepartTime.Value.Hours;
                     DepartMinute = _originalTicket.DepartTime.Value.Minutes;
                 }
-                
+
                 // 更新搜索文本框的显示
                 _isUpdatingDepartStation = true;
                 _isUpdatingArriveStation = true;
@@ -98,7 +92,7 @@ namespace TA_WPF.ViewModels
                 ArriveStationSearchText = _originalTicket.ArriveStation?.Replace("站", "");
                 _isUpdatingDepartStation = false;
                 _isUpdatingArriveStation = false;
-                
+
                 Money = _originalTicket.Money ?? 0m;
 
                 // 设置车次信息
@@ -135,11 +129,11 @@ namespace TA_WPF.ViewModels
                     var (number, position, isNoSeat) = FormValidationHelper.ParseSeatNo(seatNo);
                     IsNoSeat = isNoSeat;
                     SeatNo = number;
-                    
+
                     // 设置座位类型和位置
                     SelectedSeatType = _originalTicket.SeatType;
                     UpdateSeatPositions();
-                    
+
                     if (!string.IsNullOrEmpty(position))
                     {
                         SelectedSeatPosition = position;
@@ -152,7 +146,7 @@ namespace TA_WPF.ViewModels
                 // 设置附加信息
                 SelectedAdditionalInfo = _originalTicket.AdditionalInfo;
                 SelectedTicketPurpose = _originalTicket.TicketPurpose;
-                
+
                 // 设置提示信息
                 string hint = _originalTicket.Hint;
                 if (!string.IsNullOrEmpty(hint) && !HintOptions.Contains(hint))
@@ -165,14 +159,14 @@ namespace TA_WPF.ViewModels
                 {
                     SelectedHint = hint;
                 }
-                
+
                 // 设置票种类型
                 int ticketTypeFlags = _originalTicket.TicketTypeFlags;
                 IsStudentTicket = (ticketTypeFlags & (int)TicketTypeFlags.StudentTicket) != 0;
                 IsDiscountTicket = (ticketTypeFlags & (int)TicketTypeFlags.DiscountTicket) != 0;
                 IsOnlineTicket = (ticketTypeFlags & (int)TicketTypeFlags.OnlineTicket) != 0;
                 IsChildTicket = (ticketTypeFlags & (int)TicketTypeFlags.ChildTicket) != 0;
-                
+
                 // 设置支付渠道
                 int paymentChannelFlags = _originalTicket.PaymentChannelFlags;
                 IsAlipayPayment = (paymentChannelFlags & (int)PaymentChannelFlags.Alipay) != 0;
@@ -180,7 +174,7 @@ namespace TA_WPF.ViewModels
                 IsABCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.ABC) != 0;
                 IsCCBPayment = (paymentChannelFlags & (int)PaymentChannelFlags.CCB) != 0;
                 IsICBCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.ICBC) != 0;
-                
+
                 // 初始化完成
                 _isInitializing = false;
             }
@@ -201,7 +195,7 @@ namespace TA_WPF.ViewModels
                 // 创建一个错误消息列表，用于保存所有验证错误
                 _validationErrors.Clear();
                 StringBuilder errorMessages = new StringBuilder();
-                
+
                 // 创建TrainRideInfo对象用于验证
                 var ticket = new TrainRideInfo
                 {
@@ -231,31 +225,31 @@ namespace TA_WPF.ViewModels
 
                 // 1. 收集所有必填项错误，但不立即返回
                 bool isBasicValidationPassed = FormValidationHelper.ValidateTicketForm(ticket, _validationErrors);
-                
+
                 // 2. 验证车站外键关系前，确保StationSearchService已初始化
                 if (!_stationSearchService.IsInitialized)
                 {
                     var initTask = _stationSearchService.InitializeAsync();
                     initTask.Wait(); // 在UI线程中谨慎使用Wait()
                 }
-                
+
                 bool departHasError = false;
                 bool arriveHasError = false;
-                
+
                 // 3. 检测出发站和到达站信息
                 // 只有在用户填写了站名的情况下才检测代码和拼音是否匹配
                 if (!string.IsNullOrWhiteSpace(DepartStation))
                 {
                     // 通过站名查找出发站信息
                     var departByName = _stationSearchService.Stations
-                        .FirstOrDefault(s => s.StationName == DepartStation || 
-                                            s.StationName == DepartStation + "站" || 
+                        .FirstOrDefault(s => s.StationName == DepartStation ||
+                                            s.StationName == DepartStation + "站" ||
                                             s.StationName?.Replace("站", "") == DepartStation);
-                    
+
                     // 通过代码查找出发站信息
-                    var departByCode = !string.IsNullOrWhiteSpace(DepartStationCode) ? 
+                    var departByCode = !string.IsNullOrWhiteSpace(DepartStationCode) ?
                         _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == DepartStationCode) : null;
-                    
+
                     // 如果站名能找到，但代码不匹配或为空
                     if (departByName != null)
                     {
@@ -277,7 +271,7 @@ namespace TA_WPF.ViewModels
                             errorMessages.AppendLine($"- 正确的代码应为：【{departByName.StationCode}】");
                             errorMessages.AppendLine();
                         }
-                        
+
                         // 检测拼音是否匹配或为空
                         if (string.IsNullOrWhiteSpace(DepartStationPinyin))
                         {
@@ -305,20 +299,20 @@ namespace TA_WPF.ViewModels
                         errorMessages.AppendLine();
                     }
                 }
-                
+
                 // 检测到达站，逻辑与出发站类似
                 if (!string.IsNullOrWhiteSpace(ArriveStation))
                 {
                     // 通过站名查找到达站信息
                     var arriveByName = _stationSearchService.Stations
-                        .FirstOrDefault(s => s.StationName == ArriveStation || 
-                                            s.StationName == ArriveStation + "站" || 
+                        .FirstOrDefault(s => s.StationName == ArriveStation ||
+                                            s.StationName == ArriveStation + "站" ||
                                             s.StationName?.Replace("站", "") == ArriveStation);
-                    
+
                     // 通过代码查找到达站信息
-                    var arriveByCode = !string.IsNullOrWhiteSpace(ArriveStationCode) ? 
+                    var arriveByCode = !string.IsNullOrWhiteSpace(ArriveStationCode) ?
                         _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == ArriveStationCode) : null;
-                    
+
                     // 如果站名能找到，但代码不匹配或为空
                     if (arriveByName != null)
                     {
@@ -340,7 +334,7 @@ namespace TA_WPF.ViewModels
                             errorMessages.AppendLine($"- 正确的代码应为：【{arriveByName.StationCode}】");
                             errorMessages.AppendLine();
                         }
-                        
+
                         // 检测拼音是否匹配或为空
                         if (string.IsNullOrWhiteSpace(ArriveStationPinyin))
                         {
@@ -368,31 +362,31 @@ namespace TA_WPF.ViewModels
                         errorMessages.AppendLine();
                     }
                 }
-                
+
                 // 4. 组合所有错误信息
                 if (_validationErrors.Count > 0 || departHasError || arriveHasError)
                 {
                     // 构建完整的错误信息
                     StringBuilder fullErrorMessage = new StringBuilder("请修正以下错误：\n");
-                    
+
                     // 先添加必填项错误
                     foreach (var error in _validationErrors)
                     {
                         fullErrorMessage.AppendLine($"- {error}");
                     }
-                    
+
                     // 如果有必填项错误和其他错误，添加一个分隔行
                     if (_validationErrors.Count > 0 && (departHasError || arriveHasError))
                     {
                         fullErrorMessage.AppendLine();
                     }
-                    
+
                     // 添加车站匹配错误
                     if (departHasError || arriveHasError)
                     {
                         fullErrorMessage.Append(errorMessages);
                     }
-                    
+
                     MessageBoxHelper.ShowWarning(fullErrorMessage.ToString(), "保存验证");
                     return;
                 }
@@ -426,11 +420,11 @@ namespace TA_WPF.ViewModels
 
                 // 更新车票
                 bool result = await _databaseService.UpdateTicketAsync(finalTicket);
-                
+
                 if (result)
                 {
                     MessageBoxHelper.ShowInformation("车票修改成功！", "成功");
-                    
+
                     // 触发窗口关闭事件
                     OnCloseWindow();
                 }
@@ -456,7 +450,7 @@ namespace TA_WPF.ViewModels
             if (IsChildTicket) flags |= (int)TicketTypeFlags.ChildTicket;
             return flags;
         }
-        
+
         // 获取支付渠道标志位
         private int GetPaymentChannelFlags()
         {
@@ -490,7 +484,7 @@ namespace TA_WPF.ViewModels
             {
                 // 先设置重置标志为true
                 _isResetting = true;
-                
+
                 // 取消所有正在进行的校验任务
                 if (_validationCancellationTokenSource != null)
                 {
@@ -498,7 +492,7 @@ namespace TA_WPF.ViewModels
                     _validationCancellationTokenSource.Dispose();
                     _validationCancellationTokenSource = new CancellationTokenSource();
                 }
-                
+
                 // 直接同步执行重置操作，不再使用异步方式
                 ResetForm();
             }
@@ -518,26 +512,27 @@ namespace TA_WPF.ViewModels
             try
             {
                 Debug.WriteLine("开始重置编辑车票表单...");
-                
+
                 // 重新加载原始车票数据
                 LoadTicketData();
-                
+
                 // 重置表单修改状态
                 IsFormModified = false;
-                
+
                 // 重置验证错误列表
                 _validationErrors.Clear();
-                
+
                 // 将焦点设置到取票号输入框
                 OnFocusTextBox("TicketNumber");
-                
+
                 // 使用Dispatcher确保焦点设置在UI更新后执行
-                Application.Current.Dispatcher.InvokeAsync(() => {
+                Application.Current.Dispatcher.InvokeAsync(() =>
+                {
                     OnFocusTextBox("TicketNumber");
                 }, DispatcherPriority.Render);
-                
+
                 Debug.WriteLine("编辑车票表单重置完成，焦点已设置到取票号输入框");
-                
+
                 // 重置完成，设置重置标志为false
                 _isResetting = false;
             }
@@ -554,4 +549,4 @@ namespace TA_WPF.ViewModels
             base.ResetFormModifiedState();
         }
     }
-} 
+}

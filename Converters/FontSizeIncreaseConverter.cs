@@ -14,13 +14,13 @@ namespace TA_WPF.Converters
             {
                 return fontSize + incrementValue;
             }
-            
+
             // 如果参数未指定，默认增加2
             if (value is double size)
             {
                 return size + 2;
             }
-            
+
             return value;
         }
 
@@ -29,4 +29,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

@@ -24,4 +24,4 @@ namespace TA_WPF.Converters
             return (bool)value ? parameter.ToString() : null;
         }
     }
-} 
+}

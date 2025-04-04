@@ -19,7 +19,7 @@ namespace TA_WPF.Utils
             {
                 // 获取所有网络接口
                 var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces()
-                    .Where(n => n.OperationalStatus == OperationalStatus.Up && 
+                    .Where(n => n.OperationalStatus == OperationalStatus.Up &&
                            n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
                     .ToList();
 
@@ -77,7 +77,7 @@ namespace TA_WPF.Utils
                     {
                         var key = keyValue[0].ToLower().Trim();
                         var value = keyValue[1].Trim();
-                        
+
                         if (key == "server" || key == "host")
                         {
                             // 如果是localhost或127.0.0.1，返回实际IP地址
@@ -95,8 +95,8 @@ namespace TA_WPF.Utils
                 System.Diagnostics.Debug.WriteLine($"获取数据库服务器IP地址时出错: {ex.Message}");
                 LogHelper.LogSystemError("网络", $"获取数据库服务器IP地址时出错", ex);
             }
-            
+
             return "未知";
         }
     }
-} 
+}

@@ -109,7 +109,7 @@ namespace TA_WPF.Services
             string cleanName = stationName.Replace("站", "");
 
             // 在已加载的站点中查找匹配
-            return _stations.FirstOrDefault(s => 
+            return _stations.FirstOrDefault(s =>
                 s.StationName?.Replace("站", "") == cleanName ||
                 s.StationName == cleanName);
         }
@@ -136,7 +136,7 @@ namespace TA_WPF.Services
 
                 // 获取可能的匹配结果
                 var searchResults = await _databaseService.SearchStationsByNameAsync(stationName);
-                
+
                 // 返回第一个最接近的匹配
                 return searchResults.FirstOrDefault();
             }
@@ -169,7 +169,7 @@ namespace TA_WPF.Services
                     var loadTask = LoadStationsAsync();
                     loadTask.Wait();
                 }
-                
+
                 // 在站点列表中查找匹配的站点，不进行校验
                 return ValidateStationName(stationName);
             }
@@ -230,7 +230,7 @@ namespace TA_WPF.Services
                 return (1, null); // 出错时默认为车站不存在
             }
         }
-        
+
         /// <summary>
         /// 初始化服务
         /// </summary>
@@ -241,7 +241,7 @@ namespace TA_WPF.Services
                 await LoadStationsAsync();
             }
         }
-        
+
         /// <summary>
         /// 检测是否为有效的车站名
         /// </summary>
@@ -253,7 +253,7 @@ namespace TA_WPF.Services
             {
                 return false;
             }
-            
+
             // 确保站点数据已加载
             if (!_isInitialized)
             {
@@ -261,17 +261,17 @@ namespace TA_WPF.Services
                 var loadTask = LoadStationsAsync();
                 loadTask.Wait();
             }
-            
+
             // 检测车站表是否为空
             if (_stations.Count == 0)
             {
                 return false;
             }
-            
+
             // 在站点列表中查找匹配的站点
             return ValidateStationName(stationName) != null;
         }
-        
+
         /// <summary>
         /// 获取车站信息
         /// </summary>
@@ -283,7 +283,7 @@ namespace TA_WPF.Services
             {
                 return null;
             }
-            
+
             // 确保站点数据已加载
             if (!_isInitialized)
             {
@@ -291,9 +291,9 @@ namespace TA_WPF.Services
                 var loadTask = LoadStationsAsync();
                 loadTask.Wait();
             }
-            
+
             // 在站点列表中查找匹配的站点
             return ValidateStationName(stationName);
         }
     }
-} 
+}

@@ -1,8 +1,8 @@
+using MaterialDesignThemes.Wpf;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
-using MaterialDesignThemes.Wpf;
 using TA_WPF.Utils;
-using System.ComponentModel;
 using Theme = MaterialDesignThemes.Wpf.Theme;
 
 namespace TA_WPF.Services
@@ -61,7 +61,7 @@ namespace TA_WPF.Services
             {
                 if (window == null)
                     return;
-            
+
                 // 显式设置窗口的ThemeAssist.Theme属性
                 MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(window,
                     isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
@@ -255,7 +255,7 @@ namespace TA_WPF.Services
             {
                 // 使用ConfigUtils保存主题设置
                 ConfigUtils.SaveBoolValue("IsDarkMode", isDarkMode);
-                
+
                 // 同时更新资源字典中的主题标志
                 if (Application.Current?.Resources != null)
                 {
@@ -285,17 +285,17 @@ namespace TA_WPF.Services
             {
                 // 使用ConfigUtils获取主题设置
                 bool isDarkMode = ConfigUtils.GetBoolValue("IsDarkMode", false);
-                
+
                 // 同时更新资源字典中的主题标志
                 if (Application.Current?.Resources != null)
                 {
                     Application.Current.Resources["Theme.Dark"] = isDarkMode;
                     Application.Current.Resources["Theme.Light"] = !isDarkMode;
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine($"从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
                 LogHelper.LogSystem("主题", $"从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
-                
+
                 return isDarkMode;
             }
             catch (Exception ex)
@@ -304,20 +304,20 @@ namespace TA_WPF.Services
                 System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 LogHelper.LogSystem("主题", $"加载主题设置时出错: {ex.Message}");
                 LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
-                
+
                 // 如果加载失败，检测当前主题
                 bool currentTheme = IsDarkThemeActive();
-                
+
                 // 更新资源字典中的主题标志
                 if (Application.Current?.Resources != null)
                 {
                     Application.Current.Resources["Theme.Dark"] = currentTheme;
                     Application.Current.Resources["Theme.Light"] = !currentTheme;
                 }
-                
+
                 // 保存当前主题设置到配置文件
                 SaveThemeToConfig(currentTheme);
-                
+
                 return currentTheme;
             }
         }

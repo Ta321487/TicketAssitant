@@ -12,7 +12,7 @@ namespace TA_WPF.ViewModels
     {
         // 静态实例，确保设计时数据上下文的稳定性
         public static readonly DesignTimeQueryAllTicketsViewModel Instance = new DesignTimeQueryAllTicketsViewModel();
-        
+
         private ObservableCollection<TrainRideInfo> _trainRideInfos;
         private int _currentPage = 1;
         private int _totalPages = 10;
@@ -66,7 +66,7 @@ namespace TA_WPF.ViewModels
                     Hint = "请提前到达车站"
                 }
             };
-            
+
             // 初始化页大小选项
             _pageSizeOptions = new ObservableCollection<int> { 10, 20, 50 };
         }
@@ -171,7 +171,7 @@ namespace TA_WPF.ViewModels
     {
         // 静态实例，确保设计时数据上下文的稳定性
         public static readonly DesignTimeAdvancedQueryTicketViewModel Instance = new DesignTimeAdvancedQueryTicketViewModel();
-        
+
         private bool _isQueryPanelVisible = true;
         private string _trainNumberFilter = "1234";
         private string _selectedTrainPrefix = "G";
@@ -185,13 +185,13 @@ namespace TA_WPF.ViewModels
         private bool _hasActiveFilters = true;
         private string _departStationSearchText = "北京";
         private ObservableCollection<StationInfo> _departStationSuggestions = new();
-        
+
         public DesignTimeAdvancedQueryTicketViewModel()
         {
             // 初始化年份选项
             int currentYear = DateTime.Now.Year;
             _selectedDepartStation = new DepartStationItem("北京");
-            
+
             // 初始化年份选项
             _yearOptions = new List<YearOption>
             {
@@ -203,7 +203,7 @@ namespace TA_WPF.ViewModels
                 new YearOption(null, "自定义年份", true)
             };
             _selectedYearOption = _yearOptions[1]; // 选择当前年
-            
+
             // 初始化出发站列表
             _departStations = new ObservableCollection<DepartStationItem>
             {
@@ -212,7 +212,7 @@ namespace TA_WPF.ViewModels
                 new DepartStationItem("广州"),
                 new DepartStationItem("深圳")
             };
-            
+
             // 初始化站点建议列表
             _departStationSuggestions = new ObservableCollection<StationInfo>
             {
@@ -221,7 +221,7 @@ namespace TA_WPF.ViewModels
                 new StationInfo { StationName = "北京南站", StationPinyin = "BEIJINGNANZHAN" }
             };
         }
-        
+
         public bool IsQueryPanelVisible
         {
             get => _isQueryPanelVisible;
@@ -231,7 +231,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public string TrainNumberFilter
         {
             get => _trainNumberFilter;
@@ -242,7 +242,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(QueryButtonText));
             }
         }
-        
+
         public string SelectedTrainPrefix
         {
             get => _selectedTrainPrefix;
@@ -252,7 +252,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public List<string> TrainPrefixes
         {
             get => _trainPrefixes;
@@ -262,7 +262,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public DepartStationItem SelectedDepartStation
         {
             get => _selectedDepartStation;
@@ -273,7 +273,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(QueryButtonText));
             }
         }
-        
+
         public YearOption? SelectedYearOption
         {
             get => _selectedYearOption;
@@ -284,7 +284,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(QueryButtonText));
             }
         }
-        
+
         public List<YearOption> YearOptions
         {
             get => _yearOptions;
@@ -294,7 +294,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public ObservableCollection<DepartStationItem> DepartStations
         {
             get => _departStations;
@@ -304,7 +304,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public ObservableCollection<StationInfo> DepartStationSuggestions
         {
             get => _departStationSuggestions;
@@ -314,7 +314,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public string DepartStationSearchText
         {
             get => _departStationSearchText;
@@ -324,9 +324,9 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         public bool IsDepartStationDropdownOpen { get; set; } = false;
-        
+
         public bool IsAndCondition
         {
             get => _isAndCondition;
@@ -338,7 +338,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(IsOrCondition));
             }
         }
-        
+
         public bool IsOrCondition
         {
             get => _isOrCondition;
@@ -350,7 +350,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(IsAndCondition));
             }
         }
-        
+
         public bool HasActiveFilters
         {
             get => _hasActiveFilters;
@@ -361,17 +361,17 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(QueryButtonText));
             }
         }
-        
+
         public string QueryButtonText
         {
             get => HasActiveFilters ? "查询" : "查询全部";
         }
-        
+
         public event PropertyChangedEventHandler? PropertyChanged;
-        
+
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-} 
+}

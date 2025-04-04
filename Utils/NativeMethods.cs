@@ -17,4 +17,4 @@ namespace TA_WPF.Utils
         [DllImport("user32.dll")]
         public static extern int SetWindowLong(IntPtr hwnd, int index, int value);
     }
-} 
+}

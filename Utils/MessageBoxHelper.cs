@@ -61,4 +61,4 @@ namespace TA_WPF.Utils
             return new InputDialogResult(result == true, dialog.ResponseText);
         }
     }
-} 
+}

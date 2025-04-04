@@ -1,7 +1,7 @@
+using System.Configuration;
 using System.Windows;
 using System.Windows.Controls;
 using TA_WPF.ViewModels;
-using System.Configuration;
 
 namespace TA_WPF.Views
 {
@@ -13,17 +13,17 @@ namespace TA_WPF.Views
         public SettingsPage()
         {
             InitializeComponent();
-            
+
             // 注册加载事件
             this.Loaded += SettingsPage_Loaded;
         }
-        
+
         private void SettingsPage_Loaded(object sender, RoutedEventArgs e)
         {
             // 确保字体大小滑块的值与当前应用程序的字体大小一致
             UpdateFontSizeSlider();
         }
-        
+
         private void UpdateFontSizeSlider()
         {
             try
@@ -43,7 +43,7 @@ namespace TA_WPF.Views
                         {
                             fontSize = FontSizeSlider.Maximum;
                         }
-                        
+
                         // 如果DataContext已设置，更新ViewModel中的FontSize属性
                         if (DataContext is MainViewModel viewModel)
                         {
@@ -65,7 +65,7 @@ namespace TA_WPF.Views
         {
 
         }
-        
+
         /// <summary>
         /// 字体大小滑块值变化事件处理
         /// </summary>
@@ -75,10 +75,10 @@ namespace TA_WPF.Views
             {
                 // 四舍五入到整数
                 int fontSize = (int)Math.Round(e.NewValue);
-                
+
                 // 直接更新显示值，确保实时反馈
                 FontSizeText.Text = $"{fontSize}pt";
-                
+
                 // 如果DataContext已设置，更新ViewModel中的FontSize属性
                 if (DataContext is MainViewModel viewModel)
                 {
@@ -91,4 +91,4 @@ namespace TA_WPF.Views
             }
         }
     }
-} 
+}

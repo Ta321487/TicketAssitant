@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 using IronPython.Hosting;
 using Microsoft.Scripting.Hosting;
+using Newtonsoft.Json;
+using System.Diagnostics;
+using System.IO;
 
 namespace TA_WPF.Services
 {
@@ -18,7 +14,7 @@ namespace TA_WPF.Services
         private readonly string _pythonExePath;
         private readonly string _pythonScriptPath;
         private readonly ScriptEngine _engine;
-        
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -26,11 +22,11 @@ namespace TA_WPF.Services
         {
             _pythonExePath = "python";
             _pythonScriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "ocr.py");
-            
+
             // 初始化IronPython引擎
             _engine = Python.CreateEngine();
         }
-        
+
         /// <summary>
         /// 检测Python是否已安装
         /// </summary>
@@ -45,10 +41,10 @@ namespace TA_WPF.Services
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.CreateNoWindow = true;
-                    
+
                     process.Start();
                     await process.WaitForExitAsync();
-                    
+
                     return process.ExitCode == 0;
                 }
             }
@@ -57,7 +53,7 @@ namespace TA_WPF.Services
                 return false;
             }
         }
-        
+
         /// <summary>
         /// 检测指定的Python包是否已安装
         /// </summary>
@@ -74,10 +70,10 @@ namespace TA_WPF.Services
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
                     process.StartInfo.CreateNoWindow = true;
-                    
+
                     process.Start();
                     await process.WaitForExitAsync();
-                    
+
                     return process.ExitCode == 0;
                 }
             }
@@ -86,7 +82,7 @@ namespace TA_WPF.Services
                 return false;
             }
         }
-        
+
         /// <summary>
         /// 检测OCR模型是否已安装
         /// </summary>
@@ -95,16 +91,16 @@ namespace TA_WPF.Services
             try
             {
                 // 检测多个可能的模型路径
-                
+
                 // 1. 检测用户主目录下的.cnocr目录
                 string userDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 string modelDir1 = Path.Combine(userDir, ".cnocr");
-                
+
                 // 2. 检测AppData/Roaming下的cnocr目录
                 string appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string modelDir2 = Path.Combine(appDataDir, "cnocr");
                 string versionModelDir = Path.Combine(modelDir2, "2.3"); // 特定版本目录
-                
+
                 // 检测所有可能的模型目录
                 foreach (string dir in new[] { modelDir1, modelDir2, versionModelDir })
                 {
@@ -118,7 +114,7 @@ namespace TA_WPF.Services
                         }
                     }
                 }
-                
+
                 return false;
             }
             catch
@@ -126,7 +122,7 @@ namespace TA_WPF.Services
                 return false;
             }
         }
-        
+
         /// <summary>
         /// 通过外部进程运行OCR识别
         /// </summary>
@@ -212,22 +208,22 @@ except Exception as e:
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
                     process.StartInfo.CreateNoWindow = true;
-                    
+
                     process.Start();
-                    
+
                     string output = await process.StandardOutput.ReadToEndAsync();
                     string error = await process.StandardError.ReadToEndAsync();
-                    
+
                     await process.WaitForExitAsync();
-                    
+
                     // 删除临时脚本
                     try { File.Delete(tempScriptPath); } catch { }
-                    
+
                     if (process.ExitCode != 0)
                     {
                         return JsonConvert.SerializeObject(new { error = error });
                     }
-                    
+
                     return output;
                 }
             }
@@ -236,7 +232,7 @@ except Exception as e:
                 return JsonConvert.SerializeObject(new { error = ex.Message });
             }
         }
-        
+
         /// <summary>
         /// 使用IronPython引擎运行简单Python代码
         /// </summary>
@@ -249,15 +245,15 @@ except Exception as e:
                 var scope = _engine.CreateScope();
                 var source = _engine.CreateScriptSourceFromString(code);
                 var output = new StringWriter();
-                
+
                 // 使用内存流作为中间转换
                 var memoryStream = new MemoryStream();
                 var streamWriter = new StreamWriter(memoryStream);
                 streamWriter.AutoFlush = true;
                 _engine.Runtime.IO.SetOutput(memoryStream, System.Text.Encoding.UTF8);
-                
+
                 source.Execute(scope);
-                
+
                 // 读取内存流中的结果
                 memoryStream.Position = 0;
                 var reader = new StreamReader(memoryStream);
@@ -269,4 +265,4 @@ except Exception as e:
             }
         }
     }
-} 
+}

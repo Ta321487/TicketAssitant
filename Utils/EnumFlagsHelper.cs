@@ -11,25 +11,25 @@ namespace TA_WPF.Utils
         public static List<string> GetFlagDescriptions<T>(int flags) where T : Enum
         {
             var descriptions = new List<string>();
-            
+
             foreach (T value in Enum.GetValues(typeof(T)))
             {
                 int flagValue = Convert.ToInt32(value);
-                
+
                 // 跳过None(0)值
                 if (flagValue == 0)
                     continue;
-                
+
                 // 检测该位是否设置
                 if ((flags & flagValue) == flagValue)
                 {
                     descriptions.Add(value.ToString());
                 }
             }
-            
+
             return descriptions;
         }
-        
+
         /// <summary>
         /// 获取描述字符串（以逗号分隔）
         /// </summary>
@@ -41,7 +41,7 @@ namespace TA_WPF.Utils
             var descriptions = GetFlagDescriptions<T>(flags);
             return string.Join("、", descriptions);
         }
-        
+
         /// <summary>
         /// 从描述列表获取标志位整数值
         /// </summary>
@@ -51,7 +51,7 @@ namespace TA_WPF.Utils
         public static int GetFlagsFromDescriptions<T>(IEnumerable<string> selectedDescriptions) where T : Enum
         {
             int flags = 0;
-            
+
             foreach (string description in selectedDescriptions)
             {
                 if (Enum.TryParse(typeof(T), description, out object? value) && value != null)
@@ -59,10 +59,10 @@ namespace TA_WPF.Utils
                     flags |= Convert.ToInt32(value);
                 }
             }
-            
+
             return flags;
         }
-        
+
         /// <summary>
         /// 获取枚举所有可用的描述列表
         /// </summary>
@@ -77,4 +77,4 @@ namespace TA_WPF.Utils
                 .ToList();
         }
     }
-} 
+}

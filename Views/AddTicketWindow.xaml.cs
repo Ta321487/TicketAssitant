@@ -1,15 +1,15 @@
-using System.Windows;
-using System.Windows.Input;
-using System.Text.RegularExpressions;
-using TA_WPF.Services;
-using TA_WPF.ViewModels;
-using System.Windows.Controls;
-using TA_WPF.Utils;
-using System.Globalization;
-using System.Windows.Interop;
 using MaterialDesignThemes.Wpf;
-using System.Windows.Media;
 using System.ComponentModel;
+using System.Globalization;
+using System.Text.RegularExpressions;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Interop;
+using System.Windows.Media;
+using TA_WPF.Services;
+using TA_WPF.Utils;
+using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
 {
@@ -18,29 +18,29 @@ namespace TA_WPF.Views
         private readonly AddTicketViewModel _viewModel;
         private ThemeService _themeService;
         private bool _isClosing = false; // 添加窗口关闭标志
-        
+
         public AddTicketWindow(DatabaseService databaseService, MainViewModel mainViewModel)
         {
             try
             {
                 InitializeComponent();
-                
+
                 // 创建ViewModel并设置为DataContext
                 _viewModel = new AddTicketViewModel(databaseService, mainViewModel);
                 DataContext = _viewModel;
-                
+
                 // 获取主题服务
                 _themeService = ThemeService.Instance;
-                
+
                 // 应用当前主题
                 bool isDarkMode = _themeService.IsDarkThemeActive();
                 ApplyTheme(isDarkMode);
-                
+
                 // 订阅主题变更事件
                 _themeService.ThemeChanged += OnThemeChanged;
-                
+
                 // 订阅窗口关闭事件
-                _viewModel.CloseWindow += (s, e) => 
+                _viewModel.CloseWindow += (s, e) =>
                 {
                     try
                     {
@@ -52,18 +52,19 @@ namespace TA_WPF.Views
                         LogHelper.LogError("关闭添加车票窗口时出错", ex);
                     }
                 };
-                
+
                 // 订阅文本框聚焦事件
                 _viewModel.FocusTextBox += ViewModel_FocusTextBox;
-                
+
                 // 订阅窗口加载事件
                 this.Loaded += AddTicketWindow_Loaded;
-                
+
                 // 订阅字体大小变化事件
                 this.SizeChanged += AddTicketWindow_SizeChanged;
-                
+
                 // 窗口关闭时取消订阅事件
-                this.Closed += (s, e) => {
+                this.Closed += (s, e) =>
+                {
                     _themeService.ThemeChanged -= OnThemeChanged;
                 };
             }
@@ -73,25 +74,25 @@ namespace TA_WPF.Views
                 MessageBoxHelper.ShowError("初始化窗口时出错: " + ex.Message);
             }
         }
-        
+
         private void ApplyTheme(bool isDarkMode)
         {
             // 设置窗口主题
             ThemeAssist.SetTheme(this, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
-            
+
             // 获取当前资源字典
             var paletteHelper = new PaletteHelper();
             var theme = paletteHelper.GetTheme();
-            
+
             // 设置深色/浅色模式
             theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
-            
+
             // 应用主题到窗口
             paletteHelper.SetTheme(theme);
-            
+
             // 获取主题前景色
             var foregroundBrush = Application.Current.Resources["MaterialDesignBody"] as Brush;
-            
+
             // 更新所有文本框的前景色
             if (foregroundBrush != null)
             {
@@ -101,14 +102,14 @@ namespace TA_WPF.Views
                 {
                     textBox.Foreground = foregroundBrush;
                 }
-                
+
                 // 查找所有ComboBox并更新前景色
                 var comboBoxes = FindVisualChildren<ComboBox>(this);
                 foreach (var comboBox in comboBoxes)
                 {
                     comboBox.Foreground = foregroundBrush;
                 }
-                
+
                 // 查找所有TextBlock并更新前景色
                 var textBlocks = FindVisualChildren<TextBlock>(this);
                 foreach (var textBlock in textBlocks)
@@ -120,11 +121,11 @@ namespace TA_WPF.Views
                     }
                 }
             }
-            
+
             // 强制刷新窗口
             this.UpdateLayout();
         }
-        
+
         /// <summary>
         /// 查找指定类型的所有可视子元素
         /// </summary>
@@ -147,7 +148,7 @@ namespace TA_WPF.Views
                 }
             }
         }
-        
+
         private void OnThemeChanged(object sender, bool isDarkMode)
         {
             // 更新窗口主题
@@ -160,7 +161,7 @@ namespace TA_WPF.Views
             {
                 // 设置窗口初始大小
                 AdjustWindowSize();
-                
+
                 // 自动设置焦点到第一个文本框
                 var firstTextBox = FindVisualChildren<TextBox>(this).FirstOrDefault();
                 if (firstTextBox != null)
@@ -174,7 +175,7 @@ namespace TA_WPF.Views
                 MessageBoxHelper.ShowError("加载窗口时出错: " + ex.Message);
             }
         }
-        
+
         private void AddTicketWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             try
@@ -187,7 +188,7 @@ namespace TA_WPF.Views
                 LogHelper.LogError("调整窗口大小时出错", ex);
             }
         }
-        
+
         private void AdjustWindowSize()
         {
             try
@@ -195,25 +196,25 @@ namespace TA_WPF.Views
                 // 获取当前屏幕尺寸
                 var screenHeight = SystemParameters.PrimaryScreenHeight;
                 var screenWidth = SystemParameters.PrimaryScreenWidth;
-                
+
                 // 设置窗口最大尺寸为屏幕的90%
                 this.MaxHeight = screenHeight * 0.9;
                 this.MaxWidth = screenWidth * 0.9;
-                
+
                 // 确保窗口不会太小
                 this.MinHeight = 700;
                 this.MinWidth = 800;
-                
+
                 // 设置窗口初始大小
                 this.Height = Math.Min(850, screenHeight * 0.8);
                 this.Width = Math.Min(900, screenWidth * 0.8);
-                
+
                 // 确保窗口在屏幕内
                 if (this.Top + this.Height > screenHeight)
                 {
                     this.Top = Math.Max(0, screenHeight - this.Height);
                 }
-                
+
                 if (this.Left + this.Width > screenWidth)
                 {
                     this.Left = Math.Max(0, screenWidth - this.Width);
@@ -224,22 +225,22 @@ namespace TA_WPF.Views
                 LogHelper.LogError("调整窗口大小时出错", ex);
             }
         }
-        
+
         private void AdjustContentLayout()
         {
             try
             {
                 // 根据当前字体大小调整控件间距和大小
                 var fontSize = (double)Application.Current.Resources["MaterialDesignFontSize"];
-                
+
                 // 调整边距
                 double margin = Math.Max(16, fontSize * 0.8);
-                
+
                 // 如果窗口处于最大化状态，增加边距以提高可读性
                 if (this.WindowState == WindowState.Maximized)
                 {
                     margin = Math.Max(24, fontSize * 1.2);
-                    
+
                     // 为最大化状态设置内容边距
                     var mainGrid = this.Content as Grid;
                     if (mainGrid != null)
@@ -270,7 +271,7 @@ namespace TA_WPF.Views
                 // 只允许输入数字和小数点
                 Regex regex = new Regex("[^0-9.]+");
                 e.Handled = regex.IsMatch(e.Text);
-                
+
                 // 如果输入的是小数点，检测是否已经有小数点
                 if (e.Text == ".")
                 {
@@ -287,7 +288,7 @@ namespace TA_WPF.Views
                 e.Handled = true;
             }
         }
-        
+
         private void SeatNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             try
@@ -312,7 +313,7 @@ namespace TA_WPF.Views
                 {
                     // 保存当前前景色
                     var foreground = textBox.Foreground;
-                    
+
                     // 尝试解析金额
                     if (double.TryParse(textBox.Text, out double amount))
                     {
@@ -330,7 +331,7 @@ namespace TA_WPF.Views
                         MessageBoxHelper.ShowWarning("请输入有效的金额数值");
                         textBox.Text = "0.00";
                     }
-                    
+
                     // 确保前景色不变
                     textBox.Foreground = foreground;
                 }
@@ -360,7 +361,7 @@ namespace TA_WPF.Views
                     // 根据tag查找对应的TextBox
                     var textBoxes = FindVisualChildren<TextBox>(this);
                     var targetTextBox = textBoxes.FirstOrDefault(tb => tb.Tag?.ToString() == e.TextBoxTag);
-                    
+
                     // 如果找到了目标TextBox，将焦点设置到该TextBox
                     if (targetTextBox != null)
                     {
@@ -427,7 +428,7 @@ namespace TA_WPF.Views
                 if (hwndSource != null)
                 {
                     hwndSource.AddHook(new HwndSourceHook(WindowProc));
-                    
+
                     // 禁用最大化按钮
                     int style = NativeMethods.GetWindowLong(handle, NativeMethods.GWL_STYLE);
                     style &= ~NativeMethods.WS_MAXIMIZEBOX;
@@ -464,7 +465,7 @@ namespace TA_WPF.Views
                 {
                     this.WindowState = WindowState.Normal;
                 }
-                
+
                 // 当窗口状态变化时调整内容布局
                 AdjustContentLayout();
             }
@@ -478,15 +479,15 @@ namespace TA_WPF.Views
         {
             // 标记窗口正在关闭
             _isClosing = true;
-            
+
             base.OnClosing(e);
-            
+
             try
             {
                 // 如果DialogResult已设置，说明是通过保存按钮关闭的，不需要提示
                 if (this.DialogResult.HasValue)
                     return;
-                
+
                 // 只在用户实际修改过表单内容后才提示是否保存
                 if (_viewModel.HasUnsavedChanges())
                 {
@@ -497,7 +498,7 @@ namespace TA_WPF.Views
                         MessageType.Question,
                         MessageButtons.YesNoCancel,
                         this);
-                    
+
                     if (result == true) // 是
                     {
                         // 执行保存前先验证表单
@@ -514,7 +515,7 @@ namespace TA_WPF.Views
                         if (_viewModel.SaveCommand.CanExecute(null))
                         {
                             _viewModel.SaveCommand.Execute(null);
-                            
+
                             // 如果保存命令执行后窗口仍然打开，说明保存失败或表单验证未通过，取消关闭
                             if (this.IsVisible)
                             {
@@ -549,12 +550,12 @@ namespace TA_WPF.Views
             public const int GWL_STYLE = -16;
             public const int WS_MAXIMIZEBOX = 0x10000;
             public const int WM_GETMINMAXINFO = 0x0024;
-            
+
             [System.Runtime.InteropServices.DllImport("user32.dll")]
             public static extern int GetWindowLong(IntPtr hwnd, int index);
-            
+
             [System.Runtime.InteropServices.DllImport("user32.dll")]
             public static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
         }
     }
-} 
+}

@@ -13,7 +13,7 @@ namespace TA_WPF.Converters
                 // 反转布尔值，当value为false时返回Visible
                 return !boolValue ? Visibility.Visible : Visibility.Collapsed;
             }
-            
+
             return Visibility.Collapsed;
         }
 
@@ -24,8 +24,8 @@ namespace TA_WPF.Converters
                 // 反转可见性，当visibility为Visible时返回false
                 return visibility != Visibility.Visible;
             }
-            
+
             return true;
         }
     }
-} 
+}

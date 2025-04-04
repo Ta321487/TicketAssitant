@@ -14,12 +14,12 @@ namespace TA_WPF.ViewModels
         private readonly UIService _uiService;
         private readonly NavigationService _navigationService;
         private readonly DatabaseCheckService _databaseCheckService;
-        
+
         private readonly TicketViewModel _ticketViewModel;
         private readonly SettingsViewModel _settingsViewModel;
         private readonly QueryAllTicketsViewModel _queryAllTicketsViewModel;
         private readonly DashboardViewModel _dashboardViewModel;
-        
+
         private bool _showWelcome = true;
         private bool _showSettings = false;
         private bool _showQueryAllTickets = false;
@@ -35,35 +35,35 @@ namespace TA_WPF.ViewModels
             try
             {
                 _connectionString = connectionString;
-                
+
                 // 初始化服务
                 _databaseService = new DatabaseService(connectionString);
                 _configurationService = new ConfigurationService();
                 _uiService = new UIService();
                 _navigationService = new NavigationService();
                 _databaseCheckService = new DatabaseCheckService(_databaseService);
-                
+
                 // 初始化设置视图模型
                 _settingsViewModel = new SettingsViewModel(_configurationService, _uiService, _navigationService, _databaseService, connectionString);
-                
+
                 // 初始化车票中心视图模型
                 _queryAllTicketsViewModel = new QueryAllTicketsViewModel(_databaseService, new PaginationViewModel(), this);
-                
+
                 // 初始化车票视图模型，传入this作为MainViewModel引用
                 _ticketViewModel = new TicketViewModel(_databaseService, _navigationService, new PaginationViewModel(), this);
-                
+
                 // 初始化仪表盘视图模型
-                _dashboardViewModel = new DashboardViewModel(_databaseService, _configurationService); 
-                
+                _dashboardViewModel = new DashboardViewModel(_databaseService, _configurationService);
+
                 // 初始化命令
                 ShowHomeCommand = new RelayCommand(ShowHome);
                 TicketListCommand = new RelayCommand(async () => await QueryAllAsync());
                 ShowDashboardCommand = new RelayCommand(ShowDashboard);
-                
+
                 // 新增添加车票相关命令
                 OcrTicketCommand = new RelayCommand(ShowOcrTicketFeatureNotAvailable);
                 Import12306TicketCommand = new RelayCommand(Show12306ImportFeatureNotAvailable);
-                
+
                 // 检测必要的表是否存在
                 _databaseCheckService.CheckRequiredTablesAsync();
             }
@@ -105,7 +105,7 @@ namespace TA_WPF.ViewModels
                 {
                     _showWelcome = value;
                     OnPropertyChanged(nameof(ShowWelcome));
-                    
+
                     // 如果显示欢迎页，则隐藏其他页面
                     if (value)
                     {
@@ -129,7 +129,7 @@ namespace TA_WPF.ViewModels
                 {
                     _showSettings = value;
                     OnPropertyChanged(nameof(ShowSettings));
-                    
+
                     // 如果显示设置页，则隐藏其他页面
                     if (value)
                     {
@@ -153,7 +153,7 @@ namespace TA_WPF.ViewModels
                 {
                     _showQueryAllTickets = value;
                     OnPropertyChanged(nameof(ShowQueryAllTickets));
-                    
+
                     // 如果显示车票中心页面，则隐藏其他页面
                     if (value)
                     {
@@ -177,7 +177,7 @@ namespace TA_WPF.ViewModels
                 {
                     _showDashboardView = value;
                     OnPropertyChanged(nameof(ShowDashboardView));
-                    
+
                     // 如果显示仪表盘页面，则隐藏其他页面
                     if (value)
                     {
@@ -388,7 +388,7 @@ namespace TA_WPF.ViewModels
                 LogHelper.LogError($"打开OCR识别车票窗口时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 显示12306导入车票功能暂未开通提示
         /// </summary>
@@ -456,4 +456,4 @@ namespace TA_WPF.ViewModels
             }
         }
     }
-} 
+}

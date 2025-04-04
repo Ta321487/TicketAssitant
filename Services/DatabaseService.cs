@@ -1,5 +1,5 @@
-using System.Data.Common;
 using MySql.Data.MySqlClient;
+using System.Data.Common;
 using TA_WPF.Models;
 using TA_WPF.Utils;
 
@@ -24,7 +24,7 @@ namespace TA_WPF.Services
         {
             MySqlConnection connection = new MySqlConnection(_connectionString);
             int retryCount = 0;
-            
+
             while (true)
             {
                 try
@@ -41,10 +41,10 @@ namespace TA_WPF.Services
                         LogHelper.LogSystemError("数据库", $"连接失败。错误: {ex.Message}, 错误代码: {ex.Number}", ex);
                         throw; // 重新抛出异常
                     }
-                    
+
                     // 记录重试信息
                     LogHelper.LogSystemWarning("数据库", $"连接失败，正在重试。错误: {ex.Message}");
-                    
+
                     // 等待一段时间后重试
                     await Task.Delay(RetryDelayMs);
                 }
@@ -128,7 +128,7 @@ namespace TA_WPF.Services
             {
                 ConnectionTimeout = 10 // 设置连接超时为10秒
             };
-            
+
             using (var connection = await GetOpenConnectionWithRetryAsync())
             {
                 try
@@ -152,7 +152,7 @@ namespace TA_WPF.Services
                     {
                         // 设置命令超时为5秒
                         command.CommandTimeout = 10;
-                        
+
                         command.Parameters.AddWithValue("@TicketNumber", ticket.TicketNumber);
                         command.Parameters.AddWithValue("@CheckInLocation", ticket.CheckInLocation);
                         command.Parameters.AddWithValue("@DepartStation", ticket.DepartStation);
@@ -220,7 +220,7 @@ namespace TA_WPF.Services
             {
                 // 构建排序方向
                 string direction = ascending ? "ASC" : "DESC";
-                
+
                 // 构建查询语句，使用参数化查询防止SQL注入
                 // 添加USE INDEX提示以确保使用正确的索引
                 string query = $@"SELECT * FROM train_ride_info 
@@ -282,7 +282,7 @@ namespace TA_WPF.Services
                 // 构建查询条件
                 var conditions = new List<string>();
                 var parameters = new Dictionary<string, object>();
-                
+
                 if (isAndCondition)
                 {
                     // 如果没有任何条件，返回所有记录
@@ -290,7 +290,7 @@ namespace TA_WPF.Services
                     {
                         return await GetTotalTrainRideInfoCountAsync();
                     }
-                    
+
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
@@ -304,7 +304,7 @@ namespace TA_WPF.Services
                         // 对于AND条件，如果站点为空，使用IS NULL条件
                         conditions.Add("depart_station IS NULL");
                     }
-                    
+
                     // 添加车次号筛选条件
                     if (!string.IsNullOrWhiteSpace(trainNo))
                     {
@@ -316,7 +316,7 @@ namespace TA_WPF.Services
                         // 对于AND条件，如果车次为空，使用IS NULL条件
                         conditions.Add("train_no IS NULL");
                     }
-                    
+
                     // 添加出发年份筛选条件
                     if (year.HasValue)
                     {
@@ -340,14 +340,14 @@ namespace TA_WPF.Services
                         conditions.Add("depart_station = @DepartStation");
                         parameters.Add("@DepartStation", stationName);
                     }
-                    
+
                     // 添加车次号筛选条件
                     if (!string.IsNullOrWhiteSpace(trainNo))
                     {
                         conditions.Add("train_no = @TrainNo");
                         parameters.Add("@TrainNo", trainNo);
                     }
-                    
+
                     // 添加出发年份筛选条件
                     if (year.HasValue)
                     {
@@ -355,13 +355,13 @@ namespace TA_WPF.Services
                         parameters.Add("@Year", year.Value);
                     }
                 }
-                
+
                 // 如果没有任何条件，返回所有记录数
                 if (conditions.Count == 0)
                 {
                     return await GetTotalTrainRideInfoCountAsync();
                 }
-                
+
                 // 构建SQL查询语句
                 string query;
                 // 如果只有一个条件，不需要使用AND或OR
@@ -374,7 +374,7 @@ namespace TA_WPF.Services
                     string conditionOperator = isAndCondition ? " AND " : " OR ";
                     query = $"SELECT COUNT(*) FROM train_ride_info WHERE {string.Join(conditionOperator, conditions)}";
                 }
-                
+
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
                     using (var command = new MySqlCommand(query, connection))
@@ -384,7 +384,7 @@ namespace TA_WPF.Services
                         {
                             command.Parameters.AddWithValue(param.Key, param.Value);
                         }
-                        
+
                         return Convert.ToInt32(await command.ExecuteScalarAsync());
                     }
                 }
@@ -410,11 +410,11 @@ namespace TA_WPF.Services
             try
             {
                 var items = new List<TrainRideInfo>();
-                
+
                 // 构建查询条件
                 var conditions = new List<string>();
                 var parameters = new Dictionary<string, object>();
-                
+
                 if (isAndCondition)
                 {
                     // 如果没有任何条件，返回所有记录
@@ -422,7 +422,7 @@ namespace TA_WPF.Services
                     {
                         return await GetPagedTrainRideInfosAsync(pageNumber, pageSize);
                     }
-                    
+
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
@@ -436,7 +436,7 @@ namespace TA_WPF.Services
                         // 对于AND条件，如果站点为空，使用IS NULL条件
                         conditions.Add("depart_station IS NULL");
                     }
-                    
+
                     // 添加车次号筛选条件
                     if (!string.IsNullOrWhiteSpace(trainNo))
                     {
@@ -448,7 +448,7 @@ namespace TA_WPF.Services
                         // 对于AND条件，如果车次为空，使用IS NULL条件
                         conditions.Add("train_no IS NULL");
                     }
-                    
+
                     // 添加出发年份筛选条件
                     if (year.HasValue)
                     {
@@ -472,14 +472,14 @@ namespace TA_WPF.Services
                         conditions.Add("depart_station = @DepartStation");
                         parameters.Add("@DepartStation", stationName);
                     }
-                    
+
                     // 添加车次号筛选条件
                     if (!string.IsNullOrWhiteSpace(trainNo))
                     {
                         conditions.Add("train_no = @TrainNo");
                         parameters.Add("@TrainNo", trainNo);
                     }
-                    
+
                     // 添加出发年份筛选条件
                     if (year.HasValue)
                     {
@@ -487,13 +487,13 @@ namespace TA_WPF.Services
                         parameters.Add("@Year", year.Value);
                     }
                 }
-                
+
                 // 如果没有任何条件，使用常规查询
                 if (conditions.Count == 0)
                 {
                     return await GetPagedTrainRideInfosAsync(pageNumber, pageSize);
                 }
-                
+
                 // 构建SQL查询语句
                 string query;
                 // 如果只有一个条件，不需要使用AND或OR
@@ -512,7 +512,7 @@ namespace TA_WPF.Services
                             ORDER BY id 
                             LIMIT @Offset, @PageSize";
                 }
-                
+
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
                     using (var command = new MySqlCommand(query, connection))
@@ -520,13 +520,13 @@ namespace TA_WPF.Services
                         // 添加分页参数
                         command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
                         command.Parameters.AddWithValue("@PageSize", pageSize);
-                        
+
                         // 添加筛选参数
                         foreach (var param in parameters)
                         {
                             command.Parameters.AddWithValue(param.Key, param.Value);
                         }
-                        
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             while (await reader.ReadAsync())
@@ -536,7 +536,7 @@ namespace TA_WPF.Services
                         }
                     }
                 }
-                
+
                 return items;
             }
             catch (Exception ex)
@@ -621,7 +621,7 @@ namespace TA_WPF.Services
                     {
                         // 设置命令超时为3秒
                         command.CommandTimeout = 10;
-                        
+
                         command.Parameters.AddWithValue("@PartialName", partialName + "%");
 
                         using (var reader = await command.ExecuteReaderAsync())
@@ -666,23 +666,23 @@ namespace TA_WPF.Services
             {
                 // 获取数据库名称
                 string databaseName = connection.Database;
-                
+
                 string query = @"SELECT COUNT(*) 
                                FROM information_schema.tables 
                                WHERE table_schema = @DatabaseName 
                                AND table_name = @TableName";
-                
+
                 using (var command = new MySqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@DatabaseName", databaseName);
                     command.Parameters.AddWithValue("@TableName", tableName);
-                    
+
                     int count = Convert.ToInt32(await command.ExecuteScalarAsync());
                     return count > 0;
                 }
             }
         }
-        
+
         /// <summary>
         /// 创建车站信息表
         /// </summary>
@@ -704,14 +704,14 @@ namespace TA_WPF.Services
                   PRIMARY KEY (`id`),
                   UNIQUE KEY `station_name` (`station_name`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
-                
+
                 using (var command = new MySqlCommand(query, connection))
                 {
                     await command.ExecuteNonQueryAsync();
                 }
             }
         }
-        
+
         /// <summary>
         /// 创建车票信息表
         /// </summary>
@@ -720,7 +720,7 @@ namespace TA_WPF.Services
             using (var connection = await GetOpenConnectionWithRetryAsync())
             {
                 //TODO: 修改这个表结构
-                
+
                 string query = @"
                 CREATE TABLE IF NOT EXISTS `train_ride_info` (
                   `id` int NOT NULL AUTO_INCREMENT,
@@ -745,7 +745,7 @@ namespace TA_WPF.Services
                   KEY `idx_passenger_name` (`passenger_name`),
                   KEY `idx_passenger_id` (`passenger_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
-                
+
                 using (var command = new MySqlCommand(query, connection))
                 {
                     await command.ExecuteNonQueryAsync();
@@ -765,7 +765,7 @@ namespace TA_WPF.Services
             {
                 ConnectionTimeout = 10 // 设置连接超时为10秒
             };
-            
+
             using (var connection = await GetOpenConnectionWithRetryAsync())
             {
                 try
@@ -798,7 +798,7 @@ namespace TA_WPF.Services
                     {
                         // 设置命令超时为5秒
                         command.CommandTimeout = 10;
-                        
+
                         command.Parameters.AddWithValue("@Id", ticket.Id);
                         command.Parameters.AddWithValue("@TicketNumber", ticket.TicketNumber);
                         command.Parameters.AddWithValue("@CheckInLocation", ticket.CheckInLocation);
@@ -872,11 +872,11 @@ namespace TA_WPF.Services
             try
             {
                 var stations = new List<string>();
-                
+
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
                     string query = "SELECT DISTINCT depart_station FROM train_ride_info WHERE depart_station IS NOT NULL ORDER BY depart_station";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         using (var reader = await command.ExecuteReaderAsync())
@@ -894,7 +894,7 @@ namespace TA_WPF.Services
                         }
                     }
                 }
-                
+
                 return stations;
             }
             catch (Exception ex)
@@ -904,4 +904,4 @@ namespace TA_WPF.Services
             }
         }
     }
-} 
+}

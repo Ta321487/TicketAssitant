@@ -20,7 +20,7 @@ namespace TA_WPF.Converters
             // 将第一个字符转换为大写，其余保持不变
             if (str.Length == 1)
                 return char.ToUpper(str[0]).ToString();
-            
+
             return char.ToUpper(str[0]) + str.Substring(1);
         }
 
@@ -30,4 +30,4 @@ namespace TA_WPF.Converters
             return value;
         }
     }
-} 
+}

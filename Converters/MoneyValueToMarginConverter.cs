@@ -17,7 +17,7 @@ namespace TA_WPF.Converters
                 // 根据金额字符串的宽度调整元字的位置
                 return new Thickness(74 + width, 267, 0, 0);
             }
-            
+
             // 默认位置
             return new Thickness(122, 267, 0, 0);
         }
@@ -27,4 +27,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}
