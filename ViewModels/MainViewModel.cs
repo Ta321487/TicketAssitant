@@ -343,6 +343,11 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 数据库连接字符串
+        /// </summary>
+        public string ConnectionString => _connectionString;
+
+        /// <summary>
         /// 查询所有车票
         /// </summary>
         private async Task QueryAllAsync()

@@ -230,5 +230,70 @@ namespace TA_WPF.Services
                 return (1, null); // 出错时默认为车站不存在
             }
         }
+        
+        /// <summary>
+        /// 初始化服务
+        /// </summary>
+        public async Task InitializeAsync()
+        {
+            if (!_isInitialized)
+            {
+                await LoadStationsAsync();
+            }
+        }
+        
+        /// <summary>
+        /// 检查是否为有效的车站名
+        /// </summary>
+        /// <param name="stationName">车站名称</param>
+        /// <returns>是否有效</returns>
+        public bool IsValidStation(string stationName)
+        {
+            if (string.IsNullOrWhiteSpace(stationName))
+            {
+                return false;
+            }
+            
+            // 确保站点数据已加载
+            if (!_isInitialized)
+            {
+                // 同步加载站点数据
+                var loadTask = LoadStationsAsync();
+                loadTask.Wait();
+            }
+            
+            // 检查车站表是否为空
+            if (_stations.Count == 0)
+            {
+                return false;
+            }
+            
+            // 在站点列表中查找匹配的站点
+            return ValidateStationName(stationName) != null;
+        }
+        
+        /// <summary>
+        /// 获取车站信息
+        /// </summary>
+        /// <param name="stationName">车站名称</param>
+        /// <returns>车站信息，如果不存在返回null</returns>
+        public StationInfo GetStationInfo(string stationName)
+        {
+            if (string.IsNullOrWhiteSpace(stationName))
+            {
+                return null;
+            }
+            
+            // 确保站点数据已加载
+            if (!_isInitialized)
+            {
+                // 同步加载站点数据
+                var loadTask = LoadStationsAsync();
+                loadTask.Wait();
+            }
+            
+            // 在站点列表中查找匹配的站点
+            return ValidateStationName(stationName);
+        }
     }
 } 

@@ -27,6 +27,9 @@
 - System.Configuration.ConfigurationManager (9.0.2)
 - System.Drawing.Common (9.0.3)
 - System.IO.Compression (4.3.0)
+- IronPython (3.4.1)
+- IronPython.StdLib (3.4.1)
+- Newtonsoft.Json (13.0.3)
 
 ## 安装方法
 
@@ -51,5 +54,5 @@
 3. 运行 TrainAssistant.exe 启动应用程序
 
 ### 数据库配置
-1. 确保已安装MySQL 8.0或更高版本
-2. 在App.config文件中配置数据库连接字符串
+1. 确保已安装MySQL 8.0或更高版本 (如果没有安装也不要紧，本程序将指导您安装MySQL数据库)
+2. OCR训练集文件 

@@ -12,6 +12,8 @@ using Microsoft.Win32;
 using Newtonsoft.Json;
 using System.Globalization;
 using System.Windows.Data;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -22,6 +24,9 @@ namespace TA_WPF.ViewModels
     {
         private readonly PythonService _pythonService;
         private readonly MainViewModel _mainViewModel;
+        private readonly DatabaseService _databaseService;
+        private readonly StationSearchService _stationSearchService;
+        
         private string _selectedImagePath;
         private BitmapImage _selectedImage;
         private bool _isPythonInstalled;
@@ -33,6 +38,71 @@ namespace TA_WPF.ViewModels
         private string _loadingMessage;
         private ObservableCollection<OcrResult> _ocrResults;
         private double _averageConfidence;
+        private bool _isTicketFormExpanded;
+        
+        // 表单相关私有字段
+        // 基本信息
+        private string _ticketNumber;
+        private string _checkInLocation;
+        private string _departStation;
+        private string _arriveStation;
+        private string _departStationPinyin;
+        private string _arriveStationPinyin;
+        private decimal _money;
+        private string _departStationCode;
+        private string _arriveStationCode;
+
+        // 日期和时间
+        private DateTime _departDate = DateTime.Today;
+        private int _departHour;
+        private int _departMinute;
+
+        // 车次信息
+        private string _selectedTrainType;
+        private string _trainNumber;
+        private string _coachNo;
+        private bool _isExtraCoach;
+        private string _seatNo;
+        private bool _isNoSeat;
+        private string _selectedSeatPosition;
+
+        // 座位类型
+        private string _selectedSeatType;
+        private ObservableCollection<string> _seatPositions;
+        
+        // 附加信息
+        private string _selectedAdditionalInfo;
+        private string _selectedTicketPurpose;
+        private string _selectedHint;
+        private string _customHint;
+        private string _selectedTicketModificationType;
+        
+        // 票种类型
+        private bool _isStudentTicket;
+        private bool _isDiscountTicket;
+        private bool _isOnlineTicket;
+        private bool _isChildTicket;
+        
+        // 支付渠道
+        private bool _isAlipayPayment;
+        private bool _isWeChatPayment;
+        private bool _isABCPayment;
+        private bool _isCCBPayment;
+        private bool _isICBCPayment;
+        private bool _isAlipayPaymentEnabled = true;
+        private bool _isWeChatPaymentEnabled = true;
+
+        // 车站搜索相关属性
+        private ObservableCollection<StationInfo> _departStationSuggestions;
+        private ObservableCollection<StationInfo> _arriveStationSuggestions;
+        private bool _isDepartStationDropdownOpen;
+        private bool _isArriveStationDropdownOpen;
+        private string _departStationSearchText;
+        private string _arriveStationSearchText;
+
+        // 标记字段，用于避免循环更新
+        private bool _isUpdatingDepartStation = false;
+        private bool _isUpdatingArriveStation = false;
 
         /// <summary>
         /// 构造函数
@@ -45,6 +115,13 @@ namespace TA_WPF.ViewModels
             _ocrResults = new ObservableCollection<OcrResult>();
             _loadingMessage = "正在检查环境，请稍候...";
             _averageConfidence = 0;
+            _isTicketFormExpanded = false;
+            
+            // 初始化数据库服务和站点搜索服务
+            // 使用MainViewModel中的完整连接字符串
+            var connectionString = mainViewModel.ConnectionString;
+            _databaseService = new DatabaseService(connectionString);
+            _stationSearchService = new StationSearchService(_databaseService);
             
             // 使用项目中现有的RelayCommand实现
             SelectImageCommand = new RelayCommand(async () => await SelectImage(), CanImportTicket);
@@ -52,8 +129,82 @@ namespace TA_WPF.ViewModels
             CheckEnvironmentCommand = new RelayCommand(async () => await CheckEnvironment());
             OpenCnocrInstallGuideCommand = new RelayCommand(OpenCnocrInstallGuide);
             
+            // 初始化表单相关命令
+            SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
+            SelectArriveStationCommand = new RelayCommand<StationInfo>(SelectArriveStation);
+            
+            // 初始化表单相关集合
+            TrainTypes = new ObservableCollection<string> { "G", "C", "D", "Z", "T", "K", "L", "S", "纯数字" };
+            HourOptions = Enumerable.Range(0, 24).Select(h => h.ToString("00")).ToList();
+            MinuteOptions = Enumerable.Range(0, 60).Select(m => m.ToString("00")).ToList();
+            
+            SeatTypes = new ObservableCollection<string> 
+            { 
+                "新空调硬座", "软座", "新空调硬卧", "新空调软卧", 
+                "商务座", "一等座", "二等座", "硬卧代硬座" 
+            };
+            
+            // 初始化附加信息相关集合
+            AdditionalInfoOptions = new ObservableCollection<string> { "", "限乘当日当次车", "退票费" };
+            TicketPurposeOptions = new ObservableCollection<string> { "", "仅供报销使用" };
+            HintOptions = new ObservableCollection<string> 
+            {
+                "报销凭证 遗失不补|退票改签时须交回车站",
+                "买票请到12306 发货请到95306|中国铁路祝您旅途愉快",
+                "欢度国庆 祝福祖国|中国铁路祝您旅途愉快",
+                "奋斗百年路 启航新征程|热烈庆祝中国共产党成立100周年",
+                "锦州银行欢迎您",
+                "中国铁路沈阳局集团公司|团体订票电话024-12306",
+                "自定义"
+            };
+            
+            // 初始化车票改签类型选项
+            TicketModificationTypes = new ObservableCollection<string>
+            {
+                "始发改签",
+                "变更到站"
+            };
+            
+            // 初始化座位位置集合
+            SeatPositions = new ObservableCollection<string>();
+            
+            // 初始化车站搜索相关集合
+            DepartStationSuggestions = new ObservableCollection<StationInfo>();
+            ArriveStationSuggestions = new ObservableCollection<StationInfo>();
+            
+            // 初始化字符串属性为空字符串而不是null
+            _ticketNumber = string.Empty;
+            _checkInLocation = string.Empty;
+            _departStation = string.Empty;
+            _arriveStation = string.Empty;
+            _departStationPinyin = string.Empty;
+            _arriveStationPinyin = string.Empty;
+            _departStationCode = string.Empty;
+            _arriveStationCode = string.Empty;
+            _selectedTrainType = TrainTypes.FirstOrDefault() ?? "T";
+            _trainNumber = string.Empty;
+            _coachNo = string.Empty;
+            _seatNo = string.Empty;
+            _selectedSeatPosition = string.Empty;
+            _selectedSeatType = SeatTypes.FirstOrDefault() ?? "新空调硬座";
+            _departStationSearchText = string.Empty;
+            _arriveStationSearchText = string.Empty;
+            
+            // 初始化附加信息字符串属性
+            _selectedAdditionalInfo = string.Empty;
+            _selectedTicketPurpose = string.Empty;
+            _selectedHint = HintOptions.FirstOrDefault() ?? string.Empty;
+            _customHint = string.Empty;
+            _selectedTicketModificationType = null;
+            
+            // 根据默认座位类型更新座位位置选项
+            UpdateSeatPositions();
+            
             // 启动时自动检查环境（使用ConfigureAwait(false)避免死锁）
             _ = CheckEnvironment();
+            
+            // 加载车站数据
+            _ = LoadStationsAsync();
         }
 
         /// <summary>
@@ -256,6 +407,846 @@ namespace TA_WPF.ViewModels
         /// MainViewModel引用
         /// </summary>
         public MainViewModel MainViewModel => _mainViewModel;
+        
+        /// <summary>
+        /// 表单是否展开
+        /// </summary>
+        public bool IsTicketFormExpanded
+        {
+            get => _isTicketFormExpanded;
+            set
+            {
+                if (_isTicketFormExpanded != value)
+                {
+                    _isTicketFormExpanded = value;
+                    OnPropertyChanged(nameof(IsTicketFormExpanded));
+                }
+            }
+        }
+        
+        #region 表单相关属性
+        
+        /// <summary>
+        /// 取票号
+        /// </summary>
+        public string TicketNumber
+        {
+            get => _ticketNumber;
+            set
+            {
+                if (_ticketNumber != value)
+                {
+                    _ticketNumber = value;
+                    OnPropertyChanged(nameof(TicketNumber));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 检票位置
+        /// </summary>
+        public string CheckInLocation
+        {
+            get => _checkInLocation;
+            set
+            {
+                if (_checkInLocation != value)
+                {
+                    _checkInLocation = value;
+                    OnPropertyChanged(nameof(CheckInLocation));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站
+        /// </summary>
+        public string DepartStation
+        {
+            get => _departStation;
+            set
+            {
+                if (_departStation != value)
+                {
+                    _departStation = value;
+                    OnPropertyChanged(nameof(DepartStation));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站
+        /// </summary>
+        public string ArriveStation
+        {
+            get => _arriveStation;
+            set
+            {
+                if (_arriveStation != value)
+                {
+                    _arriveStation = value;
+                    OnPropertyChanged(nameof(ArriveStation));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站拼音
+        /// </summary>
+        public string DepartStationPinyin
+        {
+            get => _departStationPinyin;
+            set
+            {
+                if (_departStationPinyin != value)
+                {
+                    _departStationPinyin = value;
+                    OnPropertyChanged(nameof(DepartStationPinyin));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站拼音
+        /// </summary>
+        public string ArriveStationPinyin
+        {
+            get => _arriveStationPinyin;
+            set
+            {
+                if (_arriveStationPinyin != value)
+                {
+                    _arriveStationPinyin = value;
+                    OnPropertyChanged(nameof(ArriveStationPinyin));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 金额
+        /// </summary>
+        public decimal Money
+        {
+            get => _money;
+            set
+            {
+                if (_money != value)
+                {
+                    _money = value;
+                    OnPropertyChanged(nameof(Money));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站代码
+        /// </summary>
+        public string DepartStationCode
+        {
+            get => _departStationCode;
+            set
+            {
+                if (_departStationCode != value)
+                {
+                    _departStationCode = value;
+                    OnPropertyChanged(nameof(DepartStationCode));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站代码
+        /// </summary>
+        public string ArriveStationCode
+        {
+            get => _arriveStationCode;
+            set
+            {
+                if (_arriveStationCode != value)
+                {
+                    _arriveStationCode = value;
+                    OnPropertyChanged(nameof(ArriveStationCode));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发日期
+        /// </summary>
+        public DateTime DepartDate
+        {
+            get => _departDate;
+            set
+            {
+                if (_departDate != value)
+                {
+                    _departDate = value;
+                    OnPropertyChanged(nameof(DepartDate));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发小时
+        /// </summary>
+        public int DepartHour
+        {
+            get => _departHour;
+            set
+            {
+                if (_departHour != value)
+                {
+                    _departHour = value;
+                    OnPropertyChanged(nameof(DepartHour));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发分钟
+        /// </summary>
+        public int DepartMinute
+        {
+            get => _departMinute;
+            set
+            {
+                if (_departMinute != value)
+                {
+                    _departMinute = value;
+                    OnPropertyChanged(nameof(DepartMinute));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选中的车型
+        /// </summary>
+        public string SelectedTrainType
+        {
+            get => _selectedTrainType;
+            set
+            {
+                if (_selectedTrainType != value)
+                {
+                    _selectedTrainType = value;
+                    OnPropertyChanged(nameof(SelectedTrainType));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 车次号
+        /// </summary>
+        public string TrainNumber
+        {
+            get => _trainNumber;
+            set
+            {
+                if (_trainNumber != value)
+                {
+                    _trainNumber = value;
+                    OnPropertyChanged(nameof(TrainNumber));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 车厢号
+        /// </summary>
+        public string CoachNo
+        {
+            get => _coachNo;
+            set
+            {
+                if (_coachNo != value)
+                {
+                    _coachNo = value;
+                    OnPropertyChanged(nameof(CoachNo));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否加车
+        /// </summary>
+        public bool IsExtraCoach
+        {
+            get => _isExtraCoach;
+            set
+            {
+                if (_isExtraCoach != value)
+                {
+                    _isExtraCoach = value;
+                    OnPropertyChanged(nameof(IsExtraCoach));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 座位号
+        /// </summary>
+        public string SeatNo
+        {
+            get => _seatNo;
+            set
+            {
+                if (_seatNo != value)
+                {
+                    _seatNo = value;
+                    OnPropertyChanged(nameof(SeatNo));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否无座
+        /// </summary>
+        public bool IsNoSeat
+        {
+            get => _isNoSeat;
+            set
+            {
+                if (_isNoSeat != value)
+                {
+                    _isNoSeat = value;
+                    OnPropertyChanged(nameof(IsNoSeat));
+                    OnPropertyChanged(nameof(IsSeatInputEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否可以输入座位
+        /// </summary>
+        public bool IsSeatInputEnabled => !_isNoSeat;
+        
+        /// <summary>
+        /// 是否显示座位位置
+        /// </summary>
+        public bool IsSeatPositionVisible => SeatPositions != null && SeatPositions.Count > 0 && _selectedSeatType != "新空调硬座";
+        
+        /// <summary>
+        /// 选中的座位位置
+        /// </summary>
+        public string SelectedSeatPosition
+        {
+            get => _selectedSeatPosition;
+            set
+            {
+                if (_selectedSeatPosition != value)
+                {
+                    _selectedSeatPosition = value;
+                    OnPropertyChanged(nameof(SelectedSeatPosition));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选中的座位类型
+        /// </summary>
+        public string SelectedSeatType
+        {
+            get => _selectedSeatType;
+            set
+            {
+                if (_selectedSeatType != value)
+                {
+                    _selectedSeatType = value;
+                    OnPropertyChanged(nameof(SelectedSeatType));
+                    
+                    // 根据座位类型更新座位位置选项
+                    UpdateSeatPositions();
+                    
+                    OnPropertyChanged(nameof(IsSeatPositionVisible));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 座位位置选项
+        /// </summary>
+        public ObservableCollection<string> SeatPositions
+        {
+            get => _seatPositions;
+            set
+            {
+                if (_seatPositions != value)
+                {
+                    _seatPositions = value;
+                    OnPropertyChanged(nameof(SeatPositions));
+                    OnPropertyChanged(nameof(IsSeatPositionVisible));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站搜索关键词
+        /// </summary>
+        public string DepartStationSearchText
+        {
+            get => _departStationSearchText;
+            set
+            {
+                if (_departStationSearchText != value)
+                {
+                    _departStationSearchText = value;
+                    OnPropertyChanged(nameof(DepartStationSearchText));
+                    
+                    // 执行站点搜索
+                    if (!_isUpdatingDepartStation && !string.IsNullOrEmpty(value))
+                    {
+                        SearchStations(value, true);
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站搜索关键词
+        /// </summary>
+        public string ArriveStationSearchText
+        {
+            get => _arriveStationSearchText;
+            set
+            {
+                if (_arriveStationSearchText != value)
+                {
+                    _arriveStationSearchText = value;
+                    OnPropertyChanged(nameof(ArriveStationSearchText));
+                    
+                    // 执行站点搜索
+                    if (!_isUpdatingArriveStation && !string.IsNullOrEmpty(value))
+                    {
+                        SearchStations(value, false);
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站下拉列表是否打开
+        /// </summary>
+        public bool IsDepartStationDropdownOpen
+        {
+            get => _isDepartStationDropdownOpen;
+            set
+            {
+                if (_isDepartStationDropdownOpen != value)
+                {
+                    _isDepartStationDropdownOpen = value;
+                    OnPropertyChanged(nameof(IsDepartStationDropdownOpen));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站下拉列表是否打开
+        /// </summary>
+        public bool IsArriveStationDropdownOpen
+        {
+            get => _isArriveStationDropdownOpen;
+            set
+            {
+                if (_isArriveStationDropdownOpen != value)
+                {
+                    _isArriveStationDropdownOpen = value;
+                    OnPropertyChanged(nameof(IsArriveStationDropdownOpen));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站推荐列表
+        /// </summary>
+        public ObservableCollection<StationInfo> DepartStationSuggestions
+        {
+            get => _departStationSuggestions;
+            set
+            {
+                if (_departStationSuggestions != value)
+                {
+                    _departStationSuggestions = value;
+                    OnPropertyChanged(nameof(DepartStationSuggestions));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站推荐列表
+        /// </summary>
+        public ObservableCollection<StationInfo> ArriveStationSuggestions
+        {
+            get => _arriveStationSuggestions;
+            set
+            {
+                if (_arriveStationSuggestions != value)
+                {
+                    _arriveStationSuggestions = value;
+                    OnPropertyChanged(nameof(ArriveStationSuggestions));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 车型选项
+        /// </summary>
+        public ObservableCollection<string> TrainTypes { get; }
+        
+        /// <summary>
+        /// 小时选项
+        /// </summary>
+        public List<string> HourOptions { get; }
+        
+        /// <summary>
+        /// 分钟选项
+        /// </summary>
+        public List<string> MinuteOptions { get; }
+        
+        /// <summary>
+        /// 座位类型选项
+        /// </summary>
+        public ObservableCollection<string> SeatTypes { get; }
+        
+        /// <summary>
+        /// 选择出发站命令
+        /// </summary>
+        public ICommand SelectDepartStationCommand { get; }
+        
+        /// <summary>
+        /// 选择到达站命令
+        /// </summary>
+        public ICommand SelectArriveStationCommand { get; }
+        
+        /// <summary>
+        /// 附加信息选项
+        /// </summary>
+        public ObservableCollection<string> AdditionalInfoOptions { get; }
+        
+        /// <summary>
+        /// 票种类型选项
+        /// </summary>
+        public ObservableCollection<string> TicketPurposeOptions { get; }
+        
+        /// <summary>
+        /// 提示信息选项
+        /// </summary>
+        public ObservableCollection<string> HintOptions { get; }
+        
+        /// <summary>
+        /// 车票改签类型选项
+        /// </summary>
+        public ObservableCollection<string> TicketModificationTypes { get; }
+        
+        /// <summary>
+        /// 选中的附加信息
+        /// </summary>
+        public string SelectedAdditionalInfo
+        {
+            get => _selectedAdditionalInfo;
+            set
+            {
+                if (_selectedAdditionalInfo != value)
+                {
+                    _selectedAdditionalInfo = value;
+                    OnPropertyChanged(nameof(SelectedAdditionalInfo));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选中的车票用途
+        /// </summary>
+        public string SelectedTicketPurpose
+        {
+            get => _selectedTicketPurpose;
+            set
+            {
+                if (_selectedTicketPurpose != value)
+                {
+                    _selectedTicketPurpose = value;
+                    OnPropertyChanged(nameof(SelectedTicketPurpose));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选中的提示信息
+        /// </summary>
+        public string SelectedHint
+        {
+            get => _selectedHint;
+            set
+            {
+                if (_selectedHint != value)
+                {
+                    _selectedHint = value;
+                    OnPropertyChanged(nameof(SelectedHint));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 自定义提示信息
+        /// </summary>
+        public string CustomHint
+        {
+            get => _customHint;
+            set
+            {
+                if (_customHint != value)
+                {
+                    _customHint = value;
+                    OnPropertyChanged(nameof(CustomHint));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选中的车票改签类型
+        /// </summary>
+        public string SelectedTicketModificationType
+        {
+            get => _selectedTicketModificationType;
+            set
+            {
+                if (_selectedTicketModificationType != value)
+                {
+                    _selectedTicketModificationType = value;
+                    OnPropertyChanged(nameof(SelectedTicketModificationType));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否学生票
+        /// </summary>
+        public bool IsStudentTicket
+        {
+            get => _isStudentTicket;
+            set
+            {
+                if (_isStudentTicket != value)
+                {
+                    _isStudentTicket = value;
+                    OnPropertyChanged(nameof(IsStudentTicket));
+                    
+                    // 学生票和儿童票互斥
+                    if (value && IsChildTicket)
+                    {
+                        IsChildTicket = false;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否优惠票
+        /// </summary>
+        public bool IsDiscountTicket
+        {
+            get => _isDiscountTicket;
+            set
+            {
+                if (_isDiscountTicket != value)
+                {
+                    _isDiscountTicket = value;
+                    OnPropertyChanged(nameof(IsDiscountTicket));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否网络售票
+        /// </summary>
+        public bool IsOnlineTicket
+        {
+            get => _isOnlineTicket;
+            set
+            {
+                if (_isOnlineTicket != value)
+                {
+                    _isOnlineTicket = value;
+                    OnPropertyChanged(nameof(IsOnlineTicket));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否儿童票
+        /// </summary>
+        public bool IsChildTicket
+        {
+            get => _isChildTicket;
+            set
+            {
+                if (_isChildTicket != value)
+                {
+                    _isChildTicket = value;
+                    OnPropertyChanged(nameof(IsChildTicket));
+                    
+                    // 儿童票和学生票互斥
+                    if (value && IsStudentTicket)
+                    {
+                        IsStudentTicket = false;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否支付宝支付
+        /// </summary>
+        public bool IsAlipayPayment
+        {
+            get => _isAlipayPayment;
+            set
+            {
+                if (_isAlipayPayment != value)
+                {
+                    _isAlipayPayment = value;
+                    OnPropertyChanged(nameof(IsAlipayPayment));
+                    
+                    // 应用互斥逻辑
+                    if (value)
+                    {
+                        IsWeChatPaymentEnabled = false;
+                    }
+                    else
+                    {
+                        IsWeChatPaymentEnabled = true;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否微信支付
+        /// </summary>
+        public bool IsWeChatPayment
+        {
+            get => _isWeChatPayment;
+            set
+            {
+                if (_isWeChatPayment != value)
+                {
+                    _isWeChatPayment = value;
+                    OnPropertyChanged(nameof(IsWeChatPayment));
+                    
+                    // 应用互斥逻辑
+                    if (value)
+                    {
+                        IsAlipayPaymentEnabled = false;
+                    }
+                    else
+                    {
+                        IsAlipayPaymentEnabled = true;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否农业银行支付
+        /// </summary>
+        public bool IsABCPayment
+        {
+            get => _isABCPayment;
+            set
+            {
+                if (_isABCPayment != value)
+                {
+                    _isABCPayment = value;
+                    OnPropertyChanged(nameof(IsABCPayment));
+                    
+                    // 银行卡三选一
+                    if (value)
+                    {
+                        IsCCBPayment = false;
+                        IsICBCPayment = false;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否建设银行支付
+        /// </summary>
+        public bool IsCCBPayment
+        {
+            get => _isCCBPayment;
+            set
+            {
+                if (_isCCBPayment != value)
+                {
+                    _isCCBPayment = value;
+                    OnPropertyChanged(nameof(IsCCBPayment));
+                    
+                    // 银行卡三选一
+                    if (value)
+                    {
+                        IsABCPayment = false;
+                        IsICBCPayment = false;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 是否工商银行支付
+        /// </summary>
+        public bool IsICBCPayment
+        {
+            get => _isICBCPayment;
+            set
+            {
+                if (_isICBCPayment != value)
+                {
+                    _isICBCPayment = value;
+                    OnPropertyChanged(nameof(IsICBCPayment));
+                    
+                    // 银行卡三选一
+                    if (value)
+                    {
+                        IsABCPayment = false;
+                        IsCCBPayment = false;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 支付宝支付是否启用
+        /// </summary>
+        public bool IsAlipayPaymentEnabled
+        {
+            get => _isAlipayPaymentEnabled;
+            set
+            {
+                if (_isAlipayPaymentEnabled != value)
+                {
+                    _isAlipayPaymentEnabled = value;
+                    OnPropertyChanged(nameof(IsAlipayPaymentEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 微信支付是否启用
+        /// </summary>
+        public bool IsWeChatPaymentEnabled
+        {
+            get => _isWeChatPaymentEnabled;
+            set
+            {
+                if (_isWeChatPaymentEnabled != value)
+                {
+                    _isWeChatPaymentEnabled = value;
+                    OnPropertyChanged(nameof(IsWeChatPaymentEnabled));
+                }
+            }
+        }
+        
+        #endregion
 
         /// <summary>
         /// 选择图片
@@ -536,9 +1527,413 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public bool CanImportTicket()
         {
-            // 只要不是正在加载状态，就允许导入图片
-            // 即使环境未完全准备好，也允许用户点击按钮，会在后续流程中提示安装相关环境
+            // 添加检查，确保在环境检查过程中不能导入
             return !IsLoading;
         }
+        
+        #region 表单相关方法
+        
+        /// <summary>
+        /// 加载车站数据
+        /// </summary>
+        private async Task LoadStationsAsync()
+        {
+            try
+            {
+                if (_stationSearchService != null)
+                {
+                    await _stationSearchService.InitializeAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("加载车站数据失败", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 更新座位位置选项
+        /// </summary>
+        private void UpdateSeatPositions()
+        {
+            try
+            {
+                SeatPositions.Clear();
+
+                // 根据不同的座位类型设置不同的位置选项
+                switch (SelectedSeatType)
+                {
+                    case "商务座":
+                    case "一等座":
+                    case "二等座":
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("B");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("D");
+                        SeatPositions.Add("F");
+                        break;
+                    case "新空调硬座":
+                        // 硬座通常不显示位置
+                        break;
+                    case "软座":
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("B");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("D");
+                        break;
+                    case "新空调硬卧":
+                    case "新空调软卧":
+                        SeatPositions.Add("上");
+                        SeatPositions.Add("中");
+                        SeatPositions.Add("下");
+                        break;
+                    default:
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("B");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("D");
+                        SeatPositions.Add("F");
+                        break;
+                }
+                
+                // 如果有位置选项，则设置默认选择第一个
+                if (SeatPositions.Count > 0)
+                {
+                    SelectedSeatPosition = SeatPositions[0];
+                }
+                else
+                {
+                    SelectedSeatPosition = string.Empty;
+                }
+                
+                // 更新UI
+                OnPropertyChanged(nameof(IsSeatPositionVisible));
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("更新座位位置选项时出错", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 车站名失去焦点时处理
+        /// </summary>
+        public void OnStationLostFocus(bool isDepartStation)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[OCR窗口] OnStationLostFocus 开始处理，是否出发站: {isDepartStation}");
+
+                // 获取当前站名
+                string stationName = isDepartStation ? DepartStationSearchText : ArriveStationSearchText;
+                System.Diagnostics.Debug.WriteLine($"[OCR窗口] OnStationLostFocus 当前站名: {stationName}");
+                
+                // 检查是否在下拉框上操作
+                if (isDepartStation && IsDepartStationDropdownOpen)
+                {
+                    // 如果下拉框正在打开，不触发校验
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 出发站下拉框打开中，跳过校验");
+                    return;
+                }
+                else if (!isDepartStation && IsArriveStationDropdownOpen)
+                {
+                    // 如果下拉框正在打开，不触发校验
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 到达站下拉框打开中，跳过校验");
+                    return;
+                }
+                
+                // 关闭下拉列表
+                if (isDepartStation)
+                {
+                    IsDepartStationDropdownOpen = false;
+                }
+                else
+                {
+                    IsArriveStationDropdownOpen = false;
+                }
+                
+                // 如果输入为空，则不进行验证
+                if (string.IsNullOrWhiteSpace(stationName))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 站名为空，不执行校验");
+                    return;
+                }
+                
+                // 验证站名是否与已设置的站名匹配（处理选择后文本框失焦的情况）
+                string currentStationValue = isDepartStation ? DepartStation : ArriveStation;
+                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 当前文本框站名: {stationName}, 已设置站名: {currentStationValue}");
+                
+                // 如果输入值和已设置站名相同，不需要重复验证
+                if (!string.IsNullOrEmpty(currentStationValue) && stationName == currentStationValue)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 文本框值与已设置站名匹配，跳过校验");
+                    return;
+                }
+                
+                // 验证站名
+                ValidateStationName(stationName, isDepartStation);
+                
+                // 更新站点信息
+                UpdateStationInfo(stationName, isDepartStation);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"车站名失去焦点处理时出错: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 验证站名
+        /// </summary>
+        private void ValidateStationName(string stationName, bool isDepartStation)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 验证站名: {stationName}, 是否为出发站: {isDepartStation}");
+                
+                if (string.IsNullOrWhiteSpace(stationName))
+                {
+                    return;
+                }
+                
+                if (_stationSearchService == null)
+                {
+                    return;
+                }
+                
+                // 检查是否是用户选择的值，避免清空正确选择的站名
+                string currentValue = isDepartStation ? DepartStation : ArriveStation;
+                
+                // 如果与已设置的值匹配，则不需要验证
+                if (!string.IsNullOrEmpty(currentValue) && stationName == currentValue)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 站名与已设置值匹配，跳过验证");
+                    return;
+                }
+                
+                // 检查是否是有效站点
+                bool isValid = _stationSearchService.IsValidStation(stationName);
+                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 站名 {stationName} 验证结果: {isValid}");
+                
+                if (!isValid)
+                {
+                    // 清空站点信息
+                    if (isDepartStation)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[OCR窗口] 清空出发站信息，原站名: {stationName}");
+                        DepartStationSearchText = string.Empty;
+                        DepartStation = string.Empty;
+                        DepartStationPinyin = string.Empty;
+                        DepartStationCode = string.Empty;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[OCR窗口] 清空到达站信息，原站名: {stationName}");
+                        ArriveStationSearchText = string.Empty;
+                        ArriveStation = string.Empty;
+                        ArriveStationPinyin = string.Empty;
+                        ArriveStationCode = string.Empty;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"验证站名时出错: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 更新站点信息
+        /// </summary>
+        private void UpdateStationInfo(string stationName, bool isDepartStation)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(stationName))
+                {
+                    return;
+                }
+                
+                if (_stationSearchService == null)
+                {
+                    return;
+                }
+                
+                // 获取站点信息
+                var stationInfo = _stationSearchService.GetStationInfo(stationName);
+                
+                if (stationInfo != null)
+                {
+                    // 更新站点信息
+                    if (isDepartStation)
+                    {
+                        _isUpdatingDepartStation = true;
+                        
+                        DepartStation = stationInfo.StationName;
+                        DepartStationPinyin = stationInfo.StationPinyin;
+                        DepartStationCode = stationInfo.StationCode;
+                        DepartStationSearchText = stationInfo.StationName;
+                        
+                        _isUpdatingDepartStation = false;
+                    }
+                    else
+                    {
+                        _isUpdatingArriveStation = true;
+                        
+                        ArriveStation = stationInfo.StationName;
+                        ArriveStationPinyin = stationInfo.StationPinyin;
+                        ArriveStationCode = stationInfo.StationCode;
+                        ArriveStationSearchText = stationInfo.StationName;
+                        
+                        _isUpdatingArriveStation = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"更新站点信息时出错: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 搜索车站
+        /// </summary>
+        private async void SearchStations(string searchText, bool isDepartStation)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 开始搜索车站，搜索文本: {searchText}, 是否为出发站: {isDepartStation}");
+                
+                if (string.IsNullOrWhiteSpace(searchText))
+                {
+                    if (isDepartStation)
+                    {
+                        DepartStationSuggestions.Clear();
+                        IsDepartStationDropdownOpen = false;
+                    }
+                    else
+                    {
+                        ArriveStationSuggestions.Clear();
+                        IsArriveStationDropdownOpen = false;
+                    }
+                    return;
+                }
+                
+                if (_stationSearchService == null)
+                {
+                    return;
+                }
+                
+                // 搜索站点
+                var suggestions = await _stationSearchService.SearchStationsAsync(searchText);
+                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 搜索到 {suggestions.Count()} 个站点");
+                
+                // 更新建议列表
+                if (isDepartStation)
+                {
+                    DepartStationSuggestions.Clear();
+                    
+                    foreach (var suggestion in suggestions)
+                    {
+                        DepartStationSuggestions.Add(suggestion);
+                        System.Diagnostics.Debug.WriteLine($"[OCR窗口] 添加出发站建议: {suggestion.StationName}");
+                    }
+                    
+                    IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 出发站下拉框状态: {IsDepartStationDropdownOpen}");
+                }
+                else
+                {
+                    ArriveStationSuggestions.Clear();
+                    
+                    foreach (var suggestion in suggestions)
+                    {
+                        ArriveStationSuggestions.Add(suggestion);
+                        System.Diagnostics.Debug.WriteLine($"[OCR窗口] 添加到达站建议: {suggestion.StationName}");
+                    }
+                    
+                    IsArriveStationDropdownOpen = ArriveStationSuggestions.Count > 0;
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 到达站下拉框状态: {IsArriveStationDropdownOpen}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"搜索车站时出错: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 选择出发站
+        /// </summary>
+        private void SelectDepartStation(StationInfo station)
+        {
+            try
+            {
+                if (station != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 选择出发站: {station.StationName}");
+                    _isUpdatingDepartStation = true;
+                    
+                    // 确保使用完整的站名
+                    DepartStation = station.StationName;
+                    DepartStationPinyin = station.StationPinyin;
+                    DepartStationCode = station.StationCode;
+                    
+                    // 设置文本框值，去掉"站"字
+                    string displayName = station.StationName.EndsWith("站") 
+                        ? station.StationName.Substring(0, station.StationName.Length - 1) 
+                        : station.StationName;
+                    DepartStationSearchText = displayName;
+                    
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 设置后的出发站: {DepartStation}");
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 设置后的文本框值: {DepartStationSearchText}");
+                    
+                    _isUpdatingDepartStation = false;
+                    IsDepartStationDropdownOpen = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"选择出发站时出错: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 选择到达站
+        /// </summary>
+        private void SelectArriveStation(StationInfo station)
+        {
+            try
+            {
+                if (station != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 选择到达站: {station.StationName}");
+                    _isUpdatingArriveStation = true;
+                    
+                    // 确保使用完整的站名
+                    ArriveStation = station.StationName;
+                    ArriveStationPinyin = station.StationPinyin;
+                    ArriveStationCode = station.StationCode;
+                    
+                    // 设置文本框值，去掉"站"字
+                    string arriveDisplayName = station.StationName.EndsWith("站") 
+                        ? station.StationName.Substring(0, station.StationName.Length - 1) 
+                        : station.StationName;
+                    ArriveStationSearchText = arriveDisplayName;
+                    
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 设置后的到达站: {ArriveStation}");
+                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 设置后的文本框值: {ArriveStationSearchText}");
+                    
+                    _isUpdatingArriveStation = false;
+                    IsArriveStationDropdownOpen = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"选择到达站时出错: {ex.Message}", ex);
+            }
+        }
+        
+        #endregion
     }
 } 

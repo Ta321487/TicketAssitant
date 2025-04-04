@@ -10,6 +10,7 @@
         mc:Ignorable="d"
         Title="OCR导入车票" 
         Height="700" Width="1000"
+        d:DesignHeight="1400" d:DesignWidth="1200"
         WindowStartupLocation="CenterOwner"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
@@ -27,6 +28,7 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Card.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Button.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Expander.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:PathToFileNameConverter x:Key="PathToFileNameConverter" />
@@ -34,6 +36,95 @@
             <converters:FontSizeDecreaseConverter x:Key="FontSizeSmallConverter" />
             <converters:FontSizeDecreaseConverter x:Key="FontSizeExtraSmallConverter" />
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+            <converters:StationNameConverter x:Key="StationNameConverter" />
+            
+            <!-- 表单样式 -->
+            <Style x:Key="FormLabelStyle" TargetType="TextBlock">
+                <Setter Property="Margin" Value="0,0,8,0"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="FontWeight" Value="Medium"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+            </Style>
+            <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
+                <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
+                <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
+            </Style>
+            <Style x:Key="FormNumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
+                <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="False"/>
+                <Setter Property="materialDesign:TextFieldAssist.RippleOnFocusEnabled" Value="True"/>
+                <Setter Property="materialDesign:TextFieldAssist.SuffixText" Value=""/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="Padding" Value="8,8,4,8"/>
+            </Style>
+            <Style x:Key="FormReadOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
+                <Setter Property="IsReadOnly" Value="True"/>
+                <Setter Property="Background" Value="{DynamicResource MaterialDesignTextFieldBoxDisabledBackground}"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignTextFieldBoxDisabledForeground}"/>
+            </Style>
+            <Style x:Key="FormSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
+            </Style>
+            <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollViewer">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <ScrollContentPresenter Grid.Column="0" Grid.Row="0" />
+
+                                <ScrollBar x:Name="PART_VerticalScrollBar"
+                                          Grid.Row="0" Grid.Column="1"
+                                          Orientation="Vertical"
+                                          Value="{TemplateBinding VerticalOffset}"
+                                          Maximum="{TemplateBinding ScrollableHeight}"
+                                          ViewportSize="{TemplateBinding ViewportHeight}"
+                                          Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+
+                                <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                          Grid.Row="1" Grid.Column="0"
+                                          Orientation="Horizontal"
+                                          Value="{TemplateBinding HorizontalOffset}"
+                                          Maximum="{TemplateBinding ScrollableWidth}"
+                                          ViewportSize="{TemplateBinding ViewportWidth}"
+                                          Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="FormComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
+                <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
+                <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+            </Style>
+            <Style x:Key="FormComboBoxItemStyle" TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="35"/>
+                <Setter Property="Padding" Value="16,8"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     
@@ -139,219 +230,766 @@
         
         <!-- 主内容区 -->
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
             
-            <!-- 左侧图片显示区 -->
-            <materialDesign:Card Grid.Column="0" Margin="0,0,8,0" Padding="8" 
-                                 materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                <Grid>
-                    <!-- 未选择图片时显示的提示 -->
-                    <Border x:Name="NoImageBorder" Background="{DynamicResource MaterialDesignPaper}" BorderThickness="0" 
-                            Visibility="{Binding SelectedImage, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}">
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="ImageOutline" 
-                                                    Width="48" 
-                                                    Height="48" 
-                                                    Opacity="0.5" 
-                                                    HorizontalAlignment="Center"/>
-                            <TextBlock Text="请选择车票图片..." 
-                                      HorizontalAlignment="Center" 
-                                      VerticalAlignment="Center"
-                                      Foreground="{DynamicResource MaterialDesignBodyLight}"
-                                      FontSize="{Binding MainViewModel.FontSize}"
-                                      Margin="0,8,0,0"/>
-                            <TextBlock Text="点击顶部【导入车票图片】按钮" 
-                                      HorizontalAlignment="Center" 
-                                      TextAlignment="Center"
-                                      Foreground="{DynamicResource MaterialDesignBodyLight}"
-                                      FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
-                                      Margin="0,8,0,0"
-                                      Opacity="0.7"/>
-                        </StackPanel>
-                    </Border>
-                    
-                    <!-- 已选择图片时显示的内容 -->
-                    <Grid x:Name="ImageContainer" Visibility="{Binding SelectedImage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+                
+                <!-- 左侧图片显示区 -->
+                <materialDesign:Card Grid.Column="0" Margin="0,0,8,0" Padding="8" 
+                                    materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <Grid>
+                        <!-- 未选择图片时显示的提示 - 使用简单直接的方式 -->
+                        <Grid x:Name="NoImageBorder">
+                            <Border Background="Transparent" BorderThickness="0">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="ImageOutline" 
+                                                           Width="80" 
+                                                           Height="80" 
+                                                           Opacity="0.6" 
+                                                           HorizontalAlignment="Center"/>
+                                    <TextBlock Text="暂无图片" 
+                                             HorizontalAlignment="Center" 
+                                             VerticalAlignment="Center"
+                                             FontWeight="Medium"
+                                             Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                             FontSize="18"
+                                             Margin="0,16,0,0"/>
+                                    <TextBlock Text="请点击上方按钮导入车票图片" 
+                                             HorizontalAlignment="Center" 
+                                             TextAlignment="Center"
+                                             Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                             FontSize="14"
+                                             Margin="0,8,0,0"
+                                             Opacity="0.7"
+                                             MaxWidth="300"
+                                             TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
                         
-                        <!-- 图片标题和信息 - 修改为单独一行 -->
-                        <DockPanel Grid.Row="0" VerticalAlignment="Top" LastChildFill="False">
-                            <!-- 左侧标题 -->
-                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="TicketOutline" 
-                                                       Margin="4,0,4,0"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource PrimaryHueMidBrush}"/>
-                                <TextBlock Text="车票图片" 
-                                          FontWeight="Medium"
-                                          VerticalAlignment="Center"
-                                          FontSize="{Binding MainViewModel.FontSize}"
-                                          Foreground="{DynamicResource PrimaryHueMidBrush}"/>
-                            </StackPanel>
+                        <!-- 已选择图片时显示的内容 -->
+                        <Grid x:Name="ImageContainer" Visibility="{Binding SelectedImage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
                             
-                            <!-- 右侧状态 -->
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <TextBlock Text="{Binding AverageConfidence, StringFormat=置信度: {0:P2}}" 
-                                          FontWeight="Normal"
-                                          HorizontalAlignment="Right"
-                                          VerticalAlignment="Center"
-                                          Margin="0,0,8,0"
-                                          Foreground="{DynamicResource SecondaryHueMidBrush}"
-                                          FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
-                                          Visibility="{Binding AverageConfidence, Converter={StaticResource DoubleToVisibilityConverter}}"/>
-                                <TextBlock Text="[图片已加载]" 
-                                          FontWeight="Normal"
-                                          HorizontalAlignment="Right"
-                                          VerticalAlignment="Center"
-                                          Margin="0,0,4,0"
-                                          Foreground="{DynamicResource PrimaryHueLightBrush}"
-                                          FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"/>
-                            </StackPanel>
-                        </DockPanel>
-                        
-                        <!-- 图片路径信息 - 简化为单行显示 -->
-                        <Border Grid.Row="1" 
-                               Background="{DynamicResource MaterialDesignChipBackground}" 
-                               Margin="0,8,0,0"
-                               Padding="8,4">
-                            <!-- 只显示文件名，不显示完整路径 -->
-                            <TextBlock Text="{Binding SelectedImagePath, StringFormat=文件: {0}}"
-                                     TextWrapping="Wrap"
-                                     TextTrimming="CharacterEllipsis"
-                                     FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
-                                     ToolTip="{Binding SelectedImagePath}"
-                                     Margin="0,0,0,0"
-                                     Foreground="{DynamicResource MaterialDesignBody}"/>
-                        </Border>
-
-                        <!-- 图片显示容器 -->
-                        <Border Grid.Row="2" 
-                               BorderBrush="{DynamicResource MaterialDesignDivider}" 
-                               BorderThickness="1" 
-                               Margin="0,8,0,0" 
-                               Background="{DynamicResource MaterialDesignPaper}">
-                            <!-- 使用Grid和ViewBox结合实现更好的缩放效果 -->
-                            <Grid>
-                                <!-- 添加提示文本 -->
-                                <TextBlock Text="[图片已加载]" 
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          Foreground="{DynamicResource MaterialDesignBodyLight}"
-                                          FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
-                                          Opacity="0.2"
-                                          Panel.ZIndex="0"/>
+                            <!-- 图片标题和信息 - 修改为单独一行 -->
+                            <DockPanel Grid.Row="0" VerticalAlignment="Top" LastChildFill="False">
+                                <!-- 左侧标题 -->
+                                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="TicketOutline" 
+                                                           Margin="4,0,4,0"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                    <TextBlock Text="车票图片" 
+                                              FontWeight="Medium"
+                                              VerticalAlignment="Center"
+                                              FontSize="{Binding MainViewModel.FontSize}"
+                                              Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                </StackPanel>
                                 
-                                <!-- 使用ViewBox进行自适应缩放 -->
-                                <Viewbox Stretch="Uniform" 
-                                        StretchDirection="DownOnly"
-                                        Margin="10">
-                                    <Image x:Name="DisplayImage"
-                                          MaxWidth="600"
-                                          MaxHeight="600"
-                                          RenderOptions.BitmapScalingMode="HighQuality"
-                                          SnapsToDevicePixels="True"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"/>
-                                </Viewbox>
-                            </Grid>
-                        </Border>
+                                <!-- 右侧状态 -->
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <TextBlock Text="{Binding AverageConfidence, StringFormat=置信度: {0:P2}}" 
+                                              FontWeight="Normal"
+                                              HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,8,0"
+                                              Foreground="{DynamicResource SecondaryHueMidBrush}"
+                                              FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
+                                              Visibility="{Binding AverageConfidence, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                                    <TextBlock Text="[图片已加载]" 
+                                              FontWeight="Normal"
+                                              HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,4,0"
+                                              Foreground="{DynamicResource PrimaryHueLightBrush}"
+                                              FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"/>
+                                </StackPanel>
+                            </DockPanel>
+                            
+                            <!-- 图片路径信息 - 简化为单行显示 -->
+                            <Border Grid.Row="1" 
+                                   Background="{DynamicResource MaterialDesignChipBackground}" 
+                                   Margin="0,8,0,0"
+                                   Padding="8,4">
+                                <!-- 只显示文件名，不显示完整路径 -->
+                                <TextBlock Text="{Binding SelectedImagePath, StringFormat=文件: {0}}"
+                                         TextWrapping="Wrap"
+                                         TextTrimming="CharacterEllipsis"
+                                         FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
+                                         ToolTip="{Binding SelectedImagePath}"
+                                         Margin="0,0,0,0"
+                                         Foreground="{DynamicResource MaterialDesignBody}"/>
+                            </Border>
+
+                            <!-- 图片显示容器 -->
+                            <Border Grid.Row="2" 
+                                   BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                   BorderThickness="1" 
+                                   Margin="0,8,0,0" 
+                                   Background="{DynamicResource MaterialDesignPaper}">
+                                <!-- 使用Grid和ViewBox结合实现更好的缩放效果 -->
+                                <Grid>
+                                    <!-- 添加提示文本 -->
+                                    <TextBlock Text="[图片已加载]" 
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                              FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
+                                              Opacity="0.2"
+                                              Panel.ZIndex="0"/>
+                                    
+                                    <!-- 使用ViewBox进行自适应缩放 -->
+                                    <Viewbox Stretch="Uniform" 
+                                            StretchDirection="DownOnly"
+                                            Margin="10">
+                                        <Image x:Name="DisplayImage"
+                                              MaxWidth="600"
+                                              MaxHeight="600"
+                                              RenderOptions.BitmapScalingMode="HighQuality"
+                                              SnapsToDevicePixels="True"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                                    </Viewbox>
+                                </Grid>
+                            </Border>
+                        </Grid>
                     </Grid>
+                </materialDesign:Card>
+                
+                <!-- 右侧OCR结果显示区 -->
+                <Grid Grid.Column="1" Margin="8,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="1*" />
+                    </Grid.RowDefinitions>
+                    
+                    <!-- OCR识别结果列表 -->
+                    <materialDesign:Card Grid.Row="0" Margin="0,0,0,8" Padding="8"
+                                        materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Text="OCR识别结果" 
+                                      Grid.Row="0" 
+                                      Margin="8,4,8,8" 
+                                      FontWeight="Medium"
+                                      FontSize="{Binding MainViewModel.FontSize}"
+                                      Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                            
+                            <ListView Grid.Row="1" 
+                                     ItemsSource="{Binding OcrResults}" 
+                                     Margin="4,0,4,4"
+                                     FontSize="{Binding MainViewModel.FontSize}"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Text}" 
+                                                 ToolTip="{Binding Score, StringFormat=可信度: {0:P2}}"
+                                                 TextWrapping="Wrap"
+                                                 Margin="0,4" />
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Grid>
+                    </materialDesign:Card>
+                    
+                    <!-- JSON结果显示 -->
+                    <materialDesign:Card Grid.Row="1" Margin="0,8,0,0" Padding="8"
+                                        materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Text="JSON结果" 
+                                      Grid.Row="0" 
+                                      Margin="8,4,8,8" 
+                                      FontWeight="Medium"
+                                      FontSize="{Binding MainViewModel.FontSize}"
+                                      Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                            
+                            <TextBox Grid.Row="1"
+                                    Text="{Binding JsonResult, Mode=OneWay}" 
+                                    IsReadOnly="True"
+                                    VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    TextWrapping="NoWrap"
+                                    FontFamily="Consolas"
+                                    FontSize="{Binding MainViewModel.FontSize}"
+                                    Margin="4,0,4,4" />
+                        </Grid>
+                    </materialDesign:Card>
                 </Grid>
-            </materialDesign:Card>
-            
-            <!-- 右侧OCR结果显示区 -->
-            <Grid Grid.Column="1" Margin="8,0,0,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="1*" />
-                    <RowDefinition Height="1*" />
-                </Grid.RowDefinitions>
                 
-                <!-- OCR识别结果列表 -->
-                <materialDesign:Card Grid.Row="0" Margin="0,0,0,8" Padding="8"
-                                    materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        
-                        <TextBlock Text="OCR识别结果" 
-                                  Grid.Row="0" 
-                                  Margin="8,4,8,8" 
-                                  FontWeight="Medium"
-                                  FontSize="{Binding MainViewModel.FontSize}"
-                                  Foreground="{DynamicResource PrimaryHueMidBrush}" />
-                        
-                        <ListView Grid.Row="1" 
-                                 ItemsSource="{Binding OcrResults}" 
-                                 Margin="4,0,4,4"
+                <!-- 加载指示器 -->
+                <Grid Grid.ColumnSpan="2" 
+                     Background="#80000000" 
+                     Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <ProgressBar IsIndeterminate="True" 
+                                    Width="60" 
+                                    Height="60"
+                                    Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                    Margin="0,0,0,16" />
+                        <TextBlock Text="{Binding LoadingMessage}" 
+                                 Foreground="White" 
                                  FontSize="{Binding MainViewModel.FontSize}"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Text}" 
-                                             ToolTip="{Binding Score, StringFormat=可信度: {0:P2}}"
-                                             TextWrapping="Wrap"
-                                             Margin="0,4" />
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-                </materialDesign:Card>
-                
-                <!-- JSON结果显示 -->
-                <materialDesign:Card Grid.Row="1" Margin="0,8,0,0" Padding="8"
-                                    materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        
-                        <TextBlock Text="JSON结果" 
-                                  Grid.Row="0" 
-                                  Margin="8,4,8,8" 
-                                  FontWeight="Medium"
-                                  FontSize="{Binding MainViewModel.FontSize}"
-                                  Foreground="{DynamicResource PrimaryHueMidBrush}" />
-                        
-                        <TextBox Grid.Row="1"
-                                Text="{Binding JsonResult, Mode=OneWay}" 
-                                IsReadOnly="True"
-                                VerticalScrollBarVisibility="Auto"
-                                HorizontalScrollBarVisibility="Auto"
-                                TextWrapping="NoWrap"
-                                FontFamily="Consolas"
-                                FontSize="{Binding MainViewModel.FontSize}"
-                                Margin="4,0,4,4" />
-                    </Grid>
-                </materialDesign:Card>
+                                 HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
             </Grid>
             
-            <!-- 加载指示器 -->
-            <Grid Grid.ColumnSpan="2" 
-                 Background="#80000000" 
-                 Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <ProgressBar IsIndeterminate="True" 
-                                Width="60" 
-                                Height="60"
-                                Style="{StaticResource MaterialDesignCircularProgressBar}"
-                                Margin="0,0,0,16" />
-                    <TextBlock Text="{Binding LoadingMessage}" 
-                             Foreground="White" 
-                             FontSize="{Binding MainViewModel.FontSize}"
-                             HorizontalAlignment="Center" />
-                </StackPanel>
-            </Grid>
+            <!-- 可折叠表单区域 -->
+            <Expander Grid.Row="1" 
+                      Header="手工填写表单" 
+                      Margin="0,16,0,0"
+                      BorderThickness="0,1,0,0"
+                      BorderBrush="{DynamicResource MaterialDesignDivider}"
+                      Background="{DynamicResource MaterialDesignPaper}"
+                      IsExpanded="{Binding IsTicketFormExpanded}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                              HorizontalScrollBarVisibility="Disabled"
+                              MaxHeight="500">
+                    <Grid Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 第一行：取票号、检票位置 -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" 
+                                  Text="取票号:" 
+                                  Style="{StaticResource FormLabelStyle}"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" 
+                                Text="{Binding TicketNumber, UpdateSourceTrigger=PropertyChanged}" 
+                                Style="{StaticResource FormTextBoxStyle}"
+                                materialDesign:HintAssist.Hint="取票号"
+                                Margin="0,8,16,8"/>
+
+                        <TextBlock Grid.Row="0" Grid.Column="2" 
+                                  Text="检票位置:" 
+                                  Style="{StaticResource FormLabelStyle}"/>
+                        <TextBox Grid.Row="0" Grid.Column="3" 
+                                Text="{Binding CheckInLocation, UpdateSourceTrigger=PropertyChanged}" 
+                                Style="{StaticResource FormTextBoxStyle}"
+                                materialDesign:HintAssist.Hint="检票位置"
+                                Margin="0,8,0,8"/>
+
+                        <!-- 第二行：出发站、到达站 -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" 
+                                  Text="出发站:" 
+                                  Style="{StaticResource FormLabelStyle}"/>
+                        <Grid Grid.Row="1" Grid.Column="1" Margin="0,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <TextBox 
+                                    Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                    Style="{StaticResource FormSearchTextBoxStyle}"
+                                    materialDesign:HintAssist.Hint="出发站"
+                                    Tag="Depart"
+                                    InputMethod.IsInputMethodEnabled="True"
+                                    InputMethod.PreferredImeState="On"
+                                    InputMethod.PreferredImeConversionMode="Native"
+                                    LostFocus="DepartStation_LostFocus"
+                                    Margin="0"/>
+                                <Popup IsOpen="{Binding IsDepartStationDropdownOpen}" 
+                                      PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                                      Width="{Binding ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                                      StaysOpen="False">
+                                    <Border Background="{DynamicResource MaterialDesignPaper}" 
+                                            BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                            BorderThickness="1" 
+                                            MaxHeight="200">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                    Style="{StaticResource AutoHideScrollViewerStyle}">
+                                            <ItemsControl ItemsSource="{Binding DepartStationSuggestions}"
+                                                        KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                        KeyboardNavigation.TabNavigation="Cycle">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Command="{Binding DataContext.SelectDepartStationCommand, 
+                                                                RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Content="{Binding StationName, Converter={StaticResource StationNameConverter}}"
+                                                                HorizontalContentAlignment="Center"
+                                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                                Width="{Binding ActualWidth, 
+                                                                        RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                        AncestorType=ScrollViewer}}"
+                                                                FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                            <TextBlock Grid.Column="1" 
+                                      Text="站" 
+                                      VerticalAlignment="Center" 
+                                      Margin="4,0,0,0"/>
+                        </Grid>
+
+                        <TextBlock Grid.Row="1" Grid.Column="2" 
+                                  Text="到达站:" 
+                                  Style="{StaticResource FormLabelStyle}"/>
+                        <Grid Grid.Row="1" Grid.Column="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <TextBox 
+                                    Text="{Binding ArriveStationSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                    Style="{StaticResource FormSearchTextBoxStyle}"
+                                    materialDesign:HintAssist.Hint="到达站"
+                                    Tag="Arrive"
+                                    InputMethod.IsInputMethodEnabled="True"
+                                    InputMethod.PreferredImeState="On"
+                                    InputMethod.PreferredImeConversionMode="Native"
+                                    LostFocus="ArriveStation_LostFocus"
+                                    Margin="0"/>
+                                <Popup IsOpen="{Binding IsArriveStationDropdownOpen}" 
+                                      PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                                      Width="{Binding ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                                      StaysOpen="False">
+                                    <Border Background="{DynamicResource MaterialDesignPaper}" 
+                                            BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                            BorderThickness="1" 
+                                            MaxHeight="200">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                    Style="{StaticResource AutoHideScrollViewerStyle}">
+                                            <ItemsControl ItemsSource="{Binding ArriveStationSuggestions}"
+                                                        KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                        KeyboardNavigation.TabNavigation="Cycle">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Command="{Binding DataContext.SelectArriveStationCommand, 
+                                                                RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Content="{Binding StationName, Converter={StaticResource StationNameConverter}}"
+                                                                HorizontalContentAlignment="Center"
+                                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                                Width="{Binding ActualWidth, 
+                                                                        RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                        AncestorType=ScrollViewer}}"
+                                                                FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                            <TextBlock Grid.Column="1" 
+                                      Text="站" 
+                                      VerticalAlignment="Center" 
+                                      Margin="4,0,0,0"/>
+                        </Grid>
+
+                        <!-- 更多表单项... -->
+                        <!-- 第三行：出发站拼音、到达站拼音 -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" 
+                                   Text="出发站拼音:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" 
+                                 Text="{Binding DepartStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource FormTextBoxStyle}"
+                                 materialDesign:HintAssist.Hint="出发站拼音"
+                                 Margin="0,8,16,8"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="2" 
+                                   Text="到达站拼音:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <TextBox Grid.Row="2" Grid.Column="3" 
+                                 Text="{Binding ArriveStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource FormTextBoxStyle}"
+                                 materialDesign:HintAssist.Hint="到达站拼音"
+                                 Margin="0,8,0,8"/>
+
+                        <!-- 第四行：金额、出发站代码 -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" 
+                                   Text="金额:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <Grid Grid.Row="3" Grid.Column="1" Margin="0,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="¥" 
+                                     Grid.Column="0"
+                                     VerticalAlignment="Center" 
+                                     Margin="0,0,4,0"
+                                     FontFamily="Microsoft YaHei"
+                                     Foreground="{DynamicResource MaterialDesignBody}"
+                                     Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                            <TextBox Grid.Column="1"
+                                 Text="{Binding Money, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
+                                 Style="{StaticResource FormNumberTextBoxStyle}"
+                                 materialDesign:HintAssist.Hint="金额"
+                                 PreviewTextInput="MoneyTextBox_PreviewTextInput"
+                                 LostFocus="MoneyTextBox_LostFocus"
+                                 materialDesign:TextFieldAssist.HasClearButton="False"
+                                 materialDesign:TextFieldAssist.RippleOnFocusEnabled="True"
+                                 materialDesign:TextFieldAssist.SuffixText=""
+                                 HorizontalContentAlignment="Left"
+                                 Padding="8,8,4,8"/>
+                            <TextBlock Text="元" 
+                                     Grid.Column="2"
+                                     VerticalAlignment="Center" 
+                                     Margin="4,0,0,0"
+                                     FontWeight="Normal"
+                                     FontFamily="Microsoft YaHei"
+                                     Foreground="{DynamicResource MaterialDesignBody}"
+                                     Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                        </Grid>
+
+                        <TextBlock Grid.Row="3" Grid.Column="2" 
+                                   Text="出发站代码:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <TextBox Grid.Row="3" Grid.Column="3" 
+                                 Text="{Binding DepartStationCode, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource FormTextBoxStyle}"
+                                 materialDesign:HintAssist.Hint="出发站代码"
+                                 Margin="0,8,0,8" Height="45"/>
+
+                        <!-- 第五行：到达站代码、出发日期 -->
+                        <TextBlock Grid.Row="4" Grid.Column="0" 
+                                   Text="到达站代码:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" 
+                                 Text="{Binding ArriveStationCode, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource FormTextBoxStyle}"
+                                 materialDesign:HintAssist.Hint="到达站代码"
+                                 Margin="0,8,16,8"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="2" 
+                                   Text="出发日期:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <DatePicker Grid.Row="4" Grid.Column="3" 
+                                   SelectedDate="{Binding DepartDate}" 
+                                   Language="zh-CN"
+                                   SelectedDateFormat="Short"
+                                   materialDesign:HintAssist.Hint="出发日期"
+                                   Margin="0,8,0,8"
+                                   Height="Auto"
+                                   MinHeight="45"/>
+
+                        <!-- 第六行：车次、出发时间 -->
+                        <TextBlock Grid.Row="5" Grid.Column="0" 
+                                   Text="车次:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <Grid Grid.Row="5" Grid.Column="1" Margin="0,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" 
+                                      ItemsSource="{Binding TrainTypes}" 
+                                      SelectedItem="{Binding SelectedTrainType}" 
+                                      Width="90" 
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      Margin="0,0,8,0"
+                                      materialDesign:HintAssist.Hint="车型">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <TextBox Grid.Column="1" 
+                                     Text="{Binding TrainNumber, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="车次号"
+                                     Margin="0"/>
+                        </Grid>
+
+                        <TextBlock Grid.Row="5" Grid.Column="2" 
+                                   Text="出发时间:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <Grid Grid.Row="5" Grid.Column="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" 
+                                      ItemsSource="{Binding HourOptions}" 
+                                      SelectedIndex="{Binding DepartHour}" 
+                                      Width="60" 
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      Margin="0,0,4,0"
+                                      materialDesign:HintAssist.Hint="时">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <ComboBox Grid.Column="1" 
+                                      ItemsSource="{Binding MinuteOptions}" 
+                                      SelectedIndex="{Binding DepartMinute}" 
+                                      Width="60" 
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      Margin="0,0,4,0"
+                                      materialDesign:HintAssist.Hint="分">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <TextBlock Grid.Column="2" 
+                                       Text="开" 
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- 第七行：车厢号 -->
+                        <TextBlock Grid.Row="6" Grid.Column="0" 
+                                   Text="车厢号:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <Grid Grid.Row="6" Grid.Column="1" Margin="0,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" 
+                                     Text="{Binding CoachNo, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormNumberTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="车厢号"
+                                     Margin="0"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="车" 
+                                       VerticalAlignment="Center" 
+                                       Margin="4,0,8,0"/>
+                            <CheckBox Grid.Column="2" 
+                                      Content="加车" 
+                                      IsChecked="{Binding IsExtraCoach}"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- 第八行：座位号 -->
+                        <TextBlock Grid.Row="7" Grid.Column="0" 
+                                   Text="座位号:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <Grid Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" 
+                                         Text="{Binding SeatNo, UpdateSourceTrigger=PropertyChanged}" 
+                                         IsEnabled="{Binding IsSeatInputEnabled}"
+                                         Style="{StaticResource FormNumberTextBoxStyle}"
+                                         materialDesign:HintAssist.Hint="座位号"
+                                         PreviewTextInput="SeatNo_PreviewTextInput"
+                                         Margin="0"/>
+                                <ComboBox Grid.Column="1" 
+                                          ItemsSource="{Binding SeatPositions}" 
+                                          SelectedItem="{Binding SelectedSeatPosition}" 
+                                          Width="60" 
+                                          Style="{StaticResource FormComboBoxStyle}"
+                                          Margin="8,0,0,0" 
+                                          IsEnabled="{Binding IsSeatInputEnabled}" 
+                                          Visibility="{Binding IsSeatPositionVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                          materialDesign:HintAssist.Hint="位置">
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                    </ComboBox.ItemContainerStyle>
+                                </ComboBox>
+                            </Grid>
+                            <CheckBox Grid.Column="2" 
+                                      Content="无座" 
+                                      IsChecked="{Binding IsNoSeat}" 
+                                      Margin="16,0,0,0"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- 第九行：座位类型 -->
+                        <TextBlock Grid.Row="8" Grid.Column="0" 
+                                   Text="座位类型:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <ComboBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" 
+                                  ItemsSource="{Binding SeatTypes}" 
+                                  SelectedItem="{Binding SelectedSeatType}" 
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  materialDesign:HintAssist.Hint="座位类型"
+                                  Margin="0,8,0,8">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+
+                        <!-- 第十行：附加信息 -->
+                        <TextBlock Grid.Row="9" Grid.Column="0" 
+                                   Text="附加信息:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <ComboBox Grid.Row="9" Grid.Column="1" 
+                                  ItemsSource="{Binding AdditionalInfoOptions}" 
+                                  SelectedItem="{Binding SelectedAdditionalInfo}" 
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  materialDesign:HintAssist.Hint="附加信息"
+                                  Margin="0,8,16,8">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                        
+                        <TextBlock Grid.Row="9" Grid.Column="2" 
+                                   Text="票种用途:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <ComboBox Grid.Row="9" Grid.Column="3" 
+                                  ItemsSource="{Binding TicketPurposeOptions}" 
+                                  SelectedItem="{Binding SelectedTicketPurpose}" 
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  materialDesign:HintAssist.Hint="票种用途"
+                                  Margin="0,8,0,8">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+
+                        <!-- 第十一行：提示信息 -->
+                        <TextBlock Grid.Row="10" Grid.Column="0" 
+                                   Text="提示信息:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <Grid Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" 
+                                      ItemsSource="{Binding HintOptions}" 
+                                      SelectedItem="{Binding SelectedHint}" 
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      materialDesign:HintAssist.Hint="提示信息">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <TextBox Grid.Column="1" 
+                                     Text="{Binding CustomHint, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource FormTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="自定义提示"
+                                     Width="200"
+                                     Margin="8,0,0,0"
+                                     Visibility="{Binding SelectedHint, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter='自定义'}"/>
+                        </Grid>
+
+                        <!-- 第十二行：车票改签类型 -->
+                        <TextBlock Grid.Row="11" Grid.Column="0" 
+                                   Text="改签类型:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <ComboBox Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="3" 
+                                  ItemsSource="{Binding TicketModificationTypes}" 
+                                  SelectedItem="{Binding SelectedTicketModificationType}" 
+                                  Style="{StaticResource FormComboBoxStyle}"
+                                  materialDesign:HintAssist.Hint="改签类型"
+                                  Margin="0,8,0,8">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+
+                        <!-- 第十三行：票种类型 -->
+                        <TextBlock Grid.Row="12" Grid.Column="0" 
+                                   Text="票种类型:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <StackPanel Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="3" 
+                                    Orientation="Horizontal" 
+                                    Margin="0,8,0,8">
+                            <CheckBox Content="学生票" 
+                                      IsChecked="{Binding IsStudentTicket}" 
+                                      Margin="0,0,16,0"/>
+                            <CheckBox Content="优惠票" 
+                                      IsChecked="{Binding IsDiscountTicket}" 
+                                      Margin="0,0,16,0"/>
+                            <CheckBox Content="网络售票" 
+                                      IsChecked="{Binding IsOnlineTicket}" 
+                                      Margin="0,0,16,0"/>
+                            <CheckBox Content="儿童票" 
+                                      IsChecked="{Binding IsChildTicket}" 
+                                      Margin="0,0,16,0"/>
+                        </StackPanel>
+
+                        <!-- 第十四行：支付渠道 -->
+                        <TextBlock Grid.Row="13" Grid.Column="0" 
+                                   Text="支付渠道:" 
+                                   Style="{StaticResource FormLabelStyle}"/>
+                        <StackPanel Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="3" 
+                                    Orientation="Horizontal" 
+                                    Margin="0,8,0,8">
+                            <CheckBox Content="支付宝" 
+                                      IsChecked="{Binding IsAlipayPayment}" 
+                                      IsEnabled="{Binding IsAlipayPaymentEnabled}"
+                                      Margin="0,0,16,0"/>
+                            <CheckBox Content="微信支付" 
+                                      IsChecked="{Binding IsWeChatPayment}" 
+                                      IsEnabled="{Binding IsWeChatPaymentEnabled}"
+                                      Margin="0,0,16,0"/>
+                            <CheckBox Content="农业银行" 
+                                      IsChecked="{Binding IsABCPayment}" 
+                                      Margin="0,0,16,0"/>
+                            <CheckBox Content="建设银行" 
+                                      IsChecked="{Binding IsCCBPayment}" 
+                                      Margin="0,0,16,0"/>
+                            <CheckBox Content="工商银行" 
+                                      IsChecked="{Binding IsICBCPayment}" 
+                                      Margin="0,0,16,0"/>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </Expander>
         </Grid>
     </Grid>
 </Window> 

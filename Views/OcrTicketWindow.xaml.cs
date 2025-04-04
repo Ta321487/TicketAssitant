@@ -5,6 +5,8 @@ using System.IO;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.ViewModels;
+using System.Text.RegularExpressions;
+using System.Windows.Input;
 
 namespace TA_WPF.Views
 {
@@ -170,6 +172,54 @@ namespace TA_WPF.Views
         private void Window_Closed(object sender, EventArgs e)
         {
             _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        }
+        
+        /// <summary>
+        /// 出发站失去焦点时处理
+        /// </summary>
+        private void DepartStation_LostFocus(object sender, RoutedEventArgs e)
+        {
+            _viewModel.OnStationLostFocus(true);
+        }
+        
+        /// <summary>
+        /// 到达站失去焦点时处理
+        /// </summary>
+        private void ArriveStation_LostFocus(object sender, RoutedEventArgs e)
+        {
+            _viewModel.OnStationLostFocus(false);
+        }
+        
+        /// <summary>
+        /// 金额输入验证
+        /// </summary>
+        private void MoneyTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // 允许输入数字、小数点和退格键
+            Regex regex = new Regex(@"^[0-9]+(\.[0-9]{0,2})?$");
+            e.Handled = !regex.IsMatch(e.Text);
+        }
+        
+        /// <summary>
+        /// 金额失去焦点时处理格式化
+        /// </summary>
+        private void MoneyTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel != null && _viewModel.Money > 0)
+            {
+                // 格式化为两位小数
+                _viewModel.Money = Math.Round(_viewModel.Money, 2);
+            }
+        }
+        
+        /// <summary>
+        /// 座位号输入验证
+        /// </summary>
+        private void SeatNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // 只允许输入数字
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
         }
     }
 } 
