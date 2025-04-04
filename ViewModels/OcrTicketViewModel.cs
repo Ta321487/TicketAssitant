@@ -104,6 +104,35 @@ namespace TA_WPF.ViewModels
         private bool _isUpdatingDepartStation = false;
         private bool _isUpdatingArriveStation = false;
 
+        // 添加表单项启用状态属性
+        private bool _isQuestionButtonEnabled;
+        private bool _isTicketNumberEnabled;
+        private bool _isCheckInLocationEnabled;
+        private bool _isDepartStationEnabled;
+        private bool _isArriveStationEnabled;
+        private bool _isDepartStationPinyinEnabled;
+        private bool _isArriveStationPinyinEnabled;
+        private bool _isMoneyEnabled;
+        private bool _isDepartStationCodeEnabled;
+        private bool _isArriveStationCodeEnabled;
+        private bool _isDepartDateEnabled;
+        private bool _isTrainTypeEnabled;
+        private bool _isTrainNumberEnabled;
+        private bool _isDepartTimeEnabled;
+        private bool _isCoachNoEnabled;
+        private bool _isExtraCoachEnabled;
+        private bool _isSeatNoEnabled;
+        private bool _isNoSeatEnabled;
+        private bool _isSeatPositionEnabled;
+        private bool _isSeatTypeEnabled;
+        private bool _isAdditionalInfoEnabled;
+        private bool _isTicketPurposeEnabled;
+        private bool _isHintEnabled;
+        private bool _isCustomHintEnabled;
+        private bool _isTicketModificationTypeEnabled;
+        private bool _isTicketTypeEnabled;
+        private bool _isPaymentMethodEnabled;
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -205,6 +234,39 @@ namespace TA_WPF.ViewModels
             
             // 加载车站数据
             _ = LoadStationsAsync();
+
+            // 添加到构造函数中进行初始化
+            _isQuestionButtonEnabled = false;
+            _isTicketNumberEnabled = false;
+            _isCheckInLocationEnabled = false;
+            _isDepartStationEnabled = false;
+            _isArriveStationEnabled = false;
+            _isDepartStationPinyinEnabled = false;
+            _isArriveStationPinyinEnabled = false;
+            _isMoneyEnabled = false;
+            _isDepartStationCodeEnabled = false;
+            _isArriveStationCodeEnabled = false;
+            _isDepartDateEnabled = false;
+            _isTrainTypeEnabled = false;
+            _isTrainNumberEnabled = false;
+            _isDepartTimeEnabled = false;
+            _isCoachNoEnabled = false;
+            _isExtraCoachEnabled = false;
+            _isSeatNoEnabled = false;
+            _isNoSeatEnabled = false;
+            _isSeatPositionEnabled = false;
+            _isSeatTypeEnabled = false;
+            _isAdditionalInfoEnabled = false;
+            _isTicketPurposeEnabled = false;
+            _isHintEnabled = false;
+            _isCustomHintEnabled = false;
+            _isTicketModificationTypeEnabled = false;
+            _isTicketTypeEnabled = false;
+            _isPaymentMethodEnabled = false;
+
+            // 添加ToggleFieldCommand命令和SaveTicketCommand命令
+            ToggleFieldCommand = new RelayCommand<string>(ToggleField);
+            SaveTicketCommand = new RelayCommand(SaveTicket);
         }
 
         /// <summary>
@@ -716,9 +778,9 @@ namespace TA_WPF.ViewModels
         }
         
         /// <summary>
-        /// 是否可以输入座位
+        /// 原座位输入启用（兼容原系统）
         /// </summary>
-        public bool IsSeatInputEnabled => !_isNoSeat;
+        public bool IsSeatInputEnabled => !IsNoSeat && IsSeatNoEnabled;
         
         /// <summary>
         /// 是否显示座位位置
@@ -1246,6 +1308,448 @@ namespace TA_WPF.ViewModels
             }
         }
         
+        /// <summary>
+        /// 问号按钮是否启用
+        /// </summary>
+        public bool IsQuestionButtonEnabled
+        {
+            get => _isQuestionButtonEnabled;
+            set
+            {
+                if (_isQuestionButtonEnabled != value)
+                {
+                    _isQuestionButtonEnabled = value;
+                    OnPropertyChanged(nameof(IsQuestionButtonEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 取票号是否启用
+        /// </summary>
+        public bool IsTicketNumberEnabled
+        {
+            get => _isTicketNumberEnabled;
+            set
+            {
+                if (_isTicketNumberEnabled != value)
+                {
+                    _isTicketNumberEnabled = value;
+                    OnPropertyChanged(nameof(IsTicketNumberEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 检票位置是否启用
+        /// </summary>
+        public bool IsCheckInLocationEnabled
+        {
+            get => _isCheckInLocationEnabled;
+            set
+            {
+                if (_isCheckInLocationEnabled != value)
+                {
+                    _isCheckInLocationEnabled = value;
+                    OnPropertyChanged(nameof(IsCheckInLocationEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站是否启用
+        /// </summary>
+        public bool IsDepartStationEnabled
+        {
+            get => _isDepartStationEnabled;
+            set
+            {
+                if (_isDepartStationEnabled != value)
+                {
+                    _isDepartStationEnabled = value;
+                    OnPropertyChanged(nameof(IsDepartStationEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站是否启用
+        /// </summary>
+        public bool IsArriveStationEnabled
+        {
+            get => _isArriveStationEnabled;
+            set
+            {
+                if (_isArriveStationEnabled != value)
+                {
+                    _isArriveStationEnabled = value;
+                    OnPropertyChanged(nameof(IsArriveStationEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站拼音是否启用
+        /// </summary>
+        public bool IsDepartStationPinyinEnabled
+        {
+            get => _isDepartStationPinyinEnabled;
+            set
+            {
+                if (_isDepartStationPinyinEnabled != value)
+                {
+                    _isDepartStationPinyinEnabled = value;
+                    OnPropertyChanged(nameof(IsDepartStationPinyinEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站拼音是否启用
+        /// </summary>
+        public bool IsArriveStationPinyinEnabled
+        {
+            get => _isArriveStationPinyinEnabled;
+            set
+            {
+                if (_isArriveStationPinyinEnabled != value)
+                {
+                    _isArriveStationPinyinEnabled = value;
+                    OnPropertyChanged(nameof(IsArriveStationPinyinEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 金额是否启用
+        /// </summary>
+        public bool IsMoneyEnabled
+        {
+            get => _isMoneyEnabled;
+            set
+            {
+                if (_isMoneyEnabled != value)
+                {
+                    _isMoneyEnabled = value;
+                    OnPropertyChanged(nameof(IsMoneyEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发站代码是否启用
+        /// </summary>
+        public bool IsDepartStationCodeEnabled
+        {
+            get => _isDepartStationCodeEnabled;
+            set
+            {
+                if (_isDepartStationCodeEnabled != value)
+                {
+                    _isDepartStationCodeEnabled = value;
+                    OnPropertyChanged(nameof(IsDepartStationCodeEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 到达站代码是否启用
+        /// </summary>
+        public bool IsArriveStationCodeEnabled
+        {
+            get => _isArriveStationCodeEnabled;
+            set
+            {
+                if (_isArriveStationCodeEnabled != value)
+                {
+                    _isArriveStationCodeEnabled = value;
+                    OnPropertyChanged(nameof(IsArriveStationCodeEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发日期是否启用
+        /// </summary>
+        public bool IsDepartDateEnabled
+        {
+            get => _isDepartDateEnabled;
+            set
+            {
+                if (_isDepartDateEnabled != value)
+                {
+                    _isDepartDateEnabled = value;
+                    OnPropertyChanged(nameof(IsDepartDateEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 车型是否启用
+        /// </summary>
+        public bool IsTrainTypeEnabled
+        {
+            get => _isTrainTypeEnabled;
+            set
+            {
+                if (_isTrainTypeEnabled != value)
+                {
+                    _isTrainTypeEnabled = value;
+                    OnPropertyChanged(nameof(IsTrainTypeEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 车次号是否启用
+        /// </summary>
+        public bool IsTrainNumberEnabled
+        {
+            get => _isTrainNumberEnabled;
+            set
+            {
+                if (_isTrainNumberEnabled != value)
+                {
+                    _isTrainNumberEnabled = value;
+                    OnPropertyChanged(nameof(IsTrainNumberEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 出发时间是否启用
+        /// </summary>
+        public bool IsDepartTimeEnabled
+        {
+            get => _isDepartTimeEnabled;
+            set
+            {
+                if (_isDepartTimeEnabled != value)
+                {
+                    _isDepartTimeEnabled = value;
+                    OnPropertyChanged(nameof(IsDepartTimeEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 车厢号是否启用
+        /// </summary>
+        public bool IsCoachNoEnabled
+        {
+            get => _isCoachNoEnabled;
+            set
+            {
+                if (_isCoachNoEnabled != value)
+                {
+                    _isCoachNoEnabled = value;
+                    OnPropertyChanged(nameof(IsCoachNoEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 加车选项是否启用
+        /// </summary>
+        public bool IsExtraCoachEnabled
+        {
+            get => _isExtraCoachEnabled;
+            set
+            {
+                if (_isExtraCoachEnabled != value)
+                {
+                    _isExtraCoachEnabled = value;
+                    OnPropertyChanged(nameof(IsExtraCoachEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 座位号是否启用
+        /// </summary>
+        public bool IsSeatNoEnabled
+        {
+            get => _isSeatNoEnabled;
+            set
+            {
+                if (_isSeatNoEnabled != value)
+                {
+                    _isSeatNoEnabled = value;
+                    OnPropertyChanged(nameof(IsSeatNoEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 无座选项是否启用
+        /// </summary>
+        public bool IsNoSeatEnabled
+        {
+            get => _isNoSeatEnabled;
+            set
+            {
+                if (_isNoSeatEnabled != value)
+                {
+                    _isNoSeatEnabled = value;
+                    OnPropertyChanged(nameof(IsNoSeatEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 座位位置是否启用
+        /// </summary>
+        public bool IsSeatPositionEnabled
+        {
+            get => _isSeatPositionEnabled && !IsNoSeat && IsSeatPositionVisible;
+            set
+            {
+                if (_isSeatPositionEnabled != value)
+                {
+                    _isSeatPositionEnabled = value;
+                    OnPropertyChanged(nameof(IsSeatPositionEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 座位类型是否启用
+        /// </summary>
+        public bool IsSeatTypeEnabled
+        {
+            get => _isSeatTypeEnabled;
+            set
+            {
+                if (_isSeatTypeEnabled != value)
+                {
+                    _isSeatTypeEnabled = value;
+                    OnPropertyChanged(nameof(IsSeatTypeEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 附加信息是否启用
+        /// </summary>
+        public bool IsAdditionalInfoEnabled
+        {
+            get => _isAdditionalInfoEnabled;
+            set
+            {
+                if (_isAdditionalInfoEnabled != value)
+                {
+                    _isAdditionalInfoEnabled = value;
+                    OnPropertyChanged(nameof(IsAdditionalInfoEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 票种用途是否启用
+        /// </summary>
+        public bool IsTicketPurposeEnabled
+        {
+            get => _isTicketPurposeEnabled;
+            set
+            {
+                if (_isTicketPurposeEnabled != value)
+                {
+                    _isTicketPurposeEnabled = value;
+                    OnPropertyChanged(nameof(IsTicketPurposeEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 提示信息是否启用
+        /// </summary>
+        public bool IsHintEnabled
+        {
+            get => _isHintEnabled;
+            set
+            {
+                if (_isHintEnabled != value)
+                {
+                    _isHintEnabled = value;
+                    OnPropertyChanged(nameof(IsHintEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 自定义提示是否启用
+        /// </summary>
+        public bool IsCustomHintEnabled
+        {
+            get => _isCustomHintEnabled && SelectedHint == "自定义";
+            set
+            {
+                if (_isCustomHintEnabled != value)
+                {
+                    _isCustomHintEnabled = value;
+                    OnPropertyChanged(nameof(IsCustomHintEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 改签类型是否启用
+        /// </summary>
+        public bool IsTicketModificationTypeEnabled
+        {
+            get => _isTicketModificationTypeEnabled;
+            set
+            {
+                if (_isTicketModificationTypeEnabled != value)
+                {
+                    _isTicketModificationTypeEnabled = value;
+                    OnPropertyChanged(nameof(IsTicketModificationTypeEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 票种类型是否启用
+        /// </summary>
+        public bool IsTicketTypeEnabled
+        {
+            get => _isTicketTypeEnabled;
+            set
+            {
+                if (_isTicketTypeEnabled != value)
+                {
+                    _isTicketTypeEnabled = value;
+                    OnPropertyChanged(nameof(IsTicketTypeEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 支付方式是否启用
+        /// </summary>
+        public bool IsPaymentMethodEnabled
+        {
+            get => _isPaymentMethodEnabled;
+            set
+            {
+                if (_isPaymentMethodEnabled != value)
+                {
+                    _isPaymentMethodEnabled = value;
+                    OnPropertyChanged(nameof(IsPaymentMethodEnabled));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 切换字段启用状态的命令
+        /// </summary>
+        public ICommand ToggleFieldCommand { get; }
+
+        /// <summary>
+        /// 保存车票命令
+        /// </summary>
+        public ICommand SaveTicketCommand { get; }
+        
         #endregion
 
         /// <summary>
@@ -1253,6 +1757,9 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private async Task SelectImage()
         {
+            // 重置表单项状态
+            ResetFormFieldsState();
+            
             var openFileDialog = new OpenFileDialog
             {
                 Filter = "图片文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif",
@@ -1364,6 +1871,9 @@ namespace TA_WPF.ViewModels
                         
                         StatusMessage = $"OCR识别完成，识别到 {OcrResults.Count} 个文本块";
                         MessageBoxHelper.ShowInfo($"OCR识别完成，识别到 {OcrResults.Count} 个文本块");
+
+                        // OCR识别成功后启用问号按钮
+                        IsQuestionButtonEnabled = true;
                     }
                     else
                     {
@@ -1932,6 +2442,133 @@ namespace TA_WPF.ViewModels
             {
                 LogHelper.LogError($"选择到达站时出错: {ex.Message}", ex);
             }
+        }
+        
+        /// <summary>
+        /// 重置表单项状态
+        /// </summary>
+        private void ResetFormFieldsState()
+        {
+            // 禁用问号按钮
+            IsQuestionButtonEnabled = false;
+            
+            // 禁用所有表单项
+            IsTicketNumberEnabled = false;
+            IsCheckInLocationEnabled = false;
+            IsDepartStationEnabled = false;
+            IsArriveStationEnabled = false;
+            IsDepartStationPinyinEnabled = false;
+            IsArriveStationPinyinEnabled = false;
+            IsMoneyEnabled = false;
+            IsDepartStationCodeEnabled = false;
+            IsArriveStationCodeEnabled = false;
+            IsDepartDateEnabled = false;
+            IsTrainTypeEnabled = false;
+            IsTrainNumberEnabled = false;
+            IsDepartTimeEnabled = false;
+            IsCoachNoEnabled = false;
+            IsExtraCoachEnabled = false;
+            IsSeatNoEnabled = false;
+            IsNoSeatEnabled = false;
+            IsSeatPositionEnabled = false;
+            IsSeatTypeEnabled = false;
+            IsAdditionalInfoEnabled = false;
+            IsTicketPurposeEnabled = false;
+            IsHintEnabled = false;
+            IsCustomHintEnabled = false;
+            IsTicketModificationTypeEnabled = false;
+            IsTicketTypeEnabled = false;
+            IsPaymentMethodEnabled = false;
+        }
+        
+        /// <summary>
+        /// 切换字段启用状态
+        /// </summary>
+        private void ToggleField(string fieldName)
+        {
+            if (string.IsNullOrEmpty(fieldName))
+                return;
+
+            switch (fieldName)
+            {
+                case "TicketNumber":
+                    IsTicketNumberEnabled = !IsTicketNumberEnabled;
+                    break;
+                case "CheckInLocation":
+                    IsCheckInLocationEnabled = !IsCheckInLocationEnabled;
+                    break;
+                case "DepartStation":
+                    IsDepartStationEnabled = !IsDepartStationEnabled;
+                    break;
+                case "ArriveStation":
+                    IsArriveStationEnabled = !IsArriveStationEnabled;
+                    break;
+                case "DepartStationPinyin":
+                    IsDepartStationPinyinEnabled = !IsDepartStationPinyinEnabled;
+                    break;
+                case "ArriveStationPinyin":
+                    IsArriveStationPinyinEnabled = !IsArriveStationPinyinEnabled;
+                    break;
+                case "Money":
+                    IsMoneyEnabled = !IsMoneyEnabled;
+                    break;
+                case "DepartStationCode":
+                    IsDepartStationCodeEnabled = !IsDepartStationCodeEnabled;
+                    break;
+                case "ArriveStationCode":
+                    IsArriveStationCodeEnabled = !IsArriveStationCodeEnabled;
+                    break;
+                case "DepartDate":
+                    IsDepartDateEnabled = !IsDepartDateEnabled;
+                    break;
+                case "TrainNumber":
+                    IsTrainTypeEnabled = !IsTrainTypeEnabled;
+                    IsTrainNumberEnabled = !IsTrainNumberEnabled;
+                    break;
+                case "DepartTime":
+                    IsDepartTimeEnabled = !IsDepartTimeEnabled;
+                    break;
+                case "CoachNo":
+                    IsCoachNoEnabled = !IsCoachNoEnabled;
+                    IsExtraCoachEnabled = !IsExtraCoachEnabled;
+                    break;
+                case "SeatNo":
+                    IsSeatNoEnabled = !IsSeatNoEnabled;
+                    IsNoSeatEnabled = !IsNoSeatEnabled;
+                    IsSeatPositionEnabled = !IsSeatPositionEnabled;
+                    break;
+                case "SeatType":
+                    IsSeatTypeEnabled = !IsSeatTypeEnabled;
+                    break;
+                case "AdditionalInfo":
+                    IsAdditionalInfoEnabled = !IsAdditionalInfoEnabled;
+                    break;
+                case "TicketPurpose":
+                    IsTicketPurposeEnabled = !IsTicketPurposeEnabled;
+                    break;
+                case "Hint":
+                    IsHintEnabled = !IsHintEnabled;
+                    IsCustomHintEnabled = !IsCustomHintEnabled;
+                    break;
+                case "TicketModificationType":
+                    IsTicketModificationTypeEnabled = !IsTicketModificationTypeEnabled;
+                    break;
+                case "TicketType":
+                    IsTicketTypeEnabled = !IsTicketTypeEnabled;
+                    break;
+                case "PaymentMethod":
+                    IsPaymentMethodEnabled = !IsPaymentMethodEnabled;
+                    break;
+            }
+        }
+        
+        /// <summary>
+        /// 保存车票信息
+        /// </summary>
+        private void SaveTicket()
+        {
+            // 保存车票信息的逻辑将在此处实现
+            MessageBoxHelper.ShowInfo("车票保存功能正在开发中...");
         }
         
         #endregion

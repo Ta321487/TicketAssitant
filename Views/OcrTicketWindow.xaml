@@ -9,7 +9,7 @@
         xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels"
         mc:Ignorable="d"
         Title="OCR导入车票" 
-        Height="700" Width="1000"
+        Height="750" Width="1000"
         d:DesignHeight="1400" d:DesignWidth="1200"
         WindowStartupLocation="CenterOwner"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -132,6 +132,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         
         <!-- 顶部工具栏 -->
@@ -495,20 +496,52 @@
                         <TextBlock Grid.Row="0" Grid.Column="0" 
                                   Text="取票号:" 
                                   Style="{StaticResource FormLabelStyle}"/>
-                        <TextBox Grid.Row="0" Grid.Column="1" 
-                                Text="{Binding TicketNumber, UpdateSourceTrigger=PropertyChanged}" 
-                                Style="{StaticResource FormTextBoxStyle}"
-                                materialDesign:HintAssist.Hint="取票号"
-                                Margin="0,8,16,8"/>
+                        <Grid Grid.Row="0" Grid.Column="1" Margin="0,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                    Text="{Binding TicketNumber, UpdateSourceTrigger=PropertyChanged}" 
+                                    Style="{StaticResource FormTextBoxStyle}"
+                                    materialDesign:HintAssist.Hint="取票号"
+                                    IsEnabled="{Binding IsTicketNumberEnabled}"
+                                    Margin="0"/>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="TicketNumber"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <TextBlock Grid.Row="0" Grid.Column="2" 
                                   Text="检票位置:" 
                                   Style="{StaticResource FormLabelStyle}"/>
-                        <TextBox Grid.Row="0" Grid.Column="3" 
-                                Text="{Binding CheckInLocation, UpdateSourceTrigger=PropertyChanged}" 
-                                Style="{StaticResource FormTextBoxStyle}"
-                                materialDesign:HintAssist.Hint="检票位置"
-                                Margin="0,8,0,8"/>
+                        <Grid Grid.Row="0" Grid.Column="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                    Text="{Binding CheckInLocation, UpdateSourceTrigger=PropertyChanged}" 
+                                    Style="{StaticResource FormTextBoxStyle}"
+                                    materialDesign:HintAssist.Hint="检票位置"
+                                    IsEnabled="{Binding IsCheckInLocationEnabled}"
+                                    Margin="0"/>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="CheckInLocation"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <!-- 第二行：出发站、到达站 -->
                         <TextBlock Grid.Row="1" Grid.Column="0" 
@@ -517,6 +550,7 @@
                         <Grid Grid.Row="1" Grid.Column="1" Margin="0,8,16,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0">
@@ -529,6 +563,7 @@
                                     InputMethod.PreferredImeState="On"
                                     InputMethod.PreferredImeConversionMode="Native"
                                     LostFocus="DepartStation_LostFocus"
+                                    IsEnabled="{Binding IsDepartStationEnabled}"
                                     Margin="0"/>
                                 <Popup IsOpen="{Binding IsDepartStationDropdownOpen}" 
                                       PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
@@ -571,6 +606,15 @@
                                       Text="站" 
                                       VerticalAlignment="Center" 
                                       Margin="4,0,0,0"/>
+                            <Button Grid.Column="2" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="DepartStation"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
                         </Grid>
 
                         <TextBlock Grid.Row="1" Grid.Column="2" 
@@ -579,6 +623,7 @@
                         <Grid Grid.Row="1" Grid.Column="3" Margin="0,8,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0">
@@ -591,6 +636,7 @@
                                     InputMethod.PreferredImeState="On"
                                     InputMethod.PreferredImeConversionMode="Native"
                                     LostFocus="ArriveStation_LostFocus"
+                                    IsEnabled="{Binding IsArriveStationEnabled}"
                                     Margin="0"/>
                                 <Popup IsOpen="{Binding IsArriveStationDropdownOpen}" 
                                       PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
@@ -633,27 +679,67 @@
                                       Text="站" 
                                       VerticalAlignment="Center" 
                                       Margin="4,0,0,0"/>
+                            <Button Grid.Column="2" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="ArriveStation"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
                         </Grid>
 
-                        <!-- 更多表单项... -->
                         <!-- 第三行：出发站拼音、到达站拼音 -->
                         <TextBlock Grid.Row="2" Grid.Column="0" 
                                    Text="出发站拼音:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <TextBox Grid.Row="2" Grid.Column="1" 
-                                 Text="{Binding DepartStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
-                                 Style="{StaticResource FormTextBoxStyle}"
-                                 materialDesign:HintAssist.Hint="出发站拼音"
-                                 Margin="0,8,16,8"/>
+                        <Grid Grid.Row="2" Grid.Column="1" Margin="0,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding DepartStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource FormTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="出发站拼音"
+                                     IsEnabled="{Binding IsDepartStationPinyinEnabled}"
+                                     Margin="0"/>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="DepartStationPinyin"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <TextBlock Grid.Row="2" Grid.Column="2" 
                                    Text="到达站拼音:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <TextBox Grid.Row="2" Grid.Column="3" 
-                                 Text="{Binding ArriveStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
-                                 Style="{StaticResource FormTextBoxStyle}"
-                                 materialDesign:HintAssist.Hint="到达站拼音"
-                                 Margin="0,8,0,8"/>
+                        <Grid Grid.Row="2" Grid.Column="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding ArriveStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource FormTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="到达站拼音"
+                                     IsEnabled="{Binding IsArriveStationPinyinEnabled}"
+                                     Margin="0"/>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="ArriveStationPinyin"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <!-- 第四行：金额、出发站代码 -->
                         <TextBlock Grid.Row="3" Grid.Column="0" 
@@ -663,6 +749,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="¥" 
@@ -681,6 +768,7 @@
                                  materialDesign:TextFieldAssist.HasClearButton="False"
                                  materialDesign:TextFieldAssist.RippleOnFocusEnabled="True"
                                  materialDesign:TextFieldAssist.SuffixText=""
+                                 IsEnabled="{Binding IsMoneyEnabled}"
                                  HorizontalContentAlignment="Left"
                                  Padding="8,8,4,8"/>
                             <TextBlock Text="元" 
@@ -691,38 +779,96 @@
                                      FontFamily="Microsoft YaHei"
                                      Foreground="{DynamicResource MaterialDesignBody}"
                                      Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                            <Button Grid.Column="3" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="Money"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
                         </Grid>
 
                         <TextBlock Grid.Row="3" Grid.Column="2" 
                                    Text="出发站代码:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <TextBox Grid.Row="3" Grid.Column="3" 
-                                 Text="{Binding DepartStationCode, UpdateSourceTrigger=PropertyChanged}" 
-                                 Style="{StaticResource FormTextBoxStyle}"
-                                 materialDesign:HintAssist.Hint="出发站代码"
-                                 Margin="0,8,0,8" Height="45"/>
+                        <Grid Grid.Row="3" Grid.Column="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding DepartStationCode, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource FormTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="出发站代码"
+                                     IsEnabled="{Binding IsDepartStationCodeEnabled}"
+                                     Margin="0" 
+                                     Height="45"/>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="DepartStationCode"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <!-- 第五行：到达站代码、出发日期 -->
                         <TextBlock Grid.Row="4" Grid.Column="0" 
                                    Text="到达站代码:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <TextBox Grid.Row="4" Grid.Column="1" 
-                                 Text="{Binding ArriveStationCode, UpdateSourceTrigger=PropertyChanged}" 
-                                 Style="{StaticResource FormTextBoxStyle}"
-                                 materialDesign:HintAssist.Hint="到达站代码"
-                                 Margin="0,8,16,8"/>
+                        <Grid Grid.Row="4" Grid.Column="1" Margin="0,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding ArriveStationCode, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource FormTextBoxStyle}"
+                                     materialDesign:HintAssist.Hint="到达站代码"
+                                     IsEnabled="{Binding IsArriveStationCodeEnabled}"
+                                     Margin="0"/>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="ArriveStationCode"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <TextBlock Grid.Row="4" Grid.Column="2" 
                                    Text="出发日期:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <DatePicker Grid.Row="4" Grid.Column="3" 
-                                   SelectedDate="{Binding DepartDate}" 
-                                   Language="zh-CN"
-                                   SelectedDateFormat="Short"
-                                   materialDesign:HintAssist.Hint="出发日期"
-                                   Margin="0,8,0,8"
-                                   Height="Auto"
-                                   MinHeight="45"/>
+                        <Grid Grid.Row="4" Grid.Column="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <DatePicker Grid.Column="0"
+                                       SelectedDate="{Binding DepartDate}" 
+                                       Language="zh-CN"
+                                       SelectedDateFormat="Short"
+                                       materialDesign:HintAssist.Hint="出发日期"
+                                       IsEnabled="{Binding IsDepartDateEnabled}"
+                                       Margin="0"
+                                       Height="Auto"
+                                       MinHeight="45"/>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="DepartDate"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <!-- 第六行：车次、出发时间 -->
                         <TextBlock Grid.Row="5" Grid.Column="0" 
@@ -732,12 +878,14 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ComboBox Grid.Column="0" 
                                       ItemsSource="{Binding TrainTypes}" 
                                       SelectedItem="{Binding SelectedTrainType}" 
                                       Width="90" 
                                       Style="{StaticResource FormComboBoxStyle}"
+                                      IsEnabled="{Binding IsTrainTypeEnabled}"
                                       Margin="0,0,8,0"
                                       materialDesign:HintAssist.Hint="车型">
                                 <ComboBox.ItemContainerStyle>
@@ -748,7 +896,17 @@
                                      Text="{Binding TrainNumber, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource FormTextBoxStyle}"
                                      materialDesign:HintAssist.Hint="车次号"
+                                     IsEnabled="{Binding IsTrainNumberEnabled}"
                                      Margin="0"/>
+                            <Button Grid.Column="2" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="TrainNumber"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
                         </Grid>
 
                         <TextBlock Grid.Row="5" Grid.Column="2" 
@@ -759,12 +917,14 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ComboBox Grid.Column="0" 
                                       ItemsSource="{Binding HourOptions}" 
                                       SelectedIndex="{Binding DepartHour}" 
                                       Width="60" 
                                       Style="{StaticResource FormComboBoxStyle}"
+                                      IsEnabled="{Binding IsDepartTimeEnabled}"
                                       Margin="0,0,4,0"
                                       materialDesign:HintAssist.Hint="时">
                                 <ComboBox.ItemContainerStyle>
@@ -776,6 +936,7 @@
                                       SelectedIndex="{Binding DepartMinute}" 
                                       Width="60" 
                                       Style="{StaticResource FormComboBoxStyle}"
+                                      IsEnabled="{Binding IsDepartTimeEnabled}"
                                       Margin="0,0,4,0"
                                       materialDesign:HintAssist.Hint="分">
                                 <ComboBox.ItemContainerStyle>
@@ -785,6 +946,15 @@
                             <TextBlock Grid.Column="2" 
                                        Text="开" 
                                        VerticalAlignment="Center"/>
+                            <Button Grid.Column="3" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="DepartTime"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
                         </Grid>
 
                         <!-- 第七行：车厢号 -->
@@ -796,11 +966,13 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0" 
                                      Text="{Binding CoachNo, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource FormNumberTextBoxStyle}"
                                      materialDesign:HintAssist.Hint="车厢号"
+                                     IsEnabled="{Binding IsCoachNoEnabled}"
                                      Margin="0"/>
                             <TextBlock Grid.Column="1" 
                                        Text="车" 
@@ -809,7 +981,17 @@
                             <CheckBox Grid.Column="2" 
                                       Content="加车" 
                                       IsChecked="{Binding IsExtraCoach}"
+                                      IsEnabled="{Binding IsExtraCoachEnabled}"
                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="3" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="CoachNo"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
                         </Grid>
 
                         <!-- 第八行：座位号 -->
@@ -821,6 +1003,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0">
                                 <Grid.ColumnDefinitions>
@@ -829,7 +1012,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
                                          Text="{Binding SeatNo, UpdateSourceTrigger=PropertyChanged}" 
-                                         IsEnabled="{Binding IsSeatInputEnabled}"
+                                         IsEnabled="{Binding IsSeatNoEnabled}"
                                          Style="{StaticResource FormNumberTextBoxStyle}"
                                          materialDesign:HintAssist.Hint="座位号"
                                          PreviewTextInput="SeatNo_PreviewTextInput"
@@ -840,7 +1023,7 @@
                                           Width="60" 
                                           Style="{StaticResource FormComboBoxStyle}"
                                           Margin="8,0,0,0" 
-                                          IsEnabled="{Binding IsSeatInputEnabled}" 
+                                          IsEnabled="{Binding IsSeatPositionEnabled}" 
                                           Visibility="{Binding IsSeatPositionVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                                           materialDesign:HintAssist.Hint="位置">
                                     <ComboBox.ItemContainerStyle>
@@ -851,53 +1034,108 @@
                             <CheckBox Grid.Column="2" 
                                       Content="无座" 
                                       IsChecked="{Binding IsNoSeat}" 
+                                      IsEnabled="{Binding IsNoSeatEnabled}"
                                       Margin="16,0,0,0"
                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="3" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="SeatNo"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
                         </Grid>
 
                         <!-- 第九行：座位类型 -->
                         <TextBlock Grid.Row="8" Grid.Column="0" 
                                    Text="座位类型:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <ComboBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" 
-                                  ItemsSource="{Binding SeatTypes}" 
-                                  SelectedItem="{Binding SelectedSeatType}" 
-                                  Style="{StaticResource FormComboBoxStyle}"
-                                  materialDesign:HintAssist.Hint="座位类型"
-                                  Margin="0,8,0,8">
-                            <ComboBox.ItemContainerStyle>
-                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
-                            </ComboBox.ItemContainerStyle>
-                        </ComboBox>
+                        <Grid Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding SeatTypes}" 
+                                      SelectedItem="{Binding SelectedSeatType}" 
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      IsEnabled="{Binding IsSeatTypeEnabled}"
+                                      materialDesign:HintAssist.Hint="座位类型">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="SeatType"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <!-- 第十行：附加信息 -->
                         <TextBlock Grid.Row="9" Grid.Column="0" 
                                    Text="附加信息:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <ComboBox Grid.Row="9" Grid.Column="1" 
-                                  ItemsSource="{Binding AdditionalInfoOptions}" 
-                                  SelectedItem="{Binding SelectedAdditionalInfo}" 
-                                  Style="{StaticResource FormComboBoxStyle}"
-                                  materialDesign:HintAssist.Hint="附加信息"
-                                  Margin="0,8,16,8">
-                            <ComboBox.ItemContainerStyle>
-                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
-                            </ComboBox.ItemContainerStyle>
-                        </ComboBox>
+                        <Grid Grid.Row="9" Grid.Column="1" Margin="0,8,16,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding AdditionalInfoOptions}" 
+                                      SelectedItem="{Binding SelectedAdditionalInfo}" 
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      IsEnabled="{Binding IsAdditionalInfoEnabled}"
+                                      materialDesign:HintAssist.Hint="附加信息">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="AdditionalInfo"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
                         
                         <TextBlock Grid.Row="9" Grid.Column="2" 
                                    Text="票种用途:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <ComboBox Grid.Row="9" Grid.Column="3" 
-                                  ItemsSource="{Binding TicketPurposeOptions}" 
-                                  SelectedItem="{Binding SelectedTicketPurpose}" 
-                                  Style="{StaticResource FormComboBoxStyle}"
-                                  materialDesign:HintAssist.Hint="票种用途"
-                                  Margin="0,8,0,8">
-                            <ComboBox.ItemContainerStyle>
-                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
-                            </ComboBox.ItemContainerStyle>
-                        </ComboBox>
+                        <Grid Grid.Row="9" Grid.Column="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding TicketPurposeOptions}" 
+                                      SelectedItem="{Binding SelectedTicketPurpose}" 
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      IsEnabled="{Binding IsTicketPurposeEnabled}"
+                                      materialDesign:HintAssist.Hint="票种用途">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="TicketPurpose"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <!-- 第十一行：提示信息 -->
                         <TextBlock Grid.Row="10" Grid.Column="0" 
@@ -907,89 +1145,176 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <ComboBox Grid.Column="0" 
-                                      ItemsSource="{Binding HintOptions}" 
-                                      SelectedItem="{Binding SelectedHint}" 
-                                      Style="{StaticResource FormComboBoxStyle}"
-                                      materialDesign:HintAssist.Hint="提示信息">
-                                <ComboBox.ItemContainerStyle>
-                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
-                                </ComboBox.ItemContainerStyle>
-                            </ComboBox>
-                            <TextBox Grid.Column="1" 
-                                     Text="{Binding CustomHint, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource FormTextBoxStyle}"
-                                     materialDesign:HintAssist.Hint="自定义提示"
-                                     Width="200"
-                                     Margin="8,0,0,0"
-                                     Visibility="{Binding SelectedHint, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter='自定义'}"/>
+                            <Grid Grid.Column="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" 
+                                          ItemsSource="{Binding HintOptions}" 
+                                          SelectedItem="{Binding SelectedHint}" 
+                                          Style="{StaticResource FormComboBoxStyle}"
+                                          IsEnabled="{Binding IsHintEnabled}"
+                                          materialDesign:HintAssist.Hint="提示信息">
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                    </ComboBox.ItemContainerStyle>
+                                </ComboBox>
+                                <TextBox Grid.Column="1" 
+                                         Text="{Binding CustomHint, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource FormTextBoxStyle}"
+                                         materialDesign:HintAssist.Hint="自定义提示"
+                                         IsEnabled="{Binding IsCustomHintEnabled}"
+                                         Width="200"
+                                         Margin="8,0,0,0"
+                                         Visibility="{Binding SelectedHint, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter='自定义'}"/>
+                            </Grid>
+                            <Button Grid.Column="2" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="Hint"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
                         </Grid>
 
                         <!-- 第十二行：车票改签类型 -->
                         <TextBlock Grid.Row="11" Grid.Column="0" 
                                    Text="改签类型:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <ComboBox Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="3" 
-                                  ItemsSource="{Binding TicketModificationTypes}" 
-                                  SelectedItem="{Binding SelectedTicketModificationType}" 
-                                  Style="{StaticResource FormComboBoxStyle}"
-                                  materialDesign:HintAssist.Hint="改签类型"
-                                  Margin="0,8,0,8">
-                            <ComboBox.ItemContainerStyle>
-                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
-                            </ComboBox.ItemContainerStyle>
-                        </ComboBox>
+                        <Grid Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding TicketModificationTypes}" 
+                                      SelectedItem="{Binding SelectedTicketModificationType}" 
+                                      Style="{StaticResource FormComboBoxStyle}"
+                                      IsEnabled="{Binding IsTicketModificationTypeEnabled}"
+                                      materialDesign:HintAssist.Hint="改签类型">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="TicketModificationType"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <!-- 第十三行：票种类型 -->
                         <TextBlock Grid.Row="12" Grid.Column="0" 
                                    Text="票种类型:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <StackPanel Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="3" 
-                                    Orientation="Horizontal" 
-                                    Margin="0,8,0,8">
-                            <CheckBox Content="学生票" 
-                                      IsChecked="{Binding IsStudentTicket}" 
-                                      Margin="0,0,16,0"/>
-                            <CheckBox Content="优惠票" 
-                                      IsChecked="{Binding IsDiscountTicket}" 
-                                      Margin="0,0,16,0"/>
-                            <CheckBox Content="网络售票" 
-                                      IsChecked="{Binding IsOnlineTicket}" 
-                                      Margin="0,0,16,0"/>
-                            <CheckBox Content="儿童票" 
-                                      IsChecked="{Binding IsChildTicket}" 
-                                      Margin="0,0,16,0"/>
-                        </StackPanel>
+                        <Grid Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal">
+                                <CheckBox Content="学生票" 
+                                          IsChecked="{Binding IsStudentTicket}" 
+                                          IsEnabled="{Binding IsTicketTypeEnabled}"
+                                          Margin="0,0,16,0"/>
+                                <CheckBox Content="优惠票" 
+                                          IsChecked="{Binding IsDiscountTicket}" 
+                                          IsEnabled="{Binding IsTicketTypeEnabled}"
+                                          Margin="0,0,16,0"/>
+                                <CheckBox Content="网络售票" 
+                                          IsChecked="{Binding IsOnlineTicket}" 
+                                          IsEnabled="{Binding IsTicketTypeEnabled}"
+                                          Margin="0,0,16,0"/>
+                                <CheckBox Content="儿童票" 
+                                          IsChecked="{Binding IsChildTicket}" 
+                                          IsEnabled="{Binding IsTicketTypeEnabled}"
+                                          Margin="0,0,16,0"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="TicketType"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
 
                         <!-- 第十四行：支付渠道 -->
                         <TextBlock Grid.Row="13" Grid.Column="0" 
                                    Text="支付渠道:" 
                                    Style="{StaticResource FormLabelStyle}"/>
-                        <StackPanel Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="3" 
-                                    Orientation="Horizontal" 
-                                    Margin="0,8,0,8">
-                            <CheckBox Content="支付宝" 
-                                      IsChecked="{Binding IsAlipayPayment}" 
-                                      IsEnabled="{Binding IsAlipayPaymentEnabled}"
-                                      Margin="0,0,16,0"/>
-                            <CheckBox Content="微信支付" 
-                                      IsChecked="{Binding IsWeChatPayment}" 
-                                      IsEnabled="{Binding IsWeChatPaymentEnabled}"
-                                      Margin="0,0,16,0"/>
-                            <CheckBox Content="农业银行" 
-                                      IsChecked="{Binding IsABCPayment}" 
-                                      Margin="0,0,16,0"/>
-                            <CheckBox Content="建设银行" 
-                                      IsChecked="{Binding IsCCBPayment}" 
-                                      Margin="0,0,16,0"/>
-                            <CheckBox Content="工商银行" 
-                                      IsChecked="{Binding IsICBCPayment}" 
-                                      Margin="0,0,16,0"/>
-                        </StackPanel>
+                        <Grid Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal">
+                                <CheckBox Content="支付宝" 
+                                          IsChecked="{Binding IsAlipayPayment}" 
+                                          IsEnabled="{Binding IsPaymentMethodEnabled}"
+                                          Margin="0,0,16,0"/>
+                                <CheckBox Content="微信支付" 
+                                          IsChecked="{Binding IsWeChatPayment}" 
+                                          IsEnabled="{Binding IsPaymentMethodEnabled}"
+                                          Margin="0,0,16,0"/>
+                                <CheckBox Content="农业银行" 
+                                          IsChecked="{Binding IsABCPayment}" 
+                                          IsEnabled="{Binding IsPaymentMethodEnabled}"
+                                          Margin="0,0,16,0"/>
+                                <CheckBox Content="建设银行" 
+                                          IsChecked="{Binding IsCCBPayment}" 
+                                          IsEnabled="{Binding IsPaymentMethodEnabled}"
+                                          Margin="0,0,16,0"/>
+                                <CheckBox Content="工商银行" 
+                                          IsChecked="{Binding IsICBCPayment}" 
+                                          IsEnabled="{Binding IsPaymentMethodEnabled}"
+                                          Margin="0,0,16,0"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" 
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding ToggleFieldCommand}"
+                                   CommandParameter="PaymentMethod"
+                                   IsEnabled="{Binding IsQuestionButtonEnabled}"
+                                   Margin="8,0,0,0"
+                                   ToolTip="此项识别不准确？点击可编辑">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="20" Height="20"/>
+                            </Button>
+                        </Grid>
                     </Grid>
                 </ScrollViewer>
             </Expander>
+        </Grid>
+        
+        <!-- 底部保存按钮区域 -->
+        <Grid Grid.Row="2" Margin="0,16,0,0">
+            <Button HorizontalAlignment="Center" 
+                    Command="{Binding SaveTicketCommand}" 
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Background="{DynamicResource PrimaryHueMidBrush}"
+                    BorderBrush="{DynamicResource PrimaryHueMidBrush}"
+                    Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                    Width="120"
+                    Height="40"
+                    Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
+                    <TextBlock Text="保存" FontSize="14"/>
+                </StackPanel>
+            </Button>
         </Grid>
     </Grid>
 </Window> 
