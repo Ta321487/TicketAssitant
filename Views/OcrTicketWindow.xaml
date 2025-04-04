@@ -1109,7 +1109,7 @@
                         </Grid>
                         
                         <TextBlock Grid.Row="9" Grid.Column="2" 
-                                   Text="票种用途:" 
+                                   Text="车票用途:" 
                                    Style="{StaticResource FormLabelStyle}"/>
                         <Grid Grid.Row="9" Grid.Column="3" Margin="0,8,0,8">
                             <Grid.ColumnDefinitions>
@@ -1121,7 +1121,7 @@
                                       SelectedItem="{Binding SelectedTicketPurpose}" 
                                       Style="{StaticResource FormComboBoxStyle}"
                                       IsEnabled="{Binding IsTicketPurposeEnabled}"
-                                      materialDesign:HintAssist.Hint="票种用途">
+                                      materialDesign:HintAssist.Hint="车票用途">
                                 <ComboBox.ItemContainerStyle>
                                     <Style TargetType="ComboBoxItem" BasedOn="{StaticResource FormComboBoxItemStyle}"/>
                                 </ComboBox.ItemContainerStyle>

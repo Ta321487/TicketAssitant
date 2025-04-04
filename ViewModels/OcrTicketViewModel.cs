@@ -14,6 +14,8 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Text;
 
 namespace TA_WPF.ViewModels
 {
@@ -1824,6 +1826,9 @@ namespace TA_WPF.ViewModels
                 OcrResults.Clear();
                 AverageConfidence = 0;
                 
+                // 重置表单相关数据
+                ResetFormState();
+                
                 string result = await _pythonService.RunOcrWithExternalProcess(SelectedImagePath);
                 
                 // 检查是否有错误
@@ -1874,6 +1879,9 @@ namespace TA_WPF.ViewModels
 
                         // OCR识别成功后启用问号按钮
                         IsQuestionButtonEnabled = true;
+                        
+                        // 处理OCR结果并填充表单
+                        ProcessOcrResultsAndFillForm(ocrResults);
                     }
                     else
                     {
@@ -2571,6 +2579,702 @@ namespace TA_WPF.ViewModels
             MessageBoxHelper.ShowInfo("车票保存功能正在开发中...");
         }
         
+        /// <summary>
+        /// 处理OCR结果并填充表单
+        /// </summary>
+        /// <param name="ocrResults">OCR识别结果列表</param>
+        private async void ProcessOcrResultsAndFillForm(List<OcrResult> ocrResults)
+        {
+            if (ocrResults == null || ocrResults.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                // 确保车站数据已经加载
+                if (_stationSearchService != null && !_stationSearchService.IsInitialized)
+                {
+                    await _stationSearchService.InitializeAsync();
+                }
+                
+                // 将所有OCR结果文本合并到一个列表中，方便处理
+                List<string> allTexts = ocrResults.Select(r => r.Text).ToList();
+                string combinedText = string.Join(" ", allTexts);
+
+                // 启用所有要自动填充的表单项
+                EnableFormFields();
+
+                // 1. 检票号：首字母大写、一般为6位数字
+                foreach (var text in allTexts)
+                {
+                    if (text.Length >= 6 && char.IsUpper(text[0]) && text.Substring(1).All(c => char.IsDigit(c)))
+                    {
+                        TicketNumber = text;
+                        break;
+                    }
+                }
+
+                // 2. 检票地点：包含"检票："、"候车："或"xx候车室"
+                foreach (var text in allTexts)
+                {
+                    if (text.Contains("检票：") || text.Contains("检票:"))
+                    {
+                        // 处理中文冒号或英文冒号
+                        string pattern = text.Contains("检票：") ? "检票：" : "检票:";
+                        int index = text.IndexOf(pattern) + pattern.Length;
+                        CheckInLocation = text.Substring(index).Trim();
+                        break;
+                    }
+                    else if (text.Contains("候车：") || text.Contains("候车:"))
+                    {
+                        // 处理中文冒号或英文冒号
+                        string pattern = text.Contains("候车：") ? "候车：" : "候车:";
+                        int index = text.IndexOf(pattern) + pattern.Length;
+                        CheckInLocation = text.Substring(index).Trim();
+                        break;
+                    }
+                    else if (text.StartsWith("检票"))
+                    {
+                        // 去掉开头的"检票"前缀
+                        CheckInLocation = text.Substring("检票".Length).Trim();
+                        break;
+                    }
+                    else if (text.Contains("检票") && text.Contains("候车室"))
+                    {
+                        // 处理"检票候车室X"的格式
+                        int index = text.IndexOf("检票") + "检票".Length;
+                        CheckInLocation = text.Substring(index).Trim();
+                        break;
+                    }
+                    else if (text.Contains("候车室"))
+                    {
+                        CheckInLocation = text;
+                        break;
+                    }
+                }
+
+                // 提取车站信息
+                List<string> stations = new List<string>();
+                foreach (var text in allTexts)
+                {
+                    // 判断是否包含"站"字
+                    if (text.EndsWith("站") || _stationSearchService.IsValidStation(text))
+                    {
+                        stations.Add(text);
+                    }
+                }
+
+                // 3. 出发车站：第一个车站
+                if (stations.Count > 0)
+                {
+                    string departStationName = stations[0];
+                    // 去掉站字
+                    string departStationNameWithoutStation = departStationName.EndsWith("站") 
+                        ? departStationName.Substring(0, departStationName.Length - 1) 
+                        : departStationName;
+                        
+                    LogHelper.LogInfo($"提取出出发站: {departStationNameWithoutStation}");
+                    
+                    // 设置去掉站字的名称
+                    DepartStation = departStationNameWithoutStation;
+                    
+                    // 设置搜索文本，确保UI显示
+                    _isUpdatingDepartStation = true;
+                    DepartStationSearchText = departStationNameWithoutStation;
+                    _isUpdatingDepartStation = false;
+                    
+                    // 确保UI更新
+                    OnPropertyChanged(nameof(DepartStationSearchText));
+                    
+                    // 尝试填充拼音和代码
+                    var stationInfo = _stationSearchService.GetStationInfo(departStationName);
+                    if (stationInfo != null)
+                    {
+                        LogHelper.LogInfo($"出发站在数据库中找到: {stationInfo.StationName}");
+                        
+                        // 车站在数据库中存在
+                        if (!string.IsNullOrEmpty(stationInfo.StationPinyin))
+                        {
+                            DepartStationPinyin = stationInfo.StationPinyin;
+                        }
+                        
+                        if (!string.IsNullOrEmpty(stationInfo.StationCode))
+                        {
+                            DepartStationCode = stationInfo.StationCode;
+                        }
+                    }
+                    else
+                    {
+                        LogHelper.LogInfo($"出发站在数据库中未找到: {departStationName}");
+                    }
+                    // 如果车站不在数据库内或者代码/拼音为空，这些字段会保持为空
+                }
+
+                // 5. 到达车站：第二个车站
+                if (stations.Count > 1)
+                {
+                    string arriveStationName = stations[1];
+                    // 去掉站字
+                    string arriveStationNameWithoutStation = arriveStationName.EndsWith("站") 
+                        ? arriveStationName.Substring(0, arriveStationName.Length - 1) 
+                        : arriveStationName;
+                        
+                    LogHelper.LogInfo($"提取出到达站: {arriveStationNameWithoutStation}");
+                    
+                    // 设置去掉站字的名称
+                    ArriveStation = arriveStationNameWithoutStation;
+                    
+                    // 设置搜索文本，确保UI显示
+                    _isUpdatingArriveStation = true;
+                    ArriveStationSearchText = arriveStationNameWithoutStation;
+                    _isUpdatingArriveStation = false;
+                    
+                    // 确保UI更新
+                    OnPropertyChanged(nameof(ArriveStationSearchText));
+                    
+                    // 尝试填充拼音和代码
+                    var stationInfo = _stationSearchService.GetStationInfo(arriveStationName);
+                    if (stationInfo != null)
+                    {
+                        LogHelper.LogInfo($"到达站在数据库中找到: {stationInfo.StationName}");
+                        
+                        // 车站在数据库中存在
+                        if (!string.IsNullOrEmpty(stationInfo.StationPinyin))
+                        {
+                            ArriveStationPinyin = stationInfo.StationPinyin;
+                        }
+                        
+                        if (!string.IsNullOrEmpty(stationInfo.StationCode))
+                        {
+                            ArriveStationCode = stationInfo.StationCode;
+                        }
+                    }
+                    else
+                    {
+                        LogHelper.LogInfo($"到达站在数据库中未找到: {arriveStationName}");
+                    }
+                    // 如果车站不在数据库内或者代码/拼音为空，这些字段会保持为空
+                }
+
+                // 4. 车次号：首字母为G、C、D、Z、T、K、L、S，后接1~4位数字
+                foreach (var text in allTexts)
+                {
+                    // 匹配车次号格式
+                    string trainTypeRegex = @"^([GCDZTKLSY])(\d{1,4})$";
+                    var match = Regex.Match(text, trainTypeRegex);
+                    if (match.Success)
+                    {
+                        SelectedTrainType = match.Groups[1].Value; // 字母部分
+                        TrainNumber = match.Groups[2].Value; // 数字部分
+                        break;
+                    }
+                    // 纯数字车次
+                    else if (Regex.IsMatch(text, @"^\d{1,4}$"))
+                    {
+                        SelectedTrainType = "纯数字";
+                        TrainNumber = text;
+                        break;
+                    }
+                }
+
+                // 6. 处理出发日期、时间
+                foreach (var text in allTexts)
+                {
+                    // 匹配日期格式 yyyy年mm月dd日
+                    var dateMatch = Regex.Match(text, @"(\d{4})年(\d{1,2})月(\d{1,2})日");
+                    if (dateMatch.Success)
+                    {
+                        int year = int.Parse(dateMatch.Groups[1].Value);
+                        int month = int.Parse(dateMatch.Groups[2].Value);
+                        int day = int.Parse(dateMatch.Groups[3].Value);
+                        
+                        try
+                        {
+                            DepartDate = new DateTime(year, month, day);
+                        }
+                        catch
+                        {
+                            // 日期格式错误，使用当前日期
+                        }
+                    }
+                    
+                    // 匹配时间格式 HH:mm
+                    var timeMatch = Regex.Match(text, @"(\d{1,2}):(\d{2})");
+                    if (timeMatch.Success)
+                    {
+                        int hour = int.Parse(timeMatch.Groups[1].Value);
+                        int minute = int.Parse(timeMatch.Groups[2].Value);
+                        
+                        if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60)
+                        {
+                            DepartHour = hour;
+                            DepartMinute = minute;
+                        }
+                    }
+                }
+
+                // 7. 车厢号：两位数字+车
+                foreach (var text in allTexts)
+                {
+                    var coachMatch = Regex.Match(text, @"(\d{1,2})车");
+                    if (coachMatch.Success)
+                    {
+                        CoachNo = coachMatch.Groups[1].Value;
+                        
+                        // 检查是否有"加"字
+                        IsExtraCoach = text.Contains("加");
+                        break;
+                    }
+                }
+
+                // 8和10. 座位号和座位类型
+                // 先直接查找座位类型
+                foreach (var text in allTexts)
+                {
+                    if (text.Contains("新空调硬卧"))
+                    {
+                        SelectedSeatType = "新空调硬卧";
+                        
+                        // 设置卧铺位置
+                        if (text.Contains("上")) SelectedSeatPosition = "上";
+                        else if (text.Contains("中")) SelectedSeatPosition = "中";
+                        else if (text.Contains("下")) SelectedSeatPosition = "下";
+                        
+                        break;
+                    }
+                    else if (text.Contains("新空调软卧"))
+                    {
+                        SelectedSeatType = "新空调软卧";
+                        
+                        // 设置卧铺位置
+                        if (text.Contains("上")) SelectedSeatPosition = "上";
+                        else if (text.Contains("中")) SelectedSeatPosition = "中";
+                        else if (text.Contains("下")) SelectedSeatPosition = "下";
+                        
+                        break;
+                    }
+                    else if (text.Contains("商务座"))
+                    {
+                        SelectedSeatType = "商务座";
+                        break;
+                    }
+                    else if (text.Contains("一等座"))
+                    {
+                        SelectedSeatType = "一等座";
+                        break;
+                    }
+                    else if (text.Contains("二等座"))
+                    {
+                        SelectedSeatType = "二等座";
+                        break;
+                    }
+                    else if (text.Contains("新空调硬座"))
+                    {
+                        SelectedSeatType = "新空调硬座";
+                        break;
+                    }
+                }
+
+                // 如果没有找到座位类型，再通过座位号格式推断
+                if (string.IsNullOrEmpty(SelectedSeatType) || SelectedSeatType == SeatTypes.FirstOrDefault())
+                {
+                    foreach (var text in allTexts)
+                    {
+                        // 座位号：一到三位数字+号
+                        var seatMatch = Regex.Match(text, @"(\d{1,3})号");
+                        if (seatMatch.Success)
+                        {
+                            SeatNo = seatMatch.Groups[1].Value;
+                            
+                            // 检查是否有座位类型指示
+                            if (text.Contains("A") || text.Contains("B") || text.Contains("C") || 
+                                text.Contains("D") || text.Contains("F"))
+                            {
+                                // 设置座位类型
+                                if (text.Contains("商务座"))
+                                {
+                                    SelectedSeatType = "商务座";
+                                }
+                                else if (text.Contains("一等座"))
+                                {
+                                    SelectedSeatType = "一等座";
+                                }
+                                else
+                                {
+                                    SelectedSeatType = "二等座";
+                                }
+                                
+                                // 设置座位位置
+                                if (text.Contains("A")) SelectedSeatPosition = "A";
+                                else if (text.Contains("B")) SelectedSeatPosition = "B";
+                                else if (text.Contains("C")) SelectedSeatPosition = "C";
+                                else if (text.Contains("D")) SelectedSeatPosition = "D";
+                                else if (text.Contains("F")) SelectedSeatPosition = "F";
+                            }
+                            else if (text.Contains("上") || text.Contains("中") || text.Contains("下"))
+                            {
+                                // 设置卧铺类型
+                                if (text.Contains("硬卧"))
+                                {
+                                    SelectedSeatType = "新空调硬卧";
+                                }
+                                else
+                                {
+                                    SelectedSeatType = "新空调软卧";
+                                }
+                                
+                                // 设置卧铺位置
+                                if (text.Contains("上")) SelectedSeatPosition = "上";
+                                else if (text.Contains("中")) SelectedSeatPosition = "中";
+                                else if (text.Contains("下")) SelectedSeatPosition = "下";
+                            }
+                            else
+                            {
+                                // 默认硬座
+                                SelectedSeatType = "新空调硬座";
+                            }
+                            
+                            break;
+                        }
+                    }
+                }
+
+                // 9. 金额：去掉￥和元字的数字部分
+                foreach (var text in allTexts)
+                {
+                    // 优先匹配带￥和元的完整金额格式
+                    var fullMoneyMatch = Regex.Match(text, @"￥(\d+(\.\d{1,2})?)元");
+                    if (fullMoneyMatch.Success)
+                    {
+                        if (decimal.TryParse(fullMoneyMatch.Groups[1].Value, out decimal moneyValue))
+                        {
+                            Money = moneyValue;
+                            break;
+                        }
+                    }
+                    
+                    // 其次匹配带￥的金额格式
+                    var yenMoneyMatch = Regex.Match(text, @"￥(\d+(\.\d{1,2})?)");
+                    if (yenMoneyMatch.Success && !text.Contains("票"))  // 排除票号
+                    {
+                        if (decimal.TryParse(yenMoneyMatch.Groups[1].Value, out decimal moneyValue))
+                        {
+                            Money = moneyValue;
+                            break;
+                        }
+                    }
+                    
+                    // 最后匹配带元的金额格式
+                    var yuanMoneyMatch = Regex.Match(text, @"(\d+(\.\d{1,2})?)元");
+                    if (yuanMoneyMatch.Success && !text.Contains("票"))  // 排除票号
+                    {
+                        if (decimal.TryParse(yuanMoneyMatch.Groups[1].Value, out decimal moneyValue))
+                        {
+                            Money = moneyValue;
+                            break;
+                        }
+                    }
+                }
+
+                // 11. 附加信息
+                if (combinedText.Contains("限乘当日当次车"))
+                {
+                    SelectedAdditionalInfo = "限乘当日当次车";
+                }
+                else if (combinedText.Contains("退票费"))
+                {
+                    SelectedAdditionalInfo = "退票费";
+                }
+
+                // 12. 车票用途
+                if (combinedText.Contains("仅供报销使用"))
+                {
+                    SelectedTicketPurpose = "仅供报销使用";
+                }
+
+                // 13. 改签类型
+                if (combinedText.Contains("始发改签"))
+                {
+                    SelectedTicketModificationType = "始发改签";
+                }
+                else if (combinedText.Contains("变更到站"))
+                {
+                    SelectedTicketModificationType = "变更到站";
+                }
+
+                // 14. 提示信息
+                // 将所有可能的提示信息片段合并
+                StringBuilder hintTextBuilder = new StringBuilder();
+                List<string> hintFragments = new List<string>();
+                
+                // 首先收集所有可能是提示信息的文本片段
+                foreach (var text in allTexts)
+                {
+                    // 排除"仅供报销使用"，它是车票用途而非提示信息
+                    if (text.Contains("仅供报销使用"))
+                    {
+                        continue;
+                    }
+                    
+                    // 排除"退票费"，它是附加信息而非提示信息
+                    if (text == "退票费" || text.Trim() == "退票费")
+                    {
+                        continue;
+                    }
+                    
+                    if (text.Contains("铁路") || text.Contains("旅途") || 
+                        text.Contains("报销凭证") || text.Contains("凭证") ||
+                        (text.Contains("退票") && text.Contains("改签")) || // 要求同时包含"退票"和"改签"
+                        text.Contains("交回车站") ||
+                        text.Contains("12306") || text.Contains("祝您") ||
+                        text.Contains("国庆") || text.Contains("祖国") ||
+                        text.Contains("遗失") || text.Contains("不补") ||
+                        text.Contains("发货") || text.Contains("95306") ||
+                        text.Contains("锦州银行") || text.Contains("沈阳局") ||
+                        text.Contains("团体") || text.Contains("订票电话"))
+                    {
+                        hintFragments.Add(text);
+                    }
+                }
+                
+                // 尝试合并相关的提示信息片段
+                string combinedHintText = string.Join("|", hintFragments);
+                LogHelper.LogInfo($"合并的提示信息: {combinedHintText}");
+                
+                // 标记是否找到匹配的预设提示信息
+                bool foundPredefinedHint = false;
+                
+                // 检查是否匹配预设的提示信息选项
+                foreach (var hint in HintOptions)
+                {
+                    // 跳过自定义选项
+                    if (hint == "自定义")
+                        continue;
+                        
+                    LogHelper.LogInfo($"检查预设提示选项: {hint}");
+                    
+                    // 检查组合后的文本是否包含所有预设提示的部分
+                    string[] hintParts = hint.Split('|');
+                    bool allPartsFound = true;
+                    int matchedParts = 0;
+                    
+                    // 如果组合文本直接包含完整的预设选项，直接匹配成功
+                    if (combinedHintText.Contains(hint))
+                    {
+                        SelectedHint = hint;
+                        foundPredefinedHint = true;
+                        LogHelper.LogInfo($"完整匹配到预设提示信息: {hint}");
+                        break;
+                    }
+                    
+                    // 检查"报销凭证"和"退票改签"特殊情况 - 这些关键词高度指示是预设选项
+                    if (hint.Contains("报销凭证") && combinedHintText.Contains("报销") && combinedHintText.Contains("凭证")
+                        && hint.Contains("退票") && hint.Contains("改签") && combinedHintText.Contains("退票") && combinedHintText.Contains("改签"))
+                    {
+                        SelectedHint = hint;
+                        foundPredefinedHint = true;
+                        LogHelper.LogInfo($"关键词匹配到预设提示信息: {hint}");
+                        break;
+                    }
+                    
+                    foreach (var part in hintParts)
+                    {
+                        // 检查组合文本是否包含这部分
+                        if (combinedHintText.Contains(part))
+                        {
+                            matchedParts++;
+                        }
+                        else
+                        {
+                            // 检查原始OCR结果是否有任何一个文本包含这部分
+                            bool partFoundInOriginal = false;
+                            foreach (var text in allTexts)
+                            {
+                                if (text.Contains(part))
+                                {
+                                    partFoundInOriginal = true;
+                                    matchedParts++;
+                                    break;
+                                }
+                            }
+                            
+                            if (!partFoundInOriginal)
+                            {
+                                allPartsFound = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 如果匹配度超过70%认为是匹配的
+                    if (allPartsFound || (hintParts.Length > 0 && matchedParts >= (hintParts.Length * 0.7)))
+                    {
+                        SelectedHint = hint;
+                        foundPredefinedHint = true;
+                        LogHelper.LogInfo($"部分匹配到预设提示信息: {hint}, 匹配度: {matchedParts}/{hintParts.Length}");
+                        break;
+                    }
+                }
+                
+                // 如果没有匹配到预设的提示信息，设置为自定义并填充内容
+                if (!foundPredefinedHint && hintFragments.Count > 0)
+                {
+                    SelectedHint = "自定义";
+                    
+                    // 设置CustomHint为OCR识别出的提示信息
+                    CustomHint = combinedHintText;
+                    LogHelper.LogInfo($"设置为自定义提示信息: {CustomHint}");
+                    
+                    // 显示自定义提示对话框，并传入已识别的提示内容
+                    OpenCustomHintDialog();
+                }
+                
+                // 展开表单
+                IsTicketFormExpanded = true;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"处理OCR结果并填充表单时出错: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"处理OCR结果并填充表单时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 打开自定义提示对话框
+        /// </summary>
+        private void OpenCustomHintDialog()
+        {
+            try
+            {
+                LogHelper.LogInfo("打开自定义提示对话框");
+                
+                // 创建自定义提示对话框
+                var dialog = new Views.InputDialog("请输入你想展示在车票上的提示信息（车票上的虚线框区域）");
+                
+                // 如果已有自定义内容，则预填充
+                if (!string.IsNullOrEmpty(CustomHint))
+                {
+                    dialog.ResponseText = CustomHint;
+                }
+                
+                if (dialog.ShowDialog() == true)
+                {
+                    CustomHint = dialog.ResponseText;
+                    
+                    // 确保自定义选项已选择
+                    SelectedHint = "自定义";
+                    
+                    LogHelper.LogInfo($"自定义提示信息已设置: {CustomHint}");
+                }
+                else
+                {
+                    // 用户取消，如果没有自定义内容，恢复选择
+                    if (string.IsNullOrEmpty(CustomHint) && SelectedHint == "自定义")
+                    {
+                        SelectedHint = HintOptions.FirstOrDefault(h => h != "自定义") ?? string.Empty;
+                        LogHelper.LogInfo($"用户取消自定义，恢复为: {SelectedHint}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"显示自定义提示对话框时出错: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"显示自定义提示对话框时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 启用要自动填充的表单项
+        /// </summary>
+        private void EnableFormFields()
+        {
+            IsTicketNumberEnabled = true;
+            IsCheckInLocationEnabled = true;
+            IsDepartStationEnabled = true;
+            IsArriveStationEnabled = true;
+            IsDepartStationPinyinEnabled = true;
+            IsArriveStationPinyinEnabled = true;
+            IsMoneyEnabled = true;
+            IsDepartStationCodeEnabled = true;
+            IsArriveStationCodeEnabled = true;
+            IsDepartDateEnabled = true;
+            IsTrainTypeEnabled = true;
+            IsTrainNumberEnabled = true;
+            IsDepartTimeEnabled = true;
+            IsCoachNoEnabled = true;
+            IsExtraCoachEnabled = true;
+            IsSeatNoEnabled = true;
+            IsNoSeatEnabled = true;
+            IsSeatPositionEnabled = true;
+            IsSeatTypeEnabled = true;
+            IsAdditionalInfoEnabled = true;
+            IsTicketPurposeEnabled = true;
+            IsHintEnabled = true;
+            IsCustomHintEnabled = true;
+            IsTicketModificationTypeEnabled = true;
+        }
+        
         #endregion
+
+        /// <summary>
+        /// 重置表单状态
+        /// </summary>
+        private void ResetFormState()
+        {
+            // 重置基本信息
+            TicketNumber = string.Empty;
+            CheckInLocation = string.Empty;
+            DepartStation = string.Empty;
+            ArriveStation = string.Empty;
+            DepartStationPinyin = string.Empty;
+            ArriveStationPinyin = string.Empty;
+            Money = 0;
+            DepartStationCode = string.Empty;
+            ArriveStationCode = string.Empty;
+            DepartStationSearchText = string.Empty;
+            ArriveStationSearchText = string.Empty;
+
+            // 重置日期和时间
+            DepartDate = DateTime.Today;
+            DepartHour = 0;
+            DepartMinute = 0;
+
+            // 重置车次信息
+            SelectedTrainType = TrainTypes.FirstOrDefault() ?? "G";
+            TrainNumber = string.Empty;
+            CoachNo = string.Empty;
+            IsExtraCoach = false;
+            SeatNo = string.Empty;
+            IsNoSeat = false;
+            
+            // 重置座位类型和位置
+            SelectedSeatType = SeatTypes.FirstOrDefault() ?? "新空调硬座";
+            UpdateSeatPositions();
+            SelectedSeatPosition = SeatPositions.FirstOrDefault() ?? string.Empty;
+
+            // 重置附加信息
+            SelectedAdditionalInfo = string.Empty;
+            SelectedTicketPurpose = string.Empty;
+            SelectedHint = HintOptions.FirstOrDefault(h => h != "自定义") ?? string.Empty;
+            CustomHint = string.Empty;
+            SelectedTicketModificationType = null;
+
+            // 重置票种类型
+            IsStudentTicket = false;
+            IsDiscountTicket = false;
+            IsOnlineTicket = false;
+            IsChildTicket = false;
+
+            // 重置支付渠道
+            IsAlipayPayment = false;
+            IsWeChatPayment = false;
+            IsABCPayment = false;
+            IsCCBPayment = false;
+            IsICBCPayment = false;
+            
+            // 重置表单展开状态
+            IsTicketFormExpanded = false;
+        }
     }
 } 
