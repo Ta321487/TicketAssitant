@@ -186,6 +186,7 @@ namespace TA_WPF.ViewModels
                 // 初始化车票改签类型选项
                 TicketModificationTypes = new ObservableCollection<string>
                 {
+                    "",
                     "始发改签",
                     "变更到站"
                 };
@@ -204,7 +205,7 @@ namespace TA_WPF.ViewModels
                 _coachNo = string.Empty;
                 _seatNo = string.Empty;
                 _selectedSeatPosition = SeatPositions.FirstOrDefault() ?? string.Empty;
-                _selectedSeatType = SeatTypes.FirstOrDefault() ?? "新空硬座";
+                _selectedSeatType = SeatTypes.FirstOrDefault() ?? "新空调硬座";
                 _selectedAdditionalInfo = string.Empty;
                 _selectedTicketPurpose = string.Empty;
                 _selectedHint = HintOptions.FirstOrDefault() ?? string.Empty;
@@ -911,16 +912,8 @@ namespace TA_WPF.ViewModels
                     _isAlipayPayment = value;
                     OnPropertyChanged(nameof(IsAlipayPayment));
 
-                    // 如果勾选了支付宝售票，那么微信售票不可选择
-                    if (!_isInitializing && value)
-                    {
-                        IsWeChatPayment = false; // 取消选中微信支付
-                        IsWeChatPaymentEnabled = false; // 禁用微信支付选择
-                    }
-                    else if (!_isInitializing && !value)
-                    {
-                        IsWeChatPaymentEnabled = true; // 启用微信支付选择
-                    }
+                    // 使用提取的互斥逻辑方法
+                    HandlePaymentChannelMutualExclusion("Alipay");
 
                     if (!_isInitializing) _isFormModified = true;
                 }
@@ -937,16 +930,8 @@ namespace TA_WPF.ViewModels
                     _isWeChatPayment = value;
                     OnPropertyChanged(nameof(IsWeChatPayment));
 
-                    // 如果勾选了微信售票，那么支付宝售票不可选择
-                    if (!_isInitializing && value)
-                    {
-                        IsAlipayPayment = false; // 取消选中支付宝支付
-                        IsAlipayPaymentEnabled = false; // 禁用支付宝支付选择
-                    }
-                    else if (!_isInitializing && !value)
-                    {
-                        IsAlipayPaymentEnabled = true; // 启用支付宝支付选择
-                    }
+                    // 使用提取的互斥逻辑方法
+                    HandlePaymentChannelMutualExclusion("WeChat");
 
                     if (!_isInitializing) _isFormModified = true;
                 }
@@ -992,12 +977,8 @@ namespace TA_WPF.ViewModels
                     _isABCPayment = value;
                     OnPropertyChanged(nameof(IsABCPayment));
 
-                    // 农业银行、建设银行、工商银行只能选择一个
-                    if (!_isInitializing && value)
-                    {
-                        IsCCBPayment = false;
-                        IsICBCPayment = false;
-                    }
+                    // 使用提取的互斥逻辑方法
+                    HandlePaymentChannelMutualExclusion("ABC");
 
                     if (!_isInitializing) _isFormModified = true;
                 }
@@ -1014,12 +995,8 @@ namespace TA_WPF.ViewModels
                     _isCCBPayment = value;
                     OnPropertyChanged(nameof(IsCCBPayment));
 
-                    // 农业银行、建设银行、工商银行只能选择一个
-                    if (!_isInitializing && value)
-                    {
-                        IsABCPayment = false;
-                        IsICBCPayment = false;
-                    }
+                    // 使用提取的互斥逻辑方法
+                    HandlePaymentChannelMutualExclusion("CCB");
 
                     if (!_isInitializing) _isFormModified = true;
                 }
@@ -1036,12 +1013,8 @@ namespace TA_WPF.ViewModels
                     _isICBCPayment = value;
                     OnPropertyChanged(nameof(IsICBCPayment));
 
-                    // 农业银行、建设银行、工商银行只能选择一个
-                    if (!_isInitializing && value)
-                    {
-                        IsABCPayment = false;
-                        IsCCBPayment = false;
-                    }
+                    // 使用提取的互斥逻辑方法
+                    HandlePaymentChannelMutualExclusion("ICBC");
 
                     if (!_isInitializing) _isFormModified = true;
                 }
@@ -1352,7 +1325,7 @@ namespace TA_WPF.ViewModels
                 _validationErrors.Clear();
                 StringBuilder errorMessages = new StringBuilder();
 
-                // 创建TrainRideInfo对象用于验证
+                // 创建TrainRideInfo对象用于验证和保存
                 var ticket = new TrainRideInfo
                 {
                     TicketNumber = TicketNumber,
@@ -1391,132 +1364,9 @@ namespace TA_WPF.ViewModels
                 bool departHasError = false;
                 bool arriveHasError = false;
 
-                // 3. 检测出发站和到达站信息
-                // 只有在用户填写了站名的情况下才检测代码和拼音是否匹配
-                if (!string.IsNullOrWhiteSpace(DepartStation))
-                {
-                    // 通过站名查找出发站信息
-                    var departByName = _stationSearchService.Stations
-                        .FirstOrDefault(s => s.StationName == DepartStation ||
-                                            s.StationName == DepartStation + "站" ||
-                                            s.StationName?.Replace("站", "") == DepartStation);
-
-                    // 通过代码查找出发站信息
-                    var departByCode = !string.IsNullOrWhiteSpace(DepartStationCode) ?
-                        _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == DepartStationCode) : null;
-
-                    // 如果站名能找到，但代码不匹配或为空
-                    if (departByName != null)
-                    {
-                        // 检测代码是否匹配或为空
-                        if (string.IsNullOrWhiteSpace(DepartStationCode))
-                        {
-                            // 将代码为空的情况添加到验证错误
-                            if (!_validationErrors.Any(e => e.Contains("未填写出发站代码")))
-                            {
-                                _validationErrors.Add("未填写出发站代码");
-                            }
-                        }
-                        else if (departByCode == null || departByName.Id != departByCode.Id)
-                        {
-                            // 代码不匹配
-                            departHasError = true;
-                            errorMessages.AppendLine($"出发站【{DepartStation}】的代码错误：");
-                            errorMessages.AppendLine($"- 当前填写的代码【{DepartStationCode}】与车站不匹配");
-                            errorMessages.AppendLine($"- 正确的代码应为：【{departByName.StationCode}】");
-                            errorMessages.AppendLine();
-                        }
-
-                        // 检测拼音是否匹配或为空
-                        if (string.IsNullOrWhiteSpace(DepartStationPinyin))
-                        {
-                            // 将拼音为空的情况添加到验证错误
-                            if (!_validationErrors.Any(e => e.Contains("未填写出发站拼音")))
-                            {
-                                _validationErrors.Add("未填写出发站拼音");
-                            }
-                        }
-                        else if (DepartStationPinyin != departByName.StationPinyin)
-                        {
-                            // 拼音不匹配
-                            departHasError = true;
-                            errorMessages.AppendLine($"出发站【{DepartStation}】的拼音错误：");
-                            errorMessages.AppendLine($"- 当前填写的拼音【{DepartStationPinyin}】与车站记录不匹配");
-                            errorMessages.AppendLine($"- 正确的拼音应为：【{departByName.StationPinyin}】");
-                            errorMessages.AppendLine();
-                        }
-                    }
-                    // 如果无法通过站名找到匹配的车站
-                    else if (departByName == null && departByCode == null)
-                    {
-                        departHasError = true;
-                        errorMessages.AppendLine($"出发站【{DepartStation}】在车站中心不存在，请先添加该车站信息。");
-                        errorMessages.AppendLine();
-                    }
-                }
-
-                // 检测到达站，逻辑与出发站类似
-                if (!string.IsNullOrWhiteSpace(ArriveStation))
-                {
-                    // 通过站名查找到达站信息
-                    var arriveByName = _stationSearchService.Stations
-                        .FirstOrDefault(s => s.StationName == ArriveStation ||
-                                            s.StationName == ArriveStation + "站" ||
-                                            s.StationName?.Replace("站", "") == ArriveStation);
-
-                    // 通过代码查找到达站信息
-                    var arriveByCode = !string.IsNullOrWhiteSpace(ArriveStationCode) ?
-                        _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == ArriveStationCode) : null;
-
-                    // 如果站名能找到，但代码不匹配或为空
-                    if (arriveByName != null)
-                    {
-                        // 检测代码是否匹配或为空
-                        if (string.IsNullOrWhiteSpace(ArriveStationCode))
-                        {
-                            // 将代码为空的情况添加到验证错误
-                            if (!_validationErrors.Any(e => e.Contains("未填写到达站代码")))
-                            {
-                                _validationErrors.Add("未填写到达站代码");
-                            }
-                        }
-                        else if (arriveByCode == null || arriveByName.Id != arriveByCode.Id)
-                        {
-                            // 代码不匹配
-                            arriveHasError = true;
-                            errorMessages.AppendLine($"到达站【{ArriveStation}】的代码错误：");
-                            errorMessages.AppendLine($"- 当前填写的代码【{ArriveStationCode}】与车站不匹配");
-                            errorMessages.AppendLine($"- 正确的代码应为：【{arriveByName.StationCode}】");
-                            errorMessages.AppendLine();
-                        }
-
-                        // 检测拼音是否匹配或为空
-                        if (string.IsNullOrWhiteSpace(ArriveStationPinyin))
-                        {
-                            // 将拼音为空的情况添加到验证错误
-                            if (!_validationErrors.Any(e => e.Contains("未填写到达站拼音")))
-                            {
-                                _validationErrors.Add("未填写到达站拼音");
-                            }
-                        }
-                        else if (ArriveStationPinyin != arriveByName.StationPinyin)
-                        {
-                            // 拼音不匹配
-                            arriveHasError = true;
-                            errorMessages.AppendLine($"到达站【{ArriveStation}】的拼音错误：");
-                            errorMessages.AppendLine($"- 当前填写的拼音【{ArriveStationPinyin}】与车站记录不匹配");
-                            errorMessages.AppendLine($"- 正确的拼音应为：【{arriveByName.StationPinyin}】");
-                            errorMessages.AppendLine();
-                        }
-                    }
-                    // 如果无法通过站名找到匹配的车站
-                    else if (arriveByName == null && arriveByCode == null)
-                    {
-                        arriveHasError = true;
-                        errorMessages.AppendLine($"到达站【{ArriveStation}】在车站中心不存在，请先添加该车站信息。");
-                        errorMessages.AppendLine();
-                    }
-                }
+                // 3. 使用新的验证方法验证站点信息
+                departHasError = !ValidateStationInfo(DepartStation, DepartStationCode, DepartStationPinyin, true, errorMessages);
+                arriveHasError = !ValidateStationInfo(ArriveStation, ArriveStationCode, ArriveStationPinyin, false, errorMessages);
 
                 // 4. 组合所有错误信息
                 if (_validationErrors.Count > 0 || departHasError || arriveHasError)
@@ -1546,34 +1396,12 @@ namespace TA_WPF.ViewModels
                     return;
                 }
 
-                // 5. 验证都通过，创建最终要保存的TrainRideInfo对象
-                var finalTicket = new TrainRideInfo
-                {
-                    TicketNumber = TicketNumber,
-                    CheckInLocation = CheckInLocation,
-                    DepartStation = DepartStation + "站",
-                    ArriveStation = ArriveStation + "站",
-                    DepartStationPinyin = DepartStationPinyin,
-                    ArriveStationPinyin = ArriveStationPinyin,
-                    DepartStationCode = DepartStationCode,
-                    ArriveStationCode = ArriveStationCode,
-                    DepartDate = DepartDate,
-                    DepartTime = new TimeSpan(DepartHour, DepartMinute, 0),
-                    TrainNo = FormValidationHelper.FormatTrainNo(SelectedTrainType, TrainNumber),
-                    CoachNo = IsExtraCoach ? $"加{CoachNo}车" : $"{CoachNo}车",
-                    SeatNo = FormValidationHelper.FormatSeatNo(IsNoSeat, SeatNo, SelectedSeatPosition),
-                    Money = Money,
-                    SeatType = SelectedSeatType,
-                    AdditionalInfo = SelectedAdditionalInfo,
-                    TicketPurpose = SelectedTicketPurpose,
-                    Hint = SelectedHint == "自定义" ? CustomHint : SelectedHint,
-                    TicketModificationType = SelectedTicketModificationType,
-                    TicketTypeFlags = GetTicketTypeFlags(),
-                    PaymentChannelFlags = GetPaymentChannelFlags()
-                };
+                // 5. 所有验证都通过，更新车票对象的格式化字段
+                ticket.DepartStation = DepartStation + "站";
+                ticket.ArriveStation = ArriveStation + "站";
 
                 // 保存车票
-                await _databaseService.AddTicketAsync(finalTicket);
+                await _databaseService.AddTicketAsync(ticket);
 
                 MessageBoxHelper.ShowInformation("车票已成功保存！", "成功");
 
@@ -1689,6 +1517,9 @@ namespace TA_WPF.ViewModels
                 // 重置验证错误列表
                 _validationErrors.Clear();
 
+                // 根据默认座位类型更新座位位置选项
+                UpdateSeatPositions();
+
                 // 将焦点设置到取票号输入框
                 OnFocusTextBox("TicketNumber");
 
@@ -1765,7 +1596,7 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        private void SelectDepartStation(StationInfo station)
+        private void SelectStation(StationInfo station, bool isDepartStation)
         {
             if (station == null)
                 return;
@@ -1774,45 +1605,47 @@ namespace TA_WPF.ViewModels
             string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
 
             // 关闭下拉框
-            IsDepartStationDropdownOpen = false;
-
-            // 设置出发站文本
-            _isUpdatingDepartStation = true;
-            DepartStationSearchText = stationName;
-            DepartStation = stationName;
-            _isUpdatingDepartStation = false;
-
-            // 直接从选择的站点对象获取信息
-            DepartStationPinyin = station.StationPinyin ?? string.Empty;
-            DepartStationCode = station.StationCode ?? string.Empty;
+            if (isDepartStation)
+            {
+                IsDepartStationDropdownOpen = false;
+                
+                // 设置出发站文本
+                _isUpdatingDepartStation = true;
+                DepartStationSearchText = stationName;
+                DepartStation = stationName;
+                _isUpdatingDepartStation = false;
+                
+                // 直接从选择的站点对象获取信息
+                DepartStationPinyin = station.StationPinyin ?? string.Empty;
+                DepartStationCode = station.StationCode ?? string.Empty;
+            }
+            else
+            {
+                IsArriveStationDropdownOpen = false;
+                
+                // 设置到达站文本
+                _isUpdatingArriveStation = true;
+                ArriveStationSearchText = stationName;
+                ArriveStation = stationName;
+                _isUpdatingArriveStation = false;
+                
+                // 直接从选择的站点对象获取信息
+                ArriveStationPinyin = station.StationPinyin ?? string.Empty;
+                ArriveStationCode = station.StationCode ?? string.Empty;
+            }
 
             // 选择后立即检测站点信息完整性
-            CheckStationInfoCompleteness(station, true);
+            CheckStationInfoCompleteness(station, isDepartStation);
+        }
+
+        private void SelectDepartStation(StationInfo station)
+        {
+            SelectStation(station, true);
         }
 
         private void SelectArriveStation(StationInfo station)
         {
-            if (station == null)
-                return;
-
-            // 获取选择的车站名称
-            string stationName = station.StationName?.Replace("站", "") ?? string.Empty;
-
-            // 关闭下拉框
-            IsArriveStationDropdownOpen = false;
-
-            // 设置到达站文本
-            _isUpdatingArriveStation = true;
-            ArriveStationSearchText = stationName;
-            ArriveStation = stationName;
-            _isUpdatingArriveStation = false;
-
-            // 直接从选择的站点对象获取信息
-            ArriveStationPinyin = station.StationPinyin ?? string.Empty;
-            ArriveStationCode = station.StationCode ?? string.Empty;
-
-            // 选择后立即检测站点信息完整性
-            CheckStationInfoCompleteness(station, false);
+            SelectStation(station, false);
         }
 
         /// <summary>
@@ -1986,16 +1819,12 @@ namespace TA_WPF.ViewModels
 
         private void ResetData()
         {
-            // 重置所有字段
             ResetForm();
-
-            // 根据默认座位类型更新座位位置选项
-            UpdateSeatPositions();
-
-            // 加载车站数据
+            
+            // 加载车站数据 - 此操作在ResetForm中没有
             LoadStationsAsync();
-
-            // 确保初始化字体大小相关属性
+            
+            // 确保初始化字体大小相关属性 - 此操作在ResetForm中没有
             InitializeFontSizes();
         }
 
@@ -2202,6 +2031,135 @@ namespace TA_WPF.ViewModels
                 return parent;
 
             return FindVisualParent<T>(parentObject);
+        }
+
+        private void HandlePaymentChannelMutualExclusion(string selectedChannel)
+        {
+            if (_isInitializing) return;
+
+            switch (selectedChannel)
+            {
+                case "Alipay":
+                    if (IsAlipayPayment)
+                    {
+                        IsWeChatPayment = false;
+                        IsWeChatPaymentEnabled = false;
+                    }
+                    else
+                    {
+                        IsWeChatPaymentEnabled = true;
+                    }
+                    break;
+                    
+                case "WeChat":
+                    if (IsWeChatPayment)
+                    {
+                        IsAlipayPayment = false;
+                        IsAlipayPaymentEnabled = false;
+                    }
+                    else
+                    {
+                        IsAlipayPaymentEnabled = true;
+                    }
+                    break;
+                    
+                case "ABC":
+                    if (IsABCPayment)
+                    {
+                        IsCCBPayment = false;
+                        IsICBCPayment = false;
+                    }
+                    break;
+                    
+                case "CCB":
+                    if (IsCCBPayment)
+                    {
+                        IsABCPayment = false;
+                        IsICBCPayment = false;
+                    }
+                    break;
+                    
+                case "ICBC":
+                    if (IsICBCPayment)
+                    {
+                        IsABCPayment = false;
+                        IsCCBPayment = false;
+                    }
+                    break;
+            }
+        }
+
+        private bool ValidateStationInfo(string stationName, string stationCode, string stationPinyin, 
+                                       bool isDepart, StringBuilder errorMessages)
+        {
+            if (string.IsNullOrWhiteSpace(stationName)) return true;
+            
+            bool hasError = false;
+            
+            // 通过站名查找站点信息
+            var stationByName = _stationSearchService.Stations
+                .FirstOrDefault(s => s.StationName == stationName ||
+                                   s.StationName == stationName + "站" ||
+                                   s.StationName?.Replace("站", "") == stationName);
+                                   
+            // 通过代码查找站点信息
+            var stationByCode = !string.IsNullOrWhiteSpace(stationCode) ?
+                _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == stationCode) : null;
+                
+            string stationType = isDepart ? "出发站" : "到达站";
+            
+            // 如果站名能找到，但代码不匹配或为空
+            if (stationByName != null)
+            {
+                // 检测代码是否匹配或为空
+                if (string.IsNullOrWhiteSpace(stationCode))
+                {
+                    // 将代码为空的情况添加到验证错误
+                    string errorMsg = $"未填写{stationType}代码";
+                    if (!_validationErrors.Any(e => e.Contains(errorMsg)))
+                    {
+                        _validationErrors.Add(errorMsg);
+                    }
+                }
+                else if (stationByCode == null || stationByName.Id != stationByCode.Id)
+                {
+                    // 代码不匹配
+                    hasError = true;
+                    errorMessages.AppendLine($"{stationType}【{stationName}】的代码错误：");
+                    errorMessages.AppendLine($"- 当前填写的代码【{stationCode}】与车站不匹配");
+                    errorMessages.AppendLine($"- 正确的代码应为：【{stationByName.StationCode}】");
+                    errorMessages.AppendLine();
+                }
+
+                // 检测拼音是否匹配或为空
+                if (string.IsNullOrWhiteSpace(stationPinyin))
+                {
+                    // 将拼音为空的情况添加到验证错误
+                    string errorMsg = $"未填写{stationType}拼音";
+                    if (!_validationErrors.Any(e => e.Contains(errorMsg)))
+                    {
+                        _validationErrors.Add(errorMsg);
+                    }
+                }
+                else if (stationPinyin != stationByName.StationPinyin)
+                {
+                    // 拼音不匹配
+                    hasError = true;
+                    errorMessages.AppendLine($"{stationType}【{stationName}】的拼音错误：");
+                    errorMessages.AppendLine($"- 当前填写的拼音【{stationPinyin}】与车站记录不匹配");
+                    errorMessages.AppendLine($"- 正确的拼音应为：【{stationByName.StationPinyin}】");
+                    errorMessages.AppendLine();
+                }
+            }
+            // 如果无法通过站名找到匹配的车站
+            else if (stationByName == null && stationByCode == null)
+            {
+                hasError = true;
+                errorMessages.AppendLine($"{stationType}【{stationName}】在车站中心不存在，请先添加该车站信息。");
+                errorMessages.AppendLine();
+            }
+            
+            return !hasError;
         }
     }
 

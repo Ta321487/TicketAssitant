@@ -3832,13 +3832,18 @@ namespace TA_WPF.ViewModels
 
                     LogHelper.LogInfo($"检测预设提示选项: {hint}");
 
+                    // 创建不含空格的版本用于比较
+                    string hintNoSpace = hint.Replace(" ", "");
+                    string combinedHintTextNoSpace = combinedHintText.Replace(" ", "");
+
                     // 检测组合后的文本是否包含所有预设提示的部分
                     string[] hintParts = hint.Split('|');
+                    string[] hintPartsNoSpace = hintNoSpace.Split('|');
                     bool allPartsFound = true;
                     int matchedParts = 0;
 
                     // 如果组合文本直接包含完整的预设选项，直接匹配成功
-                    if (combinedHintText.Contains(hint))
+                    if (combinedHintText.Contains(hint) || combinedHintTextNoSpace.Contains(hintNoSpace))
                     {
                         SelectedHint = hint;
                         foundPredefinedHint = true;
@@ -3856,10 +3861,13 @@ namespace TA_WPF.ViewModels
                         break;
                     }
 
-                    foreach (var part in hintParts)
+                    for (int i = 0; i < hintParts.Length; i++)
                     {
-                        // 检测组合文本是否包含这部分
-                        if (combinedHintText.Contains(part))
+                        string part = hintParts[i];
+                        string partNoSpace = hintPartsNoSpace[i];
+
+                        // 检测组合文本是否包含这部分（带空格和不带空格两种情况）
+                        if (combinedHintText.Contains(part) || combinedHintTextNoSpace.Contains(partNoSpace))
                         {
                             matchedParts++;
                         }
@@ -3869,7 +3877,8 @@ namespace TA_WPF.ViewModels
                             bool partFoundInOriginal = false;
                             foreach (var text in allTexts)
                             {
-                                if (text.Contains(part))
+                                string textNoSpace = text.Replace(" ", "");
+                                if (text.Contains(part) || textNoSpace.Contains(partNoSpace))
                                 {
                                     partFoundInOriginal = true;
                                     matchedParts++;

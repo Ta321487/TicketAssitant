@@ -1012,7 +1012,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
                                          Text="{Binding SeatNo, UpdateSourceTrigger=PropertyChanged}" 
-                                         IsEnabled="{Binding IsSeatNoEnabled}"
+                                         IsEnabled="{Binding IsSeatInputEnabled}"
                                          Style="{StaticResource FormNumberTextBoxStyle}"
                                          materialDesign:HintAssist.Hint="座位号"
                                          PreviewTextInput="SeatNo_PreviewTextInput"
