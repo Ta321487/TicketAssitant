@@ -64,22 +64,22 @@ namespace TA_WPF.Services
         {
             try
             {
-                var manualTicketInputWindow = new ManualTicketInputWindow(databaseService, mainViewModel);
+                var addTicketWindow = new AddTicketWindow(databaseService, mainViewModel);
 
                 // 确保主窗口已初始化并且可见
                 if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)
                 {
-                    manualTicketInputWindow.Owner = Application.Current.MainWindow;
-                    manualTicketInputWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                    addTicketWindow.Owner = Application.Current.MainWindow;
+                    addTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                 }
                 else
                 {
                     // 如果主窗口不可用，使用CenterScreen
-                    manualTicketInputWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    addTicketWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 }
 
                 // 显示窗口
-                bool? result = manualTicketInputWindow.ShowDialog();
+                bool? result = addTicketWindow.ShowDialog();
 
                 // 返回是否成功添加车票
                 return result == true;
