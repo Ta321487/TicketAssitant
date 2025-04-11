@@ -1934,29 +1934,19 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 车站名失去焦点时处理
+        /// 站点输入框失去焦点时的处理
         /// </summary>
         public void OnStationLostFocus(bool isDepartStation)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[OCR窗口] OnStationLostFocus 开始处理，是否出发站: {isDepartStation}");
-
                 // 获取当前站名
                 string stationName = isDepartStation ? DepartStationSearchText : ArriveStationSearchText;
-                System.Diagnostics.Debug.WriteLine($"[OCR窗口] OnStationLostFocus 当前站名: {stationName}");
 
                 // 检测是否在下拉框上操作
-                if (isDepartStation && IsDepartStationDropdownOpen)
+                if ((isDepartStation && IsDepartStationDropdownOpen) || 
+                    (!isDepartStation && IsArriveStationDropdownOpen))
                 {
-                    // 如果下拉框正在打开，不触发校验
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 出发站下拉框打开中，跳过校验");
-                    return;
-                }
-                else if (!isDepartStation && IsArriveStationDropdownOpen)
-                {
-                    // 如果下拉框正在打开，不触发校验
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 到达站下拉框打开中，跳过校验");
                     return;
                 }
 
@@ -1973,26 +1963,20 @@ namespace TA_WPF.ViewModels
                 // 如果输入为空，则不进行验证
                 if (string.IsNullOrWhiteSpace(stationName))
                 {
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 站名为空，不执行校验");
                     return;
                 }
 
                 // 验证站名是否与已设置的站名匹配（处理选择后文本框失焦的情况）
                 string currentStationValue = isDepartStation ? DepartStation : ArriveStation;
-                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 当前文本框站名: {stationName}, 已设置站名: {currentStationValue}");
 
                 // 如果输入值和已设置站名相同，不需要重复验证
                 if (!string.IsNullOrEmpty(currentStationValue) && stationName == currentStationValue)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 文本框值与已设置站名匹配，跳过校验");
                     return;
                 }
 
-                // 验证站名
+                // 验证站名并更新站点信息
                 ValidateStationName(stationName, isDepartStation);
-
-                // 更新站点信息
-                UpdateStationInfo(stationName, isDepartStation);
             }
             catch (Exception ex)
             {
@@ -2001,44 +1985,53 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 验证站名
+        /// 验证站名并更新相关信息
         /// </summary>
         private void ValidateStationName(string stationName, bool isDepartStation)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 验证站名: {stationName}, 是否为出发站: {isDepartStation}");
-
-                if (string.IsNullOrWhiteSpace(stationName))
-                {
-                    return;
-                }
-
-                if (_stationSearchService == null)
+                if (string.IsNullOrWhiteSpace(stationName) || _stationSearchService == null)
                 {
                     return;
                 }
 
                 // 检测是否是用户选择的值，避免清空正确选择的站名
                 string currentValue = isDepartStation ? DepartStation : ArriveStation;
-
-                // 如果与已设置的值匹配，则不需要验证
                 if (!string.IsNullOrEmpty(currentValue) && stationName == currentValue)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 站名与已设置值匹配，跳过验证");
                     return;
                 }
 
-                // 检测是否是有效站点
-                bool isValid = _stationSearchService.IsValidStation(stationName);
-                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 站名 {stationName} 验证结果: {isValid}");
+                // 使用StationSearchService检测是否是有效站点
+                var stationInfo = _stationSearchService.GetStationInfo(stationName);
 
-                if (!isValid)
+                if (stationInfo != null)
+                {
+                    // 更新站点信息
+                    if (isDepartStation)
+                    {
+                        _isUpdatingDepartStation = true;
+                        DepartStation = stationInfo.StationName;
+                        DepartStationPinyin = stationInfo.StationPinyin;
+                        DepartStationCode = stationInfo.StationCode;
+                        DepartStationSearchText = stationInfo.StationName;
+                        _isUpdatingDepartStation = false;
+                    }
+                    else
+                    {
+                        _isUpdatingArriveStation = true;
+                        ArriveStation = stationInfo.StationName;
+                        ArriveStationPinyin = stationInfo.StationPinyin;
+                        ArriveStationCode = stationInfo.StationCode;
+                        ArriveStationSearchText = stationInfo.StationName;
+                        _isUpdatingArriveStation = false;
+                    }
+                }
+                else
                 {
                     // 不清空站点信息，保留无效站名并显示提示
                     LogHelper.LogInfo($"站点 \"{stationName}\" 不存在于数据库中，建议在车站表中完善该站信息");
-
-                    // 显示消息框提示用户
                     MessageBoxHelper.ShowWarning($"站点\"{stationName}\"不存在于数据库中，建议在车站表中完善该站信息。");
 
                     // 仍然设置站名，但不设置拼音和代码
@@ -2047,30 +2040,18 @@ namespace TA_WPF.ViewModels
                         _isUpdatingDepartStation = true;
                         DepartStation = stationName;
                         DepartStationSearchText = stationName;
-                        _isUpdatingDepartStation = false;
-
-                        // 清空拼音和代码
                         DepartStationPinyin = string.Empty;
                         DepartStationCode = string.Empty;
-
-                        // 确保UI更新
-                        OnPropertyChanged(nameof(DepartStation));
-                        OnPropertyChanged(nameof(DepartStationSearchText));
+                        _isUpdatingDepartStation = false;
                     }
                     else
                     {
                         _isUpdatingArriveStation = true;
                         ArriveStation = stationName;
                         ArriveStationSearchText = stationName;
-                        _isUpdatingArriveStation = false;
-
-                        // 清空拼音和代码
                         ArriveStationPinyin = string.Empty;
                         ArriveStationCode = string.Empty;
-
-                        // 确保UI更新
-                        OnPropertyChanged(nameof(ArriveStation));
-                        OnPropertyChanged(nameof(ArriveStationSearchText));
+                        _isUpdatingArriveStation = false;
                     }
                 }
             }
@@ -2081,67 +2062,12 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 更新站点信息
-        /// </summary>
-        private void UpdateStationInfo(string stationName, bool isDepartStation)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(stationName))
-                {
-                    return;
-                }
-
-                if (_stationSearchService == null)
-                {
-                    return;
-                }
-
-                // 获取站点信息
-                var stationInfo = _stationSearchService.GetStationInfo(stationName);
-
-                if (stationInfo != null)
-                {
-                    // 更新站点信息
-                    if (isDepartStation)
-                    {
-                        _isUpdatingDepartStation = true;
-
-                        DepartStation = stationInfo.StationName;
-                        DepartStationPinyin = stationInfo.StationPinyin;
-                        DepartStationCode = stationInfo.StationCode;
-                        DepartStationSearchText = stationInfo.StationName;
-
-                        _isUpdatingDepartStation = false;
-                    }
-                    else
-                    {
-                        _isUpdatingArriveStation = true;
-
-                        ArriveStation = stationInfo.StationName;
-                        ArriveStationPinyin = stationInfo.StationPinyin;
-                        ArriveStationCode = stationInfo.StationCode;
-                        ArriveStationSearchText = stationInfo.StationName;
-
-                        _isUpdatingArriveStation = false;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogError($"更新站点信息时出错: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
         /// 搜索车站
         /// </summary>
         private async void SearchStations(string searchText, bool isDepartStation)
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 开始搜索车站，搜索文本: {searchText}, 是否为出发站: {isDepartStation}");
-
                 if (string.IsNullOrWhiteSpace(searchText))
                 {
                     if (isDepartStation)
@@ -2158,40 +2084,28 @@ namespace TA_WPF.ViewModels
                 }
 
                 if (_stationSearchService == null)
-                {
                     return;
-                }
 
-                // 搜索站点
+                // 使用StationSearchService搜索站点
                 var suggestions = await _stationSearchService.SearchStationsAsync(searchText);
-                System.Diagnostics.Debug.WriteLine($"[OCR窗口] 搜索到 {suggestions.Count()} 个站点");
 
-                // 更新建议列表
                 if (isDepartStation)
                 {
                     DepartStationSuggestions.Clear();
-
-                    foreach (var suggestion in suggestions)
+                    foreach (var station in suggestions)
                     {
-                        DepartStationSuggestions.Add(suggestion);
-                        System.Diagnostics.Debug.WriteLine($"[OCR窗口] 添加出发站建议: {suggestion.StationName}");
+                        DepartStationSuggestions.Add(station);
                     }
-
                     IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 出发站下拉框状态: {IsDepartStationDropdownOpen}");
                 }
                 else
                 {
                     ArriveStationSuggestions.Clear();
-
-                    foreach (var suggestion in suggestions)
+                    foreach (var station in suggestions)
                     {
-                        ArriveStationSuggestions.Add(suggestion);
-                        System.Diagnostics.Debug.WriteLine($"[OCR窗口] 添加到达站建议: {suggestion.StationName}");
+                        ArriveStationSuggestions.Add(station);
                     }
-
                     IsArriveStationDropdownOpen = ArriveStationSuggestions.Count > 0;
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 到达站下拉框状态: {IsArriveStationDropdownOpen}");
                 }
             }
             catch (Exception ex)
@@ -2209,22 +2123,17 @@ namespace TA_WPF.ViewModels
             {
                 if (station != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 选择出发站: {station.StationName}");
                     _isUpdatingDepartStation = true;
 
-                    // 确保使用完整的站名
                     DepartStation = station.StationName;
                     DepartStationPinyin = station.StationPinyin;
                     DepartStationCode = station.StationCode;
 
-                    // 设置文本框值，去掉"站"字
+                    // 设置文本框值
                     string displayName = station.StationName.EndsWith("站")
                         ? station.StationName.Substring(0, station.StationName.Length - 1)
                         : station.StationName;
                     DepartStationSearchText = displayName;
-
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 设置后的出发站: {DepartStation}");
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 设置后的文本框值: {DepartStationSearchText}");
 
                     _isUpdatingDepartStation = false;
                     IsDepartStationDropdownOpen = false;
@@ -2245,22 +2154,17 @@ namespace TA_WPF.ViewModels
             {
                 if (station != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 选择到达站: {station.StationName}");
                     _isUpdatingArriveStation = true;
 
-                    // 确保使用完整的站名
                     ArriveStation = station.StationName;
                     ArriveStationPinyin = station.StationPinyin;
                     ArriveStationCode = station.StationCode;
 
-                    // 设置文本框值，去掉"站"字
-                    string arriveDisplayName = station.StationName.EndsWith("站")
+                    // 设置文本框值
+                    string displayName = station.StationName.EndsWith("站")
                         ? station.StationName.Substring(0, station.StationName.Length - 1)
                         : station.StationName;
-                    ArriveStationSearchText = arriveDisplayName;
-
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 设置后的到达站: {ArriveStation}");
-                    System.Diagnostics.Debug.WriteLine($"[OCR窗口] 设置后的文本框值: {ArriveStationSearchText}");
+                    ArriveStationSearchText = displayName;
 
                     _isUpdatingArriveStation = false;
                     IsArriveStationDropdownOpen = false;
