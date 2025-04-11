@@ -264,5 +264,22 @@ except Exception as e:
                 return $"{{\"error\": \"{ex.Message}\"}}";
             }
         }
+
+        /// <summary>
+        /// 检测CNOCR是否已安装
+        /// </summary>
+        public async Task<bool> CheckCnocrInstalled()
+        {
+            return await CheckPackageInstalled("cnocr");
+        }
+
+        /// <summary>
+        /// 检测任意Python包是否已安装（通用方法）
+        /// </summary>
+        /// <param name="packageName">包名</param>
+        public async Task<bool> CheckPythonPackageInstalled(string packageName)
+        {
+            return await CheckPackageInstalled(packageName);
+        }
     }
 }

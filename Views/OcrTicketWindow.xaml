@@ -37,6 +37,7 @@
             <converters:FontSizeDecreaseConverter x:Key="FontSizeExtraSmallConverter" />
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
             <converters:StationNameConverter x:Key="StationNameConverter" />
+            <converters:StringContainsConverter x:Key="StringContainsConverter" />
             
             <!-- 表单样式 -->
             <Style x:Key="FormLabelStyle" TargetType="TextBlock">
@@ -194,6 +195,13 @@
                                 <DataTrigger Binding="{Binding IsPythonInstalled}" Value="True">
                                     <Setter Property="Fill" Value="Green" />
                                 </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsLoading}" Value="True"/>
+                                        <Condition Binding="{Binding LoadingMessage, Converter={StaticResource StringContainsConverter}, ConverterParameter='Python'}" Value="True"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Fill" Value="Orange" />
+                                </MultiDataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Ellipse.Style>
@@ -208,6 +216,13 @@
                                 <DataTrigger Binding="{Binding IsCnocrInstalled}" Value="True">
                                     <Setter Property="Fill" Value="Green" />
                                 </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsLoading}" Value="True"/>
+                                        <Condition Binding="{Binding LoadingMessage, Converter={StaticResource StringContainsConverter}, ConverterParameter='CNOCR'}" Value="True"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Fill" Value="Orange" />
+                                </MultiDataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Ellipse.Style>
@@ -217,11 +232,18 @@
                 <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1">
                     <Ellipse.Style>
                         <Style TargetType="Ellipse">
-                            <Setter Property="Fill" Value="Orange" />
+                            <Setter Property="Fill" Value="Red" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsOcrModelInstalled}" Value="True">
                                     <Setter Property="Fill" Value="Green" />
                                 </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsLoading}" Value="True"/>
+                                        <Condition Binding="{Binding LoadingMessage, Converter={StaticResource StringContainsConverter}, ConverterParameter='OCR模型'}" Value="True"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Fill" Value="Orange" />
+                                </MultiDataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Ellipse.Style>
@@ -447,6 +469,7 @@
                                     Width="60" 
                                     Height="60"
                                     Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                    Foreground="{DynamicResource PrimaryHueMidBrush}"
                                     Margin="0,0,0,16" />
                         <TextBlock Text="{Binding LoadingMessage}" 
                                  Foreground="White" 

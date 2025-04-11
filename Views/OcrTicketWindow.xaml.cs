@@ -170,6 +170,7 @@ namespace TA_WPF.Views
         private void Window_Closed(object sender, EventArgs e)
         {
             _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            _viewModel.SetWindowClosed();
         }
 
         /// <summary>
