@@ -47,29 +47,33 @@
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
             </Style>
-            <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+            <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
-                <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
-                <Setter Property="materialDesign:HintAssist.FloatingScale" Value="0.85"/>
-                <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
             </Style>
-            <Style x:Key="FormNumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
-                <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="False"/>
-                <Setter Property="materialDesign:TextFieldAssist.RippleOnFocusEnabled" Value="True"/>
-                <Setter Property="materialDesign:TextFieldAssist.SuffixText" Value=""/>
-                <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                <Setter Property="Padding" Value="8,8,4,8"/>
+            <Style x:Key="FormNumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomNumberTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
-            <Style x:Key="FormReadOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
-                <Setter Property="IsReadOnly" Value="True"/>
-                <Setter Property="Background" Value="{DynamicResource MaterialDesignTextFieldBoxDisabledBackground}"/>
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignTextFieldBoxDisabledForeground}"/>
+            <Style x:Key="FormReadOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomReadOnlyTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
-            <Style x:Key="FormSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
+            <Style x:Key="FormSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomSearchTextBox}">
+                <Setter Property="Margin" Value="0,8,0,8"/>
+                <Setter Property="FontFamily" Value="Microsoft YaHei"/>
+                <Setter Property="Height" Value="Auto"/>
+                <Setter Property="MinHeight" Value="45"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
             <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer">
                 <Setter Property="Template">
@@ -139,8 +143,9 @@
         <!-- 顶部工具栏 -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
             <Button Command="{Binding SelectImageCommand}" 
-                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
                     materialDesign:ButtonAssist.CornerRadius="4"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
                     Margin="0,0,8,0"
                     ToolTip="选择车票图片">
                 <StackPanel Orientation="Horizontal">
@@ -150,11 +155,9 @@
             </Button>
             
             <Button Command="{Binding RunOcrCommand}" 
-                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
                     materialDesign:ButtonAssist.CornerRadius="4"
-                    Background="{DynamicResource PrimaryHueMidBrush}"
-                    BorderBrush="{DynamicResource PrimaryHueMidBrush}"
-                    Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
                     Margin="0,0,8,0"
                     ToolTip="执行OCR识别">
                 <StackPanel Orientation="Horizontal">
@@ -164,8 +167,9 @@
             </Button>
             
             <Button Command="{Binding CheckEnvironmentCommand}" 
-                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
                     materialDesign:ButtonAssist.CornerRadius="4"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
                     Margin="0,0,8,0"
                     ToolTip="检测Python和cnocr环境">
                 <StackPanel Orientation="Horizontal">
@@ -175,8 +179,9 @@
             </Button>
             
             <Button Command="{Binding OpenCnocrInstallGuideCommand}" 
-                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
                     materialDesign:ButtonAssist.CornerRadius="4"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
                     Margin="0,0,8,0"
                     ToolTip="打开cnocr安装指南">
                 <StackPanel Orientation="Horizontal">
@@ -265,8 +270,10 @@
                 </Grid.ColumnDefinitions>
                 
                 <!-- 左侧图片显示区 -->
-                <materialDesign:Card Grid.Column="0" Margin="0,0,8,0" Padding="8" 
-                                    materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                <Border Grid.Column="0" Margin="0,0,8,0" Padding="8"
+                       BorderBrush="{DynamicResource MaterialDesignDivider}"
+                       BorderThickness="1"
+                       CornerRadius="4">
                     <Grid>
                         <!-- 未选择图片时显示的提示 - 使用简单直接的方式 -->
                         <Grid x:Name="NoImageBorder">
@@ -312,12 +319,12 @@
                                     <materialDesign:PackIcon Kind="TicketOutline" 
                                                            Margin="4,0,4,0"
                                                            VerticalAlignment="Center"
-                                                           Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                                           Foreground="{DynamicResource GlobalAccentBrush}"/>
                                     <TextBlock Text="车票图片" 
                                               FontWeight="Medium"
                                               VerticalAlignment="Center"
                                               FontSize="{Binding MainViewModel.FontSize}"
-                                              Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                              Foreground="{DynamicResource GlobalAccentBrush}"/>
                                 </StackPanel>
                                 
                                 <!-- 右侧状态 -->
@@ -327,7 +334,7 @@
                                               HorizontalAlignment="Right"
                                               VerticalAlignment="Center"
                                               Margin="0,0,8,0"
-                                              Foreground="{DynamicResource SecondaryHueMidBrush}"
+                                              Foreground="{DynamicResource MaterialDesignBodyLight}"
                                               FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"
                                               Visibility="{Binding AverageConfidence, Converter={StaticResource DoubleToVisibilityConverter}}"/>
                                     <TextBlock Text="[图片已加载]" 
@@ -335,7 +342,7 @@
                                               HorizontalAlignment="Right"
                                               VerticalAlignment="Center"
                                               Margin="0,0,4,0"
-                                              Foreground="{DynamicResource PrimaryHueLightBrush}"
+                                              Foreground="{DynamicResource MaterialDesignBodyLight}"
                                               FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}, ConverterParameter=2}"/>
                                 </StackPanel>
                             </DockPanel>
@@ -388,7 +395,7 @@
                             </Border>
                         </Grid>
                     </Grid>
-                </materialDesign:Card>
+                </Border>
                 
                 <!-- 右侧OCR结果显示区 -->
                 <Grid Grid.Column="1" Margin="8,0,0,0">
@@ -398,8 +405,10 @@
                     </Grid.RowDefinitions>
                     
                     <!-- OCR识别结果列表 -->
-                    <materialDesign:Card Grid.Row="0" Margin="0,0,0,8" Padding="8"
-                                        materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <Border Grid.Row="0" Margin="0,0,0,8" Padding="8"
+                           BorderBrush="{DynamicResource MaterialDesignDivider}"
+                           BorderThickness="1"
+                           CornerRadius="4">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -411,7 +420,7 @@
                                       Margin="8,4,8,8" 
                                       FontWeight="Medium"
                                       FontSize="{Binding MainViewModel.FontSize}"
-                                      Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                                      Foreground="{DynamicResource GlobalAccentBrush}" />
                             
                             <ListView Grid.Row="1" 
                                      ItemsSource="{Binding OcrResults}" 
@@ -429,11 +438,13 @@
                                 </ListView.ItemTemplate>
                             </ListView>
                         </Grid>
-                    </materialDesign:Card>
+                    </Border>
                     
                     <!-- JSON结果显示 -->
-                    <materialDesign:Card Grid.Row="1" Margin="0,8,0,0" Padding="8"
-                                        materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                    <Border Grid.Row="1" Margin="0,8,0,0" Padding="8"
+                           BorderBrush="{DynamicResource MaterialDesignDivider}"
+                           BorderThickness="1"
+                           CornerRadius="4">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -445,7 +456,7 @@
                                       Margin="8,4,8,8" 
                                       FontWeight="Medium"
                                       FontSize="{Binding MainViewModel.FontSize}"
-                                      Foreground="{DynamicResource PrimaryHueMidBrush}" />
+                                      Foreground="{DynamicResource GlobalAccentBrush}" />
                             
                             <TextBox Grid.Row="1"
                                     Text="{Binding JsonResult, Mode=OneWay}" 
@@ -457,7 +468,7 @@
                                     FontSize="{Binding MainViewModel.FontSize}"
                                     Margin="4,0,4,4" />
                         </Grid>
-                    </materialDesign:Card>
+                    </Border>
                 </Grid>
                 
                 <!-- 加载指示器 -->
@@ -469,7 +480,7 @@
                                     Width="60" 
                                     Height="60"
                                     Style="{StaticResource MaterialDesignCircularProgressBar}"
-                                    Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                    Foreground="{DynamicResource GlobalAccentBrush}"
                                     Margin="0,0,0,16" />
                         <TextBlock Text="{Binding LoadingMessage}" 
                                  Foreground="White" 
@@ -1322,23 +1333,30 @@
         </Grid>
         
         <!-- 底部保存按钮区域 -->
-        <Grid Grid.Row="2" Margin="0,16,0,0">
-            <Button HorizontalAlignment="Center" 
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,16,0,0">
+            <Button Content="保存" 
                     Command="{Binding SaveTicketCommand}" 
-                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
                     materialDesign:ButtonAssist.CornerRadius="4"
-                    Background="{DynamicResource PrimaryHueMidBrush}"
-                    BorderBrush="{DynamicResource PrimaryHueMidBrush}"
-                    Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
-                    Width="120"
-                    Height="40"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
+                    Height="48"
+                    MinHeight="36"
+                    FontSize="{DynamicResource MaterialDesignFontSize}"
+                    Padding="16,8"
                     IsEnabled="{Binding IsEnvironmentReady}"
-                    Margin="0,0,0,8">
-                <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
-                    <TextBlock Text="保存" FontSize="14"/>
-                </StackPanel>
+                    IsDefault="True">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
+                            <TextBlock Text="保存" FontSize="14"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </Button.ContentTemplate>
             </Button>
-        </Grid>
+        </StackPanel>
     </Grid>
 </Window> 

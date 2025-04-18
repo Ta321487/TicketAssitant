@@ -42,6 +42,7 @@
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="IronPython" Version="3.4.1" />
     <PackageReference Include="IronPython.StdLib" Version="3.4.1" />
+    <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
   </ItemGroup>
 
   <ItemGroup>

@@ -394,7 +394,16 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void Show12306ImportFeatureNotAvailable()
         {
-            MessageBoxHelper.ShowInfo("从12306导入车票功能暂未开通，敬请期待！");
+            try
+            {
+                // 使用导航服务打开PDF导入窗口
+                _navigationService.OpenPdfImportWindow(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"打开12306 PDF导入车票窗口时出错: {ex.Message}");
+                LogHelper.LogError($"打开12306 PDF导入车票窗口时出错: {ex.Message}");
+            }
         }
     }
 

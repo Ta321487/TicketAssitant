@@ -95,7 +95,7 @@
         <TextBlock Grid.Row="0" 
                    Text="手工录入车票" 
                    Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
-                   Margin="0,0,0,16"/>
+                   Margin="0,0,0,16" d:IsHidden="True"/>
 
         <!-- 表单内容 -->
         <ScrollViewer Grid.Row="1" 
