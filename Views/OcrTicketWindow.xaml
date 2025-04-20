@@ -492,7 +492,7 @@
             
             <!-- 可折叠表单区域 -->
             <Expander Grid.Row="1" 
-                      Header="手工填写表单" 
+                      Header="表单区域（如果识别不准确，您可以点击“问号”按钮以解锁修改表单信息）" 
                       Margin="0,16,0,0"
                       BorderThickness="0,1,0,0"
                       BorderBrush="{DynamicResource MaterialDesignDivider}"

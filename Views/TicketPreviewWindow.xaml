@@ -952,8 +952,8 @@
                                         <Rectangle StrokeDashArray="4 2"
                                                  Stroke="Black"
                                                  StrokeThickness="1"
-                                                 Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualWidth}"
-                                                 Height="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualHeight}"/>
+                                                 Width="{Binding Path=ActualWidth, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Border}}}"
+                                                 Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Border}}}"/>
                                     </VisualBrush.Visual>
                                 </VisualBrush>
                             </Border.BorderBrush>

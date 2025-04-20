@@ -51,41 +51,6 @@ namespace TA_WPF.Services
             }
         }
 
-        public async Task<(List<TrainRideInfo> Items, int TotalCount)> GetTrainRideInfoAsync(int pageSize, int pageNumber)
-        {
-            var items = new List<TrainRideInfo>();
-            int totalCount = 0;
-
-            using (var connection = await GetOpenConnectionWithRetryAsync())
-            {
-                // 获取总记录数
-                using (var countCommand = new MySqlCommand("SELECT COUNT(*) FROM train_ride_info", connection))
-                {
-                    totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync());
-                }
-
-                // 获取分页数据
-                string query = @"SELECT * FROM train_ride_info 
-                               ORDER BY id 
-                               LIMIT @Offset, @PageSize";
-
-                using (var command = new MySqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
-                    command.Parameters.AddWithValue("@PageSize", pageSize);
-
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            items.Add(MapTrainRideInfo(reader));
-                        }
-                    }
-                }
-            }
-
-            return (items, totalCount);
-        }
 
         public async Task<List<StationInfo>> GetStationsAsync()
         {
