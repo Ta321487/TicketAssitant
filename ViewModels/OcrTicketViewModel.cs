@@ -81,6 +81,10 @@ namespace TA_WPF.ViewModels
         private bool _isABCPayment;
         private bool _isCCBPayment;
         private bool _isICBCPayment;
+        private bool _isPSBCPayment;
+        private bool _isBOCPayment;
+        private bool _isCMBPayment;
+        private bool _isCOMMPayment;
         private bool _isAlipayPaymentEnabled = true;
         private bool _isWeChatPaymentEnabled = true;
 
@@ -1071,16 +1075,8 @@ namespace TA_WPF.ViewModels
                 {
                     _isAlipayPayment = value;
                     OnPropertyChanged(nameof(IsAlipayPayment));
-
                     // 应用互斥逻辑
-                    if (value)
-                    {
-                        IsWeChatPaymentEnabled = false;
-                    }
-                    else
-                    {
-                        IsWeChatPaymentEnabled = true;
-                    }
+                    HandlePaymentChannelMutualExclusion("Alipay");
                 }
             }
         }
@@ -1097,16 +1093,8 @@ namespace TA_WPF.ViewModels
                 {
                     _isWeChatPayment = value;
                     OnPropertyChanged(nameof(IsWeChatPayment));
-
                     // 应用互斥逻辑
-                    if (value)
-                    {
-                        IsAlipayPaymentEnabled = false;
-                    }
-                    else
-                    {
-                        IsAlipayPaymentEnabled = true;
-                    }
+                    HandlePaymentChannelMutualExclusion("WeChat");
                 }
             }
         }
@@ -1123,13 +1111,8 @@ namespace TA_WPF.ViewModels
                 {
                     _isABCPayment = value;
                     OnPropertyChanged(nameof(IsABCPayment));
-
-                    // 银行卡三选一
-                    if (value)
-                    {
-                        IsCCBPayment = false;
-                        IsICBCPayment = false;
-                    }
+                    // 应用互斥逻辑
+                    HandlePaymentChannelMutualExclusion("ABC");
                 }
             }
         }
@@ -1146,13 +1129,8 @@ namespace TA_WPF.ViewModels
                 {
                     _isCCBPayment = value;
                     OnPropertyChanged(nameof(IsCCBPayment));
-
-                    // 银行卡三选一
-                    if (value)
-                    {
-                        IsABCPayment = false;
-                        IsICBCPayment = false;
-                    }
+                    // 应用互斥逻辑
+                    HandlePaymentChannelMutualExclusion("CCB");
                 }
             }
         }
@@ -1169,13 +1147,64 @@ namespace TA_WPF.ViewModels
                 {
                     _isICBCPayment = value;
                     OnPropertyChanged(nameof(IsICBCPayment));
+                    // 应用互斥逻辑
+                    HandlePaymentChannelMutualExclusion("ICBC");
+                }
+            }
+        }
 
-                    // 银行卡三选一
-                    if (value)
-                    {
-                        IsABCPayment = false;
-                        IsCCBPayment = false;
-                    }
+        public bool IsPSBCPayment
+        {
+            get => _isPSBCPayment;
+            set {
+                if (_isPSBCPayment != value)
+                {
+                    _isPSBCPayment = value;
+                    OnPropertyChanged(nameof(IsPSBCPayment));
+                    // 应用互斥逻辑
+                    HandlePaymentChannelMutualExclusion("PSBC");
+                }
+            }
+        }
+
+        public bool IsCMBPayment {
+            get=>_isCMBPayment;
+            set
+            {
+                // 修复私有字段名
+                if (_isCMBPayment != value)
+                {
+                    _isCMBPayment = value;
+                    OnPropertyChanged(nameof(IsCMBPayment));
+                    // 应用互斥逻辑
+                    HandlePaymentChannelMutualExclusion("CMB");
+                }
+            }
+        }
+        public bool IsBOCPayment {
+            get => _isBOCPayment;
+            set
+            {
+                if (_isBOCPayment != value)
+                {
+                    _isBOCPayment = value;
+                    OnPropertyChanged(nameof(IsBOCPayment));
+                    // 应用互斥逻辑
+                    HandlePaymentChannelMutualExclusion("BOC");
+                }
+            }
+        }
+        public bool IsCOMMPayment
+        {
+            get => _isCOMMPayment;
+            set
+            {
+                if(_isCOMMPayment != value)
+                {
+                    _isCOMMPayment = value;
+                    OnPropertyChanged(nameof(IsCOMMPayment));
+                    // 应用互斥逻辑
+                    HandlePaymentChannelMutualExclusion("COMM");
                 }
             }
         }
@@ -2600,6 +2629,10 @@ namespace TA_WPF.ViewModels
             if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
             if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
             if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
+            if (IsCMBPayment) flags |= (int)PaymentChannelFlags.CMB;
+            if (IsPSBCPayment) flags |= (int)PaymentChannelFlags.PSBC;
+            if (IsBOCPayment) flags |= (int)PaymentChannelFlags.BOC;
+            if (IsCOMMPayment) flags |= (int)PaymentChannelFlags.COMM;
             return flags;
         }
 
@@ -3985,6 +4018,115 @@ namespace TA_WPF.ViewModels
         public void SetWindowClosed()
         {
             _ocrEnvironmentService.SetWindowClosed();
+        }
+
+        // 添加互斥逻辑方法
+        private void HandlePaymentChannelMutualExclusion(string selectedChannel)
+        {
+            // 定义银行渠道列表
+            var bankChannels = new List<string> { "ABC", "CCB", "ICBC", "CMB", "PSBC", "BOC", "COMM" };
+
+            // 支付宝和微信的互斥逻辑
+            if (selectedChannel == "Alipay")
+            {
+                if (IsAlipayPayment)
+                {
+                    // 确保不触发连锁反应导致栈溢出
+                    if (IsWeChatPayment)
+                    {
+                        _isWeChatPayment = false;
+                        OnPropertyChanged(nameof(IsWeChatPayment));
+                    }
+                    IsWeChatPaymentEnabled = false;
+                }
+                else
+                {
+                    IsWeChatPaymentEnabled = true;
+                }
+            }
+            else if (selectedChannel == "WeChat")
+            {
+                if (IsWeChatPayment)
+                {
+                    // 确保不触发连锁反应导致栈溢出
+                    if (IsAlipayPayment)
+                    {
+                        _isAlipayPayment = false;
+                        OnPropertyChanged(nameof(IsAlipayPayment));
+                    }
+                    IsAlipayPaymentEnabled = false;
+                }
+                else
+                {
+                    IsAlipayPaymentEnabled = true;
+                }
+            }
+            // 银行渠道的互斥逻辑
+            else if (bankChannels.Contains(selectedChannel))
+            {
+                // 获取当前选中的银行属性值
+                bool isSelected = GetBankPaymentStatus(selectedChannel);
+
+                // 如果当前银行被选中，则取消其他所有银行的选择
+                if (isSelected)
+                {
+                    // 遍历所有银行渠道
+                    foreach (var bank in bankChannels)
+                    {
+                        // 如果不是当前选中的银行，并且该银行当前是选中状态，则取消选择
+                        if (bank != selectedChannel && GetBankPaymentStatus(bank))
+                        {
+                            SetBankPaymentStatus(bank, false);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 辅助方法：根据渠道名称获取银行支付状态
+        private bool GetBankPaymentStatus(string channel)
+        {
+            switch (channel)
+            {
+                case "ABC": return IsABCPayment;
+                case "CCB": return IsCCBPayment;
+                case "ICBC": return IsICBCPayment;
+                case "CMB": return IsCMBPayment;
+                case "PSBC": return IsPSBCPayment;
+                case "BOC": return IsBOCPayment;
+                case "COMM": return IsCOMMPayment;
+                default: return false;
+            }
+        }
+
+        // 辅助方法：根据渠道名称设置银行支付状态
+        private void SetBankPaymentStatus(string channel, bool status)
+        {
+            switch (channel)
+            {
+                case "ABC":
+                    // 直接修改字段避免递归调用setter
+                    if (_isABCPayment != status) { _isABCPayment = status; OnPropertyChanged(nameof(IsABCPayment)); }
+                    break;
+                case "CCB":
+                    if (_isCCBPayment != status) { _isCCBPayment = status; OnPropertyChanged(nameof(IsCCBPayment)); }
+                    break;
+                case "ICBC":
+                    if (_isICBCPayment != status) { _isICBCPayment = status; OnPropertyChanged(nameof(IsICBCPayment)); }
+                    break;
+                case "CMB":
+                    if (_isCMBPayment != status) { _isCMBPayment = status; OnPropertyChanged(nameof(IsCMBPayment)); }
+                    break;
+                case "PSBC":
+                    if (_isPSBCPayment != status) { _isPSBCPayment = status; OnPropertyChanged(nameof(IsPSBCPayment)); }
+                    break;
+                case "BOC":
+                    if (_isBOCPayment != status) { _isBOCPayment = status; OnPropertyChanged(nameof(IsBOCPayment)); }
+                    break;
+                case "COMM":
+                    if (_isCOMMPayment != status) { _isCOMMPayment = status; OnPropertyChanged(nameof(IsCOMMPayment)); }
+                    break;
+            }
         }
     }
 }

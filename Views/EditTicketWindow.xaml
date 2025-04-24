@@ -592,34 +592,42 @@
                 </Grid>
 
                 <!-- 第十五行：支付渠道 -->
-                <TextBlock Grid.Row="14" Grid.Column="0" 
-                           Text="支付渠道:" 
+                <TextBlock Grid.Row="14" Grid.Column="0"
+                           Text="支付渠道:"
                            Style="{StaticResource FormLabelStyle}"/>
                 <Grid Grid.Row="14" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,8,0,8">
-                    <WrapPanel Margin="4,2,0,2">
-                        <CheckBox Content="支付宝售票" 
-                                  IsChecked="{Binding IsAlipayPayment}" 
+                    <!-- 使用 UniformGrid 替代 WrapPanel 实现对齐 -->
+                    <UniformGrid Columns="4" Margin="4,2,0,2">
+                        <CheckBox Content="支付宝售票"
+                                  IsChecked="{Binding IsAlipayPayment}"
                                   IsEnabled="{Binding IsAlipayPaymentEnabled}"
-                                  Margin="0,0,24,0"
                                   VerticalAlignment="Center"/>
-                        <CheckBox Content="微信售票" 
-                                  IsChecked="{Binding IsWeChatPayment}" 
+                        <CheckBox Content="微信售票"
+                                  IsChecked="{Binding IsWeChatPayment}"
                                   IsEnabled="{Binding IsWeChatPaymentEnabled}"
-                                  Margin="0,0,24,0"
                                   VerticalAlignment="Center"/>
-                        <CheckBox Content="农业银行" 
-                                  IsChecked="{Binding IsABCPayment}" 
-                                  Margin="0,0,24,0"
+                        <CheckBox Content="农业银行"
+                                  IsChecked="{Binding IsABCPayment}"
                                   VerticalAlignment="Center"/>
-                        <CheckBox Content="建设银行" 
-                                  IsChecked="{Binding IsCCBPayment}" 
-                                  Margin="0,0,24,0"
+                        <CheckBox Content="建设银行"
+                                  IsChecked="{Binding IsCCBPayment}"
                                   VerticalAlignment="Center"/>
-                        <CheckBox Content="工商银行" 
-                                  IsChecked="{Binding IsICBCPayment}" 
-                                  Margin="0,0,0,0"
+                        <CheckBox Content="工商银行"
+                                  IsChecked="{Binding IsICBCPayment}"
                                   VerticalAlignment="Center"/>
-                    </WrapPanel>
+                        <CheckBox Content="交通银行"
+                                  IsChecked="{Binding IsCOMMPayment}"
+                                  VerticalAlignment="Center"/>
+                        <CheckBox Content="招商银行"
+                                  IsChecked="{Binding IsCMBPayment}"
+                                  VerticalAlignment="Center"/>
+                        <CheckBox Content="邮储银行"
+                                  IsChecked="{Binding IsPSBCPayment}"
+                                  VerticalAlignment="Center"/>
+                        <CheckBox Content="中国银行"
+                                  IsChecked="{Binding IsBOCPayment}"
+                                  VerticalAlignment="Center"/>
+                    </UniformGrid>
                 </Grid>
             </Grid>
         </ScrollViewer>
@@ -629,8 +637,7 @@
                     Orientation="Horizontal" 
                     HorizontalAlignment="Right" 
                     Margin="0,16,0,0">
-            <Button Content="重置" 
-                    Command="{Binding ResetCommand}" 
+            <Button Command="{Binding ResetCommand}" 
                     Style="{StaticResource MaterialDesignFlatButton}" 
                     materialDesign:ButtonAssist.CornerRadius="4"
                     Foreground="{DynamicResource GlobalAccentBrush}"
@@ -638,9 +645,13 @@
                     Height="48"
                     MinHeight="36"
                     FontSize="{DynamicResource MaterialDesignFontSize}"
-                    Padding="16,8"/>
-            <Button Content="确定" 
-                    Command="{Binding SaveCommand}" 
+                    Padding="16,8">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Restore" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="重置" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button Command="{Binding SaveCommand}" 
                     Style="{StaticResource MaterialDesignFlatButton}"
                     materialDesign:ButtonAssist.CornerRadius="4"
                     Foreground="{DynamicResource GlobalAccentBrush}"
@@ -648,7 +659,12 @@
                     MinHeight="36"
                     FontSize="{DynamicResource MaterialDesignFontSize}"
                     Padding="16,8"
-                    IsDefault="True"/>
+                    IsDefault="True">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="保存修改" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
         </StackPanel>
     </Grid>
 </Window> 

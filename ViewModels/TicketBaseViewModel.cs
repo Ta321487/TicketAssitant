@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
+using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -69,6 +70,10 @@ namespace TA_WPF.ViewModels
         private bool _isABCPayment;
         private bool _isCCBPayment;
         private bool _isICBCPayment;
+        private bool _isCMBPayment;
+        private bool _isPSBCPayment;
+        private bool _isBOCPayment;
+        private bool _isCOMMPayment;
 
         public PaymentChannelViewModel()
         {
@@ -144,11 +149,15 @@ namespace TA_WPF.ViewModels
                     _isABCPayment = value;
                     OnPropertyChanged(nameof(IsABCPayment));
 
-                    // 农业银行、建设银行、工商银行只能选择一个
+                    // 银行七选一(中国工商银行、中国农业银行、中国银行、中国建设银行、招商银行、中国邮政储蓄银行、交通银行)
                     if (!_isInitializing && value)
                     {
                         IsCCBPayment = false;
                         IsICBCPayment = false;
+                        IsCMBPayment = false;
+                        IsPSBCPayment = false;
+                        IsBOCPayment = false;
+                        IsCOMMPayment = false;
                     }
 
                     if (!_isInitializing) OnPaymentChannelChanged();
@@ -166,11 +175,16 @@ namespace TA_WPF.ViewModels
                     _isCCBPayment = value;
                     OnPropertyChanged(nameof(IsCCBPayment));
 
-                    // 农业银行、建设银行、工商银行只能选择一个
+                    // 七选一
                     if (!_isInitializing && value)
                     {
                         IsABCPayment = false;
                         IsICBCPayment = false;
+                        IsCMBPayment = false;
+                        IsPSBCPayment = false;
+                        IsBOCPayment = false;
+                        IsCOMMPayment = false;
+                        
                     }
 
                     if (!_isInitializing) OnPaymentChannelChanged();
@@ -188,16 +202,106 @@ namespace TA_WPF.ViewModels
                     _isICBCPayment = value;
                     OnPropertyChanged(nameof(IsICBCPayment));
 
-                    // 农业银行、建设银行、工商银行只能选择一个
+                    // 七选一
                     if (!_isInitializing && value)
                     {
                         IsABCPayment = false;
                         IsCCBPayment = false;
+                        IsCMBPayment = false;
+                        IsPSBCPayment = false;
+                        IsBOCPayment = false;
+                        IsCOMMPayment = false;
                     }
 
                     if (!_isInitializing) OnPaymentChannelChanged();
                 }
             }
+        }
+
+        public bool IsCMBPayment
+        {
+
+            get => _isCMBPayment;
+            set
+            {
+                if (_isCMBPayment != value)
+                {
+                    _isCMBPayment = value;
+                    OnPropertyChanged(nameof(IsCMBPayment));
+                    if (!_isInitializing && value)
+                    {
+                        IsABCPayment = false;
+                        IsCCBPayment = false;
+                        IsICBCPayment = false;
+                        IsPSBCPayment = false;
+                        IsBOCPayment = false;
+                        IsCOMMPayment = false;
+                    }
+                    if (!_isInitializing) OnPaymentChannelChanged();
+                }
+            }
+        }
+        public bool IsPSBCPayment {
+            get => _isPSBCPayment;
+            set
+            {
+                if (_isPSBCPayment != value) {
+                    _isPSBCPayment = value;
+                    OnPropertyChanged(nameof(IsPSBCPayment));
+                    if(!_isInitializing && value) {
+                        IsABCPayment = false;
+                        IsCCBPayment = false;
+                        IsICBCPayment = false;
+                        IsCMBPayment = false;
+                        IsBOCPayment = false;
+                        IsCOMMPayment = false;
+                    }
+                    if(!_isInitializing) OnPaymentChannelChanged();
+                }
+            }
+        }
+        public bool IsBOCPayment
+        {
+            get => _isBOCPayment;
+            set
+            {
+                if (!_isBOCPayment && value)
+                {
+                    _isBOCPayment = value;
+                    OnPropertyChanged(nameof(IsBOCPayment));
+                    if (!_isInitializing && value)
+                    {
+                        IsABCPayment = false;
+                        IsCCBPayment = false;
+                        IsICBCPayment = false;
+                        IsCMBPayment = false;
+                        IsPSBCPayment = false;
+                        IsCOMMPayment = false;
+                    }
+                }
+            }
+        }
+        public bool IsCOMMPayment {
+            get => _isCOMMPayment;
+            set 
+            { 
+                if(_isCOMMPayment != value)
+                {
+                    _isCOMMPayment = value;
+                    OnPropertyChanged(nameof(IsCOMMPayment));
+                    if (!_isInitializing && value)
+                    {
+                        IsABCPayment = false;
+                        IsICBCPayment= false;
+                        IsCCBPayment = false;
+                        IsCMBPayment = false;
+                        IsPSBCPayment = false;
+                        IsBOCPayment = false;
+
+                    }
+                }
+            }
+        
         }
 
         // 控制支付宝售票是否可用
@@ -247,6 +351,10 @@ namespace TA_WPF.ViewModels
             if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
             if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
             if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
+            if(IsCMBPayment) flags |= (int)PaymentChannelFlags.CMB;
+            if(IsPSBCPayment) flags |= (int)PaymentChannelFlags.PSBC;
+            if(IsBOCPayment)flags |= (int)PaymentChannelFlags.BOC;
+            if(IsCOMMPayment)flags |=(int)PaymentChannelFlags.COMM;
             return flags;
         }
 
@@ -270,6 +378,10 @@ namespace TA_WPF.ViewModels
             IsABCPayment = (flags & (int)PaymentChannelFlags.ABC) != 0;
             IsCCBPayment = (flags & (int)PaymentChannelFlags.CCB) != 0;
             IsICBCPayment = (flags & (int)PaymentChannelFlags.ICBC) != 0;
+            IsCMBPayment = (flags & (int)PaymentChannelFlags.CMB) != 0;
+            IsPSBCPayment = (flags & (int)PaymentChannelFlags.PSBC) != 0;
+            IsBOCPayment = (flags & (int)PaymentChannelFlags.BOC) != 0;
+            IsCOMMPayment = (flags & (int)PaymentChannelFlags.COMM) != 0;
 
             _isInitializing = false;
 
@@ -341,6 +453,8 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
+
+
     }
 
     /// <summary>
@@ -717,11 +831,11 @@ namespace TA_WPF.ViewModels
                 : $"确定要删除选中的 {SelectedItemsCount} 张车票吗？此操作不可撤销。";
 
             // 显示确认对话框
-            var result = TA_WPF.Views.MessageDialog.Show(
+            var result = MessageDialog.Show(
                 confirmMessage,
                 "删除确认",
-                TA_WPF.Views.MessageType.Warning,
-                TA_WPF.Views.MessageButtons.YesNo);
+                MessageType.Warning,
+                MessageButtons.YesNo);
 
             if (result != true)
                 return;
@@ -748,11 +862,11 @@ namespace TA_WPF.ViewModels
                         ? "已成功删除1张车票。"
                         : $"已成功删除{deletedCount}张车票。";
 
-                    TA_WPF.Views.MessageDialog.Show(
+                    MessageDialog.Show(
                         resultMessage,
                         "删除成功",
-                        TA_WPF.Views.MessageType.Information,
-                        TA_WPF.Views.MessageButtons.Ok);
+                        MessageType.Information,
+                        MessageButtons.Ok);
 
                     // 清除所有缓存数据
                     _paginationViewModel.ClearCache();
@@ -785,11 +899,11 @@ namespace TA_WPF.ViewModels
                 }
                 else
                 {
-                    TA_WPF.Views.MessageDialog.Show(
+                    MessageDialog.Show(
                         "未能删除任何车票，请稍后重试。",
                         "删除失败",
-                        TA_WPF.Views.MessageType.Error,
-                        TA_WPF.Views.MessageButtons.Ok);
+                        MessageType.Error,
+                        MessageButtons.Ok);
                 }
             }
             catch (Exception ex)

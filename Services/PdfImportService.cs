@@ -165,6 +165,10 @@ namespace TA_WPF.Services
                     var seatRegex = new Regex(@"(?:(加)?)(\d+)车([^号]+)号\s*([^\s]+)"); // Removed trailing \
                     var seatMatch = seatRegex.Match(seatLine);
 
+                    // --- 初始化 Flags ---
+                    ticket.TicketTypeFlags = (int)TicketTypeFlags.None;
+                    ticket.PaymentChannelFlags = (int)PaymentChannelFlags.None;
+
                     if (seatMatch.Success)
                     {
                         bool isExtra = seatMatch.Groups[1].Success;
@@ -179,6 +183,33 @@ namespace TA_WPF.Services
                         // Map extracted text to the required SeatType value
                         ticket.SeatType = MapSeatType(seatTypeText);
                         Debug.WriteLine($"[PdfImportService] Extracted CoachNo: '{ticket.CoachNo}', SeatNo: '{ticket.SeatNo}', SeatType: '{ticket.SeatType}' (Original Text: '{seatTypeText}')");
+
+                        // --- 提取票种和支付渠道标志 ---
+                        string remainingSeatLine = seatLine.Substring(seatMatch.Index + seatMatch.Length).Trim();
+                        Debug.WriteLine($"[PdfImportService] Remaining seat line for flags: '{remainingSeatLine}'");
+
+                        if (remainingSeatLine.Contains("孩"))
+                        {
+                            ticket.TicketTypeFlags |= (int)TicketTypeFlags.ChildTicket;
+                            Debug.WriteLine("[PdfImportService] Detected '孩' (ChildTicket)");
+                        }
+                        if (remainingSeatLine.Contains("惠"))
+                        {
+                            ticket.TicketTypeFlags |= (int)TicketTypeFlags.DiscountTicket;
+                            Debug.WriteLine("[PdfImportService] Detected '惠' (DiscountTicket)");
+                        }
+
+                        // 支付渠道识别
+                        if (remainingSeatLine.Contains("招")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.CMB; Debug.WriteLine("[PdfImportService] Detected '招' (CMB)"); }
+                        else if (remainingSeatLine.Contains("邮")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.PSBC; Debug.WriteLine("[PdfImportService] Detected '邮' (PSBC)"); }
+                        else if (remainingSeatLine.Contains("中")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.BOC; Debug.WriteLine("[PdfImportService] Detected '中' (BOC)"); }
+                        else if (remainingSeatLine.Contains("交")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.COMM; Debug.WriteLine("[PdfImportService] Detected '交' (COMM)"); }
+                        else if (remainingSeatLine.Contains("农")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.ABC; Debug.WriteLine("[PdfImportService] Detected '农' (ABC)"); }
+                        else if (remainingSeatLine.Contains("建")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.CCB; Debug.WriteLine("[PdfImportService] Detected '建' (CCB)"); }
+                        else if (remainingSeatLine.Contains("工")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.ICBC; Debug.WriteLine("[PdfImportService] Detected '工' (ICBC)"); }
+                        else if (remainingSeatLine.Contains("支")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.Alipay; Debug.WriteLine("[PdfImportService] Detected '支' (Alipay)"); }
+                        else if (remainingSeatLine.Contains("微")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.WeChat; Debug.WriteLine("[PdfImportService] Detected '微' (WeChat)"); }
+
                     }
                     else { Debug.WriteLine($"[PdfImportService] Seat line (Index {seatLineIndex}) '{seatLine}' did not match regex."); }
                 }

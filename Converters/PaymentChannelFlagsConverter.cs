@@ -13,7 +13,11 @@ namespace TA_WPF.Converters
             { PaymentChannelFlags.WeChat, "微信" },
             { PaymentChannelFlags.ABC, "农业银行" },
             { PaymentChannelFlags.CCB, "建设银行" },
-            { PaymentChannelFlags.ICBC, "工商银行" }
+            { PaymentChannelFlags.ICBC, "工商银行" },
+            { PaymentChannelFlags.CMB,"招商银行" },
+            { PaymentChannelFlags.PSBC,"邮储银行" },
+            { PaymentChannelFlags.BOC,"中国银行" },
+            {PaymentChannelFlags.COMM,"交通银行" }
         };
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

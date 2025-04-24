@@ -9,6 +9,7 @@ using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.Models;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace TA_WPF.ViewModels
 {
@@ -74,6 +75,10 @@ namespace TA_WPF.ViewModels
         private bool _isABCPayment;
         private bool _isCCBPayment;
         private bool _isICBCPayment;
+        private bool _isCMBPayment;
+        private bool _isPSBCPayment;
+        private bool _isBOCPayment;
+        private bool _isCOMMPayment;
 
         // 车站搜索相关属性
         private ObservableCollection<StationInfo> _departStationSuggestions;
@@ -82,6 +87,44 @@ namespace TA_WPF.ViewModels
         private bool _isArriveStationDropdownOpen;
         private string _departStationSearchText;
         private string _arriveStationSearchText;
+
+        // 用于临时禁止通知和互斥逻辑的标志
+        private bool _suppressNotifications = false;
+
+        // --- 添加用于字段解锁的属性 ---
+        private bool _isQuestionButtonEnabled;
+        private bool _isTicketNumberEnabled;
+        private bool _isCheckInLocationEnabled;
+        private bool _isDepartStationEnabled;
+        private bool _isArriveStationEnabled;
+        private bool _isDepartStationPinyinEnabled;
+        private bool _isArriveStationPinyinEnabled;
+        private bool _isMoneyEnabled;
+        private bool _isDepartStationCodeEnabled;
+        private bool _isArriveStationCodeEnabled;
+        private bool _isDepartDateEnabled;
+        private bool _isTrainTypeEnabled;
+        private bool _isTrainNumberEnabled;
+        private bool _isDepartTimeEnabled;
+        private bool _isCoachNoEnabled;
+        private bool _isExtraCoachEnabled;
+        private bool _isSeatNoEnabled;
+        private bool _isNoSeatEnabled;
+        private bool _isSeatPositionEnabled;
+        private bool _isSeatTypeEnabled;
+        private bool _isAdditionalInfoEnabled;
+        private bool _isTicketPurposeEnabled;
+        private bool _isHintEnabled;
+        private bool _isCustomHintEnabled;
+        private bool _isTicketModificationTypeEnabled;
+        private bool _isTicketTypeEnabled;
+        private bool _isPaymentMethodEnabled;
+        // --- 结束添加 ---
+
+        /// <summary>
+        /// 主视图模型，用于主题和字体大小绑定
+        /// </summary>
+        public MainViewModel MainViewModel => _mainViewModel;
 
         /// <summary>
         /// 构造函数
@@ -99,6 +142,7 @@ namespace TA_WPF.ViewModels
             SelectPdfCommand = new RelayCommand(SelectPdfFile);
             ImportTicketCommand = new RelayCommand(ImportTicket, CanImportTicket);
             CancelCommand = new RelayCommand(Cancel);
+            ToggleFieldCommand = new RelayCommand<string>(ToggleField);
             
             // 初始化表单相关集合
             TrainTypes = new ObservableCollection<string> { "G", "C", "D", "Z", "T", "K", "L", "S", "纯数字" };
@@ -142,6 +186,9 @@ namespace TA_WPF.ViewModels
             // 初始化并加载车站数据
             Task.Run(async () => await _stationSearchService.InitializeAsync());
             
+            // 重置字段启用状态
+            ResetFormFieldsState();
+
             // 注册属性变更事件
             PropertyChanged += OnPropertyChanged;
         }
@@ -232,6 +279,11 @@ namespace TA_WPF.ViewModels
         /// 取消命令
         /// </summary>
         public ICommand CancelCommand { get; }
+
+        /// <summary>
+        /// 切换字段编辑状态命令
+        /// </summary>
+        public ICommand ToggleFieldCommand { get; }
 
         #region 表单相关属性
 
@@ -722,6 +774,10 @@ namespace TA_WPF.ViewModels
                 if (_isAlipayPayment != value)
                 {
                     _isAlipayPayment = value;
+                    if (value && !_suppressNotifications)
+                    {
+                        IsWeChatPayment = false; // 互斥
+                    }
                     OnPropertyChanged(nameof(IsAlipayPayment));
                 }
             }
@@ -738,6 +794,10 @@ namespace TA_WPF.ViewModels
                 if (_isWeChatPayment != value)
                 {
                     _isWeChatPayment = value;
+                    if (value && !_suppressNotifications)
+                    {
+                        IsAlipayPayment = false; // 互斥
+                    }
                     OnPropertyChanged(nameof(IsWeChatPayment));
                 }
             }
@@ -754,6 +814,7 @@ namespace TA_WPF.ViewModels
                 if (_isABCPayment != value)
                 {
                     _isABCPayment = value;
+                    if (value && !_suppressNotifications) ClearOtherBankPayments(PaymentChannelFlags.ABC);
                     OnPropertyChanged(nameof(IsABCPayment));
                 }
             }
@@ -770,6 +831,7 @@ namespace TA_WPF.ViewModels
                 if (_isCCBPayment != value)
                 {
                     _isCCBPayment = value;
+                    if (value && !_suppressNotifications) ClearOtherBankPayments(PaymentChannelFlags.CCB);
                     OnPropertyChanged(nameof(IsCCBPayment));
                 }
             }
@@ -786,7 +848,63 @@ namespace TA_WPF.ViewModels
                 if (_isICBCPayment != value)
                 {
                     _isICBCPayment = value;
+                    if (value && !_suppressNotifications) ClearOtherBankPayments(PaymentChannelFlags.ICBC);
                     OnPropertyChanged(nameof(IsICBCPayment));
+                }
+            }
+        }
+        public bool IsCMBPayment
+        {
+            get => _isCMBPayment;
+            set
+            {
+                if (_isCMBPayment != value)
+                {
+                    _isCMBPayment = value;
+                    if (value && !_suppressNotifications) ClearOtherBankPayments(PaymentChannelFlags.CMB);
+                    OnPropertyChanged(nameof(IsCMBPayment));
+                }
+            }
+        }
+
+        public bool IsPSBCPayment
+        {
+            get => _isPSBCPayment;
+            set
+            {
+                if (_isPSBCPayment != value)
+                {
+                    _isPSBCPayment = value;
+                    if (value && !_suppressNotifications) ClearOtherBankPayments(PaymentChannelFlags.PSBC);
+                    OnPropertyChanged(nameof(IsPSBCPayment));
+                }
+            }
+        }
+        
+        public bool IsBOCPayment
+        {
+            get => _isBOCPayment;
+            set
+            {
+                if (_isBOCPayment != value)
+                {
+                    _isBOCPayment = value;
+                    if (value && !_suppressNotifications) ClearOtherBankPayments(PaymentChannelFlags.BOC);
+                    OnPropertyChanged(nameof(IsBOCPayment));
+                }
+            }
+        }
+
+        public bool IsCOMMPayment
+        {
+            get => _isCOMMPayment;
+            set
+            {
+                if (_isCOMMPayment != value)
+                {
+                    _isCOMMPayment = value;
+                    if (value && !_suppressNotifications) ClearOtherBankPayments(PaymentChannelFlags.COMM);
+                    OnPropertyChanged(nameof(IsCOMMPayment));
                 }
             }
         }
@@ -934,6 +1052,293 @@ namespace TA_WPF.ViewModels
 
         #endregion
 
+        #region 表单字段启用状态属性
+
+        /// <summary>
+        /// 问号按钮是否启用
+        /// </summary>
+        public bool IsQuestionButtonEnabled
+        {
+            get => _isQuestionButtonEnabled;
+            set => SetProperty(ref _isQuestionButtonEnabled, value);
+        }
+
+        /// <summary>
+        /// 取票号字段是否启用
+        /// </summary>
+        public bool IsTicketNumberEnabled
+        {
+            get => _isTicketNumberEnabled;
+            set => SetProperty(ref _isTicketNumberEnabled, value);
+        }
+
+        /// <summary>
+        /// 检票位置字段是否启用
+        /// </summary>
+        public bool IsCheckInLocationEnabled
+        {
+            get => _isCheckInLocationEnabled;
+            set => SetProperty(ref _isCheckInLocationEnabled, value);
+        }
+
+        /// <summary>
+        /// 出发站字段是否启用
+        /// </summary>
+        public bool IsDepartStationEnabled
+        {
+            get => _isDepartStationEnabled;
+            set
+            {
+                SetProperty(ref _isDepartStationEnabled, value);
+                // 出发站启用时，拼音和代码也应启用（如果需要用户输入）
+                if (value)
+                {
+                    IsDepartStationPinyinEnabled = true;
+                    IsDepartStationCodeEnabled = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 到达站字段是否启用
+        /// </summary>
+        public bool IsArriveStationEnabled
+        {
+            get => _isArriveStationEnabled;
+            set
+            {
+                SetProperty(ref _isArriveStationEnabled, value);
+                // 到达站启用时，拼音和代码也应启用（如果需要用户输入）
+                if (value)
+                {
+                    IsArriveStationPinyinEnabled = true;
+                    IsArriveStationCodeEnabled = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 出发站拼音字段是否启用
+        /// </summary>
+        public bool IsDepartStationPinyinEnabled
+        {
+            get => _isDepartStationPinyinEnabled;
+            set => SetProperty(ref _isDepartStationPinyinEnabled, value);
+        }
+
+        /// <summary>
+        /// 到达站拼音字段是否启用
+        /// </summary>
+        public bool IsArriveStationPinyinEnabled
+        {
+            get => _isArriveStationPinyinEnabled;
+            set => SetProperty(ref _isArriveStationPinyinEnabled, value);
+        }
+
+        /// <summary>
+        /// 金额字段是否启用
+        /// </summary>
+        public bool IsMoneyEnabled
+        {
+            get => _isMoneyEnabled;
+            set => SetProperty(ref _isMoneyEnabled, value);
+        }
+
+        /// <summary>
+        /// 出发站代码字段是否启用
+        /// </summary>
+        public bool IsDepartStationCodeEnabled
+        {
+            get => _isDepartStationCodeEnabled;
+            set => SetProperty(ref _isDepartStationCodeEnabled, value);
+        }
+
+        /// <summary>
+        /// 到达站代码字段是否启用
+        /// </summary>
+        public bool IsArriveStationCodeEnabled
+        {
+            get => _isArriveStationCodeEnabled;
+            set => SetProperty(ref _isArriveStationCodeEnabled, value);
+        }
+
+        /// <summary>
+        /// 出发日期字段是否启用
+        /// </summary>
+        public bool IsDepartDateEnabled
+        {
+            get => _isDepartDateEnabled;
+            set => SetProperty(ref _isDepartDateEnabled, value);
+        }
+
+        /// <summary>
+        /// 车型字段是否启用
+        /// </summary>
+        public bool IsTrainTypeEnabled
+        {
+            get => _isTrainTypeEnabled;
+            set => SetProperty(ref _isTrainTypeEnabled, value);
+        }
+
+        /// <summary>
+        /// 车次号字段是否启用
+        /// </summary>
+        public bool IsTrainNumberEnabled
+        {
+            get => _isTrainNumberEnabled;
+            set => SetProperty(ref _isTrainNumberEnabled, value);
+        }
+
+        /// <summary>
+        /// 出发时间字段是否启用
+        /// </summary>
+        public bool IsDepartTimeEnabled
+        {
+            get => _isDepartTimeEnabled;
+            set => SetProperty(ref _isDepartTimeEnabled, value);
+        }
+
+        /// <summary>
+        /// 车厢号字段是否启用
+        /// </summary>
+        public bool IsCoachNoEnabled
+        {
+            get => _isCoachNoEnabled;
+            set
+            {
+                SetProperty(ref _isCoachNoEnabled, value);
+                if (value) IsExtraCoachEnabled = true; // 车厢号启用时，加车也启用
+            }
+        }
+
+        /// <summary>
+        /// 是否加车字段是否启用
+        /// </summary>
+        public bool IsExtraCoachEnabled
+        {
+            get => _isExtraCoachEnabled;
+            set => SetProperty(ref _isExtraCoachEnabled, value);
+        }
+
+        /// <summary>
+        /// 座位号字段是否启用
+        /// </summary>
+        public bool IsSeatNoEnabled
+        {
+            get => _isSeatNoEnabled;
+            set
+            {
+                SetProperty(ref _isSeatNoEnabled, value);
+                if (value)
+                {
+                    IsNoSeatEnabled = true; // 座位号启用时，无座也启用
+                    IsSeatPositionEnabled = true; // 座位号启用时，位置也启用
+                    OnPropertyChanged(nameof(IsSeatInputEnabled)); // 更新依赖属性
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否无座字段是否启用
+        /// </summary>
+        public bool IsNoSeatEnabled
+        {
+            get => _isNoSeatEnabled;
+            set => SetProperty(ref _isNoSeatEnabled, value);
+        }
+
+        /// <summary>
+        /// 座位位置字段是否启用
+        /// </summary>
+        public bool IsSeatPositionEnabled
+        {
+            get => _isSeatPositionEnabled;
+            set => SetProperty(ref _isSeatPositionEnabled, value);
+        }
+
+        /// <summary>
+        /// 座位类型字段是否启用
+        /// </summary>
+        public bool IsSeatTypeEnabled
+        {
+            get => _isSeatTypeEnabled;
+            set => SetProperty(ref _isSeatTypeEnabled, value);
+        }
+
+        /// <summary>
+        /// 附加信息字段是否启用
+        /// </summary>
+        public bool IsAdditionalInfoEnabled
+        {
+            get => _isAdditionalInfoEnabled;
+            set => SetProperty(ref _isAdditionalInfoEnabled, value);
+        }
+
+        /// <summary>
+        /// 车票用途字段是否启用
+        /// </summary>
+        public bool IsTicketPurposeEnabled
+        {
+            get => _isTicketPurposeEnabled;
+            set => SetProperty(ref _isTicketPurposeEnabled, value);
+        }
+
+        /// <summary>
+        /// 提示信息字段是否启用
+        /// </summary>
+        public bool IsHintEnabled
+        {
+            get => _isHintEnabled;
+            set
+            {
+                SetProperty(ref _isHintEnabled, value);
+                if (value) IsCustomHintEnabled = true; // 提示启用时，自定义提示也启用
+            }
+        }
+
+        /// <summary>
+        /// 自定义提示字段是否启用
+        /// </summary>
+        public bool IsCustomHintEnabled
+        {
+            get => _isCustomHintEnabled;
+            set => SetProperty(ref _isCustomHintEnabled, value);
+        }
+
+        /// <summary>
+        /// 车票改签类型字段是否启用
+        /// </summary>
+        public bool IsTicketModificationTypeEnabled
+        {
+            get => _isTicketModificationTypeEnabled;
+            set => SetProperty(ref _isTicketModificationTypeEnabled, value);
+        }
+
+        /// <summary>
+        /// 票种类型字段是否启用
+        /// </summary>
+        public bool IsTicketTypeEnabled
+        {
+            get => _isTicketTypeEnabled;
+            set => SetProperty(ref _isTicketTypeEnabled, value);
+        }
+
+        /// <summary>
+        /// 支付方式字段是否启用
+        /// </summary>
+        public bool IsPaymentMethodEnabled
+        {
+            get => _isPaymentMethodEnabled;
+            set => SetProperty(ref _isPaymentMethodEnabled, value);
+        }
+
+        /// <summary>
+        /// 座位号和位置输入是否启用（依赖于 IsSeatNoEnabled 和 IsNoSeat）
+        /// </summary>
+        public bool IsSeatInputEnabled => IsSeatNoEnabled && !IsNoSeat;
+
+        #endregion
+
         /// <summary>
         /// 选择PDF文件
         /// </summary>
@@ -952,10 +1357,12 @@ namespace TA_WPF.ViewModels
                 {
                     IsLoading = true;
                     SelectedPdfPath = openFileDialog.FileName;
-                    
+                    PdfContent = string.Empty; // 清空旧内容
+                    ResetFormFieldsState(); // 重置字段状态
+
                     // 使用服务读取PDF内容
                     PdfContent = await _pdfImportService.LoadPdfContentAsync(SelectedPdfPath);
-                    
+
                     // 解析PDF内容并填充表单
                     await ParsePdfContentAsync(PdfContent);
                 }
@@ -963,6 +1370,8 @@ namespace TA_WPF.ViewModels
                 {
                     PdfContent = $"处理PDF文件时出错: {ex.Message}";
                     LogHelper.LogError($"处理PDF文件时出错: {ex.Message}");
+                    ResetFormFieldsState(); // 出错时也重置
+                    IsQuestionButtonEnabled = false; // 出错时禁用问号按钮
                 }
                 finally
                 {
@@ -978,7 +1387,10 @@ namespace TA_WPF.ViewModels
         private async Task ParsePdfContentAsync(string content)
         {
             if (string.IsNullOrEmpty(content))
+            {
+                IsQuestionButtonEnabled = false; // 无内容时禁用问号按钮
                 return;
+            }
 
             // 使用PdfImportService解析PDF内容
             var ticket = _pdfImportService.ParsePdfContent(content);
@@ -986,6 +1398,14 @@ namespace TA_WPF.ViewModels
             {
                 // 将解析结果填充到表单
                 FillFormWithTicketInfo(ticket);
+                IsQuestionButtonEnabled = true; // 填充成功后启用问号按钮
+            }
+            else
+            {
+                // 解析失败，可能是格式不支持等
+                MessageBoxHelper.ShowWarning("无法从此PDF中解析出车票信息，请检查文件内容或手动输入。");
+                ResetFormFieldsState(); // 重置字段状态
+                IsQuestionButtonEnabled = false; // 解析失败时禁用问号按钮
             }
         }
 
@@ -995,12 +1415,17 @@ namespace TA_WPF.ViewModels
         /// <param name="ticket">车票信息</param>
         private void FillFormWithTicketInfo(TrainRideInfo ticket)
         {
+            // 填充前先重置状态并禁用问号按钮，填充完成后再启用
+            // ResetFormFieldsState(); // 在SelectPdfFile中已调用
+            IsQuestionButtonEnabled = false;
+
             // 基本信息
             TicketNumber = ticket.TicketNumber;
+            CheckInLocation = ticket.CheckInLocation; // 确保 CheckInLocation 在 TrainRideInfo 中存在
             DepartStation = ticket.DepartStation;
             ArriveStation = ticket.ArriveStation;
-            DepartStationSearchText = ticket.DepartStation;
-            ArriveStationSearchText = ticket.ArriveStation;
+            DepartStationSearchText = ticket.DepartStation; // 更新搜索文本
+            ArriveStationSearchText = ticket.ArriveStation; // 更新搜索文本
             DepartStationPinyin = ticket.DepartStationPinyin;
             ArriveStationPinyin = ticket.ArriveStationPinyin;
             DepartStationCode = ticket.DepartStationCode;
@@ -1102,6 +1527,29 @@ namespace TA_WPF.ViewModels
             {
                 SelectedTicketModificationType = ticket.TicketModificationType;
             }
+
+            // 填充票种类型复选框 (基于解析出的 Flags)
+            IsStudentTicket = (ticket.TicketTypeFlags & (int)TicketTypeFlags.StudentTicket) != 0;
+            IsChildTicket = (ticket.TicketTypeFlags & (int)TicketTypeFlags.ChildTicket) != 0;
+            IsDiscountTicket = (ticket.TicketTypeFlags & (int)TicketTypeFlags.DiscountTicket) != 0;
+            IsOnlineTicket = (ticket.TicketTypeFlags & (int)TicketTypeFlags.OnlineTicket) != 0;
+
+            // 填充支付渠道复选框 (基于解析出的 Flags)
+            using (SuppressNotifications())
+            {
+                IsAlipayPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.Alipay) != 0;
+                IsWeChatPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.WeChat) != 0;
+                IsABCPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.ABC) != 0;
+                IsCCBPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.CCB) != 0;
+                IsICBCPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.ICBC) != 0;
+                IsCMBPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.CMB) != 0;
+                IsPSBCPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.PSBC) != 0;
+                IsBOCPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.BOC) != 0;
+                IsCOMMPayment = (ticket.PaymentChannelFlags & (int)PaymentChannelFlags.COMM) != 0;
+            }
+
+            // 填充完成后启用问号按钮
+            IsQuestionButtonEnabled = true;
         }
 
         /// <summary>
@@ -1121,6 +1569,7 @@ namespace TA_WPF.ViewModels
                 
                 if (success)
                 {
+                    IsLoading = false; // 在显示消息和关闭前设置 IsLoading = false
                     MessageBoxHelper.ShowInfo("车票导入成功");
                     // 关闭窗口
                     Application.Current.Windows.OfType<Window>()
@@ -1128,17 +1577,19 @@ namespace TA_WPF.ViewModels
                 }
                 else
                 {
+                    IsLoading = false; // 失败时也要设置
                     MessageBoxHelper.ShowError("导入车票失败");
                 }
             }
             catch (Exception ex)
             {
+                IsLoading = false; // 异常时也要设置
                 MessageBoxHelper.ShowError($"导入车票时出错: {ex.Message}");
                 LogHelper.LogError($"导入车票时出错: {ex.Message}");
             }
             finally
             {
-                IsLoading = false;
+                // IsLoading = false; // 从 finally 块中移除，因为它已在 try/catch 中处理
             }
         }
 
@@ -1246,6 +1697,11 @@ namespace TA_WPF.ViewModels
             if (IsABCPayment) flags |= 4;    // 农业银行
             if (IsCCBPayment) flags |= 8;    // 建设银行
             if (IsICBCPayment) flags |= 16;  // 工商银行
+            if(IsCMBPayment) flags |= 32;    // 招商银行
+            if(IsPSBCPayment) flags |= 64; // 邮储银行
+            if(IsBOCPayment) flags |= 128;  // 中国银行
+            if(IsCOMMPayment) flags |= 256;// 交通银行
+
             return flags;
         }
 
@@ -1263,6 +1719,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void Cancel()
         {
+            IsQuestionButtonEnabled = false; // 取消时禁用
             // 关闭窗口
             Application.Current.Windows.OfType<Window>()
                 .FirstOrDefault(w => w.DataContext == this)?.Close();
@@ -1374,6 +1831,150 @@ namespace TA_WPF.ViewModels
             {
                 LogHelper.LogError($"搜索到达站信息时出错: {ex.Message}");
             }
+        }
+
+        // 辅助方法，用于临时禁止通知，确保初始填充不触发互斥逻辑
+        private IDisposable SuppressNotifications()
+        {
+            _suppressNotifications = true;
+            return new DisposableAction(() => _suppressNotifications = false);
+        }
+
+        // 辅助方法，用于清除除当前选中银行外的其他银行支付方式
+        private void ClearOtherBankPayments(PaymentChannelFlags selectedBank)
+        {
+            using (SuppressNotifications()) // 在清除操作期间也禁止通知
+            {
+                if (selectedBank != PaymentChannelFlags.ABC) IsABCPayment = false;
+                if (selectedBank != PaymentChannelFlags.CCB) IsCCBPayment = false;
+                if (selectedBank != PaymentChannelFlags.ICBC) IsICBCPayment = false;
+                if (selectedBank != PaymentChannelFlags.CMB) IsCMBPayment = false;
+                if (selectedBank != PaymentChannelFlags.PSBC) IsPSBCPayment = false;
+                if (selectedBank != PaymentChannelFlags.BOC) IsBOCPayment = false;
+                if (selectedBank != PaymentChannelFlags.COMM) IsCOMMPayment = false;
+            }
+        }
+
+        // 辅助类，用于实现 using 语句块结束时恢复标志
+        private class DisposableAction : IDisposable
+        {
+            private readonly Action _action;
+            public DisposableAction(Action action)
+            { _action = action; }
+            public void Dispose()
+            { _action?.Invoke(); }
+        }
+
+        // --- 添加字段解锁方法 ---
+
+        /// <summary>
+        /// 重置所有表单字段的启用状态为 False
+        /// </summary>
+        private void ResetFormFieldsState()
+        {
+            IsQuestionButtonEnabled = false; // 默认禁用问号按钮
+
+            IsTicketNumberEnabled = false;
+            IsCheckInLocationEnabled = false;
+            IsDepartStationEnabled = false;
+            IsArriveStationEnabled = false;
+            IsDepartStationPinyinEnabled = false;
+            IsArriveStationPinyinEnabled = false;
+            IsMoneyEnabled = false;
+            IsDepartStationCodeEnabled = false;
+            IsArriveStationCodeEnabled = false;
+            IsDepartDateEnabled = false;
+            IsTrainTypeEnabled = false;
+            IsTrainNumberEnabled = false;
+            IsDepartTimeEnabled = false;
+            IsCoachNoEnabled = false;
+            IsExtraCoachEnabled = false;
+            IsSeatNoEnabled = false;
+            IsNoSeatEnabled = false;
+            IsSeatPositionEnabled = false;
+            IsSeatTypeEnabled = false;
+            IsAdditionalInfoEnabled = false;
+            IsTicketPurposeEnabled = false;
+            IsHintEnabled = false;
+            IsCustomHintEnabled = false;
+            IsTicketModificationTypeEnabled = false;
+            IsTicketTypeEnabled = false;
+            IsPaymentMethodEnabled = false;
+
+            OnPropertyChanged(nameof(IsSeatInputEnabled)); // 更新依赖属性
+        }
+
+        /// <summary>
+        /// 切换指定字段的编辑状态（设置为 True）
+        /// </summary>
+        /// <param name="fieldName">要切换的字段名称</param>
+        private void ToggleField(string fieldName)
+        {
+            bool newState;
+            switch (fieldName)
+            {
+                case "TicketNumber": IsTicketNumberEnabled = !IsTicketNumberEnabled; break;
+                case "CheckInLocation": IsCheckInLocationEnabled = !IsCheckInLocationEnabled; break;
+                case "DepartStation":
+                    newState = !IsDepartStationEnabled; // 计算新状态
+                    IsDepartStationEnabled = newState;
+                    IsDepartStationPinyinEnabled = newState; // 同步相关字段
+                    IsDepartStationCodeEnabled = newState;
+                    break;
+                case "ArriveStation":
+                    newState = !IsArriveStationEnabled;
+                    IsArriveStationEnabled = newState;
+                    IsArriveStationPinyinEnabled = newState;
+                    IsArriveStationCodeEnabled = newState;
+                    break;
+                case "DepartStationPinyin": IsDepartStationPinyinEnabled = !IsDepartStationPinyinEnabled; break;
+                case "ArriveStationPinyin": IsArriveStationPinyinEnabled = !IsArriveStationPinyinEnabled; break;
+                case "Money": IsMoneyEnabled = !IsMoneyEnabled; break;
+                case "DepartStationCode": IsDepartStationCodeEnabled = !IsDepartStationCodeEnabled; break;
+                case "ArriveStationCode": IsArriveStationCodeEnabled = !IsArriveStationCodeEnabled; break;
+                case "DepartDate": IsDepartDateEnabled = !IsDepartDateEnabled; break;
+                case "TrainNumber": // 同时切换类型和编号
+                    newState = !IsTrainTypeEnabled; // 以其中一个为基准
+                    IsTrainTypeEnabled = newState;
+                    IsTrainNumberEnabled = newState;
+                    break;
+                case "DepartTime": IsDepartTimeEnabled = !IsDepartTimeEnabled; break;
+                case "CoachNo": // 同时切换车厢号和加车
+                    newState = !IsCoachNoEnabled;
+                    IsCoachNoEnabled = newState;
+                    IsExtraCoachEnabled = newState;
+                    break;
+                case "SeatNo": // 同时切换座位号、无座、位置
+                    newState = !IsSeatNoEnabled;
+                    IsSeatNoEnabled = newState;
+                    IsNoSeatEnabled = newState;
+                    IsSeatPositionEnabled = newState;
+                    OnPropertyChanged(nameof(IsSeatInputEnabled)); // 触发依赖属性更新
+                    break;
+                case "SeatType": IsSeatTypeEnabled = !IsSeatTypeEnabled; break;
+                case "AdditionalInfo": IsAdditionalInfoEnabled = !IsAdditionalInfoEnabled; break;
+                case "TicketPurpose": IsTicketPurposeEnabled = !IsTicketPurposeEnabled; break;
+                case "Hint": // 同时切换提示和自定义提示
+                    newState = !IsHintEnabled;
+                    IsHintEnabled = newState;
+                    IsCustomHintEnabled = newState;
+                    break;
+                case "TicketModificationType": IsTicketModificationTypeEnabled = !IsTicketModificationTypeEnabled; break;
+                case "TicketType": IsTicketTypeEnabled = !IsTicketTypeEnabled; break;
+                case "PaymentMethod": IsPaymentMethodEnabled = !IsPaymentMethodEnabled; break;
+                // 可以根据需要添加更多字段
+            }
+        }
+
+        // --- 结束添加 ---
+
+        // 辅助方法，用于简化属性设置和通知
+        private bool SetProperty<T>(ref T storage, T value, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(storage, value)) return false;
+            storage = value;
+            OnPropertyChanged(propertyName);
+            return true;
         }
     }
 } 

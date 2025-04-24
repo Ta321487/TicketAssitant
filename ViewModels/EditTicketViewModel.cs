@@ -174,6 +174,10 @@ namespace TA_WPF.ViewModels
                 IsABCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.ABC) != 0;
                 IsCCBPayment = (paymentChannelFlags & (int)PaymentChannelFlags.CCB) != 0;
                 IsICBCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.ICBC) != 0;
+                IsCMBPayment = (paymentChannelFlags & (int)PaymentChannelFlags.CMB) != 0;
+                IsPSBCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.PSBC) != 0;
+                IsBOCPayment = (paymentChannelFlags & (int)PaymentChannelFlags.BOC) != 0;
+                IsCOMMPayment = (paymentChannelFlags & (int)PaymentChannelFlags.COMM) != 0;
 
                 // 初始化完成
                 _isInitializing = false;
@@ -460,6 +464,10 @@ namespace TA_WPF.ViewModels
             if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
             if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
             if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
+            if(IsCMBPayment) flags |= (int)PaymentChannelFlags.CMB;
+            if(IsPSBCPayment) flags |= (int)PaymentChannelFlags.PSBC;
+            if(IsBOCPayment) flags |= (int)PaymentChannelFlags.BOC;
+            if(IsCOMMPayment) flags |= (int)PaymentChannelFlags.COMM;
             return flags;
         }
 
