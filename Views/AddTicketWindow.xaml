@@ -326,7 +326,7 @@
                              FontWeight="Normal"
                              FontFamily="Microsoft YaHei"
                              Foreground="{DynamicResource MaterialDesignBody}"
-                             Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                             Style="{StaticResource FormLabelStyle}"/>
                 </Grid>
 
                 <TextBlock Grid.Row="3" Grid.Column="2" 

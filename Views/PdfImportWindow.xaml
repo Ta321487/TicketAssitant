@@ -486,7 +486,7 @@
                                                   FontWeight="Normal"
                                                   FontFamily="Microsoft YaHei"
                                                   Foreground="{DynamicResource MaterialDesignBody}"
-                                                  Style="{StaticResource MaterialDesignBody1TextBlock}"/>
+                                                  Style="{StaticResource FormLabelStyle}"/>
                                         <Button Grid.Column="3"
                                                Style="{StaticResource MaterialDesignIconButton}"
                                                Command="{Binding ToggleFieldCommand}"
