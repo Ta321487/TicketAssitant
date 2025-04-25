@@ -1,4 +1,5 @@
 using System.Configuration;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using TA_WPF.ViewModels;
@@ -57,7 +58,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"更新字体大小滑块时出错: {ex.Message}");
+                Debug.WriteLine($"更新字体大小滑块时出错: {ex.Message}");
             }
         }
 

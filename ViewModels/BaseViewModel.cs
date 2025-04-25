@@ -1,5 +1,6 @@
 using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using TA_WPF.Models;
 using TA_WPF.Services;
@@ -38,7 +39,7 @@ namespace TA_WPF.ViewModels
                 // 如果当前主题状态与配置文件中的不一致，以当前主题状态为准
                 if (_isDarkMode != currentIsDarkMode)
                 {
-                    System.Diagnostics.Debug.WriteLine($"BaseViewModel: 主题状态不一致，配置文件中为{(_isDarkMode ? "深色" : "浅色")}，当前主题为{(currentIsDarkMode ? "深色" : "浅色")}");
+                    Debug.WriteLine($"BaseViewModel: 主题状态不一致，配置文件中为{(_isDarkMode ? "深色" : "浅色")}，当前主题为{(currentIsDarkMode ? "深色" : "浅色")}");
                     _isDarkMode = currentIsDarkMode;
 
                     // 保存当前主题状态到配置文件

@@ -1,5 +1,6 @@
 using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -120,7 +121,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"禁用最大化按钮时出错: {ex.Message}");
+                Debug.WriteLine($"禁用最大化按钮时出错: {ex.Message}");
             }
         }
 
@@ -233,7 +234,7 @@ namespace TA_WPF.Views
             catch (Exception ex)
             {
                 // 记录错误但不显示给用户，避免干扰用户体验
-                System.Diagnostics.Debug.WriteLine($"调整对话框大小时出错: {ex.Message}");
+                Debug.WriteLine($"调整对话框大小时出错: {ex.Message}");
             }
         }
 

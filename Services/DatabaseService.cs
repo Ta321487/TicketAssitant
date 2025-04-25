@@ -655,24 +655,40 @@ namespace TA_WPF.Services
         {
             using (var connection = await GetOpenConnectionWithRetryAsync())
             {
+                // 禁用外键约束检测
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    await disableChecksCmd.ExecuteNonQueryAsync();
+                }
+
                 string query = @"
-                CREATE TABLE IF NOT EXISTS `station_info` (
-                  `id` int NOT NULL AUTO_INCREMENT,
-                  `station_name` varchar(50) DEFAULT NULL,
-                  `province` varchar(20) DEFAULT NULL,
-                  `city` varchar(20) DEFAULT NULL,
-                  `district` varchar(20) DEFAULT NULL,
-                  `longitude` varchar(20) DEFAULT NULL,
-                  `latitude` varchar(20) DEFAULT NULL,
-                  `station_code` varchar(10) DEFAULT NULL,
-                  `station_pinyin` varchar(50) DEFAULT NULL,
-                  PRIMARY KEY (`id`),
-                  UNIQUE KEY `station_name` (`station_name`)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+                    DROP TABLE IF EXISTS `station_info`;
+                    CREATE TABLE `station_info`  (
+                    `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                    `station_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站名称',
+                    `province` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在省',
+                    `city` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在市',
+                    `district` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在区',
+                    `longitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '经度',
+                    `latitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '纬度',
+                    `station_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站代码',
+                    `station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站拼音',
+                    PRIMARY KEY (`id`) USING BTREE,
+                    INDEX `station_name`(`station_name` ASC) USING BTREE,
+                    INDEX `fk_arrive_code`(`station_code` ASC) USING BTREE,
+                    INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+                    ALTER TABLE `station_info` AUTO_INCREMENT = 1;";
 
                 using (var command = new MySqlCommand(query, connection))
                 {
                     await command.ExecuteNonQueryAsync();
+                }
+
+                // 重新启用外键约束检测
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    await enableChecksCmd.ExecuteNonQueryAsync();
                 }
             }
         }
@@ -684,36 +700,60 @@ namespace TA_WPF.Services
         {
             using (var connection = await GetOpenConnectionWithRetryAsync())
             {
-                //TODO: 修改这个表结构
+                // 禁用外键约束检测
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    await disableChecksCmd.ExecuteNonQueryAsync();
+                }
 
                 string query = @"
-                CREATE TABLE IF NOT EXISTS `train_ride_info` (
-                  `id` int NOT NULL AUTO_INCREMENT,
-                  `train_number` varchar(20) DEFAULT NULL,
-                  `departure_station` varchar(50) DEFAULT NULL,
-                  `arrival_station` varchar(50) DEFAULT NULL,
-                  `departure_time` datetime DEFAULT NULL,
-                  `arrival_time` datetime DEFAULT NULL,
-                  `seat_type` varchar(20) DEFAULT NULL,
-                  `seat_number` varchar(20) DEFAULT NULL,
-                  `passenger_name` varchar(50) DEFAULT NULL,
-                  `passenger_id` varchar(50) DEFAULT NULL,
-                  `ticket_price` decimal(10,2) DEFAULT NULL,
-                  `purchase_time` datetime DEFAULT NULL,
-                  `ticket_status` varchar(20) DEFAULT NULL,
-                  `carriage_number` varchar(10) DEFAULT NULL,
-                  `notes` text,
-                  PRIMARY KEY (`id`),
-                  KEY `idx_train_number` (`train_number`),
-                  KEY `idx_departure_station` (`departure_station`),
-                  KEY `idx_arrival_station` (`arrival_station`),
-                  KEY `idx_passenger_name` (`passenger_name`),
-                  KEY `idx_passenger_id` (`passenger_id`)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+                    DROP TABLE IF EXISTS `train_ride_info`;
+                    CREATE TABLE `train_ride_info`  (
+                    `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                    `ticket_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '取票号',
+                    `check_in_location` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '检票位置',
+                    `depart_station` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '出发车站',
+                    `train_no` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车次号',
+                    `arrive_station` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '到达车站',
+                    `depart_station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '出发车站拼音',
+                    `arrive_station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '到达车站拼音',
+                    `depart_date` date NULL DEFAULT NULL COMMENT '出发日期',
+                    `depart_time` time NULL DEFAULT NULL COMMENT '出发时间',
+                    `coach_no` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车厢号',
+                    `seat_no` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '座位号',
+                    `money` decimal(6, 2) NULL DEFAULT NULL COMMENT '金额',
+                    `seat_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '席别',
+                    `additional_info` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '附加信息（退票费/限乘当日当次车）',
+                    `ticket_purpose` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车票用途',
+                    `ticket_modification_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车票改签类型',
+                    `ticket_type_flags` int NULL DEFAULT 0 COMMENT '票种类型（枚举）',
+                    `payment_channel_flags` int NULL DEFAULT 0 COMMENT '支付渠道（枚举）',
+                    `hint` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '提示信息',
+                    `depart_station_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '出发车站代码',
+                    `arrive_station_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '到达车站代码',
+                    PRIMARY KEY (`id`) USING BTREE,
+                    INDEX `station_code`(`depart_station_code` ASC) USING BTREE,
+                    INDEX `arrive_station_code`(`arrive_station_code` ASC) USING BTREE,
+                    INDEX `fk_depart_station_pinyin`(`depart_station_pinyin` ASC) USING BTREE,
+                    INDEX `fk_arrive_station_pinyin`(`arrive_station_pinyin` ASC) USING BTREE,
+                    INDEX `idx_train_no`(`train_no` ASC, `depart_date` ASC) USING BTREE,
+                    INDEX `idx_depart_station`(`depart_station` ASC, `depart_date` ASC) USING BTREE,
+                    CONSTRAINT `fc_dc_arrive` FOREIGN KEY (`arrive_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE,
+                    CONSTRAINT `fc_dp_arrive` FOREIGN KEY (`arrive_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
+                    CONSTRAINT `fc_sp_depart` FOREIGN KEY (`depart_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
+                    CONSTRAINT `fk_sc_depart` FOREIGN KEY (`depart_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+                    ALTER TABLE `train_ride_info` AUTO_INCREMENT = 1;";
 
                 using (var command = new MySqlCommand(query, connection))
                 {
                     await command.ExecuteNonQueryAsync();
+                }
+
+                // 重新启用外键约束检测
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    await enableChecksCmd.ExecuteNonQueryAsync();
                 }
             }
         }

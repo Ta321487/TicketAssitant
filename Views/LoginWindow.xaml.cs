@@ -49,7 +49,7 @@ namespace TA_WPF.Views
                 _loginInfoService = new LoginInfoService();
 
                 // 确保端口号文本框的清空按钮初始状态是禁用的
-                MaterialDesignThemes.Wpf.TextFieldAssist.SetHasClearButton(PortTextBox, false);
+                TextFieldAssist.SetHasClearButton(PortTextBox, false);
 
                 // 初始化Snackbar消息队列
                 LoginSnackbar.MessageQueue = new SnackbarMessageQueue(TimeSpan.FromMilliseconds(3000));
@@ -65,8 +65,8 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"LoginWindow构造函数异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"LoginWindow构造函数异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show($"初始化登录窗口时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -93,15 +93,15 @@ namespace TA_WPF.Views
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"延迟执行UpdateThemeIcon异常: {ex.Message}");
-                        System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                        Debug.WriteLine($"延迟执行UpdateThemeIcon异常: {ex.Message}");
+                        Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                     }
                 }), DispatcherPriority.Loaded);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Window_Loaded异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"Window_Loaded异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -120,19 +120,19 @@ namespace TA_WPF.Views
                 if (hasServerAddress && hasDatabaseName)
                 {
                     UsernameTextBox.Focus();
-                    System.Diagnostics.Debug.WriteLine("焦点设置在用户名上");
+                    Debug.WriteLine("焦点设置在用户名上");
                 }
                 else
                 {
                     // 否则，焦点放在服务器地址上
                     ServerAddressTextBox.Focus();
-                    System.Diagnostics.Debug.WriteLine("焦点设置在服务器地址上");
+                    Debug.WriteLine("焦点设置在服务器地址上");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"SetInitialFocus异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"SetInitialFocus异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -141,7 +141,7 @@ namespace TA_WPF.Views
             try
             {
                 // 创建主题服务
-                var themeService = TA_WPF.Services.ThemeService.Instance;
+                var themeService = ThemeService.Instance;
 
                 // 从配置文件加载主题设置
                 bool isDarkMode = themeService.LoadThemeFromConfig();
@@ -149,13 +149,13 @@ namespace TA_WPF.Views
                 // 使用集中的方法应用主题到窗口
                 themeService.ApplyThemeToWindow(this, isDarkMode, ThemeIcon, MainCard);
 
-                System.Diagnostics.Debug.WriteLine($"已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
+                Debug.WriteLine($"已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
                 LogHelper.LogSystem("登录", $"窗口已初始化为{(isDarkMode ? "深色" : "浅色")}主题");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"InitializeTheme异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"InitializeTheme异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -164,13 +164,7 @@ namespace TA_WPF.Views
             try
             {
                 // 从配置文件中加载字体大小设置
-                double fontSize = ConfigUtils.GetDoubleValue("FontSize", 13);
-
-                // 确保字体大小不小于最小可读值
-                if (fontSize < 12)
-                {
-                    fontSize = 12;
-                }
+                double fontSize = GetAndValidateFontSize();
 
                 // 更新滑块值
                 FontSizeSlider.Value = fontSize;
@@ -178,7 +172,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载字体大小设置时出错: {ex.Message}");
+                Debug.WriteLine($"加载字体大小设置时出错: {ex.Message}");
             }
         }
 
@@ -198,22 +192,14 @@ namespace TA_WPF.Views
             try
             {
                 // 应用字体大小设置
-                var resources = Application.Current.Resources;
-                resources["MaterialDesignFontSize"] = fontSize;
-                resources["MaterialDesignSubtitle1FontSize"] = fontSize + 2;
-                resources["MaterialDesignSubtitle2FontSize"] = fontSize + 1;
-                resources["MaterialDesignHeadline6FontSize"] = fontSize + 4;
-                resources["MaterialDesignHeadline5FontSize"] = fontSize + 6;
-
-                // 更新窗口字体大小
-                this.FontSize = fontSize;
+                ApplyFontSize(fontSize);
 
                 // 保存字体大小设置到配置文件
                 SaveFontSizeToConfig(fontSize);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"应用字体大小时出错: {ex.Message}");
+                Debug.WriteLine($"应用字体大小时出错: {ex.Message}");
             }
         }
 
@@ -221,19 +207,45 @@ namespace TA_WPF.Views
         {
             try
             {
-                // 确保字体大小不小于最小可读值
-                if (fontSize < 12)
-                {
-                    fontSize = 12;
-                }
+                // 确保字体大小有效
+                fontSize = ValidateFontSize(fontSize);
 
                 // 保存字体大小到配置文件
                 ConfigUtils.SaveDoubleValue("FontSize", fontSize);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存字体大小设置时出错: {ex.Message}");
+                Debug.WriteLine($"保存字体大小设置时出错: {ex.Message}");
             }
+        }
+
+        // 新增辅助方法，应用字体大小设置
+        private void ApplyFontSize(double fontSize)
+        {
+            // 应用字体大小设置
+            var resources = Application.Current.Resources;
+            resources["MaterialDesignFontSize"] = fontSize;
+            resources["MaterialDesignSubtitle1FontSize"] = fontSize + 2;
+            resources["MaterialDesignSubtitle2FontSize"] = fontSize + 1;
+            resources["MaterialDesignHeadline6FontSize"] = fontSize + 4;
+            resources["MaterialDesignHeadline5FontSize"] = fontSize + 6;
+
+            // 更新窗口字体大小
+            this.FontSize = fontSize;
+        }
+
+        // 新增辅助方法，获取并验证字体大小
+        private double GetAndValidateFontSize()
+        {
+            double fontSize = ConfigUtils.GetDoubleValue("FontSize", 13);
+            return ValidateFontSize(fontSize);
+        }
+
+        // 新增辅助方法，验证字体大小
+        private double ValidateFontSize(double fontSize)
+        {
+            // 确保字体大小不小于最小可读值
+            return Math.Max(fontSize, 12);
         }
 
         // 设置数据库名称（从MainViewModel调用）
@@ -242,7 +254,7 @@ namespace TA_WPF.Views
             if (!string.IsNullOrEmpty(databaseName))
             {
                 _lastDatabaseName = databaseName;
-                DatabaseNameTextBox.Text = databaseName;
+                // 只需要设置ComboBox的Text，因为已经绑定到隐藏的TextBox
                 DatabaseNameComboBox.Text = databaseName;
             }
         }
@@ -256,13 +268,13 @@ namespace TA_WPF.Views
                 if (!string.IsNullOrEmpty(lastDbName))
                 {
                     _lastDatabaseName = lastDbName;
-                    DatabaseNameTextBox.Text = lastDbName;
+                    // 只需要设置ComboBox的Text，因为已经绑定到隐藏的TextBox
                     DatabaseNameComboBox.Text = lastDbName;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载上次数据库名称时出错: {ex.Message}");
+                Debug.WriteLine($"加载上次数据库名称时出错: {ex.Message}");
             }
         }
 
@@ -280,7 +292,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载上次服务器地址时出错: {ex.Message}");
+                Debug.WriteLine($"加载上次服务器地址时出错: {ex.Message}");
             }
         }
 
@@ -293,7 +305,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存服务器地址时出错: {ex.Message}");
+                Debug.WriteLine($"保存服务器地址时出错: {ex.Message}");
             }
         }
 
@@ -306,7 +318,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存数据库名称时出错: {ex.Message}");
+                Debug.WriteLine($"保存数据库名称时出错: {ex.Message}");
             }
         }
 
@@ -317,24 +329,24 @@ namespace TA_WPF.Views
                 // 检测ThemeIcon是否已初始化
                 if (ThemeIcon == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("UpdateThemeIcon: ThemeIcon为空");
+                    Debug.WriteLine("UpdateThemeIcon: ThemeIcon为空");
                     return;
                 }
 
                 // 使用主题服务获取当前主题状态
-                var themeService = TA_WPF.Services.ThemeService.Instance;
+                var themeService = ThemeService.Instance;
                 bool isDarkTheme = themeService.IsDarkThemeActive();
 
                 // 使用集中的方法应用主题到窗口
                 themeService.ApplyThemeToWindow(this, isDarkTheme, ThemeIcon, MainCard);
 
-                System.Diagnostics.Debug.WriteLine($"当前主题: {(isDarkTheme ? "深色" : "浅色")}");
+                Debug.WriteLine($"当前主题: {(isDarkTheme ? "深色" : "浅色")}");
             }
             catch (Exception ex)
             {
                 // 记录异常但不中断操作
-                System.Diagnostics.Debug.WriteLine($"UpdateThemeIcon异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"UpdateThemeIcon异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
 
                 // 尝试设置默认图标
                 try
@@ -358,12 +370,12 @@ namespace TA_WPF.Views
                 // 检测ThemeIcon是否已初始化
                 if (ThemeIcon == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("ThemeToggleButton_Click: ThemeIcon为空");
+                    Debug.WriteLine("ThemeToggleButton_Click: ThemeIcon为空");
                     return;
                 }
 
                 // 创建主题服务
-                var themeService = TA_WPF.Services.ThemeService.Instance;
+                var themeService = ThemeService.Instance;
 
                 // 获取当前主题状态
                 bool isDarkTheme = themeService.IsDarkThemeActive();
@@ -377,13 +389,13 @@ namespace TA_WPF.Views
                 // 应用全局主题
                 themeService.ApplyTheme(newIsDarkTheme);
 
-                System.Diagnostics.Debug.WriteLine($"主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
+                Debug.WriteLine($"主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
                 LogHelper.LogSystem("登录", $"窗口主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ThemeToggleButton_Click异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"ThemeToggleButton_Click异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -433,14 +445,14 @@ namespace TA_WPF.Views
         {
             PortTextBox.IsEnabled = true;
             // 启用清空按钮
-            MaterialDesignThemes.Wpf.TextFieldAssist.SetHasClearButton(PortTextBox, true);
+            TextFieldAssist.SetHasClearButton(PortTextBox, true);
         }
 
         private void CustomPortCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             PortTextBox.IsEnabled = false;
             PortTextBox.Text = "3306";
-            MaterialDesignThemes.Wpf.TextFieldAssist.SetHasClearButton(PortTextBox, false);
+            TextFieldAssist.SetHasClearButton(PortTextBox, false);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -452,7 +464,7 @@ namespace TA_WPF.Views
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
             // 创建一个计时器变量，用于控制加载动画
-            System.Threading.Timer loadingTimer = null;
+            Timer loadingTimer = null;
 
             try
             {
@@ -467,7 +479,7 @@ namespace TA_WPF.Views
                 var connectionStatus = await CheckMySqlConnectionStatus(serverAddress, port);
                 if (connectionStatus != MySqlConnectionStatus.Connected)
                 {
-                    System.Diagnostics.Debug.WriteLine($"MySQL连接状态: {connectionStatus}");
+                    Debug.WriteLine($"MySQL连接状态: {connectionStatus}");
                     LogHelper.LogWarning($"MySQL连接状态: {connectionStatus}，无法继续登录");
                     await ShowDatabaseConnectionError(serverAddress, port, connectionStatus);
                     return;
@@ -553,13 +565,13 @@ namespace TA_WPF.Views
                 loadingContent.Children.Add(loadingTextBlock);
 
                 // 创建一个计时器，如果连接超过300ms，则显示加载动画
-                loadingTimer = new System.Threading.Timer(async (state) =>
+                loadingTimer = new Timer(async (state) =>
                 {
                     await Dispatcher.InvokeAsync(() =>
                     {
-                        MaterialDesignThemes.Wpf.DialogHost.Show(loadingContent, "LoginDialogHost");
+                        DialogHost.Show(loadingContent, "LoginDialogHost");
                     });
-                }, null, 300, System.Threading.Timeout.Infinite);
+                }, null, 300, Timeout.Infinite);
 
                 try
                 {
@@ -571,7 +583,7 @@ namespace TA_WPF.Views
                         // 更新加载文本
                         await Dispatcher.InvokeAsync(() =>
                         {
-                            if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                            if (DialogHost.IsDialogOpen("LoginDialogHost"))
                             {
                                 loadingTextBlock.Text = $"正在检测服务器 {serverAddress} 是否可达...";
                             }
@@ -607,7 +619,7 @@ namespace TA_WPF.Views
                         // 更新加载文本
                         await Dispatcher.InvokeAsync(() =>
                         {
-                            if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                            if (DialogHost.IsDialogOpen("LoginDialogHost"))
                             {
                                 loadingTextBlock.Text = "正在检测本地MySQL服务...";
                             }
@@ -647,7 +659,7 @@ namespace TA_WPF.Views
                     // 更新加载文本
                     await Dispatcher.InvokeAsync(() =>
                     {
-                        if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                        if (DialogHost.IsDialogOpen("LoginDialogHost"))
                         {
                             loadingTextBlock.Text = $"正在连接到数据库 {databaseName}...";
                         }
@@ -689,9 +701,9 @@ namespace TA_WPF.Views
                     await Dispatcher.InvokeAsync(() =>
                     {
                         // 只有在DialogHost已打开的情况下才尝试关闭它
-                        if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                        if (DialogHost.IsDialogOpen("LoginDialogHost"))
                         {
-                            MaterialDesignThemes.Wpf.DialogHost.Close("LoginDialogHost");
+                            DialogHost.Close("LoginDialogHost");
                         }
                     });
 
@@ -754,7 +766,7 @@ namespace TA_WPF.Views
                                 throw new Exception($"数据库中缺少必要的表结构（{string.Join(", ", _requiredTables)}），且未找到SqlData文件夹。请确保SqlData文件夹存在于应用程序目录中。");
                             }
 
-                            System.Diagnostics.Debug.WriteLine($"找到SqlData文件夹: {sqlDataFolderPath}");
+                            Debug.WriteLine($"找到SqlData文件夹: {sqlDataFolderPath}");
 
                             // 检测必要的SQL文件是否存在
                             bool allSqlFilesExist = true;
@@ -770,7 +782,7 @@ namespace TA_WPF.Views
                                 }
                                 else
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"找到SQL文件: {sqlFilePath}");
+                                    Debug.WriteLine($"找到SQL文件: {sqlFilePath}");
                                 }
                             }
 
@@ -804,21 +816,21 @@ namespace TA_WPF.Views
                                 Content = "否",
                                 Style = (Style)Application.Current.Resources["MaterialDesignFlatButton"],
                                 Margin = new Thickness(0, 0, 8, 0),
-                                Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand
+                                Command = DialogHost.CloseDialogCommand
                             };
 
                             var yesButton = new Button
                             {
                                 Content = "是",
                                 Style = (Style)Application.Current.Resources["MaterialDesignFlatButton"],
-                                Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand
+                                Command = DialogHost.CloseDialogCommand
                             };
 
                             buttonPanel.Children.Add(noButton);
                             buttonPanel.Children.Add(yesButton);
                             dialogContent.Children.Add(buttonPanel);
 
-                            var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialogContent, "LoginDialogHost");
+                            var result = await DialogHost.Show(dialogContent, "LoginDialogHost");
 
                             if (result != null && result.Equals(yesButton))
                             {
@@ -843,7 +855,7 @@ namespace TA_WPF.Views
 
                                 await Dispatcher.InvokeAsync(() =>
                                 {
-                                    MaterialDesignThemes.Wpf.DialogHost.Show(importingContent, "LoginDialogHost");
+                                    DialogHost.Show(importingContent, "LoginDialogHost");
                                 });
 
                                 // 导入SQL文件
@@ -863,7 +875,7 @@ namespace TA_WPF.Views
                                                 // 更新导入状态
                                                 await Dispatcher.InvokeAsync(() =>
                                                 {
-                                                    if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                                                    if (DialogHost.IsDialogOpen("LoginDialogHost"))
                                                     {
                                                         importingTextBlock.Text = $"正在导入表 {requiredTable}...";
                                                     }
@@ -888,8 +900,8 @@ namespace TA_WPF.Views
                                                             catch (MySqlException ex)
                                                             {
                                                                 // 记录错误但继续执行其他语句
-                                                                System.Diagnostics.Debug.WriteLine($"执行SQL语句时出错: {ex.Message}");
-                                                                System.Diagnostics.Debug.WriteLine($"有问题的SQL语句: {statement}");
+                                                                Debug.WriteLine($"执行SQL语句时出错: {ex.Message}");
+                                                                Debug.WriteLine($"有问题的SQL语句: {statement}");
                                                             }
                                                         }
                                                     }
@@ -902,7 +914,7 @@ namespace TA_WPF.Views
                                             // 更新导入状态
                                             await Dispatcher.InvokeAsync(() =>
                                             {
-                                                if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                                                if (DialogHost.IsDialogOpen("LoginDialogHost"))
                                                 {
                                                     importingTextBlock.Text = "表结构导入完成，正在验证...";
                                                 }
@@ -929,9 +941,9 @@ namespace TA_WPF.Views
                                 // 关闭导入中的加载动画
                                 await Dispatcher.InvokeAsync(() =>
                                 {
-                                    if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                                    if (DialogHost.IsDialogOpen("LoginDialogHost"))
                                     {
-                                        MaterialDesignThemes.Wpf.DialogHost.Close("LoginDialogHost");
+                                        DialogHost.Close("LoginDialogHost");
                                     }
                                 });
 
@@ -972,7 +984,7 @@ namespace TA_WPF.Views
                             }
                             catch (Exception ex)
                             {
-                                System.Diagnostics.Debug.WriteLine($"关闭之前的主窗口时出错: {ex.Message}");
+                                Debug.WriteLine($"关闭之前的主窗口时出错: {ex.Message}");
                                 LogHelper.LogError($"关闭之前的主窗口时出错: {ex.Message}");
                             }
                         }
@@ -1015,13 +1027,13 @@ namespace TA_WPF.Views
                         {
                             // 显式设置主题模式
                             mainViewModel.IsDarkMode = isDarkMode;
-                            System.Diagnostics.Debug.WriteLine($"已设置MainViewModel.IsDarkMode = {isDarkMode}");
+                            Debug.WriteLine($"已设置MainViewModel.IsDarkMode = {isDarkMode}");
                             LogHelper.LogInfo($"已设置MainViewModel.IsDarkMode = {isDarkMode}");
                         }
 
                         // 显式应用主题到主窗口
-                        MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(_mainWindow,
-                            isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
+                        ThemeAssist.SetTheme(_mainWindow,
+                            isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
 
                         // 强制应用主题
                         themeService.ApplyTheme(isDarkMode);
@@ -1052,16 +1064,16 @@ namespace TA_WPF.Views
                 catch (Exception innerEx)
                 {
                     // 记录内部异常
-                    System.Diagnostics.Debug.WriteLine($"登录过程中发生内部异常: {innerEx.Message}");
+                    Debug.WriteLine($"登录过程中发生内部异常: {innerEx.Message}");
                     LogHelper.LogError($"登录过程中发生内部异常: {innerEx.Message}");
 
                     // 关闭加载动画
                     loadingTimer.Dispose();
                     await Dispatcher.InvokeAsync(() =>
                     {
-                        if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                        if (DialogHost.IsDialogOpen("LoginDialogHost"))
                         {
-                            MaterialDesignThemes.Wpf.DialogHost.Close("LoginDialogHost");
+                            DialogHost.Close("LoginDialogHost");
                         }
                     });
 
@@ -1077,9 +1089,9 @@ namespace TA_WPF.Views
                 await Dispatcher.InvokeAsync(() =>
                 {
                     // 只有在DialogHost已打开的情况下才尝试关闭它
-                    if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                    if (DialogHost.IsDialogOpen("LoginDialogHost"))
                     {
-                        MaterialDesignThemes.Wpf.DialogHost.Close("LoginDialogHost");
+                        DialogHost.Close("LoginDialogHost");
                     }
                 });
 
@@ -1094,9 +1106,9 @@ namespace TA_WPF.Views
                 await Dispatcher.InvokeAsync(() =>
                 {
                     // 只有在DialogHost已打开的情况下才尝试关闭它
-                    if (MaterialDesignThemes.Wpf.DialogHost.IsDialogOpen("LoginDialogHost"))
+                    if (DialogHost.IsDialogOpen("LoginDialogHost"))
                     {
-                        MaterialDesignThemes.Wpf.DialogHost.Close("LoginDialogHost");
+                        DialogHost.Close("LoginDialogHost");
                     }
                 });
 
@@ -1112,28 +1124,44 @@ namespace TA_WPF.Views
             {
                 // 获取数据库中的所有表
                 DataTable tables = connection.GetSchema("Tables");
-                List<string> existingTables = new List<string>();
-
-                foreach (DataRow row in tables.Rows)
-                {
-                    string tableName = row["TABLE_NAME"].ToString().ToLower();
-                    existingTables.Add(tableName);
-                }
-
-                // 检测必要的表是否都存在
-                foreach (string requiredTable in _requiredTables)
-                {
-                    if (!existingTables.Contains(requiredTable.ToLower()))
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
+                
+                // 将表名转为小写存入HashSet以便快速查找
+                HashSet<string> existingTables = new HashSet<string>(
+                    tables.Rows.Cast<DataRow>()
+                          .Select(row => row["TABLE_NAME"].ToString().ToLower())
+                );
+                
+                // 检测所有必要的表是否都存在
+                return _requiredTables.All(table => existingTables.Contains(table.ToLower()));
             }
             catch
             {
                 return false;
+            }
+        }
+
+        // 使用DatabaseService创建必要的表
+        private async Task CreateRequiredTablesUsingService(string connectionString)
+        {
+            try
+            {
+                // 创建DatabaseService实例
+                var databaseService = new DatabaseService(connectionString);
+                
+                // 创建station_info表
+                await databaseService.CreateStationInfoTableAsync();
+                
+                // 创建train_ride_info表
+                await databaseService.CreateTrainRideInfoTableAsync();
+                
+                Debug.WriteLine("使用DatabaseService创建表成功");
+                LogHelper.LogSystem("数据库", "使用DatabaseService创建必要的表成功");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"使用DatabaseService创建表时出错: {ex.Message}");
+                LogHelper.LogError($"使用DatabaseService创建表时出错: {ex.Message}");
+                throw new Exception($"创建表结构时出错: {ex.Message}", ex);
             }
         }
 
@@ -1195,7 +1223,7 @@ namespace TA_WPF.Views
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"复制SQL命令时出错: {ex.Message}");
+                        Debug.WriteLine($"复制SQL命令时出错: {ex.Message}");
                     }
                 };
 
@@ -1219,7 +1247,7 @@ namespace TA_WPF.Views
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"复制SQL命令时出错: {ex.Message}");
+                        Debug.WriteLine($"复制SQL命令时出错: {ex.Message}");
                     }
                 };
 
@@ -1244,167 +1272,131 @@ namespace TA_WPF.Views
                 Style = (Style)Application.Current.Resources["MaterialDesignFlatButton"],
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 8, 0, 0),
-                Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand
+                Command = DialogHost.CloseDialogCommand
             };
 
             dialogContent.Children.Add(okButton);
 
             // 显示对话框
-            MaterialDesignThemes.Wpf.DialogHost.Show(dialogContent, "LoginDialogHost");
+            DialogHost.Show(dialogContent, "LoginDialogHost");
         }
 
         // 获取用户友好的错误消息
         private string GetUserFriendlyErrorMessage(string originalMessage)
         {
-            // 数据库不存在错误
-            if (originalMessage.Contains("Unknown database") || originalMessage.Contains("Unknown schema"))
+            // 创建错误类型-消息的映射
+            Dictionary<Func<string, bool>, string> errorMessages = new Dictionary<Func<string, bool>, string>
             {
-                string dbName = DatabaseNameComboBox.Text.Trim();
-                return $"数据库 '{dbName}' 不存在，请检测数据库名称是否正确。\n" +
-                       "如果确认数据库名称正确，您可以：\n" +
-                       "1. 检测数据库是否已创建\n" +
-                       "2. 使用正确的数据库名称\n" +
-                       "3. 点击\"创建数据库\"按钮创建新数据库";
-            }
+                // 数据库不存在错误
+                { msg => msg.Contains("Unknown database") || msg.Contains("Unknown schema"),
+                  $"数据库 '{DatabaseNameComboBox.Text.Trim()}' 不存在，请检测数据库名称是否正确。\n" +
+                  "如果确认数据库名称正确，您可以：\n" +
+                  "1. 检测数据库是否已创建\n" +
+                  "2. 使用正确的数据库名称\n" +
+                  "3. 点击\"创建数据库\"按钮创建新数据库" },
 
-            // 认证方法错误 - 增强处理
-            if (originalMessage.Contains("Authentication to host") ||
-                originalMessage.Contains("using method 'caching_sha2_password'") ||
-                originalMessage.Contains("using method 'sha256_password'") ||
-                originalMessage.Contains("Authentication plugin") ||
-                originalMessage.Contains("is not supported"))
-            {
-                // 首先检测是否是访问被拒绝的错误
-                if (originalMessage.Contains("Access denied for user"))
-                {
-                    string username = UsernameTextBox.Text.Trim();
-                    return $"登录失败：用户'{username}'的用户名或密码错误。\n" +
-                           "请检测：\n" +
-                           "1. 用户名拼写是否正确\n" +
-                           "2. 密码是否正确\n" +
-                           "3. 该用户是否有权限访问MySQL服务器\n" +
-                           "4. 如果确认用户名密码无误，请联系数据库管理员检测用户权限";
-                }
+                // 认证方法错误 - 但不是访问被拒绝
+                { msg => (msg.Contains("Authentication to host") || 
+                        msg.Contains("using method 'caching_sha2_password'") ||
+                        msg.Contains("using method 'sha256_password'") ||
+                        msg.Contains("Authentication plugin") ||
+                        msg.Contains("is not supported")) && !msg.Contains("Access denied for user"),
+                  "认证方式不兼容，请尝试以下解决方案：\n" +
+                  "1. 在MySQL中修改用户认证方式为mysql_native_password\n" +
+                  "   执行SQL: ALTER USER '用户名'@'%' IDENTIFIED WITH mysql_native_password BY '密码';\n" +
+                  "   或者: ALTER USER '用户名'@'localhost' IDENTIFIED WITH mysql_native_password BY '密码';\n" +
+                  "2. 在MySQL配置文件中添加default_authentication_plugin=mysql_native_password\n" +
+                  "3. 重启MySQL服务" },
 
-                return "认证方式不兼容，请尝试以下解决方案：\n" +
-                       "1. 在MySQL中修改用户认证方式为mysql_native_password\n" +
-                       "   执行SQL: ALTER USER '用户名'@'%' IDENTIFIED WITH mysql_native_password BY '密码';\n" +
-                       "   或者: ALTER USER '用户名'@'localhost' IDENTIFIED WITH mysql_native_password BY '密码';\n" +
-                       "2. 在MySQL配置文件中添加default_authentication_plugin=mysql_native_password\n" +
-                       "3. 重启MySQL服务";
-            }
+                // 用户名或密码错误
+                { msg => msg.Contains("Access denied for user"),
+                  $"登录失败：用户'{UsernameTextBox.Text.Trim()}'的用户名或密码错误。\n" +
+                  "请检测：\n" +
+                  "1. 用户名拼写是否正确\n" +
+                  "2. 密码是否正确\n" +
+                  "3. 该用户是否有权限访问MySQL服务器\n" +
+                  "4. 如果确认用户名密码无误，请联系数据库管理员检测用户权限" },
 
-            // 用户名或密码错误
-            if (originalMessage.Contains("Access denied for user") && originalMessage.Contains("using password"))
-            {
-                string username = UsernameTextBox.Text.Trim();
-                return $"登录失败：用户'{username}'的用户名或密码错误。\n" +
-                       "请检测：\n" +
-                       "1. 用户名拼写是否正确\n" +
-                       "2. 密码是否正确\n" +
-                       "3. 该用户是否有权限访问MySQL服务器\n" +
-                       "4. 如果确认用户名密码无误，请联系数据库管理员检测用户权限";
-            }
+                // 连接超时
+                { msg => msg.Contains("Connection timeout") || msg.Contains("Reading from the stream has timed out"),
+                  "连接服务器超时，请检测网络连接或服务器地址是否正确。" },
 
-            // 连接超时
-            if (originalMessage.Contains("Connection timeout") || originalMessage.Contains("Reading from the stream has timed out"))
-            {
-                return "连接服务器超时，请检测网络连接或服务器地址是否正确。";
-            }
+                // 无法连接到服务器 - 本地连接
+                { msg => msg.Contains("Unable to connect") && IsLocalConnection(),
+                  "无法连接到本地MySQL服务器，请确认MySQL服务是否已启动。" },
 
-            // 无法连接到服务器
-            if (originalMessage.Contains("Unable to connect") || originalMessage.Contains("Could not connect to MySQL server"))
-            {
-                // 检测是否是本地连接
-                string serverAddress = ServerAddressTextBox.Text.Trim();
-                if (serverAddress == "localhost" || serverAddress == "127.0.0.1")
-                {
-                    return "无法连接到本地MySQL服务器，请确认MySQL服务是否已启动。";
-                }
-                else
-                {
-                    return "无法连接到MySQL服务器，请检测服务器地址是否正确或服务器是否在线。";
-                }
-            }
+                // 无法连接到服务器 - 远程连接
+                { msg => msg.Contains("Unable to connect") || msg.Contains("Could not connect to MySQL server"),
+                  "无法连接到MySQL服务器，请检测服务器地址是否正确或服务器是否在线。" },
 
-            // 端口错误
-            if (originalMessage.Contains("No connection could be made because the target machine actively refused it") ||
-                originalMessage.Contains("Connection refused"))
-            {
-                string port = CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306";
-                return $"连接被拒绝，请检测端口号({port})是否正确或MySQL服务是否已在该端口启动。";
-            }
+                // 端口错误
+                { msg => msg.Contains("No connection could be made because the target machine actively refused it") ||
+                        msg.Contains("Connection refused"),
+                  $"连接被拒绝，请检测端口号({(CustomPortCheckBox.IsChecked == true ? PortTextBox.Text.Trim() : "3306")})是否正确或MySQL服务是否已在该端口启动。" },
 
-            // 主机名解析错误
-            if (originalMessage.Contains("Unknown MySQL server host") || originalMessage.Contains("No such host is known"))
-            {
-                string serverAddress = ServerAddressTextBox.Text.Trim();
-                return $"无法解析服务器地址'{serverAddress}'，请检测拼写是否正确或网络DNS设置。";
-            }
+                // 主机名解析错误
+                { msg => msg.Contains("Unknown MySQL server host") || msg.Contains("No such host is known"),
+                  $"无法解析服务器地址'{ServerAddressTextBox.Text.Trim()}'，请检测拼写是否正确或网络DNS设置。" },
 
-            // 认证方式错误
-            if (originalMessage.Contains("Authentication method") && originalMessage.Contains("not supported"))
-            {
-                return "不支持的认证方式，可能是MySQL版本过高或客户端驱动过旧，请尝试使用旧版认证方式。";
-            }
+                // 认证方式错误
+                { msg => msg.Contains("Authentication method") && msg.Contains("not supported"),
+                  "不支持的认证方式，可能是MySQL版本过高或客户端驱动过旧，请尝试使用旧版认证方式。" },
 
-            // 字符集错误
-            if (originalMessage.Contains("Unknown character set"))
-            {
-                return "未知的字符集，请检测数据库配置或连接字符串设置。";
-            }
+                // 字符集错误
+                { msg => msg.Contains("Unknown character set"),
+                  "未知的字符集，请检测数据库配置或连接字符串设置。" },
 
-            // SSL连接错误
-            if (originalMessage.Contains("SSL connection error"))
-            {
-                return "SSL连接错误，请检测SSL配置或尝试禁用SSL连接。";
-            }
+                // SSL连接错误
+                { msg => msg.Contains("SSL connection error"),
+                  "SSL连接错误，请检测SSL配置或尝试禁用SSL连接。" },
 
-            // 服务器已关闭连接
-            if (originalMessage.Contains("server has gone away") || originalMessage.Contains("Connection closed"))
-            {
-                return "服务器已关闭连接，可能是网络不稳定或服务器超时设置过短。";
-            }
+                // 服务器已关闭连接
+                { msg => msg.Contains("server has gone away") || msg.Contains("Connection closed"),
+                  "服务器已关闭连接，可能是网络不稳定或服务器超时设置过短。" },
 
-            // 公钥检索错误
-            if (originalMessage.Contains("AllowPublicKeyRetrieval"))
-            {
-                return "需要启用公钥检索，请在连接字符串中添加AllowPublicKeyRetrieval=true参数。";
-            }
+                // 公钥检索错误
+                { msg => msg.Contains("AllowPublicKeyRetrieval"),
+                  "需要启用公钥检索，请在连接字符串中添加AllowPublicKeyRetrieval=true参数。" }
+            };
 
             // 输入验证错误
             if (string.IsNullOrEmpty(ServerAddressTextBox.Text.Trim()))
-            {
                 return "请输入服务器地址。";
-            }
 
             if (string.IsNullOrEmpty(DatabaseNameComboBox.Text.Trim()))
-            {
                 return "请输入数据库名称。";
-            }
 
             if (string.IsNullOrEmpty(UsernameTextBox.Text.Trim()))
-            {
                 return "请输入用户名。";
-            }
 
             if (string.IsNullOrEmpty(PasswordBox.Password))
-            {
                 return "请输入密码。";
+
+            if (CustomPortCheckBox.IsChecked == true)
+            {
+                if (string.IsNullOrEmpty(PortTextBox.Text.Trim()))
+                    return "请输入端口号。";
+
+                if (!Regex.IsMatch(PortTextBox.Text.Trim(), @"^\d+$"))
+                    return "端口号必须是数字。";
             }
 
-            if (CustomPortCheckBox.IsChecked == true && string.IsNullOrEmpty(PortTextBox.Text.Trim()))
+            // 查找匹配的错误消息
+            foreach (var pair in errorMessages)
             {
-                return "请输入端口号。";
-            }
-
-            if (CustomPortCheckBox.IsChecked == true && !Regex.IsMatch(PortTextBox.Text.Trim(), @"^\d+$"))
-            {
-                return "端口号必须是数字。";
+                if (pair.Key(originalMessage))
+                    return pair.Value;
             }
 
             // 如果无法识别具体错误，返回原始错误消息
             return originalMessage;
+        }
+
+        // 辅助方法，判断是否是本地连接
+        private bool IsLocalConnection()
+        {
+            string serverAddress = ServerAddressTextBox.Text.Trim();
+            return serverAddress == "localhost" || serverAddress == "127.0.0.1" || serverAddress == "::1";
         }
 
         private void SaveConnectionString(string connectionString)
@@ -1480,7 +1472,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
+                Debug.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
             }
         }
 
@@ -1516,7 +1508,7 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
+                Debug.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
             }
         }
 
@@ -1595,7 +1587,7 @@ namespace TA_WPF.Views
                             connection.ChangeDatabase(newDatabaseName);
 
                             // 创建必要的表结构
-                            CreateRequiredTables(connection);
+                            CreateRequiredTablesUsingService(connectionString);
                         }
                         catch (MySqlException ex)
                         {
@@ -1652,134 +1644,6 @@ namespace TA_WPF.Views
             }
         }
 
-        // 创建必要的表结构
-        private void CreateRequiredTables(MySqlConnection connection)
-        {
-            try
-            {
-                // 禁用外键约束检测
-                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
-                {
-                    disableChecksCmd.ExecuteNonQuery();
-                }
-
-                // 创建station_info表
-                using (MySqlCommand cmd = new MySqlCommand(@"
-                    DROP TABLE IF EXISTS `station_info`;
-                    CREATE TABLE `station_info`  (
-                    `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
-                    `station_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站名称',
-                    `province` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在省',
-                    `city` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在市',
-                    `district` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站所在区',
-                    `longitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '经度',
-                    `latitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '纬度',
-                    `station_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站代码',
-                    `station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站拼音',
-                    PRIMARY KEY (`id`) USING BTREE,
-                    INDEX `station_name`(`station_name` ASC) USING BTREE,
-                    INDEX `fk_arrive_code`(`station_code` ASC) USING BTREE,
-                    INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
-                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-                    ALTER TABLE `station_info` AUTO_INCREMENT = 1;", connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-
-                // 创建train_ride_info表
-                using (MySqlCommand cmd = new MySqlCommand(@"
-                    DROP TABLE IF EXISTS `train_ride_info`;
-                    CREATE TABLE `train_ride_info`  (
-                    `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
-                    `ticket_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '取票号',
-                    `check_in_location` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '检票位置',
-                    `depart_station` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '出发车站',
-                    `train_no` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车次号',
-                    `arrive_station` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '到达车站',
-                    `depart_station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '出发车站拼音',
-                    `arrive_station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '到达车站拼音',
-                    `depart_date` date NULL DEFAULT NULL COMMENT '出发日期',
-                    `depart_time` time NULL DEFAULT NULL COMMENT '出发时间',
-                    `coach_no` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车厢号',
-                    `seat_no` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '座位号',
-                    `money` decimal(6, 2) NULL DEFAULT NULL COMMENT '金额',
-                    `seat_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '席别',
-                    `additional_info` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '附加信息（退票费/限乘当日当次车）',
-                    `ticket_purpose` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车票用途',
-                    `ticket_modification_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车票改签类型',
-                    `ticket_type_flags` int NULL DEFAULT 0 COMMENT '票种类型（枚举）',
-                    `payment_channel_flags` int NULL DEFAULT 0 COMMENT '支付渠道（枚举）',
-                    `hint` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '提示信息',
-                    `depart_station_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '出发车站代码',
-                    `arrive_station_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '到达车站代码',
-                    PRIMARY KEY (`id`) USING BTREE,
-                    INDEX `station_code`(`depart_station_code` ASC) USING BTREE,
-                    INDEX `arrive_station_code`(`arrive_station_code` ASC) USING BTREE,
-                    INDEX `fk_depart_station_pinyin`(`depart_station_pinyin` ASC) USING BTREE,
-                    INDEX `fk_arrive_station_pinyin`(`arrive_station_pinyin` ASC) USING BTREE,
-                    INDEX `idx_train_no`(`train_no` ASC, `depart_date` ASC) USING BTREE,
-                    INDEX `idx_depart_station`(`depart_station` ASC, `depart_date` ASC) USING BTREE,
-                    CONSTRAINT `fc_dc_arrive` FOREIGN KEY (`arrive_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE,
-                    CONSTRAINT `fc_dp_arrive` FOREIGN KEY (`arrive_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
-                    CONSTRAINT `fc_sp_depart` FOREIGN KEY (`depart_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
-                    CONSTRAINT `fk_sc_depart` FOREIGN KEY (`depart_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE
-                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
-                    ALTER TABLE `train_ride_info` AUTO_INCREMENT = 1;", connection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-
-                // 重新启用外键约束检测
-                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
-                {
-                    enableChecksCmd.ExecuteNonQuery();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"创建表结构时出错: {ex.Message}");
-                LogHelper.LogError($"创建表结构时出错: {ex.Message}");
-                throw new Exception($"创建表结构时出错: {ex.Message}", ex);
-            }
-        }
-
-        // 分割SQL脚本为多个语句
-        private string[] SplitSqlStatements(string sqlScript)
-        {
-            // 移除注释
-            sqlScript = RemoveSqlComments(sqlScript);
-
-            // 按分号分割SQL语句
-            List<string> statements = new List<string>();
-
-            // 使用正则表达式分割SQL语句，考虑到分号可能出现在字符串中
-            string pattern = @";(?=(?:[^']*'[^']*')*[^']*$)";
-            string[] parts = System.Text.RegularExpressions.Regex.Split(sqlScript, pattern);
-
-            foreach (string part in parts)
-            {
-                string trimmedPart = part.Trim();
-                if (!string.IsNullOrEmpty(trimmedPart))
-                {
-                    statements.Add(trimmedPart);
-                }
-            }
-
-            return statements.ToArray();
-        }
-
-        // 移除SQL注释
-        private string RemoveSqlComments(string sql)
-        {
-            // 移除单行注释 (-- 开头的行)
-            sql = System.Text.RegularExpressions.Regex.Replace(sql, @"--.*?$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
-
-            // 移除多行注释 (/* ... */)
-            sql = System.Text.RegularExpressions.Regex.Replace(sql, @"/\*[\s\S]*?\*/", "");
-
-            return sql;
-        }
-
         /// <summary>
         /// 添加枚举以区分MySQL连接问题的不同情况
         /// </summary>
@@ -1799,14 +1663,6 @@ namespace TA_WPF.Views
         /// <returns>MySQL连接状态</returns>
         private async Task<MySqlConnectionStatus> CheckMySqlConnectionStatus(string serverAddress, string port)
         {
-            // 测试模式：模拟MySQL未安装的情况
-            bool testMode = false;
-            if (testMode)
-            {
-                System.Diagnostics.Debug.WriteLine("测试模式：模拟MySQL未安装");
-                return MySqlConnectionStatus.NotInstalled;
-            }
-
             try
             {
                 // 检测是否是远程连接
@@ -1815,159 +1671,45 @@ namespace TA_WPF.Views
                                          serverAddress == "127.0.0.1" ||
                                          serverAddress == "::1";
 
-                // 如果是远程连接，检测远程服务器是否可达
-                if (!isLocalConnection)
+                // 尝试直接连接到MySQL端口
+                bool canConnect = await Task.Run(() =>
                 {
-                    System.Diagnostics.Debug.WriteLine($"检测远程MySQL连接: {serverAddress}:{port}");
+                    try
+                    {
+                        using (var client = new System.Net.Sockets.TcpClient())
+                        {
+                            var connectTask = client.ConnectAsync(
+                                isLocalConnection ? "127.0.0.1" : serverAddress, 
+                                int.Parse(port));
+                            var timeoutTask = Task.Delay(isLocalConnection ? 1000 : 2000);
+                            var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
+                            return completedTask == connectTask && client.Connected;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"连接MySQL服务器失败: {ex.Message}");
+                        return false;
+                    }
+                });
 
-                    bool canConnect = await Task.Run(() =>
+                if (canConnect)
+                {
+                    return MySqlConnectionStatus.Connected;
+                }
+                else if (port != "3306" && CustomPortCheckBox.IsChecked == true)
+                {
+                    // 尝试使用默认端口3306连接
+                    bool defaultPortWorks = await Task.Run(() =>
                     {
                         try
                         {
                             using (var client = new System.Net.Sockets.TcpClient())
                             {
-                                // 尝试连接MySQL端口
-                                var connectTask = client.ConnectAsync(serverAddress, int.Parse(port));
-                                var timeoutTask = Task.Delay(2000); // 2秒超时
-
-                                var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
-                                return completedTask == connectTask && client.Connected;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"连接远程MySQL服务器失败: {ex.Message}");
-                            return false;
-                        }
-                    });
-
-                    if (canConnect)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"成功连接到远程MySQL服务器: {serverAddress}:{port}");
-                        return MySqlConnectionStatus.Connected;
-                    }
-                    else
-                    {
-                        // 对于远程连接，判断是否为端口问题
-                        // 尝试使用默认端口3306连接
-                        if (port != "3306" && CustomPortCheckBox.IsChecked == true)
-                        {
-                            bool defaultPortWorks = await Task.Run(() =>
-                            {
-                                try
-                                {
-                                    using (var client = new System.Net.Sockets.TcpClient())
-                                    {
-                                        var connectTask = client.ConnectAsync(serverAddress, 3306);
-                                        var timeoutTask = Task.Delay(2000);
-                                        var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
-                                        return completedTask == connectTask && client.Connected;
-                                    }
-                                }
-                                catch
-                                {
-                                    return false;
-                                }
-                            });
-
-                            if (defaultPortWorks)
-                            {
-                                // 如果默认端口可以连接，说明是端口号问题
-                                System.Diagnostics.Debug.WriteLine($"默认端口3306可连接，但自定义端口{port}不可连接");
-                                return MySqlConnectionStatus.PortError;
-                            }
-                        }
-
-                        System.Diagnostics.Debug.WriteLine($"无法连接到远程MySQL服务器: {serverAddress}:{port}");
-                        return MySqlConnectionStatus.ConnectionError;
-                    }
-                }
-
-                // 对于本地连接，检测本地MySQL安装
-                System.Diagnostics.Debug.WriteLine("检测本地MySQL安装");
-
-                // 检测MySQL服务是否存在
-                bool serviceExists = false;
-                try
-                {
-                    // 使用sc命令查询MySQL服务
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = "sc",
-                        Arguments = "query MySQL",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        CreateNoWindow = true
-                    };
-
-                    using (var process = Process.Start(startInfo))
-                    {
-                        if (process != null)
-                        {
-                            string output = process.StandardOutput.ReadToEnd();
-                            process.WaitForExit();
-                            serviceExists = !output.Contains("指定的服务未安装") && !output.Contains("The specified service does not exist");
-                        }
-                    }
-                }
-                catch
-                {
-                    // 忽略服务检测错误
-                }
-
-                // 检测MySQL注册表项
-                bool registryExists = false;
-                try
-                {
-                    using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\MySQL"))
-                    {
-                        registryExists = key != null;
-                    }
-
-                    if (!registryExists)
-                    {
-                        using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Wow6432Node\MySQL"))
-                        {
-                            registryExists = key != null;
-                        }
-                    }
-                }
-                catch
-                {
-                    // 忽略注册表检测错误
-                }
-
-                // 检测MySQL程序文件夹
-                bool folderExists = false;
-                string[] possiblePaths = new string[]
-                {
-                    @"C:\Program Files\MySQL",
-                    @"C:\Program Files (x86)\MySQL",
-                    @"C:\MySQL"
-                };
-
-                foreach (var path in possiblePaths)
-                {
-                    if (Directory.Exists(path))
-                    {
-                        folderExists = true;
-                        break;
-                    }
-                }
-
-                // 如果本地任何一项检测通过，检测MySQL服务端口是否可连接
-                if (serviceExists || registryExists || folderExists)
-                {
-                    bool canConnect = await Task.Run(() =>
-                    {
-                        try
-                        {
-                            using (var client = new System.Net.Sockets.TcpClient())
-                            {
-                                // 尝试连接到MySQL默认端口
-                                var connectTask = client.ConnectAsync("127.0.0.1", int.Parse(port));
-                                var timeoutTask = Task.Delay(1000); // 1秒超时
-
+                                var connectTask = client.ConnectAsync(
+                                    isLocalConnection ? "127.0.0.1" : serverAddress, 
+                                    3306);
+                                var timeoutTask = Task.Delay(isLocalConnection ? 1000 : 2000);
                                 var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
                                 return completedTask == connectTask && client.Connected;
                             }
@@ -1978,64 +1720,111 @@ namespace TA_WPF.Views
                         }
                     });
 
-                    if (canConnect)
+                    if (defaultPortWorks)
                     {
-                        return MySqlConnectionStatus.Connected;
-                    }
-                    else if (port != "3306" && CustomPortCheckBox.IsChecked == true)
-                    {
-                        // 检测默认端口是否可连接
-                        bool defaultPortWorks = await Task.Run(() =>
-                        {
-                            try
-                            {
-                                using (var client = new System.Net.Sockets.TcpClient())
-                                {
-                                    var connectTask = client.ConnectAsync("127.0.0.1", 3306);
-                                    var timeoutTask = Task.Delay(1000);
-                                    var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
-                                    return completedTask == connectTask && client.Connected;
-                                }
-                            }
-                            catch
-                            {
-                                return false;
-                            }
-                        });
-
-                        if (defaultPortWorks)
-                        {
-                            // 如果默认端口可以连接，说明是端口号问题
-                            System.Diagnostics.Debug.WriteLine($"默认端口3306可连接，但自定义端口{port}不可连接");
-                            return MySqlConnectionStatus.PortError;
-                        }
-                        else
-                        {
-                            // MySQL已安装但服务未启动
-                            return MySqlConnectionStatus.ConnectionError;
-                        }
-                    }
-                    else
-                    {
-                        // MySQL已安装但服务未启动
-                        return MySqlConnectionStatus.ConnectionError;
+                        // 如果默认端口可以连接，说明是端口号问题
+                        return MySqlConnectionStatus.PortError;
                     }
                 }
 
-                return MySqlConnectionStatus.NotInstalled;
+                // 如果是本地连接，检测MySQL是否已安装
+                if (isLocalConnection)
+                {
+                    // 检测MySQL服务是否存在
+                    bool serviceExists = false;
+                    try
+                    {
+                        var startInfo = new ProcessStartInfo
+                        {
+                            FileName = "sc",
+                            Arguments = "query MySQL",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            CreateNoWindow = true
+                        };
+
+                        using (var process = Process.Start(startInfo))
+                        {
+                            if (process != null)
+                            {
+                                string output = process.StandardOutput.ReadToEnd();
+                                process.WaitForExit();
+                                serviceExists = !output.Contains("指定的服务未安装") && !output.Contains("The specified service does not exist");
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // 忽略服务检测错误
+                    }
+
+                    // 检测MySQL注册表项或程序文件夹
+                    bool registryExists = CheckMySqlRegistry();
+                    bool folderExists = CheckMySqlFolders();
+
+                    // 如果有任何一项检测通过，说明MySQL已安装但服务未运行
+                    if (serviceExists || registryExists || folderExists)
+                    {
+                        return MySqlConnectionStatus.ConnectionError;
+                    }
+
+                    return MySqlConnectionStatus.NotInstalled;
+                }
+
+                return MySqlConnectionStatus.ConnectionError;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"检测MySQL安装或连接时出错: {ex.Message}");
+                Debug.WriteLine($"检测MySQL安装或连接时出错: {ex.Message}");
                 return MySqlConnectionStatus.ConnectionError;
             }
+        }
+
+        // 新增辅助方法，检测MySQL注册表
+        private bool CheckMySqlRegistry()
+        {
+            try
+            {
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\MySQL"))
+                {
+                    if (key != null) return true;
+                }
+
+                using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Wow6432Node\MySQL"))
+                {
+                    return key != null;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // 新增辅助方法，检测MySQL程序文件夹
+        private bool CheckMySqlFolders()
+        {
+            string[] possiblePaths = new string[]
+            {
+                @"C:\Program Files\MySQL",
+                @"C:\Program Files (x86)\MySQL",
+                @"C:\MySQL"
+            };
+
+            foreach (var path in possiblePaths)
+            {
+                if (Directory.Exists(path))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // 保留旧方法，但内部调用新方法，以保持兼容性
         private async Task<bool> IsMySqlInstalledOrConnectable(string serverAddress, string port)
         {
-            var status = await CheckMySqlConnectionStatus(serverAddress, port);
-            return status == MySqlConnectionStatus.Connected;
+            return await CheckMySqlConnectionStatus(serverAddress, port) == MySqlConnectionStatus.Connected;
         }
 
         /// <summary>
@@ -2051,9 +1840,9 @@ namespace TA_WPF.Views
                 };
 
                 // 添加警告图标
-                var warningIcon = new MaterialDesignThemes.Wpf.PackIcon
+                var warningIcon = new PackIcon
                 {
-                    Kind = MaterialDesignThemes.Wpf.PackIconKind.DatabaseAlert,
+                    Kind = PackIconKind.DatabaseAlert,
                     Width = 48,
                     Height = 48,
                     Foreground = new SolidColorBrush(Colors.Orange),
@@ -2183,7 +1972,7 @@ namespace TA_WPF.Views
                         Cursor = Cursors.Hand,
                         Margin = new Thickness(0, 0, 0, 24)
                     };
-                    hyperlink.MouseDown += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    hyperlink.MouseDown += (s, e) => Process.Start(new ProcessStartInfo
                     {
                         FileName = "https://dev.mysql.com/downloads/installer/",
                         UseShellExecute = true
@@ -2202,30 +1991,67 @@ namespace TA_WPF.Views
                 {
                     Content = "我知道了",
                     Style = TryFindResource("MaterialDesignFlatButton") as Style,
-                    Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand
+                    Command = DialogHost.CloseDialogCommand
                 };
                 buttonPanel.Children.Add(okButton);
 
                 content.Children.Add(buttonPanel);
 
                 // 显示对话框
-                await MaterialDesignThemes.Wpf.DialogHost.Show(content, "LoginDialogHost");
+                await DialogHost.Show(content, "LoginDialogHost");
 
                 // 记录日志
                 LogHelper.LogWarning($"用户尝试登录，但MySQL连接状态为: {status}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"显示数据库连接错误提示时出错: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"显示数据库连接错误提示时出错: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show("连接数据库时发生错误。请检测您的连接设置。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
-        // 保留旧方法，但内部调用新方法，以保持兼容性
+        // 保留旧方法，但简化实现，以保持兼容性
         private async Task ShowMySqlNotInstalledWarning(string serverAddress = "")
         {
             await ShowDatabaseConnectionError(serverAddress, "3306", MySqlConnectionStatus.NotInstalled);
+        }
+
+        // 分割SQL脚本为多个语句
+        private string[] SplitSqlStatements(string sqlScript)
+        {
+            // 移除注释
+            sqlScript = RemoveSqlComments(sqlScript);
+
+            // 按分号分割SQL语句
+            List<string> statements = new List<string>();
+
+            // 使用正则表达式分割SQL语句，考虑到分号可能出现在字符串中
+            string pattern = @";(?=(?:[^']*'[^']*')*[^']*$)";
+            string[] parts = System.Text.RegularExpressions.Regex.Split(sqlScript, pattern);
+
+            foreach (string part in parts)
+            {
+                string trimmedPart = part.Trim();
+                if (!string.IsNullOrEmpty(trimmedPart))
+                {
+                    statements.Add(trimmedPart);
+                }
+            }
+
+            return statements.ToArray();
+        }
+
+        // 移除SQL注释
+        private string RemoveSqlComments(string sql)
+        {
+            // 移除单行注释 (-- 开头的行)
+            sql = Regex.Replace(sql, @"--.*?$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+
+            // 移除多行注释 (/* ... */)
+            sql = Regex.Replace(sql, @"/\*[\s\S]*?\*/", "");
+
+            return sql;
         }
     }
 }

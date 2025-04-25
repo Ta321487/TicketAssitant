@@ -69,8 +69,8 @@ namespace TA_WPF.Views
                     Values = new ChartValues<int>(),
                     PointGeometry = DefaultGeometries.Diamond,
                     PointGeometrySize = 10,
-                    Stroke = System.Windows.Media.Brushes.Orange,
-                    Fill = System.Windows.Media.Brushes.Transparent
+                    Stroke = Brushes.Orange,
+                    Fill = Brushes.Transparent
                 }
             };
 
@@ -100,8 +100,8 @@ namespace TA_WPF.Views
                     Values = new ChartValues<double>(),
                     PointGeometry = null,
                     LineSmoothness = 0,
-                    Stroke = System.Windows.Media.Brushes.Red,
-                    Fill = System.Windows.Media.Brushes.Transparent
+                    Stroke = Brushes.Red,
+                    Fill = Brushes.Transparent
                 }
             };
 
@@ -170,7 +170,7 @@ namespace TA_WPF.Views
             if (viewModel.TicketTypeData == null || !viewModel.TicketTypeData.Any()) return;
 
             // 根据当前主题选择适当的文本颜色
-            var textColor = viewModel.IsDarkMode ? System.Windows.Media.Colors.White : System.Windows.Media.Colors.Black;
+            var textColor = viewModel.IsDarkMode ? Colors.White : Colors.Black;
 
             viewModel.TicketTypeSeries.Clear();
             foreach (var data in viewModel.TicketTypeData)
@@ -180,7 +180,7 @@ namespace TA_WPF.Views
                     Title = data.TypeName,
                     Values = new ChartValues<int> { data.Count },
                     DataLabels = true,
-                    Foreground = new System.Windows.Media.SolidColorBrush(textColor),
+                    Foreground = new SolidColorBrush(textColor),
                     LabelPoint = point => $"{data.TypeName}: {point.Y}张 ({point.Participation:P1})"
                 };
                 viewModel.TicketTypeSeries.Add(series);

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -107,7 +108,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"后台刷新数据时出错: {ex.Message}");
+                Debug.WriteLine($"后台刷新数据时出错: {ex.Message}");
                 // 不显示错误消息，因为这是后台操作
             }
         }
@@ -270,7 +271,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载页面数据时出错: {ex.Message}");
+                Debug.WriteLine($"加载页面数据时出错: {ex.Message}");
                 MessageBoxHelper.ShowError($"加载页面数据时出错: {ex.Message}");
             }
             finally

@@ -5,16 +5,16 @@ namespace TA_WPF.Models
     public class StationInfo : INotifyPropertyChanged
     {
         private int _id;
-        private string _stationName;
-        private string _province;
-        private string _city;
-        private string _district;
-        private string _longitude;
-        private string _latitude;
-        private string _stationCode;
-        private string _stationPinyin;
-        private string _stationAddress;
-        private string _stationTelephone;
+        private string? _stationName;
+        private string? _province;
+        private string? _city;
+        private string? _district;
+        private string? _longitude;
+        private string? _latitude;
+        private string? _stationCode;
+        private string? _stationPinyin;
+        private string? _stationAddress;
+        private string? _stationTelephone;
 
         public int Id
         {

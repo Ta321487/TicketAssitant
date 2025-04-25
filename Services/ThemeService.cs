@@ -1,9 +1,9 @@
 using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using TA_WPF.Utils;
-using Theme = MaterialDesignThemes.Wpf.Theme;
 
 namespace TA_WPF.Services
 {
@@ -63,8 +63,8 @@ namespace TA_WPF.Services
                     return;
 
                 // 显式设置窗口的ThemeAssist.Theme属性
-                MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(window,
-                    isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
+                ThemeAssist.SetTheme(window,
+                    isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
 
                 // 获取当前主题
                 var paletteHelper = new PaletteHelper();
@@ -90,12 +90,12 @@ namespace TA_WPF.Services
                     mainCard.UpdateLayout();
                 }
 
-                System.Diagnostics.Debug.WriteLine($"窗口已设置为{(isDarkMode ? "深色" : "浅色")}主题");
+                Debug.WriteLine($"窗口已设置为{(isDarkMode ? "深色" : "浅色")}主题");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"应用主题到窗口时出错: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"应用主题到窗口时出错: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -128,17 +128,17 @@ namespace TA_WPF.Services
                 {
                     // 更新MaterialDesignTheme的BaseTheme
                     var bundledTheme = Application.Current.Resources.MergedDictionaries
-                        .OfType<MaterialDesignThemes.Wpf.BundledTheme>()
+                        .OfType<BundledTheme>()
                         .FirstOrDefault();
 
                     if (bundledTheme != null)
                     {
-                        bundledTheme.BaseTheme = isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light;
-                        System.Diagnostics.Debug.WriteLine($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
+                        bundledTheme.BaseTheme = isDarkMode ? BaseTheme.Dark : BaseTheme.Light;
+                        Debug.WriteLine($"已更新BundledTheme的BaseTheme为: {bundledTheme.BaseTheme}");
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("警告: 未找到BundledTheme");
+                        Debug.WriteLine("警告: 未找到BundledTheme");
                     }
 
                     // 更新Theme.Dark和Theme.Light资源 - 确保这些值立即更新
@@ -206,7 +206,7 @@ namespace TA_WPF.Services
                         if (window != null && window.IsLoaded)
                         {
                             // 更新窗口的ThemeAssist.Theme属性
-                            MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(window, isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
+                            ThemeAssist.SetTheme(window, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
 
                             // 如果窗口的DataContext实现了INotifyPropertyChanged接口，尝试更新其IsDarkMode属性
                             if (window.DataContext is INotifyPropertyChanged viewModel)
@@ -230,7 +230,7 @@ namespace TA_WPF.Services
                         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
                 }
 
-                System.Diagnostics.Debug.WriteLine($"已应用{(isDarkMode ? "深色" : "浅色")}主题");
+                Debug.WriteLine($"已应用{(isDarkMode ? "深色" : "浅色")}主题");
 
                 // 保存主题设置到配置文件
                 SaveThemeToConfig(isDarkMode);
@@ -240,8 +240,8 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"应用主题时出错: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"应用主题时出错: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -263,13 +263,13 @@ namespace TA_WPF.Services
                     Application.Current.Resources["Theme.Light"] = !isDarkMode;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"已保存主题设置: {(isDarkMode ? "深色" : "浅色")}，值为: {isDarkMode.ToString().ToLower()}");
+                Debug.WriteLine($"已保存主题设置: {(isDarkMode ? "深色" : "浅色")}，值为: {isDarkMode.ToString().ToLower()}");
                 LogHelper.LogSystem("主题", $"已保存主题设置: {(isDarkMode ? "深色" : "浅色")}，值为: {isDarkMode.ToString().ToLower()}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存主题设置时出错: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"保存主题设置时出错: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 LogHelper.LogSystem("主题", $"保存主题设置时出错: {ex.Message}");
                 LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
             }
@@ -293,15 +293,15 @@ namespace TA_WPF.Services
                     Application.Current.Resources["Theme.Light"] = !isDarkMode;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
+                Debug.WriteLine($"从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
                 LogHelper.LogSystem("主题", $"从配置文件加载主题设置: {(isDarkMode ? "深色" : "浅色")}");
 
                 return isDarkMode;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载主题设置时出错: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"加载主题设置时出错: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 LogHelper.LogSystem("主题", $"加载主题设置时出错: {ex.Message}");
                 LogHelper.LogSystem("主题", $"异常堆栈: {ex.StackTrace}");
 
@@ -333,15 +333,15 @@ namespace TA_WPF.Services
                 var paletteHelper = new PaletteHelper();
                 var theme = paletteHelper.GetTheme();
                 bool isDark = theme.GetBaseTheme() == BaseTheme.Dark;
-
-                System.Diagnostics.Debug.WriteLine($"当前活动主题检测: {(isDark ? "深色" : "浅色")}");
+                    
+                Debug.WriteLine($"当前活动主题检测: {(isDark ? "深色" : "浅色")}");
                 LogHelper.LogSystem("主题", $"当前活动主题检测: {(isDark ? "深色" : "浅色")}");
 
                 return isDark;
             }
             catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"检测当前主题时出错: {ex.Message}");
+            {   
+                Debug.WriteLine($"检测当前主题时出错: {ex.Message}");
                 LogHelper.LogSystem("主题", $"检测当前主题时出错: {ex.Message}");
 
                 // 默认返回false（浅色主题）

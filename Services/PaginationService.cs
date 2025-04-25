@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TA_WPF.Models;
@@ -322,7 +323,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载页面数据时出错: {ex.Message}");
+                Debug.WriteLine($"加载页面数据时出错: {ex.Message}");
                 throw;
             }
             finally
@@ -343,7 +344,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"获取总记录数时出错: {ex.Message}");
+                Debug.WriteLine($"获取总记录数时出错: {ex.Message}");
                 throw;
             }
         }

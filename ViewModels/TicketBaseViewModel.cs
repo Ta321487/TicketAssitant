@@ -10,53 +10,6 @@ using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
-    /// <summary>
-    /// 支付渠道视图模型基类，处理支付渠道的选择逻辑
-    /// </summary>
-    /// <remarks>
-    /// 该类实现了支付渠道选择的业务逻辑，包括：
-    /// 1. 支付宝售票和微信售票互斥（只能选择其中一个）
-    /// 2. 农业银行、建设银行、工商银行三选一
-    /// 
-    /// 如需添加新的支付渠道，请按照以下步骤操作：
-    /// 1. 在 Models/PaymentChannelFlags.cs 中的枚举中添加新的支付渠道标志，例如：
-    ///    PSBC = 32       // 邮政银行
-    ///    
-    /// 2. 在本类中添加新的属性，例如：
-    ///    private bool _isPSBCPayment;
-    ///    public bool IsPSBCPayment
-    ///    {
-    ///        get => _isPSBCPayment;
-    ///        set
-    ///        {
-    ///            if (_isPSBCPayment != value)
-    ///            {
-    ///                _isPSBCPayment = value;
-    ///                OnPropertyChanged(nameof(IsPSBCPayment));
-    ///                
-    ///                // 如果需要与其他银行互斥
-    ///                if (!_isInitializing && value)
-    ///                {
-    ///                    IsABCPayment = false;
-    ///                    IsCCBPayment = false;
-    ///                    IsICBCPayment = false;
-    ///                }
-    ///                
-    ///                if (!_isInitializing) OnPaymentChannelChanged();
-    ///            }
-    ///        }
-    ///    }
-    ///    
-    /// 3. 修改其他互斥的支付渠道属性，确保它们也与新添加的支付渠道互斥
-    /// 
-    /// 4. 在 GetPaymentChannelFlags() 和 SetPaymentChannelFlags() 方法中添加对新支付渠道的处理
-    /// 
-    /// 5. 在XAML文件(Views/AddTicketWindow.xaml和Views/EditTicketWindow.xaml)中添加新的复选框
-    ///    <CheckBox Content="邮政银行" 
-    ///              IsChecked="{Binding IsPSBCPayment}" 
-    ///              Margin="0,0,24,0"
-    ///              VerticalAlignment="Center"/>
-    /// </remarks>
     public class PaymentChannelViewModel : INotifyPropertyChanged
     {
         protected bool _isInitializing = true; // 初始化标志

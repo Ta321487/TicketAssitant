@@ -149,13 +149,13 @@ namespace TA_WPF.Services
                         if (decimal.TryParse(moneyMatch.Groups[1].Value, out decimal money))
                         {
                             ticket.Money = money;
-                            Debug.WriteLine($"[PdfImportService] Extracted Money: {ticket.Money}");
+                            Debug.WriteLine($"[PdfImportService] 识别到金额: {ticket.Money}");
                         }
-                        else { Debug.WriteLine($"[PdfImportService] Failed to parse extracted money value: '{moneyMatch.Groups[1].Value}'"); }
+                        else { Debug.WriteLine($"[PdfImportService] 无法解析金额值。原值: '{moneyMatch.Groups[1].Value}'"); }
                     }
-                    else { Debug.WriteLine("[PdfImportService] Money regex matched line, but group extraction failed."); }
+                    else { Debug.WriteLine("[PdfImportService] 匹配到金额正则行，但分组提取失败。"); }
                 }
-                else { Debug.WriteLine("[PdfImportService] No line matched Money regex."); }
+                else { Debug.WriteLine("[PdfImportService] 没有行匹配金额正则。"); }
 
                 // --- 提取车厢号、座位号、座位类型 (从第9行) ---
                 int seatLineIndex = 8; // 第9行索引
@@ -182,7 +182,7 @@ namespace TA_WPF.Services
                         ticket.SeatNo = seatCode; 
                         // Map extracted text to the required SeatType value
                         ticket.SeatType = MapSeatType(seatTypeText);
-                        Debug.WriteLine($"[PdfImportService] Extracted CoachNo: '{ticket.CoachNo}', SeatNo: '{ticket.SeatNo}', SeatType: '{ticket.SeatType}' (Original Text: '{seatTypeText}')");
+                        Debug.WriteLine($"[PdfImportService] 提取到车厢号: '{ticket.CoachNo}', 座位号: '{ticket.SeatNo}', 座位类型: '{ticket.SeatType}' (原始文本: '{seatTypeText}')");
 
                         // --- 提取票种和支付渠道标志 ---
                         string remainingSeatLine = seatLine.Substring(seatMatch.Index + seatMatch.Length).Trim();
@@ -191,24 +191,24 @@ namespace TA_WPF.Services
                         if (remainingSeatLine.Contains("孩"))
                         {
                             ticket.TicketTypeFlags |= (int)TicketTypeFlags.ChildTicket;
-                            Debug.WriteLine("[PdfImportService] Detected '孩' (ChildTicket)");
+                            Debug.WriteLine("[PdfImportService] 检测到 '孩' (ChildTicket)");
                         }
                         if (remainingSeatLine.Contains("惠"))
                         {
                             ticket.TicketTypeFlags |= (int)TicketTypeFlags.DiscountTicket;
-                            Debug.WriteLine("[PdfImportService] Detected '惠' (DiscountTicket)");
+                            Debug.WriteLine("[PdfImportService] 检测到 '惠' (DiscountTicket)");
                         }
 
                         // 支付渠道识别
-                        if (remainingSeatLine.Contains("招")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.CMB; Debug.WriteLine("[PdfImportService] Detected '招' (CMB)"); }
-                        else if (remainingSeatLine.Contains("邮")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.PSBC; Debug.WriteLine("[PdfImportService] Detected '邮' (PSBC)"); }
-                        else if (remainingSeatLine.Contains("中")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.BOC; Debug.WriteLine("[PdfImportService] Detected '中' (BOC)"); }
-                        else if (remainingSeatLine.Contains("交")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.COMM; Debug.WriteLine("[PdfImportService] Detected '交' (COMM)"); }
-                        else if (remainingSeatLine.Contains("农")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.ABC; Debug.WriteLine("[PdfImportService] Detected '农' (ABC)"); }
-                        else if (remainingSeatLine.Contains("建")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.CCB; Debug.WriteLine("[PdfImportService] Detected '建' (CCB)"); }
-                        else if (remainingSeatLine.Contains("工")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.ICBC; Debug.WriteLine("[PdfImportService] Detected '工' (ICBC)"); }
-                        else if (remainingSeatLine.Contains("支")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.Alipay; Debug.WriteLine("[PdfImportService] Detected '支' (Alipay)"); }
-                        else if (remainingSeatLine.Contains("微")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.WeChat; Debug.WriteLine("[PdfImportService] Detected '微' (WeChat)"); }
+                        if (remainingSeatLine.Contains("招")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.CMB; Debug.WriteLine("[PdfImportService] 检测到 '招' (CMB)"); }
+                        else if (remainingSeatLine.Contains("邮")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.PSBC; Debug.WriteLine("[PdfImportService] 检测到 '邮' (PSBC)"); }
+                        else if (remainingSeatLine.Contains("中")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.BOC; Debug.WriteLine("[PdfImportService] 检测到 '中' (BOC)"); }
+                        else if (remainingSeatLine.Contains("交")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.COMM; Debug.WriteLine("[PdfImportService] 检测到 '交' (COMM)"); }
+                        else if (remainingSeatLine.Contains("农")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.ABC; Debug.WriteLine("[PdfImportService] 检测到 '农' (ABC)"); }
+                        else if (remainingSeatLine.Contains("建")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.CCB; Debug.WriteLine("[PdfImportService] 检测到 '建' (CCB)"); }
+                        else if (remainingSeatLine.Contains("工")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.ICBC; Debug.WriteLine("[PdfImportService] 检测到 '工' (ICBC)"); }
+                        else if (remainingSeatLine.Contains("支")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.Alipay; Debug.WriteLine("[PdfImportService] 检测到 '支' (Alipay)"); }
+                        else if (remainingSeatLine.Contains("微")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.WeChat; Debug.WriteLine("[PdfImportService] 检测到 '微' (WeChat)"); }
 
                     }
                     else { Debug.WriteLine($"[PdfImportService] Seat line (Index {seatLineIndex}) '{seatLine}' did not match regex."); }

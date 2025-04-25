@@ -336,7 +336,7 @@ namespace TA_WPF.ViewModels
                 IsLoading = true;
 
                 // 模拟连接过程
-                System.Threading.Tasks.Task.Delay(1500).ContinueWith(_ =>
+                Task.Delay(1500).ContinueWith(_ =>
                 {
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {

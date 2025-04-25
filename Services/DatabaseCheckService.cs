@@ -1,4 +1,5 @@
 using TA_WPF.Utils;
+using TA_WPF.Views;
 
 namespace TA_WPF.Services
 {
@@ -8,6 +9,7 @@ namespace TA_WPF.Services
     public class DatabaseCheckService
     {
         private readonly DatabaseService _databaseService;
+        private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info" }; // 必要的表
 
         /// <summary>
         /// 构造函数
@@ -25,6 +27,7 @@ namespace TA_WPF.Services
         {
             try
             {
+                // 检查表是否存在
                 bool stationTableExists = await _databaseService.TableExistsAsync("station_info");
                 bool ticketTableExists = await _databaseService.TableExistsAsync("train_ride_info");
 
@@ -43,11 +46,11 @@ namespace TA_WPF.Services
                     message += "\n是否立即创建这些表？";
 
                     // 显示确认对话框
-                    var result = TA_WPF.Views.MessageDialog.Show(
+                    var result = MessageDialog.Show(
                         message,
                         "缺少必要的表",
-                        TA_WPF.Views.MessageType.Question,
-                        TA_WPF.Views.MessageButtons.YesNo);
+                        MessageType.Question,
+                        MessageButtons.YesNo);
 
                     if (result == true)
                     {
@@ -61,11 +64,11 @@ namespace TA_WPF.Services
                             await _databaseService.CreateTrainRideInfoTableAsync();
                         }
 
-                        TA_WPF.Views.MessageDialog.Show(
+                        MessageDialog.Show(
                             "表创建成功！",
                             "操作成功",
-                            TA_WPF.Views.MessageType.Information,
-                            TA_WPF.Views.MessageButtons.Ok);
+                            MessageType.Information,
+                            MessageButtons.Ok);
                     }
                 }
             }
@@ -73,11 +76,11 @@ namespace TA_WPF.Services
             {
                 System.Diagnostics.Debug.WriteLine($"检测表时出错: {ex.Message}");
                 LogHelper.LogError($"检测表时出错: {ex.Message}");
-                TA_WPF.Views.MessageDialog.Show(
+                MessageDialog.Show(
                     $"检测数据库表时出错: {ex.Message}",
                     "错误",
-                    TA_WPF.Views.MessageType.Error,
-                    TA_WPF.Views.MessageButtons.Ok);
+                    MessageType.Error,
+                    MessageButtons.Ok);
             }
         }
     }

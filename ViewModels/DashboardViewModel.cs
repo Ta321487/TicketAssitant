@@ -1,6 +1,7 @@
 using LiveCharts;
 using LiveCharts.Wpf;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -267,7 +268,7 @@ namespace TA_WPF.ViewModels
                             OnPropertyChanged(nameof(StartDate));
                         }
 
-                        System.Diagnostics.Debug.WriteLine($"手动更改StartDate: {_startDate:yyyy-MM-dd}，将刷新数据...");
+                        Debug.WriteLine($"手动更改StartDate: {_startDate:yyyy-MM-dd}，将刷新数据...");
                     }
                     RefreshDataAsync();
                 }
@@ -316,7 +317,7 @@ namespace TA_WPF.ViewModels
                             OnPropertyChanged(nameof(EndDate));
                         }
 
-                        System.Diagnostics.Debug.WriteLine($"手动更改EndDate: {_endDate:yyyy-MM-dd}，将刷新数据...");
+                        Debug.WriteLine($"手动更改EndDate: {_endDate:yyyy-MM-dd}，将刷新数据...");
                     }
                     RefreshDataAsync();
                 }
@@ -933,7 +934,7 @@ namespace TA_WPF.ViewModels
             RefreshDataAsync();
 
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"时间范围已变更为：{range}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+            Debug.WriteLine($"时间范围已变更为：{range}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
         }
 
         /// <summary>
@@ -946,7 +947,7 @@ namespace TA_WPF.ViewModels
                 return;
 
             // 这里可以实现显示详情的逻辑，例如弹出对话框等
-            System.Diagnostics.Debug.WriteLine($"显示车票类型详情: {ticketType.TypeName}, 数量: {ticketType.Count}");
+            Debug.WriteLine($"显示车票类型详情: {ticketType.TypeName}, 数量: {ticketType.Count}");
         }
 
         /// <summary>
@@ -964,7 +965,7 @@ namespace TA_WPF.ViewModels
                 MonthlyExpenseData.Clear();
 
                 // 记录调试信息
-                System.Diagnostics.Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+                Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
 
                 // 重新加载所有车票数据
                 _allTickets = await _databaseService.GetAllTrainRideInfosAsync();
@@ -997,11 +998,11 @@ namespace TA_WPF.ViewModels
                 await LoadChartDataAsync(_allTickets);
 
                 // 记录调试信息
-                System.Diagnostics.Debug.WriteLine($"数据刷新完成，总车票数：{TotalTickets}，当前范围车票数：{CurrentRangeTickets}");
+                Debug.WriteLine($"数据刷新完成，总车票数：{TotalTickets}，当前范围车票数：{CurrentRangeTickets}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"刷新数据时出错: {ex.Message}");
+                Debug.WriteLine($"刷新数据时出错: {ex.Message}");
                 // 可以在这里添加错误提示逻辑
             }
             finally
@@ -1017,7 +1018,7 @@ namespace TA_WPF.ViewModels
         private async Task LoadChartDataAsync(List<TrainRideInfo> tickets)
         {
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"开始加载图表数据，当前时间范围：{SelectedTimeRange}");
+            Debug.WriteLine($"开始加载图表数据，当前时间范围：{SelectedTimeRange}");
 
             // 先加载热门路线数据和最近活动（使用所有车票数据）
             LoadTopRouteData(tickets);
@@ -1029,7 +1030,7 @@ namespace TA_WPF.ViewModels
                                         t.DepartDate.Value <= EndDate).ToList();
 
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"筛选后的当前时间范围车票数据：{filteredTickets.Count}条，时间范围：{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
+            Debug.WriteLine($"筛选后的当前时间范围车票数据：{filteredTickets.Count}条，时间范围：{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
 
             // 对比时间范围（去年同期或其他对比时间）
             DateTime comparisonStartDate = DateTime.MinValue;
@@ -1092,7 +1093,7 @@ namespace TA_WPF.ViewModels
                                           t.DepartDate.Value <= comparisonEndDate).ToList();
 
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"筛选后的对比时间范围车票数据：{comparisonTickets.Count}条，对比时间范围：{comparisonStartDate:yyyy-MM-dd} 至 {comparisonEndDate:yyyy-MM-dd}");
+            Debug.WriteLine($"筛选后的对比时间范围车票数据：{comparisonTickets.Count}条，对比时间范围：{comparisonStartDate:yyyy-MM-dd} 至 {comparisonEndDate:yyyy-MM-dd}");
 
             // 加载月度车票数据（传入当前和对比时间段的数据）
             LoadMonthlyTicketData(filteredTickets, comparisonTickets);
@@ -1104,7 +1105,7 @@ namespace TA_WPF.ViewModels
             LoadMonthlyExpenseData(filteredTickets);
 
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"图表数据加载完成，月度车票数据：{MonthlyTicketData.Count}条，月度支出数据：{MonthlyExpenseData.Count}条");
+            Debug.WriteLine($"图表数据加载完成，月度车票数据：{MonthlyTicketData.Count}条，月度支出数据：{MonthlyExpenseData.Count}条");
         }
 
         /// <summary>
@@ -1118,7 +1119,7 @@ namespace TA_WPF.ViewModels
             MonthlyTicketData.Clear();
 
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"开始加载月度车票数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+            Debug.WriteLine($"开始加载月度车票数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
 
             // 只在本周、本月、本年、自定义时间范围显示车票使用趋势
             if (SelectedTimeRange == "今日")
@@ -1135,7 +1136,7 @@ namespace TA_WPF.ViewModels
                     ((LineSeries)MonthlyTicketSeries[0]).Title = "当前";
                     ((LineSeries)MonthlyTicketSeries[1]).Title = "对比";
                 }
-                System.Diagnostics.Debug.WriteLine($"车票使用趋势：今日时间范围下不显示图表");
+                Debug.WriteLine($"车票使用趋势：今日时间范围下不显示图表");
                 return;
             }
 
@@ -1178,7 +1179,7 @@ namespace TA_WPF.ViewModels
                     endDate = EndDate;
 
                     // 记录调试信息
-                    System.Diagnostics.Debug.WriteLine($"自定义时间范围：{startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}");
+                    Debug.WriteLine($"自定义时间范围：{startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}");
 
                     // 计算时间跨度
                     TimeSpan span = endDate - startDate;
@@ -1320,7 +1321,7 @@ namespace TA_WPF.ViewModels
                 // 记录调试信息
                 if (count > 0 || comparisonCount > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine($"时间段 {periodStart:yyyy-MM-dd} 至 {periodEnd:yyyy-MM-dd}: 当前={count}, 对比={comparisonCount}");
+                    Debug.WriteLine($"时间段 {periodStart:yyyy-MM-dd} 至 {periodEnd:yyyy-MM-dd}: 当前={count}, 对比={comparisonCount}");
                 }
 
                 // 上一时间段
@@ -1356,7 +1357,7 @@ namespace TA_WPF.ViewModels
             {
                 // 对于自定义时间范围，无论跨越多少年份，都使用单一折线图显示每年车票总量
                 UpdateMultiYearTicketSeries(tickets);
-                System.Diagnostics.Debug.WriteLine($"自定义时间范围：使用年份折线图显示，范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}");
+                Debug.WriteLine($"自定义时间范围：使用年份折线图显示，范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}");
             }
             else
             {
@@ -1448,7 +1449,7 @@ namespace TA_WPF.ViewModels
             }
 
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"更新年份车票趋势图，时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，年份范围：{StartDate.Year} 到 {EndDate.Year}");
+            Debug.WriteLine($"更新年份车票趋势图，时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，年份范围：{StartDate.Year} 到 {EndDate.Year}");
 
             // 横坐标表示年份
             var yearLabels = years.OrderBy(y => y).Select(y => y.ToString()).ToList();
@@ -1507,7 +1508,7 @@ namespace TA_WPF.ViewModels
 
                 yearlyValues.Add(count);
 
-                System.Diagnostics.Debug.WriteLine($"年份：{year}，时间范围：{startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}，车票数量：{count}");
+                Debug.WriteLine($"年份：{year}，时间范围：{startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}，车票数量：{count}");
             }
 
             // 创建单一折线图
@@ -1529,7 +1530,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(MonthlyTicketLabels));
             OnPropertyChanged(nameof(MonthlyTicketSeries));
 
-            System.Diagnostics.Debug.WriteLine($"车票使用趋势图表更新完成，用户设置的时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，横坐标年份数量：{yearLabels.Count}");
+            Debug.WriteLine($"车票使用趋势图表更新完成，用户设置的时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，横坐标年份数量：{yearLabels.Count}");
         }
 
         /// <summary>
@@ -1643,11 +1644,11 @@ namespace TA_WPF.ViewModels
             MonthlyExpenseData.Clear();
 
             // 记录调试信息
-            System.Diagnostics.Debug.WriteLine($"开始加载月度支出数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+            Debug.WriteLine($"开始加载月度支出数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
 
             // 检测是否有数据
             bool hasData = tickets != null && tickets.Any(t => t.Money > 0);
-            System.Diagnostics.Debug.WriteLine($"费用支出分析：总共有 {tickets?.Count ?? 0} 条车票数据，其中有费用的车票数量：{tickets?.Count(t => t.Money > 0) ?? 0}");
+            Debug.WriteLine($"费用支出分析：总共有 {tickets?.Count ?? 0} 条车票数据，其中有费用的车票数量：{tickets?.Count(t => t.Money > 0) ?? 0}");
 
             // 只在本周、本月、本年、自定义时间范围显示支出趋势
             if (SelectedTimeRange == "今日")
@@ -1659,7 +1660,7 @@ namespace TA_WPF.ViewModels
                     ((ColumnSeries)ExpenseSeries[0]).Values = new ChartValues<double> { 0 };
                     ExpenseLabels = new[] { "" };
                 }
-                System.Diagnostics.Debug.WriteLine($"费用支出分析：今日时间范围下不显示图表");
+                Debug.WriteLine($"费用支出分析：今日时间范围下不显示图表");
                 return;
             }
 
@@ -1742,7 +1743,7 @@ namespace TA_WPF.ViewModels
             // 如果没有数据，设置HasExpenseData为false
             if (!hasData)
             {
-                System.Diagnostics.Debug.WriteLine($"费用支出分析：没有任何费用数据");
+                Debug.WriteLine($"费用支出分析：没有任何费用数据");
                 // 清空集合，确保HasExpenseData返回false
                 MonthlyExpenseData.Clear();
                 OnPropertyChanged(nameof(HasExpenseData));
@@ -1754,12 +1755,12 @@ namespace TA_WPF.ViewModels
                                               t.DepartDate.Value >= startDate &&
                                               t.DepartDate.Value <= endDate).ToList();
 
-            System.Diagnostics.Debug.WriteLine($"费用支出分析：当前时间范围内有 {ticketsInRange.Count} 条数据");
-            System.Diagnostics.Debug.WriteLine($"费用支出分析：时间范围 {startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}");
+            Debug.WriteLine($"费用支出分析：当前时间范围内有 {ticketsInRange.Count} 条数据");
+            Debug.WriteLine($"费用支出分析：时间范围 {startDate:yyyy-MM-dd} 到 {endDate:yyyy-MM-dd}");
 
             if (!ticketsInRange.Any())
             {
-                System.Diagnostics.Debug.WriteLine($"费用支出分析：当前时间范围内没有数据");
+                Debug.WriteLine($"费用支出分析：当前时间范围内没有数据");
                 // 清空集合，确保HasExpenseData返回false
                 MonthlyExpenseData.Clear();
                 OnPropertyChanged(nameof(HasExpenseData));
@@ -1785,12 +1786,12 @@ namespace TA_WPF.ViewModels
                 decimal expense = ticketsInPeriod.Where(t => t.Money.HasValue).Sum(t => t.Money.Value);
                 decimal avgPrice = count > 0 ? expense / count : 0;
 
-                System.Diagnostics.Debug.WriteLine($"费用支出分析：时间段 {periodStart:yyyy-MM-dd} 到 {periodEnd:yyyy-MM-dd}，有 {count} 条数据，总支出 {expense}，平均票价 {avgPrice}");
+                Debug.WriteLine($"费用支出分析：时间段 {periodStart:yyyy-MM-dd} 到 {periodEnd:yyyy-MM-dd}，有 {count} 条数据，总支出 {expense}，平均票价 {avgPrice}");
 
                 // 即使没有数据，也添加一个记录，确保图表显示完整
                 if (count == 0)
                 {
-                    System.Diagnostics.Debug.WriteLine($"费用支出分析：时间段 {periodStart:yyyy-MM-dd} 到 {periodEnd:yyyy-MM-dd} 没有数据，添加空记录");
+                    Debug.WriteLine($"费用支出分析：时间段 {periodStart:yyyy-MM-dd} 到 {periodEnd:yyyy-MM-dd} 没有数据，添加空记录");
                 }
 
                 // 计算同比数据
@@ -1875,7 +1876,7 @@ namespace TA_WPF.ViewModels
             // 更新图表
             UpdateExpenseChart();
 
-            System.Diagnostics.Debug.WriteLine($"费用支出分析：共生成 {MonthlyExpenseData.Count} 条数据");
+            Debug.WriteLine($"费用支出分析：共生成 {MonthlyExpenseData.Count} 条数据");
 
             OnPropertyChanged(nameof(HasExpenseData));
         }
@@ -1885,11 +1886,11 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void UpdateExpenseChart()
         {
-            System.Diagnostics.Debug.WriteLine($"开始更新支出图表，当前趋势指标：{SelectedTrendIndicator}");
+            Debug.WriteLine($"开始更新支出图表，当前趋势指标：{SelectedTrendIndicator}");
 
             if (MonthlyExpenseData == null || !MonthlyExpenseData.Any())
             {
-                System.Diagnostics.Debug.WriteLine($"支出图表更新：没有月度支出数据，清空图表");
+                Debug.WriteLine($"支出图表更新：没有月度支出数据，清空图表");
                 ExpenseSeries = new SeriesCollection();
                 ExpenseLabels = new string[0];
                 OnPropertyChanged(nameof(ExpenseSeries));
@@ -1897,7 +1898,7 @@ namespace TA_WPF.ViewModels
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"支出图表更新：有 {MonthlyExpenseData.Count} 条月度支出数据");
+            Debug.WriteLine($"支出图表更新：有 {MonthlyExpenseData.Count} 条月度支出数据");
 
             var orderedData = MonthlyExpenseData.ToList();
 
@@ -1910,13 +1911,13 @@ namespace TA_WPF.ViewModels
                     if (orderedData[0].Month.Length >= 7 && orderedData[0].Month.Contains("/"))
                     {
                         // 可能是yyyy/MM格式
-                        System.Diagnostics.Debug.WriteLine($"支出图表更新：使用yyyy/MM格式排序");
+                        Debug.WriteLine($"支出图表更新：使用yyyy/MM格式排序");
                         orderedData = orderedData.OrderBy(d => d.Month).ToList();
                     }
                     else
                     {
                         // 可能是MM/dd格式
-                        System.Diagnostics.Debug.WriteLine($"支出图表更新：使用MM/dd格式排序");
+                        Debug.WriteLine($"支出图表更新：使用MM/dd格式排序");
                         orderedData = orderedData.OrderBy(d =>
                         {
                             var parts = d.Month.Split('/');
@@ -1931,7 +1932,7 @@ namespace TA_WPF.ViewModels
                 else if (orderedData.All(d => d.Month.Contains(":")))
                 {
                     // 可能是HH:00格式
-                    System.Diagnostics.Debug.WriteLine($"支出图表更新：使用HH:00格式排序");
+                    Debug.WriteLine($"支出图表更新：使用HH:00格式排序");
                     orderedData = orderedData.OrderBy(d =>
                     {
                         var parts = d.Month.Split(':');
@@ -1945,14 +1946,14 @@ namespace TA_WPF.ViewModels
                 else
                 {
                     // 其他格式，直接按字符串排序
-                    System.Diagnostics.Debug.WriteLine($"支出图表更新：使用默认字符串排序");
+                    Debug.WriteLine($"支出图表更新：使用默认字符串排序");
                     orderedData = orderedData.OrderBy(d => d.Month).ToList();
                 }
             }
             catch (Exception ex)
             {
                 // 如果排序出错，使用原始顺序
-                System.Diagnostics.Debug.WriteLine($"排序费用数据时出错，使用原始顺序: {ex.Message}");
+                Debug.WriteLine($"排序费用数据时出错，使用原始顺序: {ex.Message}");
             }
 
             ExpenseLabels = orderedData.Select(d => d.Month).ToArray();
@@ -2048,7 +2049,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(ExpenseLabels));
             OnPropertyChanged(nameof(ExpenseYFormatter));
 
-            System.Diagnostics.Debug.WriteLine($"支出图表更新完成，X轴标签数量：{ExpenseLabels.Length}，数据系列数量：{ExpenseSeries.Count}");
+            Debug.WriteLine($"支出图表更新完成，X轴标签数量：{ExpenseLabels.Length}，数据系列数量：{ExpenseSeries.Count}");
         }
 
         /// <summary>
@@ -2103,7 +2104,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载热门路线数据时出错: {ex.Message}");
+                Debug.WriteLine($"加载热门路线数据时出错: {ex.Message}");
 
                 // 出错时添加提示信息
                 TopRouteData.Add(new RouteData
@@ -2168,7 +2169,7 @@ namespace TA_WPF.ViewModels
                 IsLoading = true;
 
                 // 记录调试信息
-                System.Diagnostics.Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+                Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
 
                 // 强制更新UI上的时间范围属性，确保图表使用最新的时间范围
                 OnPropertyChanged(nameof(StartDate));
@@ -2184,18 +2185,18 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(ShowMonthlyTicketChart));
                     OnPropertyChanged(nameof(MonthlyTicketChartMessage));
 
-                    System.Diagnostics.Debug.WriteLine($"自定义时间范围刷新，时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，确保图表可见");
+                    Debug.WriteLine($"自定义时间范围刷新，时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，确保图表可见");
                 }
 
                 // 调用加载仪表盘数据方法
                 await LoadDashboardDataAsync();
 
                 // 记录调试信息
-                System.Diagnostics.Debug.WriteLine($"数据刷新完成，总车票数：{TotalTickets}，当前范围车票数：{CurrentRangeTickets}");
+                Debug.WriteLine($"数据刷新完成，总车票数：{TotalTickets}，当前范围车票数：{CurrentRangeTickets}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"刷新数据时出错: {ex.Message}");
+                Debug.WriteLine($"刷新数据时出错: {ex.Message}");
                 // 可以在这里添加错误提示逻辑
             }
             finally
@@ -2250,7 +2251,7 @@ namespace TA_WPF.ViewModels
                 Window mainWindow = Application.Current.MainWindow;
                 if (mainWindow == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("无法获取主窗口引用");
+                    Debug.WriteLine("无法获取主窗口引用");
                     return;
                 }
 
@@ -2273,7 +2274,7 @@ namespace TA_WPF.ViewModels
                     _savedWidth = mainWindow.RestoreBounds.Width;
                     _savedHeight = mainWindow.RestoreBounds.Height;
 
-                    System.Diagnostics.Debug.WriteLine($"进入全屏模式：保存之前的窗口状态 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
+                    Debug.WriteLine($"进入全屏模式：保存之前的窗口状态 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
 
                     // 设置为全屏模式（无标题栏，最大化）
                     mainWindow.WindowStyle = WindowStyle.None; // 无边框
@@ -2291,12 +2292,12 @@ namespace TA_WPF.ViewModels
                     mainWindow.Width = screenWidth;
                     mainWindow.Height = screenHeight;
 
-                    System.Diagnostics.Debug.WriteLine($"设置窗口为完全全屏模式：宽度={screenWidth}, 高度={screenHeight}");
+                    Debug.WriteLine($"设置窗口为完全全屏模式：宽度={screenWidth}, 高度={screenHeight}");
                 }
                 else
                 {
                     // 退出全屏模式
-                    System.Diagnostics.Debug.WriteLine($"退出全屏模式：恢复窗口状态为 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
+                    Debug.WriteLine($"退出全屏模式：恢复窗口状态为 {PreviousWindowState}，位置：({_savedLeft}, {_savedTop})，大小：{_savedWidth}x{_savedHeight}");
 
                     // 恢复窗口样式和状态
                     mainWindow.WindowStyle = WindowStyle.SingleBorderWindow; // 显示标题栏
@@ -2308,7 +2309,7 @@ namespace TA_WPF.ViewModels
                     {
                         // 如果之前是最大化状态，直接设置为最大化，避免闪烁
                         mainWindow.WindowState = WindowState.Maximized;
-                        System.Diagnostics.Debug.WriteLine("直接恢复到最大化状态，避免闪烁");
+                        Debug.WriteLine("直接恢复到最大化状态，避免闪烁");
                     }
                     else
                     {
@@ -2325,11 +2326,11 @@ namespace TA_WPF.ViewModels
                                 mainWindow.Width = _savedWidth;
                                 mainWindow.Height = _savedHeight;
 
-                                System.Diagnostics.Debug.WriteLine($"完成恢复窗口位置和大小：({mainWindow.Left}, {mainWindow.Top}), {mainWindow.Width}x{mainWindow.Height}, 状态: {mainWindow.WindowState}");
+                                Debug.WriteLine($"完成恢复窗口位置和大小：({mainWindow.Left}, {mainWindow.Top}), {mainWindow.Width}x{mainWindow.Height}, 状态: {mainWindow.WindowState}");
                             }
                             catch (Exception ex)
                             {
-                                System.Diagnostics.Debug.WriteLine($"恢复窗口位置和大小时出错: {ex.Message}");
+                                Debug.WriteLine($"恢复窗口位置和大小时出错: {ex.Message}");
                             }
                         }), DispatcherPriority.Render);
                     }
@@ -2337,8 +2338,8 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ToggleFullScreen异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"ToggleFullScreen异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 

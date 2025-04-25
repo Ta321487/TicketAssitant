@@ -31,6 +31,9 @@ namespace TA_WPF.Views
 
             // 添加图片变更监听
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+
+            // 订阅关闭请求事件
+            _viewModel.RequestCloseAction += ViewModel_RequestCloseAction;
         }
 
         private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -171,6 +174,16 @@ namespace TA_WPF.Views
         {
             _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
             _viewModel.SetWindowClosed();
+            // 取消订阅关闭请求事件
+            _viewModel.RequestCloseAction -= ViewModel_RequestCloseAction;
+        }
+
+        /// <summary>
+        /// 处理ViewModel请求关闭窗口的事件
+        /// </summary>
+        private void ViewModel_RequestCloseAction()
+        {
+            this.Close();
         }
 
         /// <summary>

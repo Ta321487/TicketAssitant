@@ -103,7 +103,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
 
                 // 手动刷新命令状态
-                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+                CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
@@ -270,7 +270,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(HasNoData));
 
                 // 手动刷新命令状态
-                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+                CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
@@ -1096,22 +1096,22 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 首页命令
         /// </summary>
-        public System.Windows.Input.ICommand FirstPageCommand => _paginationViewModel.FirstPageCommand;
+        public ICommand FirstPageCommand => _paginationViewModel.FirstPageCommand;
 
         /// <summary>
         /// 上一页命令
         /// </summary>
-        public System.Windows.Input.ICommand PreviousPageCommand => _paginationViewModel.PreviousPageCommand;
+        public ICommand PreviousPageCommand => _paginationViewModel.PreviousPageCommand;
 
         /// <summary>
         /// 下一页命令
         /// </summary>
-        public System.Windows.Input.ICommand NextPageCommand => _paginationViewModel.NextPageCommand;
+        public ICommand NextPageCommand => _paginationViewModel.NextPageCommand;
 
         /// <summary>
         /// 末页命令
         /// </summary>
-        public System.Windows.Input.ICommand LastPageCommand => _paginationViewModel.LastPageCommand;
+        public ICommand LastPageCommand => _paginationViewModel.LastPageCommand;
 
         /// <summary>
         /// 切换查询面板命令

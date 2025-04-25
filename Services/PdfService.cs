@@ -39,7 +39,7 @@ namespace TA_WPF.Services
                     throw new FileNotFoundException($"找不到文件: {filePath}");
                 }
 
-                var content = new System.Text.StringBuilder();
+                var content = new StringBuilder();
 
                 using (PdfDocument document = PdfDocument.Open(filePath))
                 {

@@ -9,6 +9,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TA_WPF.Models;
+using TA_WPF.Views;
 using Bitmap = System.Drawing.Bitmap;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
@@ -943,11 +944,11 @@ namespace TA_WPF.ViewModels
                     if (string.IsNullOrWhiteSpace(fileName))
                     {
                         // 使用MaterialDesign风格的对话框提示用户输入文件名
-                        var result = Views.MessageDialog.Show(
+                        var result = MessageDialog.Show(
                             "请输入文件名！",
                             "提示",
-                            Views.MessageType.Warning,
-                            Views.MessageButtons.Ok,
+                            MessageType.Warning,
+                            MessageButtons.Ok,
                             window);
                         return;
                     }
@@ -983,11 +984,11 @@ namespace TA_WPF.ViewModels
                     }
 
                     // 使用MaterialDesign风格的对话框显示成功消息
-                    Views.MessageDialog.Show(
+                    MessageDialog.Show(
                         "图片导出成功！",
                         "提示",
-                        Views.MessageType.Information,
-                        Views.MessageButtons.Ok,
+                        MessageType.Information,
+                        MessageButtons.Ok,
                         window);
                 }
             }
@@ -995,11 +996,11 @@ namespace TA_WPF.ViewModels
             {
                 // 使用MaterialDesign风格的对话框显示错误消息
                 var currentWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
-                Views.MessageDialog.Show(
+                MessageDialog.Show(
                     $"导出图片时发生错误：{ex.Message}",
                     "错误",
-                    Views.MessageType.Error,
-                    Views.MessageButtons.Ok,
+                    MessageType.Error,
+                    MessageButtons.Ok,
                     currentWindow);
             }
         }
