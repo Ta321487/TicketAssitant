@@ -20,6 +20,7 @@
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="Microsoft YaHei"
         Closed="Window_Closed"
+        Closing="Window_Closing"
         materialDesign:ThemeAssist.Theme="{Binding MainViewModel.IsDarkMode, Converter={StaticResource BooleanToThemeConverter}}">
     
     <Window.Resources>
@@ -190,69 +191,25 @@
                 </StackPanel>
             </Button>
             
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                <TextBlock Text="Python: " VerticalAlignment="Center" Margin="0,0,4,0" />
-                <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1" Margin="0,0,12,0">
-                    <Ellipse.Style>
-                        <Style TargetType="Ellipse">
-                            <Setter Property="Fill" Value="Red" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsPythonInstalled}" Value="True">
-                                    <Setter Property="Fill" Value="Green" />
-                                </DataTrigger>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IsLoading}" Value="True"/>
-                                        <Condition Binding="{Binding LoadingMessage, Converter={StaticResource StringContainsConverter}, ConverterParameter='Python'}" Value="True"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter Property="Fill" Value="Orange" />
-                                </MultiDataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Ellipse.Style>
-                </Ellipse>
-                
-                <TextBlock Text="cnocr: " VerticalAlignment="Center" Margin="0,0,4,0" />
-                <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1" Margin="0,0,12,0">
-                    <Ellipse.Style>
-                        <Style TargetType="Ellipse">
-                            <Setter Property="Fill" Value="Red" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsCnocrInstalled}" Value="True">
-                                    <Setter Property="Fill" Value="Green" />
-                                </DataTrigger>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IsLoading}" Value="True"/>
-                                        <Condition Binding="{Binding LoadingMessage, Converter={StaticResource StringContainsConverter}, ConverterParameter='CNOCR'}" Value="True"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter Property="Fill" Value="Orange" />
-                                </MultiDataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Ellipse.Style>
-                </Ellipse>
-                
-                <TextBlock Text="OCR模型: " VerticalAlignment="Center" Margin="0,0,4,0" />
-                <Ellipse Width="16" Height="16" Stroke="Black" StrokeThickness="1">
-                    <Ellipse.Style>
-                        <Style TargetType="Ellipse">
-                            <Setter Property="Fill" Value="Red" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsOcrModelInstalled}" Value="True">
-                                    <Setter Property="Fill" Value="Green" />
-                                </DataTrigger>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IsLoading}" Value="True"/>
-                                        <Condition Binding="{Binding LoadingMessage, Converter={StaticResource StringContainsConverter}, ConverterParameter='OCR模型'}" Value="True"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter Property="Fill" Value="Orange" />
-                                </MultiDataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Ellipse.Style>
-                </Ellipse>
+            <!-- 状态指示区 -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="16,0,0,0">
+                <!-- Python 状态 -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,0" ToolTip="Python安装状态">
+                    <TextBlock Text="Python: " VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <Ellipse Width="16" Height="16" Fill="{Binding IsPythonInstalled, Converter={StaticResource BoolToColorConverter}}"/>
+                </StackPanel>
+
+                <!-- cnocr 状态 -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,0" ToolTip="CNOCR安装状态">
+                    <TextBlock Text="cnocr: " VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <Ellipse Width="16" Height="16" Fill="{Binding IsCnocrInstalled, Converter={StaticResource BoolToColorConverter}}"/>
+                </StackPanel>
+
+                <!-- OCR模型状态 -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,0" ToolTip="OCR模型安装状态">
+                    <TextBlock Text="OCR模型: " VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <Ellipse Width="16" Height="16" Fill="{Binding IsOcrModelInstalled, Converter={StaticResource BoolToColorConverter}}"/>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
         
@@ -485,6 +442,21 @@
                         <TextBlock Text="{Binding LoadingMessage}" 
                                  Foreground="White" 
                                  FontSize="{Binding MainViewModel.FontSize}"
+                                 HorizontalAlignment="Center"
+                                 Margin="0,0,0,16" />
+                        <!-- 添加进度条 -->
+                        <ProgressBar x:Name="OcrProgressBar" 
+                                    Width="200" 
+                                    Height="4"
+                                    Value="{Binding Progress}" 
+                                    Maximum="100"
+                                    Style="{StaticResource MaterialDesignLinearProgressBar}"
+                                    Foreground="{DynamicResource GlobalAccentBrush}"
+                                    Margin="0,0,0,8" />
+                        <!-- 进度文本 -->
+                        <TextBlock Text="{Binding Progress, StringFormat={}{0}%}" 
+                                 Foreground="White" 
+                                 FontSize="{Binding MainViewModel.FontSize, Converter={StaticResource FontSizeSmallConverter}}"
                                  HorizontalAlignment="Center" />
                     </StackPanel>
                 </Grid>
@@ -1057,7 +1029,7 @@
                                           Width="60" 
                                           Style="{StaticResource FormComboBoxStyle}"
                                           Margin="8,0,0,0" 
-                                          IsEnabled="{Binding IsSeatPositionEnabled}" 
+                                          IsEnabled="{Binding IsSeatPositionEnabled}"
                                           Visibility="{Binding IsSeatPositionVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                                           materialDesign:HintAssist.Hint="位置">
                                     <ComboBox.ItemContainerStyle>

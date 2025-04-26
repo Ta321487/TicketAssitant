@@ -60,5 +60,26 @@ namespace TA_WPF.Utils
             bool? result = dialog.ShowDialog();
             return new InputDialogResult(result == true, dialog.ResponseText);
         }
+
+        public static MessageBoxResult ShowConfirmation(string message, string title = "确认", MessageBoxButton buttons = MessageBoxButton.YesNo)
+        {
+            bool? result = MessageDialog.Show(message, title, MessageType.Question, 
+                buttons == MessageBoxButton.OK ? MessageButtons.Ok : 
+                buttons == MessageBoxButton.YesNo ? MessageButtons.YesNo : 
+                MessageButtons.YesNoCancel);
+            
+            if (result == true)
+            {
+                return buttons == MessageBoxButton.OK ? MessageBoxResult.OK : MessageBoxResult.Yes;
+            }
+            else if (result == false)
+            {
+                return MessageBoxResult.No;
+            }
+            else
+            {
+                return MessageBoxResult.Cancel;
+            }
+        }
     }
 }

@@ -186,45 +186,34 @@ namespace TA_WPF.Services
                 // 更新环境就绪状态
                 IsEnvironmentReady = IsPythonInstalled && IsCnocrInstalled;
 
-                // 更新状态消息
-                if (IsEnvironmentReady)
+                // 仅在窗口未关闭时显示消息框
+                if (!_isWindowClosed)
                 {
-                    StatusMessage = "OCR环境已准备就绪。";
-                    
-                    // 如果OCR模型未安装，添加提示
-                    if (!IsOcrModelInstalled)
+                    // 在UI线程显示环境检测结果
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
-                        StatusMessage += "\n注意: OCR模型未检测到，首次识别可能会自动下载模型";
-                    }
-                    
-                    // 仅在窗口未关闭时显示消息框
-                    if (!_isWindowClosed)
-                    {
-                        // 在UI线程显示环境检测结果 - 简化消息
-                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        if (IsEnvironmentReady)
                         {
-                            MessageBoxHelper.ShowInfo("环境检测完成，可以开始导入图片了。");
-                        });
-                    }
-                }
-                else
-                {
-                    string errorMessage = "OCR环境未准备好:";
-                    if (!IsPythonInstalled) errorMessage += "\n- Python未安装";
-                    if (!IsCnocrInstalled) errorMessage += "\n- CNOCR未安装";
-                    if (!IsOcrModelInstalled) errorMessage += "\n- OCR模型未下载";
-                    
-                    StatusMessage = errorMessage;
-                    
-                    // 仅在窗口未关闭时显示消息框
-                    if (!_isWindowClosed)
-                    {
-                        // 在UI线程显示环境检测结果 - 简化错误消息
-                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                            if (!IsOcrModelInstalled)
+                            {
+                                // 环境就绪但模型未安装，提示用户首次识别会自动下载模型
+                                MessageBoxHelper.ShowInfo("环境检测完成，可以开始导入图片了。\n\n注意：OCR模型未检测到，首次识别时会自动下载模型文件，请耐心等待。");
+                            }
+                            else
+                            {
+                                // 环境完全就绪
+                                MessageBoxHelper.ShowInfo("环境检测完成，可以开始导入图片了。");
+                            }
+                        }
+                        else
                         {
-                            MessageBoxHelper.ShowWarning("环境检测未通过，请先安装所需环境再使用OCR识别功能。");
-                        });
-                    }
+                            string errorMessage = "OCR环境未准备好:";
+                            if (!IsPythonInstalled) errorMessage += "\n- Python未安装";
+                            if (!IsCnocrInstalled) errorMessage += "\n- CNOCR未安装";
+                            
+                            MessageBoxHelper.ShowWarning($"{errorMessage}\n\n请先安装所需环境再使用OCR识别功能。");
+                        }
+                    });
                 }
                 
                 // 触发环境检测完成事件
@@ -232,7 +221,6 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                StatusMessage = $"检查环境时出错：{ex.Message}";
                 IsEnvironmentReady = false;
                 
                 // 在UI线程显示错误
@@ -311,6 +299,23 @@ namespace TA_WPF.Services
         public void ResetWindowClosed()
         {
             _isWindowClosed = false;
+        }
+
+        /// <summary>
+        /// 更新OCR模型安装状态
+        /// </summary>
+        /// <returns>检查完成的任务</returns>
+        public async Task UpdateOcrModelStatus()
+        {
+            try
+            {
+                // 检查OCR模型是否安装
+                IsOcrModelInstalled = await _pythonService.CheckOcrModelInstalled();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"检查OCR模型时出错：{ex.Message}";
+            }
         }
 
         /// <summary>

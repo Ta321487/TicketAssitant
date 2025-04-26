@@ -40,6 +40,10 @@ namespace TA_WPF.ViewModels
         private bool _showABCPayment;
         private bool _showCCBPayment;
         private bool _showICBCPayment;
+        private bool _showCMBPayment;
+        private bool _showPSBCPayment;
+        private bool _showBOCPayment;
+        private bool _showCOMMPayment;
 
         // 设计时构造函数
         public TicketPreviewViewModel() : this(new TrainRideInfo
@@ -731,6 +735,10 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(PaymentABCMargin));
                     OnPropertyChanged(nameof(PaymentCCBMargin));
                     OnPropertyChanged(nameof(PaymentICBCMargin));
+                    OnPropertyChanged(nameof(PaymentCMBMargin));
+                    OnPropertyChanged(nameof(PaymentPSBCMargin));
+                    OnPropertyChanged(nameof(PaymentBOCMargin));
+                    OnPropertyChanged(nameof(PaymentCOMMMargin));
 
                     // 强制刷新UI，确保边框样式正确应用
                     Application.Current.Dispatcher.InvokeAsync(() =>
@@ -762,6 +770,10 @@ namespace TA_WPF.ViewModels
         public string ABCText => "农";
         public string CCBText => "建";
         public string ICBCText => "工";
+        public string CMBText => "招";
+        public string PSBCText => "邮";
+        public string BOCText => "中";
+        public string COMMText => "交";
 
         // 支付渠道显示属性
         public bool ShowAlipayPayment
@@ -825,6 +837,58 @@ namespace TA_WPF.ViewModels
                 {
                     _showICBCPayment = value;
                     OnPropertyChanged(nameof(ShowICBCPayment));
+                }
+            }
+        }
+
+        public bool ShowCMBPayment
+        {
+            get => _showCMBPayment;
+            set
+            {
+                if (_showCMBPayment != value)
+                {
+                    _showCMBPayment = value;
+                    OnPropertyChanged(nameof(ShowCMBPayment));
+                }
+            }
+        }
+
+        public bool ShowPSBCPayment
+        {
+            get => _showPSBCPayment;
+            set
+            {
+                if (_showPSBCPayment != value)
+                {
+                    _showPSBCPayment = value;
+                    OnPropertyChanged(nameof(ShowPSBCPayment));
+                }
+            }
+        }
+
+        public bool ShowBOCPayment
+        {
+            get => _showBOCPayment;
+            set
+            {
+                if (_showBOCPayment != value)
+                {
+                    _showBOCPayment = value;
+                    OnPropertyChanged(nameof(ShowBOCPayment));
+                }
+            }
+        }
+
+        public bool ShowCOMMPayment
+        {
+            get => _showCOMMPayment;
+            set
+            {
+                if (_showCOMMPayment != value)
+                {
+                    _showCOMMPayment = value;
+                    OnPropertyChanged(nameof(ShowCOMMPayment));
                 }
             }
         }
@@ -1142,6 +1206,10 @@ namespace TA_WPF.ViewModels
                 { "PaymentABCMargin", new Thickness(385, 185, 0, 0) },    // 农业银行，在惠字旁边
                 { "PaymentCCBMargin", new Thickness(385, 185, 0, 0) },    // 建设银行，在惠字旁边
                 { "PaymentICBCMargin", new Thickness(385, 185, 0, 0) },   // 工商银行，在惠字旁边
+                { "PaymentCMBMargin", new Thickness(385, 185, 0, 0) },    // 招商银行，在惠字旁边
+                { "PaymentPSBCMargin", new Thickness(385, 185, 0, 0) },   // 邮储银行，在惠字旁边
+                { "PaymentBOCMargin", new Thickness(385, 185, 0, 0) },    // 中国银行，在惠字旁边
+                { "PaymentCOMMMargin", new Thickness(385, 185, 0, 0) },   // 交通银行，在惠字旁边
                 
                 // 票种信息位置 - 带框
                 { "TicketTypeStudentBoxedMargin", new Thickness(310, 185, 0, 0) },// 学生票
@@ -1154,6 +1222,10 @@ namespace TA_WPF.ViewModels
                 { "PaymentABCBoxedMargin", new Thickness(415, 185, 0, 0) },    // 农业银行，在惠字旁边
                 { "PaymentCCBBoxedMargin", new Thickness(415, 185, 0, 0) },    // 建设银行，在惠字旁边
                 { "PaymentICBCBoxedMargin", new Thickness(415, 185, 0, 0) },   // 工商银行，在惠字旁边
+                { "PaymentCMBBoxedMargin", new Thickness(415, 185, 0, 0) },    // 招商银行，在惠字旁边
+                { "PaymentPSBCBoxedMargin", new Thickness(415, 185, 0, 0) },   // 邮储银行，在惠字旁边
+                { "PaymentBOCBoxedMargin", new Thickness(415, 185, 0, 0) },    // 中国银行，在惠字旁边
+                { "PaymentCOMMBoxedMargin", new Thickness(415, 185, 0, 0) },   // 交通银行，在惠字旁边
             };
 
             // 红色车票布局参数 - 部分参数与蓝色不同
@@ -1210,12 +1282,20 @@ namespace TA_WPF.ViewModels
             _redTicketLayout["PaymentABCMargin"] = new Thickness(385, 185, 0, 0);
             _redTicketLayout["PaymentCCBMargin"] = new Thickness(385, 185, 0, 0);
             _redTicketLayout["PaymentICBCMargin"] = new Thickness(385, 185, 0, 0);
+            _redTicketLayout["PaymentCMBMargin"] = new Thickness(385, 185, 0, 0);
+            _redTicketLayout["PaymentPSBCMargin"] = new Thickness(385, 185, 0, 0);
+            _redTicketLayout["PaymentBOCMargin"] = new Thickness(385, 185, 0, 0);
+            _redTicketLayout["PaymentCOMMMargin"] = new Thickness(385, 185, 0, 0);
 
             _redTicketLayout["PaymentAlipayBoxedMargin"] = new Thickness(345, 185, 0, 0);
             _redTicketLayout["PaymentWeChatBoxedMargin"] = new Thickness(345, 185, 0, 0);
             _redTicketLayout["PaymentABCBoxedMargin"] = new Thickness(415, 185, 0, 0);
             _redTicketLayout["PaymentCCBBoxedMargin"] = new Thickness(415, 185, 0, 0);
             _redTicketLayout["PaymentICBCBoxedMargin"] = new Thickness(415, 185, 0, 0);
+            _redTicketLayout["PaymentCMBBoxedMargin"] = new Thickness(415, 185, 0, 0);
+            _redTicketLayout["PaymentPSBCBoxedMargin"] = new Thickness(415, 185, 0, 0);
+            _redTicketLayout["PaymentBOCBoxedMargin"] = new Thickness(415, 185, 0, 0);
+            _redTicketLayout["PaymentCOMMBoxedMargin"] = new Thickness(415, 185, 0, 0);
         }
 
         // 更新所有布局相关属性
@@ -1255,14 +1335,24 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(HintBoxMargin));
             OnPropertyChanged(nameof(QRCodeMargin));
 
-            // 票种信息位置
+            // 更新票种位置
             OnPropertyChanged(nameof(TicketTypeStudentMargin));
             OnPropertyChanged(nameof(TicketTypeDiscountMargin));
             OnPropertyChanged(nameof(TicketTypeOnlineMargin));
             OnPropertyChanged(nameof(TicketTypeChildMargin));
             OnPropertyChanged(nameof(TicketTypeBoxStyle));
 
-            // 然后触发使用转换器的属性的更新通知
+            // 更新支付渠道位置
+            OnPropertyChanged(nameof(PaymentAlipayMargin));
+            OnPropertyChanged(nameof(PaymentWeChatMargin));
+            OnPropertyChanged(nameof(PaymentABCMargin));
+            OnPropertyChanged(nameof(PaymentCCBMargin));
+            OnPropertyChanged(nameof(PaymentICBCMargin));
+            OnPropertyChanged(nameof(PaymentCMBMargin));
+            OnPropertyChanged(nameof(PaymentPSBCMargin));
+            OnPropertyChanged(nameof(PaymentBOCMargin));
+            OnPropertyChanged(nameof(PaymentCOMMMargin));
+
             // 这些属性在XAML中绑定了MultiBinding，需要特别触发
             OnPropertyChanged(nameof(DepartStationWithSpacing));
             OnPropertyChanged(nameof(ArriveStationWithSpacing));
@@ -1273,13 +1363,6 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(DepartStationPinyinPosition));
             OnPropertyChanged(nameof(ArriveStationPinyinPosition));
             OnPropertyChanged(nameof(TrainNumberCenterPosition));
-
-            // 支付渠道位置
-            OnPropertyChanged(nameof(PaymentAlipayMargin));
-            OnPropertyChanged(nameof(PaymentWeChatMargin));
-            OnPropertyChanged(nameof(PaymentABCMargin));
-            OnPropertyChanged(nameof(PaymentCCBMargin));
-            OnPropertyChanged(nameof(PaymentICBCMargin));
 
             // 刷新整个视图，确保所有转换器都能重新计算
             Application.Current.Dispatcher.Invoke(() =>
@@ -1441,6 +1524,22 @@ namespace TA_WPF.ViewModels
             ? (Thickness)_currentLayout["PaymentICBCBoxedMargin"]
             : (Thickness)_currentLayout["PaymentICBCMargin"];
 
+        public Thickness PaymentCMBMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["PaymentCMBBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentCMBMargin"];
+
+        public Thickness PaymentPSBCMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["PaymentPSBCBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentPSBCMargin"];
+
+        public Thickness PaymentBOCMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["PaymentBOCBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentBOCMargin"];
+
+        public Thickness PaymentCOMMMargin => ShowBoxedTicketType
+            ? (Thickness)_currentLayout["PaymentCOMMBoxedMargin"]
+            : (Thickness)_currentLayout["PaymentCOMMMargin"];
+
         // 根据原始票种信息初始化票种显示选项并锁定
         private void InitializeTicketTypeOptions()
         {
@@ -1459,6 +1558,10 @@ namespace TA_WPF.ViewModels
                 _showABCPayment = false;
                 _showCCBPayment = false;
                 _showICBCPayment = false;
+                _showCMBPayment = false;
+                _showPSBCPayment = false;
+                _showBOCPayment = false;
+                _showCOMMPayment = false;
 
                 var ticketTypeFlags = _selectedTicket.TicketTypeFlags;
                 var paymentChannelFlags = _selectedTicket.PaymentChannelFlags;
@@ -1516,6 +1619,26 @@ namespace TA_WPF.ViewModels
                     _showICBCPayment = true;
                 }
 
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.CMB) != 0)
+                {
+                    _showCMBPayment = true;
+                }
+
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.PSBC) != 0)
+                {
+                    _showPSBCPayment = true;
+                }
+
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.BOC) != 0)
+                {
+                    _showBOCPayment = true;
+                }
+
+                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.COMM) != 0)
+                {
+                    _showCOMMPayment = true;
+                }
+
                 // 通知UI更新
                 OnPropertyChanged(nameof(ShowStudentTicket));
                 OnPropertyChanged(nameof(ShowDiscountTicket));
@@ -1526,6 +1649,10 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(ShowABCPayment));
                 OnPropertyChanged(nameof(ShowCCBPayment));
                 OnPropertyChanged(nameof(ShowICBCPayment));
+                OnPropertyChanged(nameof(ShowCMBPayment));
+                OnPropertyChanged(nameof(ShowPSBCPayment));
+                OnPropertyChanged(nameof(ShowBOCPayment));
+                OnPropertyChanged(nameof(ShowCOMMPayment));
                 OnPropertyChanged(nameof(IsTicketTypeOptionsLocked));
             }
             else

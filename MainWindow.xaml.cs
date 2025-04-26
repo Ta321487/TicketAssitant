@@ -1,10 +1,13 @@
 using MaterialDesignThemes.Wpf;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using TA_WPF.Services;
 using TA_WPF.Utils;
@@ -66,8 +69,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"MainWindow构造函数异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"MainWindow构造函数异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show($"初始化窗口时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -83,16 +86,16 @@ namespace TA_WPF
                 try
                 {
                     Uri iconUri = new Uri("pack://application:,,,/Assets/Icons/app_icon.ico", UriKind.Absolute);
-                    this.Icon = new System.Windows.Media.Imaging.BitmapImage(iconUri);
+                    this.Icon = new BitmapImage(iconUri);
 
                     // 确保任务栏图标也被设置
-                    System.Windows.Interop.WindowInteropHelper helper = new System.Windows.Interop.WindowInteropHelper(this);
-                    System.Windows.Interop.HwndSource source = System.Windows.Interop.HwndSource.FromHwnd(helper.Handle);
-                    source.AddHook(new System.Windows.Interop.HwndSourceHook(WndProc));
+                    WindowInteropHelper helper = new WindowInteropHelper(this);
+                    HwndSource source = HwndSource.FromHwnd(helper.Handle);
+                    source.AddHook(new HwndSourceHook(WndProc));
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"设置窗口图标时出错: {ex.Message}");
+                    Debug.WriteLine($"设置窗口图标时出错: {ex.Message}");
                 }
 
                 // 获取控件引用
@@ -102,7 +105,7 @@ namespace TA_WPF
                 // 检测控件引用是否有效
                 if (_menuToggleButton == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("警告: MenuToggleButton引用为空");
+                    Debug.WriteLine("警告: MenuToggleButton引用为空");
                 }
                 else
                 {
@@ -113,31 +116,31 @@ namespace TA_WPF
 
                 if (_settingsButton == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("警告: SettingsButton引用为空");
+                    Debug.WriteLine("警告: SettingsButton引用为空");
                 }
 
                 // 确保窗口加载时应用正确的主题
-                if (DataContext is ViewModels.MainViewModel viewModel)
+                if (DataContext is MainViewModel viewModel)
                 {
                     // 获取主题服务实例
-                    var themeService = TA_WPF.Services.ThemeService.Instance;
+                    var themeService = ThemeService.Instance;
 
                     // 获取当前主题状态
                     bool isDarkMode = themeService.IsDarkThemeActive();
 
-                    System.Diagnostics.Debug.WriteLine($"MainWindow_Loaded: 当前主题状态 isDarkMode = {isDarkMode}");
-                    System.Diagnostics.Debug.WriteLine($"MainWindow_Loaded: ViewModel.IsDarkMode = {viewModel.IsDarkMode}");
+                    Debug.WriteLine($"MainWindow_Loaded: 当前主题状态 isDarkMode = {isDarkMode}");
+                    Debug.WriteLine($"MainWindow_Loaded: ViewModel.IsDarkMode = {viewModel.IsDarkMode}");
 
                     // 确保视图模型的IsDarkMode属性与当前主题同步
                     if (viewModel.IsDarkMode != isDarkMode)
                     {
-                        System.Diagnostics.Debug.WriteLine($"MainWindow_Loaded: 主题状态不一致，正在同步...");
+                        Debug.WriteLine($"MainWindow_Loaded: 主题状态不一致，正在同步...");
                         viewModel.IsDarkMode = isDarkMode;
                     }
 
                     // 显式设置窗口的ThemeAssist.Theme属性
-                    MaterialDesignThemes.Wpf.ThemeAssist.SetTheme(this,
-                        isDarkMode ? MaterialDesignThemes.Wpf.BaseTheme.Dark : MaterialDesignThemes.Wpf.BaseTheme.Light);
+                    ThemeAssist.SetTheme(this,
+                    isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
 
                     // 强制应用主题
                     themeService.ApplyTheme(isDarkMode);
@@ -145,7 +148,7 @@ namespace TA_WPF
                     // 强制刷新窗口
                     this.UpdateLayout();
 
-                    System.Diagnostics.Debug.WriteLine($"窗口加载时应用了{(isDarkMode ? "深色" : "浅色")}主题");
+                    Debug.WriteLine($"窗口加载时应用了{(isDarkMode ? "深色" : "浅色")}主题");
                 }
 
                 // 添加键盘事件处理
@@ -153,8 +156,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"MainWindow_Loaded异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"MainWindow_Loaded异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -172,7 +175,7 @@ namespace TA_WPF
                     // 如果按下ESC键且当前处于全屏模式，则退出全屏模式
                     if (e.Key == Key.Escape && mainViewModel.DashboardViewModel.IsFullScreen)
                     {
-                        System.Diagnostics.Debug.WriteLine("检测到ESC键，退出全屏模式");
+                        Debug.WriteLine("检测到ESC键，退出全屏模式");
 
                         // 使用命令切换全屏模式
                         mainViewModel.DashboardViewModel.ToggleFullScreenCommand.Execute(null);
@@ -184,8 +187,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"MainWindow_KeyDown异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"MainWindow_KeyDown异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -211,8 +214,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"SettingsButton_Click异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"SettingsButton_Click异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -232,8 +235,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Window_SizeChanged异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"Window_SizeChanged异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -256,7 +259,7 @@ namespace TA_WPF
                     mainViewModel.DashboardViewModel != null)
                 {
                     // 记录窗口状态变化
-                    System.Diagnostics.Debug.WriteLine($"窗口状态变化: {this.WindowState}, 窗口样式: {this.WindowStyle}, 全屏模式: {mainViewModel.DashboardViewModel.IsFullScreen}");
+                    Debug.WriteLine($"窗口状态变化: {this.WindowState}, 窗口样式: {this.WindowStyle}, 全屏模式: {mainViewModel.DashboardViewModel.IsFullScreen}");
 
                     // 如果不是全屏模式，保存窗口状态
                     if (!mainViewModel.DashboardViewModel.IsFullScreen)
@@ -265,7 +268,7 @@ namespace TA_WPF
                         if (this.WindowState != WindowState.Minimized)
                         {
                             mainViewModel.DashboardViewModel.PreviousWindowState = this.WindowState;
-                            System.Diagnostics.Debug.WriteLine($"保存窗口状态: {this.WindowState}");
+                            Debug.WriteLine($"保存窗口状态: {this.WindowState}");
                         }
                     }
                     // 不要在这里处理全屏模式的情况，让 ToggleFullScreen 方法完全控制全屏模式
@@ -273,8 +276,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Window_StateChanged异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"Window_StateChanged异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -289,8 +292,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"MenuToggleButton_CheckedChanged异常: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"MenuToggleButton_CheckedChanged异常: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
 
@@ -339,7 +342,7 @@ namespace TA_WPF
                     var noButton = new Button
                     {
                         Content = "否",
-                        Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand,
+                        Command = DialogHost.CloseDialogCommand,
                         CommandParameter = false,
                         Style = TryFindResource("MaterialDesignFlatButton") as Style,
                         Margin = new Thickness(8, 0, 0, 0)
@@ -348,7 +351,7 @@ namespace TA_WPF
                     var yesButton = new Button
                     {
                         Content = "是",
-                        Command = MaterialDesignThemes.Wpf.DialogHost.CloseDialogCommand,
+                        Command = DialogHost.CloseDialogCommand,
                         CommandParameter = true,
                         Style = TryFindResource("MaterialDesignFlatButton") as Style,
                         Margin = new Thickness(8, 0, 0, 0)
@@ -362,7 +365,7 @@ namespace TA_WPF
                     dialogContent.Children.Add(buttonPanel);
 
                     // 显示对话框并等待结果
-                    MaterialDesignThemes.Wpf.DialogHost.Show(dialogContent, "RootDialog", (sender, args) =>
+                    DialogHost.Show(dialogContent, "RootDialog", (sender, args) =>
                     {
                         // 检测用户选择
                         if (args.Parameter is bool result && result)
@@ -371,7 +374,7 @@ namespace TA_WPF
                             if (DataContext is MainViewModel viewModel)
                             {
                                 // 记录日志
-                                TA_WPF.Utils.LogHelper.LogInfo("用户手动关闭了主窗口，应用程序将退出");
+                                LogHelper.LogInfo("用户手动关闭了主窗口，应用程序将退出");
                             }
 
                             // 关闭应用程序
@@ -382,8 +385,8 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"处理窗口关闭事件时出错: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"处理窗口关闭事件时出错: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
 
                 // 发生异常时，允许应用程序关闭
                 e.Cancel = false;
@@ -406,7 +409,7 @@ namespace TA_WPF
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("MainWindow.ShowLoginSuccessNotification 被调用");
+                Debug.WriteLine("MainWindow.ShowLoginSuccessNotification 被调用");
 
                 // 使用Dispatcher.BeginInvoke确保在主窗口完全加载后显示提示框
                 this.Dispatcher.BeginInvoke(new Action(() =>
@@ -419,7 +422,7 @@ namespace TA_WPF
                         string lastLoginTime = _loginInfoService.GetLastLoginTime();
                         string databaseName = _loginInfoService.GetDatabaseName(_connectionString);
 
-                        System.Diagnostics.Debug.WriteLine($"登录信息: IP={loginIP}, 数据库={databaseName}, 上次登录={lastLoginTime}");
+                        Debug.WriteLine($"登录信息: IP={loginIP}, 数据库={databaseName}, 上次登录={lastLoginTime}");
 
                         // 构建提示内容
                         string message = $"登录IP：{loginIP}\n上次登录时间：{lastLoginTime}\n登录数据库：{databaseName}";
@@ -432,21 +435,21 @@ namespace TA_WPF
                         }
 
                         // 创建通知卡片
-                        var card = new MaterialDesignThemes.Wpf.Card
+                        var card = new Card
                         {
                             Padding = new Thickness(16),
                             Margin = new Thickness(8),
                             UniformCornerRadius = 8,
                             Width = 380, // 增加宽度
                             Background = isDarkMode ?
-                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2D2D2D")) :
-                                System.Windows.Media.Brushes.White,
+                                new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D2D")) :
+                                Brushes.White,
                             RenderTransform = new ScaleTransform(0.9, 0.9), // 初始缩放比例
                             Opacity = 0 // 初始透明度为0
                         };
 
                         // 设置阴影深度
-                        MaterialDesignThemes.Wpf.ShadowAssist.SetShadowDepth(card, MaterialDesignThemes.Wpf.ShadowDepth.Depth3);
+                        ShadowAssist.SetShadowDepth(card, ShadowDepth.Depth3);
 
                         // 创建内容面板
                         var panel = new StackPanel
@@ -475,8 +478,8 @@ namespace TA_WPF
                             Width = 24,
                             Height = 24,
                             Foreground = isDarkMode ?
-                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#4CAF50")) :
-                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#4CAF50")),
+                                new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CAF50")) :
+                                new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CAF50")),
                             VerticalAlignment = VerticalAlignment.Center,
                             Margin = new Thickness(0, 0, 8, 0)
                         };
@@ -489,7 +492,7 @@ namespace TA_WPF
                             Text = "登录成功",
                             FontWeight = FontWeights.Bold,
                             FontSize = 16,
-                            Foreground = isDarkMode ? System.Windows.Media.Brushes.White : System.Windows.Media.Brushes.Black,
+                            Foreground = isDarkMode ? Brushes.White : Brushes.Black,
                             VerticalAlignment = VerticalAlignment.Center
                         };
                         Grid.SetColumn(titleText, 1);
@@ -503,7 +506,7 @@ namespace TA_WPF
                             Padding = new Thickness(4),
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Right,
-                            Foreground = isDarkMode ? System.Windows.Media.Brushes.White : System.Windows.Media.Brushes.Black
+                            Foreground = isDarkMode ? Brushes.White : Brushes.Black
                         };
                         Grid.SetColumn(closeButton, 2);
                         titleGrid.Children.Add(closeButton);
@@ -513,8 +516,8 @@ namespace TA_WPF
                         {
                             Margin = new Thickness(0, 0, 0, 12), // 增加下边距
                             Background = isDarkMode ?
-                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#666666")) :
-                                new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E0E0E0"))
+                                new SolidColorBrush((Color)ColorConverter.ConvertFromString("#666666")) :
+                                new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"))
                         });
 
                         // 添加消息内容
@@ -534,8 +537,8 @@ namespace TA_WPF
                                     Text = parts[0] + "：",
                                     FontWeight = FontWeights.SemiBold,
                                     Foreground = isDarkMode ?
-                                        new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#BBBBBB")) :
-                                        new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#666666")),
+                                        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BBBBBB")) :
+                                        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#666666")),
                                     FontSize = 13,
                                     Margin = new Thickness(0, 0, 8, 0),
                                     VerticalAlignment = VerticalAlignment.Center
@@ -548,7 +551,7 @@ namespace TA_WPF
                                 {
                                     Text = parts[1],
                                     TextWrapping = TextWrapping.Wrap,
-                                    Foreground = isDarkMode ? System.Windows.Media.Brushes.White : System.Windows.Media.Brushes.Black,
+                                    Foreground = isDarkMode ? Brushes.White : Brushes.Black,
                                     FontSize = 13,
                                     VerticalAlignment = VerticalAlignment.Center
                                 };
@@ -565,7 +568,7 @@ namespace TA_WPF
                                     TextWrapping = TextWrapping.Wrap,
                                     Margin = new Thickness(0, 4, 0, 4),
                                     FontSize = 13,
-                                    Foreground = isDarkMode ? System.Windows.Media.Brushes.White : System.Windows.Media.Brushes.Black
+                                    Foreground = isDarkMode ? Brushes.White : Brushes.Black
                                 });
                             }
                         }
@@ -587,7 +590,7 @@ namespace TA_WPF
                             PlacementTarget = this
                         };
 
-                        System.Diagnostics.Debug.WriteLine("Popup已创建并设置为打开状态");
+                        Debug.WriteLine("Popup已创建并设置为打开状态");
 
                         // 设置关闭按钮的点击事件
                         closeButton.Click += (s, e) =>
@@ -638,7 +641,7 @@ namespace TA_WPF
                         };
 
                         // 应用进入动画
-                        card.BeginAnimation(UIElement.OpacityProperty, fadeInAnimation);
+                        card.BeginAnimation(OpacityProperty, fadeInAnimation);
                         (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleInAnimation);
                         (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleInAnimation);
 
@@ -675,26 +678,26 @@ namespace TA_WPF
                             };
 
                             // 应用动画
-                            card.BeginAnimation(UIElement.OpacityProperty, fadeOutAnimation);
+                            card.BeginAnimation(OpacityProperty, fadeOutAnimation);
                             (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleOutAnimation);
                             (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleOutAnimation);
                         };
 
                         timer.Start();
 
-                        System.Diagnostics.Debug.WriteLine("登录成功提示显示完成");
+                        Debug.WriteLine("登录成功提示显示完成");
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"显示登录成功提示时出错: {ex.Message}");
-                        System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                        Debug.WriteLine($"显示登录成功提示时出错: {ex.Message}");
+                        Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                     }
                 }), DispatcherPriority.Loaded);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"准备显示登录成功提示时出错: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                Debug.WriteLine($"准备显示登录成功提示时出错: {ex.Message}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
     }

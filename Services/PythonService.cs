@@ -3,6 +3,9 @@ using Microsoft.Scripting.Hosting;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
+using System.Windows;
+using System.Linq;
 
 namespace TA_WPF.Services
 {
@@ -137,6 +140,9 @@ namespace TA_WPF.Services
 from cnocr import CnOcr
 import json
 import numpy as np
+import sys
+import os
+import time
 
 # 将numpy数组转换为可JSON序列化的Python列表
 class NumpyEncoder(json.JSONEncoder):
@@ -148,6 +154,30 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.floating):
             return float(obj)
         return json.JSONEncoder.default(self, obj)
+
+# 检查是否需要下载模型
+def is_model_downloading():
+    try:
+        user_dir = os.path.expanduser('~')
+        cnocr_dir = os.path.join(user_dir, '.cnocr')
+        app_data_dir = os.path.join(os.getenv('APPDATA') if os.name == 'nt' else os.path.join(user_dir, '.local', 'share'), 'cnocr')
+        
+        # 检查模型目录是否存在
+        model_dirs = [cnocr_dir, app_data_dir]
+        for model_dir in model_dirs:
+            if os.path.exists(model_dir):
+                model_files = []
+                # 递归查找所有.onnx文件
+                for root, dirs, files in os.walk(model_dir):
+                    model_files.extend([f for f in files if f.endswith('.onnx')])
+                
+                if not model_files:
+                    return True
+        
+        return False
+    except Exception as e:
+        sys.stderr.write(f'Error checking model download: {{e}}\n')
+        return False
 
 def process_ocr_result(result):
     # 处理OCR结果，转换为易于理解的格式
@@ -187,11 +217,68 @@ def process_ocr_result(result):
 
 try:
     img_fp = '{imagePath.Replace("\\", "\\\\")}'
+    
+    # 检查是否需要下载模型
+    need_download = is_model_downloading()
+    
+    # 进度分配:
+    # 如果需要下载模型：模型下载占0-70%，OCR占70-100%
+    # 如果不需要下载模型：OCR占整个0-100%
+    
+    # 初始化进度
+    sys.stdout.write('PROGRESS:0\n')
+    sys.stdout.flush()
+    sys.stdout.write('STATUS:准备OCR识别引擎...\n')
+    sys.stdout.flush()
+    
+    if need_download:
+        sys.stdout.write('DOWNLOAD:START\n')
+        sys.stdout.flush()
+        sys.stdout.write('STATUS:首次使用需要下载OCR模型...\n')
+        sys.stdout.flush()
+    
+    # 创建CnOcr实例
+    # 这一步如果需要下载模型，CnOcr会自动下载
+    # 模拟下载进度（如果需要）
+    if need_download:
+        for i in range(0, 70, 5):
+            sys.stdout.write(f'PROGRESS:{{i}}\n')
+            sys.stdout.flush()
+            time.sleep(0.3)  # 适当延迟，让用户能看到进度
+    else:
+        # 如果不需要下载，让初始化占20%的进度
+        sys.stdout.write('PROGRESS:20\n')
+        sys.stdout.flush()
+    
+    sys.stdout.write('STATUS:加载OCR引擎...\n')
+    sys.stdout.flush()
     ocr = CnOcr()
+    
+    # 下载完成或不需要下载时，进入OCR识别阶段
+    progress_start = 70 if need_download else 20
+    sys.stdout.write(f'PROGRESS:{{progress_start}}\n')
+    sys.stdout.flush()
+    sys.stdout.write('STATUS:正在执行OCR文本识别...\n')
+    sys.stdout.flush()
+    
+    # 执行OCR识别
     out = ocr.ocr(img_fp)
+    
+    # OCR完成，处理结果
+    progress_end = 90
+    sys.stdout.write(f'PROGRESS:{{progress_end}}\n')
+    sys.stdout.flush()
+    sys.stdout.write('STATUS:正在处理识别结果...\n')
+    sys.stdout.flush()
     
     # 处理OCR结果
     processed_out = process_ocr_result(out)
+    
+    # 完成
+    sys.stdout.write('PROGRESS:100\n')
+    sys.stdout.flush()
+    sys.stdout.write('STATUS:OCR识别完成\n')
+    sys.stdout.flush()
     
     # 转换为JSON
     print(json.dumps(processed_out, cls=NumpyEncoder))
@@ -209,22 +296,115 @@ except Exception as e:
                     process.StartInfo.RedirectStandardError = true;
                     process.StartInfo.CreateNoWindow = true;
 
-                    process.Start();
+                    // 添加进度处理
+                    StringBuilder outputBuilder = new StringBuilder();
+                    StringBuilder errorBuilder = new StringBuilder();
+                    bool isDownloading = false;
+                    string statusMessage = "正在准备OCR引擎...";
 
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
+                    process.OutputDataReceived += (sender, e) => 
+                    {
+                        if (e.Data != null)
+                        {
+                            if (e.Data.StartsWith("PROGRESS:"))
+                            {
+                                // 处理进度信息
+                                string progressStr = e.Data.Substring(9);
+                                if (int.TryParse(progressStr, out int progress))
+                                {
+                                    // 使用Application.Current.Dispatcher确保在UI线程上更新进度
+                                    Application.Current.Dispatcher.Invoke(() => {
+                                        // 获取当前OcrTicketViewModel实例
+                                        var windows = Application.Current.Windows.OfType<Window>();
+                                        var ocrWindow = windows.FirstOrDefault(w => w.GetType().Name == "OcrTicketWindow");
+                                        if (ocrWindow != null && ocrWindow.DataContext is ViewModels.OcrTicketViewModel viewModel)
+                                        {
+                                            // 更新进度属性
+                                            viewModel.Progress = progress;
+                                            // 更新状态消息
+                                            if (!string.IsNullOrEmpty(statusMessage))
+                                            {
+                                                viewModel.LoadingMessage = statusMessage;
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                            else if (e.Data.StartsWith("STATUS:"))
+                            {
+                                // 处理状态信息
+                                statusMessage = e.Data.Substring(7);
+                                // 使用Application.Current.Dispatcher确保在UI线程上更新状态
+                                Application.Current.Dispatcher.Invoke(() => {
+                                    var windows = Application.Current.Windows.OfType<Window>();
+                                    var ocrWindow = windows.FirstOrDefault(w => w.GetType().Name == "OcrTicketWindow");
+                                    if (ocrWindow != null && ocrWindow.DataContext is ViewModels.OcrTicketViewModel viewModel)
+                                    {
+                                        viewModel.LoadingMessage = statusMessage;
+                                    }
+                                });
+                            }
+                            else if (e.Data.StartsWith("DOWNLOAD:START"))
+                            {
+                                isDownloading = true;
+                                statusMessage = "首次使用需要下载OCR模型，请耐心等待...";
+                                
+                                // 使用Application.Current.Dispatcher确保在UI线程上更新状态
+                                Application.Current.Dispatcher.Invoke(() => {
+                                    var windows = Application.Current.Windows.OfType<Window>();
+                                    var ocrWindow = windows.FirstOrDefault(w => w.GetType().Name == "OcrTicketWindow");
+                                    if (ocrWindow != null && ocrWindow.DataContext is ViewModels.OcrTicketViewModel viewModel)
+                                    {
+                                        viewModel.Progress = 0;
+                                        viewModel.LoadingMessage = statusMessage;
+                                        viewModel.IsDownloadingModel = true;
+                                    }
+                                });
+                            }
+                            else
+                            {
+                                // 收集普通输出
+                                outputBuilder.AppendLine(e.Data);
+                            }
+                        }
+                    };
+
+                    process.ErrorDataReceived += (sender, e) => 
+                    {
+                        if (e.Data != null)
+                        {
+                            errorBuilder.AppendLine(e.Data);
+                        }
+                    };
+
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
 
                     await process.WaitForExitAsync();
+
+                    // 重置下载状态
+                    if (isDownloading)
+                    {
+                        Application.Current.Dispatcher.Invoke(() => {
+                            var windows = Application.Current.Windows.OfType<Window>();
+                            var ocrWindow = windows.FirstOrDefault(w => w.GetType().Name == "OcrTicketWindow");
+                            if (ocrWindow != null && ocrWindow.DataContext is ViewModels.OcrTicketViewModel viewModel)
+                            {
+                                viewModel.IsDownloadingModel = false;
+                            }
+                        });
+                    }
 
                     // 删除临时脚本
                     try { File.Delete(tempScriptPath); } catch { }
 
                     if (process.ExitCode != 0)
                     {
-                        return JsonConvert.SerializeObject(new { error = error });
+                        return JsonConvert.SerializeObject(new { error = errorBuilder.ToString() });
                     }
 
-                    return output;
+                    return outputBuilder.ToString().Trim();
                 }
             }
             catch (Exception ex)

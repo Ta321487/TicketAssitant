@@ -179,6 +179,27 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
+        /// 窗口关闭前检查是否正在下载OCR模型
+        /// </summary>
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // 检查是否正在下载OCR模型
+            if (_viewModel.IsDownloadingModel)
+            {
+                var result = MessageBoxHelper.ShowConfirmation(
+                    "您确定要退出本窗口吗？这会中断下载进程", 
+                    "确认退出", 
+                    MessageBoxButton.YesNo);
+                
+                if (result != MessageBoxResult.Yes)
+                {
+                    // 取消关闭
+                    e.Cancel = true;
+                }
+            }
+        }
+
+        /// <summary>
         /// 处理ViewModel请求关闭窗口的事件
         /// </summary>
         private void ViewModel_RequestCloseAction()
@@ -233,5 +254,6 @@ namespace TA_WPF.Views
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
+
     }
 }

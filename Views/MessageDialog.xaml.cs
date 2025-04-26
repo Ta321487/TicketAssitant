@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using TA_WPF.Services;
+using System;
+using System.Windows.Controls;
 
 namespace TA_WPF.Views
 {
@@ -279,6 +281,124 @@ namespace TA_WPF.Views
             var result = dialog.ShowDialog();
 
             return result;
+        }
+        
+        // 显示带有进度信息的对话框（用于模型下载等操作）
+        private static Window _progressWindow = null;
+        private static TextBlock _progressMessageBlock = null;
+        private static ProgressBar _progressBar = null;
+        private static TextBlock _progressTextBlock = null;
+        
+        public static void ShowProgressInfo(string message, string title = "进度", int progress = 0)
+        {
+            Application.Current.Dispatcher.Invoke(() => {
+                try
+                {
+                    // 如果进度为100%或消息为空，关闭窗口
+                    if (progress >= 100 || string.IsNullOrEmpty(message))
+                    {
+                        if (_progressWindow != null && _progressWindow.IsVisible)
+                        {
+                            _progressWindow.Close();
+                            _progressWindow = null;
+                            _progressMessageBlock = null;
+                            _progressBar = null;
+                            _progressTextBlock = null;
+                        }
+                        return;
+                    }
+                    
+                    // 如果窗口不存在或已关闭，创建新窗口
+                    if (_progressWindow == null || !_progressWindow.IsVisible)
+                    {
+                        // 创建一个进度条和文本显示的Grid
+                        var grid = new Grid();
+                        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+                        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+                        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+                        grid.Margin = new Thickness(24);
+                        
+                        // 消息文本
+                        _progressMessageBlock = new TextBlock
+                        {
+                            Text = message,
+                            TextWrapping = TextWrapping.Wrap,
+                            Margin = new Thickness(0, 0, 0, 16),
+                            FontSize = 15,
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        };
+                        Grid.SetRow(_progressMessageBlock, 0);
+                        grid.Children.Add(_progressMessageBlock);
+                        
+                        // 进度条
+                        _progressBar = new ProgressBar
+                        {
+                            Value = progress,
+                            Minimum = 0,
+                            Maximum = 100,
+                            Height = 10,
+                            Width = 300,
+                            Margin = new Thickness(0, 0, 0, 8)
+                        };
+                        Grid.SetRow(_progressBar, 1);
+                        grid.Children.Add(_progressBar);
+                        
+                        // 进度文本
+                        _progressTextBlock = new TextBlock
+                        {
+                            Text = $"{progress}%",
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            Margin = new Thickness(0, 4, 0, 0)
+                        };
+                        Grid.SetRow(_progressTextBlock, 2);
+                        grid.Children.Add(_progressTextBlock);
+                        
+                        // 创建自定义窗口
+                        _progressWindow = new Window
+                        {
+                            Title = title,
+                            Content = grid,
+                            SizeToContent = SizeToContent.WidthAndHeight,
+                            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                            ResizeMode = ResizeMode.NoResize,
+                            ShowInTaskbar = false,
+                            Topmost = true,
+                            MinWidth = 350,
+                            MinHeight = 150,
+                            Background = (Brush)Application.Current.Resources["MaterialDesignPaper"]
+                        };
+                        
+                        // 应用MaterialDesign主题
+                        var isDarkMode = ThemeService.Instance.IsDarkThemeActive();
+                        ThemeAssist.SetTheme(_progressWindow, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
+                        
+                        _progressWindow.Show();
+                    }
+                    else
+                    {
+                        // 更新现有窗口内容
+                        if (_progressMessageBlock != null)
+                        {
+                            _progressMessageBlock.Text = message;
+                        }
+                        
+                        if (_progressBar != null)
+                        {
+                            _progressBar.Value = progress;
+                        }
+                        
+                        if (_progressTextBlock != null)
+                        {
+                            _progressTextBlock.Text = $"{progress}%";
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // 记录异常但不显示给用户，避免进度对话框导致的其他问题
+                    System.Diagnostics.Debug.WriteLine($"进度对话框出错: {ex.Message}");
+                }
+            });
         }
     }
 }

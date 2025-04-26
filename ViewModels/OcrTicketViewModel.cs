@@ -31,6 +31,8 @@ namespace TA_WPF.ViewModels
         private ObservableCollection<OcrResult> _ocrResults;
         private double _averageConfidence;
         private bool _isTicketFormExpanded;
+        private int _progress;
+        private bool _isDownloadingModel;
 
         // 表单相关私有字段
         // 基本信息
@@ -169,7 +171,7 @@ namespace TA_WPF.ViewModels
             // 使用项目中现有的RelayCommand实现
             SelectImageCommand = new RelayCommand(async () => await SelectImage(), CanImportTicket);
             RunOcrCommand = new RelayCommand(async () => await RunOcr(), CanRunOcr);
-            CheckEnvironmentCommand = new RelayCommand(async () => await _ocrEnvironmentService.CheckEnvironment());
+            CheckEnvironmentCommand = new RelayCommand(async () => await CheckEnvironment());
             OpenCnocrInstallGuideCommand = new RelayCommand(() => _ocrEnvironmentService.OpenCnocrInstallGuide());
 
             // 初始化表单相关命令
@@ -222,6 +224,9 @@ namespace TA_WPF.ViewModels
 
             // 重置表单状态
             ResetFormState();
+            
+            // 初始化进度
+            Progress = 0;
             
             // 检查环境
             Task.Run(async () => await _ocrEnvironmentService.CheckEnvironment());
@@ -320,7 +325,11 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 加载消息
         /// </summary>
-        public string LoadingMessage => _ocrEnvironmentService.LoadingMessage;
+        public string LoadingMessage
+        {
+            get => _ocrEnvironmentService.LoadingMessage;
+            set => _ocrEnvironmentService.SetLoadingMessage(value);
+        }
 
         /// <summary>
         /// OCR结果集合
@@ -371,6 +380,38 @@ namespace TA_WPF.ViewModels
                 {
                     _isTicketFormExpanded = value;
                     OnPropertyChanged(nameof(IsTicketFormExpanded));
+                }
+            }
+        }
+
+        /// <summary>
+        /// OCR处理进度，0-100
+        /// </summary>
+        public int Progress
+        {
+            get => _progress;
+            set
+            {
+                if (_progress != value)
+                {
+                    _progress = value;
+                    OnPropertyChanged(nameof(Progress));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否正在下载OCR模型
+        /// </summary>
+        public bool IsDownloadingModel
+        {
+            get => _isDownloadingModel;
+            set
+            {
+                if (_isDownloadingModel != value)
+                {
+                    _isDownloadingModel = value;
+                    OnPropertyChanged(nameof(IsDownloadingModel));
                 }
             }
         }
@@ -1747,91 +1788,105 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private async Task RunOcr()
         {
-            if (string.IsNullOrEmpty(SelectedImagePath))
-            {
-                MessageBoxHelper.ShowWarning("请先选择图片");
-                return;
-            }
-
-            if (!_ocrEnvironmentService.IsEnvironmentReady)
-            {
-                MessageBoxHelper.ShowWarning("OCR环境未准备好，请检查环境");
-                return;
-            }
-
             try
             {
-                IsLoading = true;
-                SetStatusMessage("正在运行OCR识别...");
-
-                // 运行OCR识别
-                string result = await _pythonService.RunOcrWithExternalProcess(SelectedImagePath);
-                JsonResult = GetFormattedJson(result);
-
-                try
+                // 检查环境和图片
+                if (!_ocrEnvironmentService.IsEnvironmentReady)
                 {
-                    // 检查是否包含错误信息
-                    if (result.Contains("error"))
+                    MessageBoxHelper.ShowWarning("OCR环境未准备就绪，请先检测环境。");
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(SelectedImagePath))
+                {
+                    MessageBoxHelper.ShowWarning("请先选择图片。");
+                    return;
+                }
+
+                // 设置加载中状态
+                IsLoading = true;
+                Progress = 0;
+                LoadingMessage = "正在执行OCR识别...";
+                JsonResult = string.Empty;
+                OcrResults = new ObservableCollection<OcrResult>();
+
+                // 执行OCR识别
+                var jsonResult = await _pythonService.RunOcrWithExternalProcess(SelectedImagePath);
+
+                // 检查JSON格式并处理可能的错误
+                if (string.IsNullOrEmpty(jsonResult))
+                {
+                    IsLoading = false;
+                    MessageBoxHelper.ShowError("OCR识别失败，未返回结果");
+                    return;
+                }
+
+                // 判断返回的是错误对象还是正常结果数组
+                if (jsonResult.TrimStart().StartsWith("{") && jsonResult.Contains("\"error\""))
+                {
+                    try
                     {
-                        var errorResult = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
-                        if (errorResult != null && errorResult.ContainsKey("error"))
+                        // 如果是JSON对象且包含error字段，尝试解析为错误对象
+                        var ocrError = JsonConvert.DeserializeObject<OcrError>(jsonResult);
+                        if (ocrError?.Error != null)
                         {
-                            SetStatusMessage($"OCR识别出错: {errorResult["error"]}");
-                            MessageBoxHelper.ShowError($"OCR识别出错: {errorResult["error"]}");
+                            IsLoading = false;
+                            MessageBoxHelper.ShowError($"OCR识别出错: {ocrError.Error}");
                             return;
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        IsLoading = false;
+                        MessageBoxHelper.ShowError($"解析OCR结果时出错: {ex.Message}");
+                        return;
+                    }
+                }
 
-                    // 解析JSON结果
-                    var ocrResults = JsonConvert.DeserializeObject<List<OcrResult>>(result);
+                // 格式化JSON结果
+                JsonResult = GetFormattedJson(jsonResult);
 
+                try
+                {
+                    // 解析OCR结果
+                    var ocrResults = JsonConvert.DeserializeObject<List<OcrResult>>(jsonResult);
                     if (ocrResults != null && ocrResults.Count > 0)
                     {
-                        // 按垂直位置排序结果 - 注释掉这行，保留原始顺序
-                        // ocrResults = ocrResults.OrderBy(r => r.Position[0][1]).ToList();
-
                         // 计算平均置信度
                         AverageConfidence = ocrResults.Average(r => r.Score);
 
-                        // 填充结果到集合 (使用原始顺序的结果)
-                        OcrResults.Clear(); // 确保清空旧结果
-                        foreach (var item in ocrResults)
-                        {
-                            OcrResults.Add(item);
-                        }
+                        // 添加到结果集合
+                        OcrResults = new ObservableCollection<OcrResult>(ocrResults);
 
-                        // 处理OCR结果并填充表单 (使用原始顺序的结果)
+                        // 尝试填充表单数据
                         ProcessOcrResultsAndFillForm(ocrResults);
 
                         // 展开表单
                         IsTicketFormExpanded = true;
-
-                        // 启用所有表单字段
-                        EnableFormFields();
-
-                        SetStatusMessage($"OCR识别完成，识别到{ocrResults.Count}个文本项，平均置信度: {AverageConfidence:P2}");
                     }
                     else
                     {
-                        SetStatusMessage("OCR识别完成，但未解析到有效结果");
-                        MessageBoxHelper.ShowWarning("OCR识别完成，但未解析到有效结果");
+                        MessageBoxHelper.ShowWarning("OCR识别未返回有效结果，请尝试使用其他图片。");
                     }
                 }
-                catch (Exception jsonEx)
+                catch (Exception ex)
                 {
-                    SetStatusMessage($"解析OCR结果时出错: {jsonEx.Message}");
-                    MessageBoxHelper.ShowError($"解析OCR结果时出错: {jsonEx.Message}");
+                    MessageBoxHelper.ShowError($"解析OCR结果时出错: {ex.Message}");
                 }
+
+                // 更新OCR模型状态（可能在首次运行时已下载模型）
+                await _ocrEnvironmentService.UpdateOcrModelStatus();
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"执行OCR识别时出错", ex);
-                MessageBoxHelper.ShowError($"执行OCR时出错: {ex.Message}");
+                MessageBoxHelper.ShowError($"执行OCR识别时出错: {ex.Message}");
             }
             finally
             {
+                // 重置加载状态
                 IsLoading = false;
-                CommandManager.InvalidateRequerySuggested();
+                Progress = 100;
+                LoadingMessage = string.Empty;
             }
         }
 
@@ -4189,21 +4244,16 @@ namespace TA_WPF.ViewModels
                     return;
                 }
 
-                // 检测是否是用户选择的值或已设置的值，避免重复处理
-                string currentValue = isDepartStation ? DepartStation : ArriveStation;
+                // 当前搜索文本，这是用户实际看到和可能编辑的
                 string currentSearchText = isDepartStation ? DepartStationSearchText : ArriveStationSearchText;
-                if (stationName == currentValue || stationName == currentSearchText)
+
+                // 检测是否是用户从下拉列表中选择的有效值，若是则跳过验证
+                string currentValue = isDepartStation ? DepartStation : ArriveStation;
+                if (stationName == currentValue && !string.IsNullOrEmpty(currentValue))
                 {
-                     // 如果搜索文本和当前值不同（例如，用户手动输入了不带"站"的名称），
-                     // 并且数据库中有这个站，则进行一次标准化更新
-                     var stationInfoCheck = _stationSearchService.GetStationInfo(stationName);
-                     if (stationInfoCheck != null && stationName != currentValue) {
-                         // 使用数据库找到的规范信息更新
-                         SetStationProperties(stationInfoCheck, isDepartStation);
-                     }
+                     // 如果当前值已经是有效的，且与检查的站名一致，则不需要再次验证
                      return;
                 }
-
 
                 // 使用StationSearchService检测是否是有效站点
                 var stationInfo = _stationSearchService.GetStationInfo(stationName);
@@ -4215,18 +4265,41 @@ namespace TA_WPF.ViewModels
                 }
                 else
                 {
+                    // 展示提示时使用当前搜索框中的文本（用户看到的），而不是原始OCR结果
+                    string displayText = currentSearchText;
+                    
                     // 不清空站点信息，保留无效站名并显示提示
-                    LogHelper.LogInfo($"站点 \"{stationName}\" 不存在于数据库中，建议在车站表中完善该站信息");
-                    MessageBoxHelper.ShowWarning($"站点\"{stationName}\"不存在于数据库中，建议在车站表中完善该站信息。");
+                    LogHelper.LogInfo($"站点 \"{displayText}\" 不存在于数据库中，建议在车站表中完善该站信息");
+                    MessageBoxHelper.ShowWarning($"{(isDepartStation ? "出发站" : "到达站")}【{displayText}】在车站中心不存在，请先添加该车站信息。");
 
                     // 仍然设置站名，但不设置拼音和代码
                     // 使用内部设置方法，传入空代码和拼音
-                    SetStationPropertiesInternal(stationName, string.Empty, string.Empty, isDepartStation);
+                    SetStationPropertiesInternal(displayText, string.Empty, string.Empty, isDepartStation);
                 }
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"验证站名时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 检查环境状态
+        /// </summary>
+        private async Task CheckEnvironment()
+        {
+            try
+            {
+                IsLoading = true;
+                await _ocrEnvironmentService.CheckEnvironment();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"检查环境出错: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 

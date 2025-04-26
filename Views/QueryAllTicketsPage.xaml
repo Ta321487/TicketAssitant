@@ -309,29 +309,21 @@
         </Grid>
 
         <!-- 替换高级查询面板 -->
-        <Border Grid.Row="1" 
-                Margin="10,10,10,0">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Visibility" Value="Collapsed"/>
+        <Grid Grid.Row="1" x:Name="QueryPanelContainer" Margin="10,10,10,0">
+            <!-- 动画容器 -->
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="MaxHeight" Value="0"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding AdvancedQueryViewModel.IsQueryPanelVisible}" Value="True">
+                            <Setter Property="MaxHeight" Value="1000"/>
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
-                                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-                                        </ObjectAnimationUsingKeyFrames>
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="0" To="1" Duration="0:0:0.35">
+                                        <DoubleAnimation Storyboard.TargetProperty="MaxHeight"
+                                                         From="0" To="1000" Duration="0:0:0.35">
                                             <DoubleAnimation.EasingFunction>
                                                 <PowerEase EasingMode="EaseOut" Power="2"/>
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
-                                                         From="-15" To="0" Duration="0:0:0.4">
-                                            <DoubleAnimation.EasingFunction>
-                                                <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="3"/>
                                             </DoubleAnimation.EasingFunction>
                                         </DoubleAnimation>
                                     </Storyboard>
@@ -340,34 +332,63 @@
                             <DataTrigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="1" To="0" Duration="0:0:0.25">
+                                        <DoubleAnimation Storyboard.TargetProperty="MaxHeight"
+                                                         From="1000" To="0" Duration="0:0:0.25">
                                             <DoubleAnimation.EasingFunction>
                                                 <PowerEase EasingMode="EaseIn" Power="2"/>
                                             </DoubleAnimation.EasingFunction>
                                         </DoubleAnimation>
-                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
-                                                         From="0" To="-10" Duration="0:0:0.25">
-                                            <DoubleAnimation.EasingFunction>
-                                                <PowerEase EasingMode="EaseIn" Power="3"/>
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
-                                            <DiscreteObjectKeyFrame KeyTime="0:0:0.25" Value="{x:Static Visibility.Collapsed}"/>
-                                        </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.ExitActions>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </Border.Style>
-            <Border.RenderTransform>
-                <TranslateTransform Y="0"/>
-            </Border.RenderTransform>
-            <Border.Opacity>0</Border.Opacity>
-            <local:AdvancedQueryTicketPanel DataContext="{Binding AdvancedQueryViewModel}" />
-        </Border>
+            </Grid.Style>
+            
+            <!-- 实际的查询面板 -->
+            <Border Background="{DynamicResource MaterialDesignCardBackground}"
+                    CornerRadius="4"
+                    BorderBrush="{DynamicResource MaterialDesignDivider}"
+                    BorderThickness="1"
+                    Padding="16"
+                    Visibility="{Binding AdvancedQueryViewModel.IsQueryPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <!-- 使用淡入淡出效果 -->
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding AdvancedQueryViewModel.IsQueryPanelVisible}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="0" To="1" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <PowerEase EasingMode="EaseOut" Power="2"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="1" To="0" Duration="0:0:0.15">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <PowerEase EasingMode="EaseIn" Power="2"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <local:AdvancedQueryTicketPanel DataContext="{Binding AdvancedQueryViewModel}" />
+            </Border>
+        </Grid>
 
         <!-- 数据表格 -->
         <Grid Grid.Row="2" Margin="10">
