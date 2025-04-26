@@ -71,7 +71,7 @@
             </Style>
             
             <!-- 数据表格行样式 -->
-            <Style x:Key="DataGridRowStyle" TargetType="DataGridRow">
+            <Style x:Key="DataGridRowStyle" TargetType="DataGridRow" x:Shared="False">
                 <Setter Property="Height" Value="{Binding DataContext.DataGridRowHeight, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="BorderThickness" Value="0" />
@@ -98,7 +98,7 @@
             </Style>
             
             <!-- 数据表格单元格样式 -->
-            <Style x:Key="DataGridCellStyle" TargetType="DataGridCell">
+            <Style x:Key="DataGridCellStyle" TargetType="DataGridCell" x:Shared="False">
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="BorderBrush" Value="Transparent" />
                 <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -114,7 +114,7 @@
             </Style>
             
             <!-- 数据表格列头样式 -->
-            <Style x:Key="DataGridColumnHeaderStyle" TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+            <Style x:Key="DataGridColumnHeaderStyle" TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}" x:Shared="False">
                 <Setter Property="HorizontalContentAlignment" Value="Center" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="FontWeight" Value="Bold" />
@@ -155,7 +155,7 @@
             </Style>
             
             <!-- 数据表格文本列样式 -->
-            <Style x:Key="DataGridTextColumnElementStyle" TargetType="TextBlock">
+            <Style x:Key="DataGridTextColumnElementStyle" TargetType="TextBlock" x:Shared="False">
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
                 <Setter Property="VerticalAlignment" Value="Center" />
                 <Setter Property="HorizontalAlignment" Value="Center" />

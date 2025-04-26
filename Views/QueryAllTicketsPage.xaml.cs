@@ -35,6 +35,33 @@ namespace TA_WPF.Views
 
             // 添加DataGrid的单元格工具提示事件处理
             TicketsDataGrid.LoadingRow += TicketsDataGrid_LoadingRow;
+            
+            // 添加DataGrid的键盘事件处理，支持Ctrl+A全选和Delete删除
+            TicketsDataGrid.PreviewKeyDown += TicketsDataGrid_PreviewKeyDown;
+        }
+
+        /// <summary>
+        /// 处理DataGrid的键盘事件，支持Ctrl+A全选和Delete删除
+        /// </summary>
+        private void TicketsDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (DataContext is TicketBaseViewModel viewModel)
+            {
+                // 处理Ctrl+A全选
+                if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control)
+                {
+                    viewModel.SelectAllCommand.Execute(null);
+                    e.Handled = true;
+                }
+                
+                // 处理Delete键删除选中项
+                if (e.Key == Key.Delete && viewModel.HasSelectedItems)
+                {
+                    // 调用删除命令，与红色删除按钮行为一致
+                    viewModel.DeleteTicketsCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
         }
 
         /// <summary>
@@ -45,8 +72,8 @@ namespace TA_WPF.Views
             _tooltipText = new TextBlock
             {
                 Padding = new Thickness(8),
-                Background = System.Windows.Media.Brushes.DarkSlateGray,
-                Foreground = System.Windows.Media.Brushes.White,
+                Background = Brushes.DarkSlateGray,
+                Foreground = Brushes.White,
                 FontSize = 14
             };
 

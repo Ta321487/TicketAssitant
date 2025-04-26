@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using TA_WPF.Models;
+using TA_WPF.Utils;
 
 namespace TA_WPF.Services
 {
@@ -57,7 +58,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 // 使用日志服务记录错误
-                Utils.LogHelper.LogError("加载车站数据时出错", ex);
+                LogHelper.LogError("加载车站数据时出错", ex);
                 throw;
             }
         }
@@ -88,7 +89,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Utils.LogHelper.LogError($"搜索车站时出错: {searchText}", ex);
+                LogHelper.LogError($"搜索车站时出错: {searchText}", ex);
                 return new ObservableCollection<StationInfo>();
             }
         }
@@ -105,12 +106,12 @@ namespace TA_WPF.Services
                 return null;
             }
 
-            // 移除"站"后缀进行比较
-            string cleanName = stationName.Replace("站", "");
+            // 使用工具类移除"站"后缀进行比较
+            string cleanName = StationNameHelper.RemoveStationSuffix(stationName);
 
             // 在已加载的站点中查找匹配
             return _stations.FirstOrDefault(s =>
-                s.StationName?.Replace("站", "") == cleanName ||
+                StationNameHelper.RemoveStationSuffix(s.StationName) == cleanName ||
                 s.StationName == cleanName);
         }
 
@@ -129,10 +130,7 @@ namespace TA_WPF.Services
             try
             {
                 // 确保站点数据已加载
-                if (!_isInitialized)
-                {
-                    await LoadStationsAsync();
-                }
+                await EnsureInitializedAsync();
 
                 // 获取可能的匹配结果
                 var searchResults = await _databaseService.SearchStationsByNameAsync(stationName);
@@ -142,7 +140,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Utils.LogHelper.LogError($"获取车站匹配时出错: {stationName}", ex);
+                LogHelper.LogError($"获取车站匹配时出错: {stationName}", ex);
                 return null;
             }
         }
@@ -153,7 +151,7 @@ namespace TA_WPF.Services
         /// <param name="stationName">站点名称</param>
         /// <param name="isDepartStation">是否为出发站</param>
         /// <returns>处理后的站点信息，如果找不到匹配站点则返回null</returns>
-        public StationInfo HandleStationLostFocus(string stationName, bool isDepartStation)
+        public async Task<StationInfo> HandleStationLostFocusAsync(string stationName, bool isDepartStation)
         {
             if (string.IsNullOrWhiteSpace(stationName))
             {
@@ -163,19 +161,14 @@ namespace TA_WPF.Services
             try
             {
                 // 确保站点数据已加载
-                if (!_isInitialized)
-                {
-                    // 同步加载站点数据
-                    var loadTask = LoadStationsAsync();
-                    loadTask.Wait();
-                }
+                await EnsureInitializedAsync();
 
                 // 在站点列表中查找匹配的站点，不进行校验
                 return ValidateStationName(stationName);
             }
             catch (Exception ex)
             {
-                Utils.LogHelper.LogError($"处理站点输入框失去焦点事件时出错: {stationName}", ex);
+                LogHelper.LogError($"处理站点输入框失去焦点事件时出错: {stationName}", ex);
                 return null;
             }
         }
@@ -195,10 +188,7 @@ namespace TA_WPF.Services
             try
             {
                 // 确保站点数据已加载
-                if (!_isInitialized)
-                {
-                    await LoadStationsAsync();
-                }
+                await EnsureInitializedAsync();
 
                 // 检测车站表是否为空
                 if (_stations.Count == 0)
@@ -226,7 +216,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Utils.LogHelper.LogError($"校验车站信息完整性时出错: {stationName}", ex);
+                LogHelper.LogError($"校验车站信息完整性时出错: {stationName}", ex);
                 return (1, null); // 出错时默认为车站不存在
             }
         }
@@ -243,11 +233,22 @@ namespace TA_WPF.Services
         }
 
         /// <summary>
+        /// 确保服务已初始化
+        /// </summary>
+        private async Task EnsureInitializedAsync()
+        {
+            if (!_isInitialized)
+            {
+                await LoadStationsAsync();
+            }
+        }
+
+        /// <summary>
         /// 检测是否为有效的车站名
         /// </summary>
         /// <param name="stationName">车站名称</param>
         /// <returns>是否有效</returns>
-        public bool IsValidStation(string stationName)
+        public async Task<bool> IsValidStationAsync(string stationName)
         {
             if (string.IsNullOrWhiteSpace(stationName))
             {
@@ -255,12 +256,7 @@ namespace TA_WPF.Services
             }
 
             // 确保站点数据已加载
-            if (!_isInitialized)
-            {
-                // 同步加载站点数据
-                var loadTask = LoadStationsAsync();
-                loadTask.Wait();
-            }
+            await EnsureInitializedAsync();
 
             // 检测车站表是否为空
             if (_stations.Count == 0)
@@ -277,7 +273,7 @@ namespace TA_WPF.Services
         /// </summary>
         /// <param name="stationName">车站名称</param>
         /// <returns>车站信息，如果不存在返回null</returns>
-        public StationInfo GetStationInfo(string stationName)
+        public async Task<StationInfo> GetStationInfoAsync(string stationName)
         {
             if (string.IsNullOrWhiteSpace(stationName))
             {
@@ -285,15 +281,54 @@ namespace TA_WPF.Services
             }
 
             // 确保站点数据已加载
-            if (!_isInitialized)
-            {
-                // 同步加载站点数据
-                var loadTask = LoadStationsAsync();
-                loadTask.Wait();
-            }
+            await EnsureInitializedAsync();
 
             // 在站点列表中查找匹配的站点
             return ValidateStationName(stationName);
         }
+        
+        #region 兼容旧版接口的同步方法（不推荐使用）
+        
+        /// <summary>
+        /// 处理站点输入框失去焦点事件 (同步版本，不推荐使用)
+        /// </summary>
+        /// <param name="stationName">站点名称</param>
+        /// <param name="isDepartStation">是否为出发站</param>
+        /// <returns>处理后的站点信息，如果找不到匹配站点则返回null</returns>
+        [Obsolete("请使用异步版本 HandleStationLostFocusAsync，避免阻塞UI线程")]
+        public StationInfo HandleStationLostFocus(string stationName, bool isDepartStation)
+        {
+            var task = HandleStationLostFocusAsync(stationName, isDepartStation);
+            task.Wait();
+            return task.Result;
+        }
+        
+        /// <summary>
+        /// 检测是否为有效的车站名 (同步版本，不推荐使用)
+        /// </summary>
+        /// <param name="stationName">车站名称</param>
+        /// <returns>是否有效</returns>
+        [Obsolete("请使用异步版本 IsValidStationAsync，避免阻塞UI线程")]
+        public bool IsValidStation(string stationName)
+        {
+            var task = IsValidStationAsync(stationName);
+            task.Wait();
+            return task.Result;
+        }
+        
+        /// <summary>
+        /// 获取车站信息 (同步版本，不推荐使用)
+        /// </summary>
+        /// <param name="stationName">车站名称</param>
+        /// <returns>车站信息，如果不存在返回null</returns>
+        [Obsolete("请使用异步版本 GetStationInfoAsync，避免阻塞UI线程")]
+        public StationInfo GetStationInfo(string stationName)
+        {
+            var task = GetStationInfoAsync(stationName);
+            task.Wait();
+            return task.Result;
+        }
+        
+        #endregion
     }
 }

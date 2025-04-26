@@ -251,17 +251,28 @@
                                                Style="{StaticResource MaterialDesignBody1TextBlock}"/>
                                 </StackPanel>
                             </Grid>
+
+                            <!-- 无数据提示 -->
+                            <Grid Visibility="{Binding HasSelectedPdf, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                                  HorizontalAlignment="Center" 
+                                  VerticalAlignment="Center">
+                                <TextBlock Text="{Binding NoDataText}" 
+                                           HorizontalAlignment="Center"
+                                           FontSize="24"
+                                           Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                           Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                            </Grid>
                                 
                             <!-- PDF内容 -->
                             <ScrollViewer VerticalScrollBarVisibility="Auto"
                                           HorizontalScrollBarVisibility="Auto"
                                           Style="{StaticResource AutoHideScrollViewerStyle}"
-                                          Visibility="{Binding IsLoading, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                          Visibility="{Binding HasSelectedPdf, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <TextBox Text="{Binding PdfContent, UpdateSourceTrigger=PropertyChanged}"
                                          FontFamily="Microsoft YaHei"
                                          TextWrapping="NoWrap"
                                          AcceptsReturn="True"
-                                         IsReadOnly="False"
+                                         IsReadOnly="True"
                                          Padding="16"/>
                             </ScrollViewer>
                         </Grid>
@@ -269,7 +280,7 @@
 
                     <!-- 车票信息表单区域 -->
                     <materialDesign:Card Grid.Row="2" UniformCornerRadius="4">
-                        <Expander Header="车票信息" IsExpanded="False" Margin="0">
+                        <Expander Header="车票信息" IsExpanded="{Binding IsExpandPanelEnabled}" Margin="0">
                             <ScrollViewer VerticalScrollBarVisibility="Auto" 
                                          Style="{StaticResource AutoHideScrollViewerStyle}" 
                                          MaxHeight="350">
@@ -356,11 +367,54 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBox Grid.Column="0"
+                                        <Grid Grid.Column="0">
+                                            <TextBox
                                                 Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                 Style="{StaticResource FormSearchTextBoxStyle}"
                                                 materialDesign:HintAssist.Hint="出发站"
                                                 IsEnabled="{Binding IsDepartStationEnabled}" />
+                                            
+                                            <!-- 站名联想弹出菜单 -->
+                                            <Popup 
+                                                IsOpen="{Binding IsDepartStationDropdownOpen}"
+                                                PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Grid}}"
+                                                Placement="Bottom"
+                                                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Grid}}"
+                                                AllowsTransparency="True"
+                                                StaysOpen="False">
+                                                <Border Background="{DynamicResource MaterialDesignPaper}" 
+                                                    BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                                    BorderThickness="1"
+                                                        MaxHeight="200">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                                Style="{StaticResource AutoHideScrollViewerStyle}">
+                                                        <ItemsControl ItemsSource="{Binding DepartStationSuggestions}"
+                                                                    KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                                    KeyboardNavigation.TabNavigation="Cycle">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Button Command="{Binding DataContext.SelectDepartStationCommand, 
+                                                                             RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Content="{Binding StationName, Converter={StaticResource StationNameConverter}}"
+                                                                            HorizontalContentAlignment="Center"
+                                                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                                                            Width="{Binding ActualWidth, 
+                                                                                    RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                                    AncestorType=ScrollViewer}}"
+                                                                            FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+                                                </Border>
+                                            </Popup>
+                                        </Grid>
                                         <TextBlock Grid.Column="1"
                                                   Text="站"
                                                   VerticalAlignment="Center"
@@ -385,11 +439,54 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBox Grid.Column="0"
+                                        <Grid Grid.Column="0">
+                                            <TextBox
                                                 Text="{Binding ArriveStationSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                 Style="{StaticResource FormSearchTextBoxStyle}"
                                                 materialDesign:HintAssist.Hint="到达站"
                                                 IsEnabled="{Binding IsArriveStationEnabled}" />
+                                            
+                                            <!-- 站名联想弹出菜单 -->
+                                            <Popup 
+                                                IsOpen="{Binding IsArriveStationDropdownOpen}"
+                                                PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Grid}}"
+                                                Placement="Bottom"
+                                                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Grid}}"
+                                                AllowsTransparency="True"
+                                                StaysOpen="False">
+                                                <Border Background="{DynamicResource MaterialDesignPaper}" 
+                                                    BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                                    BorderThickness="1"
+                                                        MaxHeight="200">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                                Style="{StaticResource AutoHideScrollViewerStyle}">
+                                                        <ItemsControl ItemsSource="{Binding ArriveStationSuggestions}"
+                                                                    KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                                    KeyboardNavigation.TabNavigation="Cycle">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Button Command="{Binding DataContext.SelectArriveStationCommand, 
+                                                                             RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Content="{Binding StationName, Converter={StaticResource StationNameConverter}}"
+                                                                            HorizontalContentAlignment="Center"
+                                                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                                                            Width="{Binding ActualWidth, 
+                                                                                    RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                                    AncestorType=ScrollViewer}}"
+                                                                            FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+                                                </Border>
+                                            </Popup>
+                                        </Grid>
                                         <TextBlock Grid.Column="1"
                                                   Text="站"
                                                   VerticalAlignment="Center"

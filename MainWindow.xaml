@@ -320,13 +320,33 @@
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
                                 </TreeViewItem>
-                                <TreeViewItem>
+                                <TreeViewItem IsExpanded="True">
                                     <TreeViewItem.Header>
                                         <StackPanel Orientation="Horizontal">
                                             <materialDesign:PackIcon Kind="OfficeBuildingMarker" Margin="0,0,8,0"/>
                                             <TextBlock Text="车站管理"/>
                                         </StackPanel>
                                     </TreeViewItem.Header>
+                                    <TreeViewItem>
+                                        <TreeViewItem.Header>
+                                            <Button Content="车站中心" 
+                                                    Command="{Binding StationListCommand}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    HorizontalContentAlignment="Left"
+                                                    Width="200"
+                                                    Margin="0"
+                                                    Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                <Button.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="OfficeBuildingOutline" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </Button.ContentTemplate>
+                                            </Button>
+                                        </TreeViewItem.Header>
+                                    </TreeViewItem>
                                 </TreeViewItem>
                                 <TreeViewItem>
                                     <TreeViewItem.Header>
@@ -369,6 +389,11 @@
                     <views:QueryAllTicketsPage Grid.Column="1" 
                                               DataContext="{Binding QueryAllTicketsViewModel}"
                                               Visibility="{Binding DataContext.ShowQueryAllTickets, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    
+                    <!-- 车站中心页面 (NEW) -->
+                    <views:QueryAllStationsPage Grid.Column="1"
+                                                DataContext="{Binding QueryAllStationsViewModel}"
+                                                Visibility="{Binding DataContext.ShowQueryAllStations, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     
                     <!-- 设置页面 -->
                     <views:SettingsPage Grid.Column="1" 

@@ -7,6 +7,7 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.Views;
+using System.Diagnostics;
 
 namespace TA_WPF.ViewModels
 {
@@ -908,7 +909,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
 
                 // 手动刷新命令状态
-                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+                CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
@@ -940,7 +941,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
 
                 // 刷新命令状态
-                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+                CommandManager.InvalidateRequerySuggested();
 
                 // 翻页时，确保重置全选状态
                 _isUpdatingAllSelected = true;
@@ -967,7 +968,7 @@ namespace TA_WPF.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"加载页面数据出错: {ex.Message}");
+                        Debug.WriteLine($"加载页面数据出错: {ex.Message}");
                     }
                     finally
                     {
@@ -978,7 +979,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"页面变更处理出错: {ex.Message}");
+                Debug.WriteLine($"页面变更处理出错: {ex.Message}");
                 // 确保加载状态被重置
                 _paginationViewModel.IsLoading = false;
             }
@@ -1002,7 +1003,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
 
                 // 刷新命令状态
-                System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+                CommandManager.InvalidateRequerySuggested();
 
                 // 页大小改变时，重置全选状态
                 _isUpdatingAllSelected = true;
@@ -1033,7 +1034,7 @@ namespace TA_WPF.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"加载页面数据出错: {ex.Message}");
+                        Debug.WriteLine($"加载页面数据出错: {ex.Message}");
                     }
                     finally
                     {
@@ -1044,7 +1045,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"页大小变更处理出错: {ex.Message}");
+                Debug.WriteLine($"页大小变更处理出错: {ex.Message}");
                 // 确保加载状态被重置
                 _paginationViewModel.IsLoading = false;
             }
@@ -1324,47 +1325,47 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 首页命令
         /// </summary>
-        public System.Windows.Input.ICommand FirstPageCommand => _paginationViewModel.FirstPageCommand;
+        public ICommand FirstPageCommand => _paginationViewModel.FirstPageCommand;
 
         /// <summary>
         /// 上一页命令
         /// </summary>
-        public System.Windows.Input.ICommand PreviousPageCommand => _paginationViewModel.PreviousPageCommand;
+        public ICommand PreviousPageCommand => _paginationViewModel.PreviousPageCommand;
 
         /// <summary>
         /// 下一页命令
         /// </summary>
-        public System.Windows.Input.ICommand NextPageCommand => _paginationViewModel.NextPageCommand;
+        public ICommand NextPageCommand => _paginationViewModel.NextPageCommand;
 
         /// <summary>
         /// 末页命令
         /// </summary>
-        public System.Windows.Input.ICommand LastPageCommand => _paginationViewModel.LastPageCommand;
+        public ICommand LastPageCommand => _paginationViewModel.LastPageCommand;
 
         /// <summary>
         /// 全选命令
         /// </summary>
-        public System.Windows.Input.ICommand SelectAllCommand { get; }
+        public ICommand SelectAllCommand { get; }
 
         /// <summary>
         /// 取消全选命令
         /// </summary>
-        public System.Windows.Input.ICommand UnselectAllCommand { get; }
+        public ICommand UnselectAllCommand { get; }
 
         /// <summary>
         /// 切换全选/取消全选命令
         /// </summary>
-        public System.Windows.Input.ICommand ToggleSelectionCommand { get; }
+        public ICommand ToggleSelectionCommand { get; }
 
         /// <summary>
         /// 反选命令
         /// </summary>
-        public System.Windows.Input.ICommand InvertSelectionCommand { get; }
+        public ICommand InvertSelectionCommand { get; }
 
         /// <summary>
         /// 清除选择命令
         /// </summary>
-        public System.Windows.Input.ICommand ClearSelectionCommand { get; }
+        public ICommand ClearSelectionCommand { get; }
 
         /// <summary>
         /// 删除车票命令

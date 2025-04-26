@@ -19,11 +19,13 @@ namespace TA_WPF.ViewModels
         private readonly SettingsViewModel _settingsViewModel;
         private readonly QueryAllTicketsViewModel _queryAllTicketsViewModel;
         private readonly DashboardViewModel _dashboardViewModel;
+        private readonly QueryAllStationsViewModel _queryAllStationsViewModel;
 
         private bool _showWelcome = true;
         private bool _showSettings = false;
         private bool _showQueryAllTickets = false;
         private bool _showDashboardView = false;
+        private bool _showQueryAllStations = false;
         private string _connectionString;
 
         /// <summary>
@@ -49,6 +51,9 @@ namespace TA_WPF.ViewModels
                 // 初始化车票中心视图模型
                 _queryAllTicketsViewModel = new QueryAllTicketsViewModel(_databaseService, new PaginationViewModel(), this);
 
+                // 初始化车站中心视图模型
+                _queryAllStationsViewModel = new QueryAllStationsViewModel(_databaseService, new PaginationViewModel(), this);
+
                 // 初始化车票视图模型，传入this作为MainViewModel引用
                 _ticketViewModel = new TicketViewModel(_databaseService, _navigationService, new PaginationViewModel(), this);
 
@@ -59,6 +64,7 @@ namespace TA_WPF.ViewModels
                 ShowHomeCommand = new RelayCommand(ShowHome);
                 TicketListCommand = new RelayCommand(async () => await QueryAllAsync());
                 ShowDashboardCommand = new RelayCommand(ShowDashboard);
+                StationListCommand = new RelayCommand(async () => await QueryAllStationsAsync());
 
                 // 新增添加车票相关命令
                 OcrTicketCommand = new RelayCommand(ShowOcrTicketFeatureNotAvailable);
@@ -89,6 +95,11 @@ namespace TA_WPF.ViewModels
         public QueryAllTicketsViewModel QueryAllTicketsViewModel => _queryAllTicketsViewModel;
 
         /// <summary>
+        /// 车站中心视图模型
+        /// </summary>
+        public QueryAllStationsViewModel QueryAllStationsViewModel => _queryAllStationsViewModel;
+
+        /// <summary>
         /// 仪表盘视图模型
         /// </summary>
         public DashboardViewModel DashboardViewModel => _dashboardViewModel;
@@ -112,6 +123,7 @@ namespace TA_WPF.ViewModels
                         ShowSettings = false;
                         ShowQueryAllTickets = false;
                         ShowDashboardView = false;
+                        ShowQueryAllStations = false;
                     }
                 }
             }
@@ -136,6 +148,7 @@ namespace TA_WPF.ViewModels
                         ShowWelcome = false;
                         ShowQueryAllTickets = false;
                         ShowDashboardView = false;
+                        ShowQueryAllStations = false;
                     }
                 }
             }
@@ -160,6 +173,7 @@ namespace TA_WPF.ViewModels
                         ShowWelcome = false;
                         ShowSettings = false;
                         ShowDashboardView = false;
+                        ShowQueryAllStations = false;
                     }
                 }
             }
@@ -184,6 +198,32 @@ namespace TA_WPF.ViewModels
                         ShowWelcome = false;
                         ShowSettings = false;
                         ShowQueryAllTickets = false;
+                        ShowQueryAllStations = false;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否显示车站中心页面
+        /// </summary>
+        public bool ShowQueryAllStations
+        {
+            get => _showQueryAllStations;
+            set
+            {
+                if (_showQueryAllStations != value)
+                {
+                    _showQueryAllStations = value;
+                    OnPropertyChanged(nameof(ShowQueryAllStations));
+
+                    // 如果显示车站中心页面，则隐藏其他页面
+                    if (value)
+                    {
+                        ShowWelcome = false;
+                        ShowSettings = false;
+                        ShowQueryAllTickets = false;
+                        ShowDashboardView = false;
                     }
                 }
             }
@@ -228,6 +268,11 @@ namespace TA_WPF.ViewModels
         /// 从12306导入车票命令
         /// </summary>
         public ICommand Import12306TicketCommand { get; }
+
+        /// <summary>
+        /// 车站中心命令
+        /// </summary>
+        public ICommand StationListCommand { get; }
 
         /// <summary>
         /// 修改连接命令
@@ -354,6 +399,15 @@ namespace TA_WPF.ViewModels
         {
             ShowQueryAllTickets = true;
             await _queryAllTicketsViewModel.QueryAllAsync();
+        }
+
+        /// <summary>
+        /// 查询所有车站
+        /// </summary>
+        private async Task QueryAllStationsAsync()
+        {
+            ShowQueryAllStations = true;
+            await _queryAllStationsViewModel.QueryAllAsync();
         }
 
         /// <summary>

@@ -112,6 +112,22 @@ namespace TA_WPF.Services
                 }
                 else { Debug.WriteLine($"[PdfImportService] Not enough lines to process station info (Index {stationLineIndex}). Total lines: {lines.Length}."); }
 
+                // --- 提取出发站和到达站拼音 (从第8行) ---
+                int pinyinLineIndex = 7; // 第8行索引
+                if (lines.Length > pinyinLineIndex)
+                {
+                    var pinyinLine = lines[pinyinLineIndex].Trim();
+                    var pinyinParts = pinyinLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (pinyinParts.Length >= 2)
+                    {
+                        ticket.DepartStationPinyin = pinyinParts[0].Trim(); // Example: "Baiyinshi"
+                        ticket.ArriveStationPinyin = pinyinParts[1].Trim(); // Example: "Baiyinxi"
+                        Debug.WriteLine($"[PdfImportService] Extracted DepartStationPinyin: '{ticket.DepartStationPinyin}', ArriveStationPinyin: '{ticket.ArriveStationPinyin}'");
+                    }
+                    else { Debug.WriteLine($"[PdfImportService] Pinyin line (Index {pinyinLineIndex}) parts count: {pinyinParts.Length}, expected >= 2."); }
+                }
+                else { Debug.WriteLine($"[PdfImportService] Not enough lines to process pinyin info (Index {pinyinLineIndex}). Total lines: {lines.Length}."); }
+
                 // --- 提取出发日期和时间 ---
                 var dateTimeRegex = new Regex(@"开车时间\s*(\d{4})年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*(\d{1,2}):(\d{1,2})");
                 var dateTimeLine = lines.FirstOrDefault(line => dateTimeRegex.IsMatch(line));

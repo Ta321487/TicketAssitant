@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows.Data;
+using TA_WPF.Utils;
 
 namespace TA_WPF.Converters
 {
@@ -9,7 +10,7 @@ namespace TA_WPF.Converters
         {
             if (value is string stationName)
             {
-                return stationName.Replace("站", "");
+                return StationNameHelper.RemoveStationSuffix(stationName);
             }
             return value;
         }

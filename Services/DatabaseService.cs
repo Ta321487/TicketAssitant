@@ -66,18 +66,7 @@ namespace TA_WPF.Services
                     {
                         while (await reader.ReadAsync())
                         {
-                            stations.Add(new StationInfo
-                            {
-                                Id = reader.GetInt32(reader.GetOrdinal("id")),
-                                StationName = reader.IsDBNull(reader.GetOrdinal("station_name")) ? null : reader.GetString(reader.GetOrdinal("station_name")),
-                                Province = reader.IsDBNull(reader.GetOrdinal("province")) ? null : reader.GetString(reader.GetOrdinal("province")),
-                                City = reader.IsDBNull(reader.GetOrdinal("city")) ? null : reader.GetString(reader.GetOrdinal("city")),
-                                District = reader.IsDBNull(reader.GetOrdinal("district")) ? null : reader.GetString(reader.GetOrdinal("district")),
-                                Longitude = reader.IsDBNull(reader.GetOrdinal("longitude")) ? null : reader.GetString(reader.GetOrdinal("longitude")),
-                                Latitude = reader.IsDBNull(reader.GetOrdinal("latitude")) ? null : reader.GetString(reader.GetOrdinal("latitude")),
-                                StationCode = reader.IsDBNull(reader.GetOrdinal("station_code")) ? null : reader.GetString(reader.GetOrdinal("station_code")),
-                                StationPinyin = reader.IsDBNull(reader.GetOrdinal("station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("station_pinyin"))
-                            });
+                            stations.Add(MapStationInfo(reader));
                         }
                     }
                 }
@@ -259,8 +248,8 @@ namespace TA_WPF.Services
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
-                        // 如果用户输入的站名不以"站"结尾，自动添加"站"字
-                        string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                        // 确保站名以"站"结尾
+                        string stationName = StationNameHelper.EnsureStationSuffix(departStation);
                         conditions.Add("depart_station = @DepartStation");
                         parameters.Add("@DepartStation", stationName);
                     }
@@ -300,8 +289,8 @@ namespace TA_WPF.Services
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
-                        // 如果用户输入的站名不以"站"结尾，自动添加"站"字
-                        string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                        // 确保站名以"站"结尾
+                        string stationName = StationNameHelper.EnsureStationSuffix(departStation);
                         conditions.Add("depart_station = @DepartStation");
                         parameters.Add("@DepartStation", stationName);
                     }
@@ -391,8 +380,8 @@ namespace TA_WPF.Services
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
-                        // 如果用户输入的站名不以"站"结尾，自动添加"站"字
-                        string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                        // 确保站名以"站"结尾
+                        string stationName = StationNameHelper.EnsureStationSuffix(departStation);
                         conditions.Add("depart_station = @DepartStation");
                         parameters.Add("@DepartStation", stationName);
                     }
@@ -432,8 +421,8 @@ namespace TA_WPF.Services
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
-                        // 如果用户输入的站名不以"站"结尾，自动添加"站"字
-                        string stationName = departStation.EndsWith("站") ? departStation : departStation + "站";
+                        // 确保站名以"站"结尾
+                        string stationName = StationNameHelper.EnsureStationSuffix(departStation);
                         conditions.Add("depart_station = @DepartStation");
                         parameters.Add("@DepartStation", stationName);
                     }
@@ -580,31 +569,29 @@ namespace TA_WPF.Services
             {
                 try
                 {
-                    string query = "SELECT * FROM station_info WHERE station_name LIKE @PartialName ORDER BY station_name LIMIT 10";
+                    // 修改查询：使用子查询和MIN(id)来获取每个站名的唯一记录
+                    string query = @"SELECT * FROM station_info 
+                                    WHERE id IN (
+                                        SELECT MIN(id) 
+                                        FROM station_info
+                                        WHERE station_name LIKE @PartialName
+                                        GROUP BY station_name
+                                    )
+                                    ORDER BY LENGTH(station_name), station_name
+                                    LIMIT 10";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
                         // 设置命令超时为3秒
                         command.CommandTimeout = 10;
 
-                        command.Parameters.AddWithValue("@PartialName", partialName + "%");
+                        command.Parameters.AddWithValue("@PartialName", "%" + partialName + "%");
 
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             while (await reader.ReadAsync())
                             {
-                                stations.Add(new StationInfo
-                                {
-                                    Id = reader.GetInt32(reader.GetOrdinal("id")),
-                                    StationName = reader.IsDBNull(reader.GetOrdinal("station_name")) ? null : reader.GetString(reader.GetOrdinal("station_name")),
-                                    Province = reader.IsDBNull(reader.GetOrdinal("province")) ? null : reader.GetString(reader.GetOrdinal("province")),
-                                    City = reader.IsDBNull(reader.GetOrdinal("city")) ? null : reader.GetString(reader.GetOrdinal("city")),
-                                    District = reader.IsDBNull(reader.GetOrdinal("district")) ? null : reader.GetString(reader.GetOrdinal("district")),
-                                    Longitude = reader.IsDBNull(reader.GetOrdinal("longitude")) ? null : reader.GetString(reader.GetOrdinal("longitude")),
-                                    Latitude = reader.IsDBNull(reader.GetOrdinal("latitude")) ? null : reader.GetString(reader.GetOrdinal("latitude")),
-                                    StationCode = reader.IsDBNull(reader.GetOrdinal("station_code")) ? null : reader.GetString(reader.GetOrdinal("station_code")),
-                                    StationPinyin = reader.IsDBNull(reader.GetOrdinal("station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("station_pinyin"))
-                                });
+                                stations.Add(MapStationInfo(reader));
                             }
                         }
                     }
@@ -889,12 +876,8 @@ namespace TA_WPF.Services
                             while (await reader.ReadAsync())
                             {
                                 string stationName = reader.GetString(0);
-                                // 如果站名不以"站"结尾，添加"站"字
-                                if (!stationName.EndsWith("站"))
-                                {
-                                    stationName += "站";
-                                }
-                                stations.Add(stationName);
+                                // 使用工具类确保站名以"站"结尾
+                                stations.Add(StationNameHelper.EnsureStationSuffix(stationName));
                             }
                         }
                     }
@@ -908,5 +891,102 @@ namespace TA_WPF.Services
                 return new List<string>();
             }
         }
+
+        #region Station Methods (NEW)
+
+        /// <summary>
+        /// 获取分页的车站信息
+        /// </summary>
+        /// <param name="pageNumber">页码 (从1开始)</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <param name="orderBy">排序字段</param>
+        /// <param name="ascending">是否升序</param>
+        /// <returns>车站信息列表</returns>
+        public async Task<List<StationInfo>> GetStationsAsync(int pageNumber, int pageSize, string orderBy = "id", bool ascending = true)
+        {
+            var items = new List<StationInfo>();
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0) pageSize = 10; // Default page size
+
+            using (var connection = await GetOpenConnectionWithRetryAsync())
+            {
+                string direction = ascending ? "ASC" : "DESC";
+                // Basic validation for orderBy to prevent injection, allow only known columns
+                string[] allowedColumns = { "id", "station_name", "province", "city", "district", "station_code", "station_pinyin" };
+                if (!allowedColumns.Contains(orderBy.ToLower()))
+                {
+                    orderBy = "id"; // Default to id if invalid column
+                }
+
+                string query = $@"SELECT * FROM station_info
+                                ORDER BY `{orderBy}` {direction} 
+                                LIMIT @Offset, @PageSize";
+
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                    command.Parameters.AddWithValue("@PageSize", pageSize);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            items.Add(MapStationInfo(reader));
+                        }
+                    }
+                }
+            }
+            return items;
+        }
+
+        /// <summary>
+        /// 获取车站总数
+        /// </summary>
+        /// <returns>车站总数</returns>
+        public async Task<int> GetStationCountAsync()
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    using (var command = new MySqlCommand("SELECT COUNT(*) FROM station_info", connection))
+                    {
+                        // Set timeout for count operation as well
+                        command.CommandTimeout = 15; // 15 seconds
+                        object result = await command.ExecuteScalarAsync();
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取车站总数时出错: {ex.Message}", ex);
+                throw new Exception($"获取车站总数时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 将 DataReader 映射到 StationInfo 对象
+        /// </summary>
+        private StationInfo MapStationInfo(DbDataReader reader)
+        {
+            return new StationInfo
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("id")),
+                StationName = reader.IsDBNull(reader.GetOrdinal("station_name")) ? null : reader.GetString(reader.GetOrdinal("station_name")),
+                Province = reader.IsDBNull(reader.GetOrdinal("province")) ? null : reader.GetString(reader.GetOrdinal("province")),
+                City = reader.IsDBNull(reader.GetOrdinal("city")) ? null : reader.GetString(reader.GetOrdinal("city")),
+                District = reader.IsDBNull(reader.GetOrdinal("district")) ? null : reader.GetString(reader.GetOrdinal("district")),
+                Longitude = reader.IsDBNull(reader.GetOrdinal("longitude")) ? null : reader.GetString(reader.GetOrdinal("longitude")),
+                Latitude = reader.IsDBNull(reader.GetOrdinal("latitude")) ? null : reader.GetString(reader.GetOrdinal("latitude")),
+                StationCode = reader.IsDBNull(reader.GetOrdinal("station_code")) ? null : reader.GetString(reader.GetOrdinal("station_code")),
+                StationPinyin = reader.IsDBNull(reader.GetOrdinal("station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("station_pinyin"))
+                // Add other properties if they exist in the table/model
+            };
+        }
+
+        // Add methods for AddStationAsync, UpdateStationAsync, DeleteStationAsync later
+
+        #endregion
     }
 }

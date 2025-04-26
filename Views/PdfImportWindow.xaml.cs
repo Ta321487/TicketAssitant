@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Controls;
+using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
 
@@ -9,6 +11,8 @@ namespace TA_WPF.Views
     /// </summary>
     public partial class PdfImportWindow : Window
     {
+        private PdfImportViewModel _viewModel;
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -18,7 +22,30 @@ namespace TA_WPF.Views
         public PdfImportWindow(MainViewModel mainViewModel, PdfImportService pdfImportService, StationSearchService stationSearchService)
         {
             InitializeComponent();
-            DataContext = new PdfImportViewModel(mainViewModel,pdfImportService,stationSearchService);
+            _viewModel = new PdfImportViewModel(mainViewModel, pdfImportService, stationSearchService);
+            DataContext = _viewModel;
+        }
+
+        /// <summary>
+        /// 出发站列表选择变更事件处理
+        /// </summary>
+        private void DepartStationListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DataContext is PdfImportViewModel viewModel && e.AddedItems.Count > 0)
+            {
+                viewModel.HandleDepartStationSelected();
+            }
+        }
+
+        /// <summary>
+        /// 到达站列表选择变更事件处理
+        /// </summary>
+        private void ArriveStationListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DataContext is PdfImportViewModel viewModel && e.AddedItems.Count > 0)
+            {
+                viewModel.HandleArriveStationSelected();
+            }
         }
     }
 } 

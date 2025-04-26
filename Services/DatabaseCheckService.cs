@@ -1,5 +1,6 @@
 using TA_WPF.Utils;
 using TA_WPF.Views;
+using System.Diagnostics;
 
 namespace TA_WPF.Services
 {
@@ -74,7 +75,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"检测表时出错: {ex.Message}");
+                Debug.WriteLine($"检测表时出错: {ex.Message}");
                 LogHelper.LogError($"检测表时出错: {ex.Message}");
                 MessageDialog.Show(
                     $"检测数据库表时出错: {ex.Message}",

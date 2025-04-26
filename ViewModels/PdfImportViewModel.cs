@@ -25,6 +25,10 @@ namespace TA_WPF.ViewModels
         private string _pdfContent = string.Empty;
         private string _selectedPdfPath = string.Empty;
         private bool _isLoading = false;
+        private bool _isLoadingEnabled;
+        private bool _isPaymentMethodEnabled;
+        private bool _isExpandPanelEnabled;
+        private string _noDataText = "暂无数据";
 
         // 表单相关私有字段
         // 基本信息
@@ -87,9 +91,12 @@ namespace TA_WPF.ViewModels
         private bool _isArriveStationDropdownOpen;
         private string _departStationSearchText;
         private string _arriveStationSearchText;
+        private StationInfo _selectedDepartStation;
+        private StationInfo _selectedArriveStation;
 
         // 用于临时禁止通知和互斥逻辑的标志
         private bool _suppressNotifications = false;
+        private bool _ignoreSearchTextChange = false;
 
         // --- 添加用于字段解锁的属性 ---
         private bool _isQuestionButtonEnabled;
@@ -118,8 +125,6 @@ namespace TA_WPF.ViewModels
         private bool _isCustomHintEnabled;
         private bool _isTicketModificationTypeEnabled;
         private bool _isTicketTypeEnabled;
-        private bool _isPaymentMethodEnabled;
-        // --- 结束添加 ---
 
         /// <summary>
         /// 主视图模型，用于主题和字体大小绑定
@@ -143,6 +148,8 @@ namespace TA_WPF.ViewModels
             ImportTicketCommand = new RelayCommand(ImportTicket, CanImportTicket);
             CancelCommand = new RelayCommand(Cancel);
             ToggleFieldCommand = new RelayCommand<string>(ToggleField);
+            SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
+            SelectArriveStationCommand = new RelayCommand<StationInfo>(SelectArriveStation);
             
             // 初始化表单相关集合
             TrainTypes = new ObservableCollection<string> { "G", "C", "D", "Z", "T", "K", "L", "S", "纯数字" };
@@ -198,16 +205,40 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private async void OnPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
+            // 防止无限递归（当我们在触发属性变更事件时执行操作导致再次触发相同事件）
+            if (_suppressNotifications)
+                return;
+
             // 当出发站搜索文本变更时，进行搜索
             if (e.PropertyName == nameof(DepartStationSearchText) && !string.IsNullOrWhiteSpace(DepartStationSearchText))
             {
+                // 如果设置了忽略标记，则跳过搜索
+                if (_ignoreSearchTextChange)
+                    return;
+                
                 await SearchDepartStationsAsync(DepartStationSearchText);
+                
+                // 如果用户已经启用了编辑模式，则尝试根据输入搜索并填充车站代码和拼音
+                if (IsDepartStationEnabled && !string.IsNullOrWhiteSpace(DepartStationSearchText))
+                {
+                    DepartStation = DepartStationSearchText;
+                }
             }
             
             // 当到达站搜索文本变更时，进行搜索
             if (e.PropertyName == nameof(ArriveStationSearchText) && !string.IsNullOrWhiteSpace(ArriveStationSearchText))
             {
+                // 如果设置了忽略标记，则跳过搜索
+                if (_ignoreSearchTextChange)
+                    return;
+                
                 await SearchArriveStationsAsync(ArriveStationSearchText);
+                
+                // 如果用户已经启用了编辑模式，则尝试根据输入搜索并填充车站代码和拼音
+                if (IsArriveStationEnabled && !string.IsNullOrWhiteSpace(ArriveStationSearchText))
+                {
+                    ArriveStation = ArriveStationSearchText;
+                }
             }
         }
 
@@ -284,6 +315,16 @@ namespace TA_WPF.ViewModels
         /// 切换字段编辑状态命令
         /// </summary>
         public ICommand ToggleFieldCommand { get; }
+
+        /// <summary>
+        /// 选择出发站命令
+        /// </summary>
+        public ICommand SelectDepartStationCommand { get; }
+        
+        /// <summary>
+        /// 选择到达站命令
+        /// </summary>
+        public ICommand SelectArriveStationCommand { get; }
 
         #region 表单相关属性
 
@@ -979,14 +1020,7 @@ namespace TA_WPF.ViewModels
         public bool IsDepartStationDropdownOpen
         {
             get => _isDepartStationDropdownOpen;
-            set
-            {
-                if (_isDepartStationDropdownOpen != value)
-                {
-                    _isDepartStationDropdownOpen = value;
-                    OnPropertyChanged(nameof(IsDepartStationDropdownOpen));
-                }
-            }
+            set => SetProperty(ref _isDepartStationDropdownOpen, value);
         }
 
         /// <summary>
@@ -995,14 +1029,25 @@ namespace TA_WPF.ViewModels
         public bool IsArriveStationDropdownOpen
         {
             get => _isArriveStationDropdownOpen;
-            set
-            {
-                if (_isArriveStationDropdownOpen != value)
-                {
-                    _isArriveStationDropdownOpen = value;
-                    OnPropertyChanged(nameof(IsArriveStationDropdownOpen));
-                }
-            }
+            set => SetProperty(ref _isArriveStationDropdownOpen, value);
+        }
+
+        /// <summary>
+        /// 选中的出发站
+        /// </summary>
+        public StationInfo SelectedDepartStation
+        {
+            get => _selectedDepartStation;
+            set => SetProperty(ref _selectedDepartStation, value);
+        }
+        
+        /// <summary>
+        /// 选中的到达站
+        /// </summary>
+        public StationInfo SelectedArriveStation
+        {
+            get => _selectedArriveStation;
+            set => SetProperty(ref _selectedArriveStation, value);
         }
 
         /// <summary>
@@ -1337,6 +1382,24 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public bool IsSeatInputEnabled => IsSeatNoEnabled && !IsNoSeat;
 
+        /// <summary>
+        /// 是否展开车票信息面板
+        /// </summary>
+        public bool IsExpandPanelEnabled
+        {
+            get => _isExpandPanelEnabled;
+            set => SetProperty(ref _isExpandPanelEnabled, value);
+        }
+
+        /// <summary>
+        /// 无数据时显示的文本
+        /// </summary>
+        public string NoDataText
+        {
+            get => _noDataText;
+            set => SetProperty(ref _noDataText, value);
+        }
+
         #endregion
 
         /// <summary>
@@ -1418,6 +1481,9 @@ namespace TA_WPF.ViewModels
             // 填充前先重置状态并禁用问号按钮，填充完成后再启用
             // ResetFormFieldsState(); // 在SelectPdfFile中已调用
             IsQuestionButtonEnabled = false;
+
+            // 自动展开车票信息面板
+            IsExpandPanelEnabled = true;
 
             // 基本信息
             TicketNumber = ticket.TicketNumber;
@@ -1563,6 +1629,21 @@ namespace TA_WPF.ViewModels
                 
                 // 收集表单数据创建车票对象
                 var ticket = CreateTicketFromForm();
+
+                // 验证车站代码
+                if (string.IsNullOrEmpty(ticket.DepartStationCode))
+                {
+                    MessageBoxHelper.ShowWarning($"车站【{ticket.DepartStation}】缺少车站代码信息，请在车站中心中完善该车站信息。");
+                    IsLoading = false;
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(ticket.ArriveStationCode))
+                {
+                    MessageBoxHelper.ShowWarning($"车站【{ticket.ArriveStation}】缺少车站代码信息，请在车站中心中完善该车站信息。");
+                    IsLoading = false;
+                    return;
+                }
                 
                 // 保存车票信息
                 bool success = await _pdfImportService.SaveTicketAsync(ticket);
@@ -1570,7 +1651,12 @@ namespace TA_WPF.ViewModels
                 if (success)
                 {
                     IsLoading = false; // 在显示消息和关闭前设置 IsLoading = false
+                    
+                    // 刷新车票中心数据
+                    await _mainViewModel.QueryAllTicketsViewModel.RefreshDataAsync();
+                    
                     MessageBoxHelper.ShowInfo("车票导入成功");
+                    
                     // 关闭窗口
                     Application.Current.Windows.OfType<Window>()
                         .FirstOrDefault(w => w.DataContext == this)?.Close();
@@ -1733,25 +1819,32 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                if (_stationSearchService != null && !string.IsNullOrEmpty(searchText))
-                {
-                    var stations = await _stationSearchService.SearchStationsAsync(searchText);
-                    DepartStationSuggestions.Clear();
-                    foreach (var station in stations)
-                    {
-                        DepartStationSuggestions.Add(station);
-                    }
-                    IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
-                }
-                else
+                if (string.IsNullOrWhiteSpace(searchText) || searchText.Length < 1)
                 {
                     IsDepartStationDropdownOpen = false;
+                    return;
                 }
+
+                // 确保StationSearchService已初始化
+                if (_stationSearchService != null && !_stationSearchService.IsInitialized)
+                {
+                    await _stationSearchService.InitializeAsync();
+                }
+
+                // 执行搜索
+                    var stations = await _stationSearchService.SearchStationsAsync(searchText);
+
+                // 使用Dispatcher在UI线程上更新集合
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    // 更新下拉列表和显示状态
+                    DepartStationSuggestions = new ObservableCollection<StationInfo>(stations);
+                    IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
+                });
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"搜索出发站时出错: {ex.Message}");
-                IsDepartStationDropdownOpen = false;
             }
         }
 
@@ -1763,25 +1856,32 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                if (_stationSearchService != null && !string.IsNullOrEmpty(searchText))
-                {
-                    var stations = await _stationSearchService.SearchStationsAsync(searchText);
-                    ArriveStationSuggestions.Clear();
-                    foreach (var station in stations)
-                    {
-                        ArriveStationSuggestions.Add(station);
-                    }
-                    IsArriveStationDropdownOpen = ArriveStationSuggestions.Count > 0;
-                }
-                else
+                if (string.IsNullOrWhiteSpace(searchText) || searchText.Length < 1)
                 {
                     IsArriveStationDropdownOpen = false;
+                    return;
                 }
+
+                // 确保StationSearchService已初始化
+                if (_stationSearchService != null && !_stationSearchService.IsInitialized)
+                {
+                    await _stationSearchService.InitializeAsync();
+                }
+
+                // 执行搜索
+                    var stations = await _stationSearchService.SearchStationsAsync(searchText);
+
+                // 使用Dispatcher在UI线程上更新集合
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    // 更新下拉列表和显示状态
+                    ArriveStationSuggestions = new ObservableCollection<StationInfo>(stations);
+                    IsArriveStationDropdownOpen = ArriveStationSuggestions.Count > 0;
+                });
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"搜索到达站时出错: {ex.Message}");
-                IsArriveStationDropdownOpen = false;
             }
         }
         
@@ -1872,7 +1972,8 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void ResetFormFieldsState()
         {
-            IsQuestionButtonEnabled = false; // 默认禁用问号按钮
+            IsQuestionButtonEnabled = false; // 初始禁用问号按钮
+            IsExpandPanelEnabled = false; // 重置时折叠面板
 
             IsTicketNumberEnabled = false;
             IsCheckInLocationEnabled = false;
@@ -1920,12 +2021,42 @@ namespace TA_WPF.ViewModels
                     IsDepartStationEnabled = newState;
                     IsDepartStationPinyinEnabled = newState; // 同步相关字段
                     IsDepartStationCodeEnabled = newState;
+                    
+                    // 如果启用了编辑模式，则激活搜索下拉框功能
+                    if (newState && !string.IsNullOrWhiteSpace(DepartStationSearchText))
+                    {
+                        DepartStationSearchText = DepartStation; // 保持一致性
+                        // 异步调用搜索，显示下拉提示
+                        Task.Run(async () => 
+                        {
+                            await SearchDepartStationsAsync(DepartStationSearchText);
+                            Application.Current.Dispatcher.Invoke(() => 
+                            {
+                                IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
+                            });
+                        });
+                    }
                     break;
                 case "ArriveStation":
                     newState = !IsArriveStationEnabled;
                     IsArriveStationEnabled = newState;
                     IsArriveStationPinyinEnabled = newState;
                     IsArriveStationCodeEnabled = newState;
+                    
+                    // 如果启用了编辑模式，则激活搜索下拉框功能
+                    if (newState && !string.IsNullOrWhiteSpace(ArriveStationSearchText))
+                    {
+                        ArriveStationSearchText = ArriveStation; // 保持一致性
+                        // 异步调用搜索，显示下拉提示
+                        Task.Run(async () => 
+                        {
+                            await SearchArriveStationsAsync(ArriveStationSearchText);
+                            Application.Current.Dispatcher.Invoke(() => 
+                            {
+                                IsArriveStationDropdownOpen = ArriveStationSuggestions.Count > 0;
+                            });
+                        });
+                    }
                     break;
                 case "DepartStationPinyin": IsDepartStationPinyinEnabled = !IsDepartStationPinyinEnabled; break;
                 case "ArriveStationPinyin": IsArriveStationPinyinEnabled = !IsArriveStationPinyinEnabled; break;
@@ -1975,6 +2106,118 @@ namespace TA_WPF.ViewModels
             storage = value;
             OnPropertyChanged(propertyName);
             return true;
+        }
+
+        /// <summary>
+        /// 选择出发站
+        /// </summary>
+        private void SelectDepartStation(StationInfo station)
+        {
+            System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] SelectDepartStation执行，参数站点: " + 
+                (station?.StationName ?? "null"));
+            
+            if (station != null)
+            {
+                // 设置忽略标志，防止更新文本后立刻触发搜索
+                _ignoreSearchTextChange = true;
+                
+                // 保存选中站点
+                SelectedDepartStation = station;
+                
+                // 更新出发站文本框内容
+                _suppressNotifications = true;
+                DepartStationSearchText = station.StationName;
+                DepartStation = station.StationName;
+                DepartStationPinyin = station.StationPinyin;
+                DepartStationCode = station.StationCode;
+                _suppressNotifications = false;
+                
+                // 确保在UI线程上关闭下拉列表
+                System.Windows.Application.Current.Dispatcher.Invoke(() => 
+                {
+                    // 必须先将DepartStationSuggestions清空，然后关闭下拉菜单
+                    DepartStationSuggestions = new ObservableCollection<StationInfo>();
+                IsDepartStationDropdownOpen = false;
+                });
+                
+                // 触发输入变更以更新UI
+                OnPropertyChanged(nameof(DepartStationSearchText));
+                OnPropertyChanged(nameof(DepartStation));
+                OnPropertyChanged(nameof(DepartStationPinyin));
+                OnPropertyChanged(nameof(DepartStationCode));
+                
+                System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] 出发站已更新为: " + DepartStationSearchText);
+                
+                // 重置忽略标志
+                _ignoreSearchTextChange = false;
+            }
+        }
+
+        /// <summary>
+        /// 选择到达站
+        /// </summary>
+        private void SelectArriveStation(StationInfo station)
+        {
+            System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] SelectArriveStation执行，参数站点: " + 
+                (station?.StationName ?? "null"));
+            
+            if (station != null)
+            {
+                // 设置忽略标志，防止更新文本后立刻触发搜索
+                _ignoreSearchTextChange = true;
+                
+                // 保存选中站点
+                SelectedArriveStation = station;
+                
+                // 更新到达站文本框内容
+                _suppressNotifications = true;
+                ArriveStationSearchText = station.StationName;
+                ArriveStation = station.StationName;
+                ArriveStationPinyin = station.StationPinyin;
+                ArriveStationCode = station.StationCode;
+                _suppressNotifications = false;
+                
+                // 确保在UI线程上关闭下拉列表
+                System.Windows.Application.Current.Dispatcher.Invoke(() => 
+                {
+                    // 必须先将ArriveStationSuggestions清空，然后关闭下拉菜单
+                    ArriveStationSuggestions = new ObservableCollection<StationInfo>();
+                IsArriveStationDropdownOpen = false;
+                });
+                
+                // 触发输入变更以更新UI
+                OnPropertyChanged(nameof(ArriveStationSearchText));
+                OnPropertyChanged(nameof(ArriveStation));
+                OnPropertyChanged(nameof(ArriveStationPinyin));
+                OnPropertyChanged(nameof(ArriveStationCode));
+                
+                System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] 到达站已更新为: " + ArriveStationSearchText);
+                
+                // 重置忽略标志
+                _ignoreSearchTextChange = false;
+            }
+        }
+        
+        /// <summary>
+        /// 处理出发站选择事件
+        /// </summary>
+        public void HandleDepartStationSelected()
+        {
+            if (SelectedDepartStation != null)
+            {
+                SelectDepartStation(SelectedDepartStation);
+            }
+        }
+        
+        /// <summary>
+        /// 处理到达站选择事件
+        /// </summary>
+        public void HandleArriveStationSelected()
+        {
+            if (SelectedArriveStation != null)
+            {
+                SelectArriveStation(SelectedArriveStation);
+            }
         }
     }
 } 
