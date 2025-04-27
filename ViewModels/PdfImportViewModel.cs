@@ -216,7 +216,14 @@ namespace TA_WPF.ViewModels
                 if (_ignoreSearchTextChange)
                     return;
                 
-                await SearchDepartStationsAsync(DepartStationSearchText);
+                try
+                {
+                    await SearchDepartStationsAsync(DepartStationSearchText);
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.LogError($"搜索出发站时出错: {ex.Message}", ex);
+                }
                 
                 // 如果用户已经启用了编辑模式，则尝试根据输入搜索并填充车站代码和拼音
                 if (IsDepartStationEnabled && !string.IsNullOrWhiteSpace(DepartStationSearchText))
@@ -232,7 +239,14 @@ namespace TA_WPF.ViewModels
                 if (_ignoreSearchTextChange)
                     return;
                 
-                await SearchArriveStationsAsync(ArriveStationSearchText);
+                try
+                {
+                    await SearchArriveStationsAsync(ArriveStationSearchText);
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.LogError($"搜索到达站时出错: {ex.Message}", ex);
+                }
                 
                 // 如果用户已经启用了编辑模式，则尝试根据输入搜索并填充车站代码和拼音
                 if (IsArriveStationEnabled && !string.IsNullOrWhiteSpace(ArriveStationSearchText))
@@ -1485,19 +1499,22 @@ namespace TA_WPF.ViewModels
             // 自动展开车票信息面板
             IsExpandPanelEnabled = true;
 
-            // 基本信息
-            TicketNumber = ticket.TicketNumber;
-            CheckInLocation = ticket.CheckInLocation; // 确保 CheckInLocation 在 TrainRideInfo 中存在
-            DepartStation = ticket.DepartStation;
-            ArriveStation = ticket.ArriveStation;
-            DepartStationSearchText = ticket.DepartStation; // 更新搜索文本
-            ArriveStationSearchText = ticket.ArriveStation; // 更新搜索文本
-            DepartStationPinyin = ticket.DepartStationPinyin;
-            ArriveStationPinyin = ticket.ArriveStationPinyin;
-            DepartStationCode = ticket.DepartStationCode;
-            ArriveStationCode = ticket.ArriveStationCode;
-            Money = ticket.Money ?? 0;
-
+            using (SuppressNotifications())  // 使用SuppressNotifications避免触发下拉框
+            {
+                // 基本信息
+                TicketNumber = ticket.TicketNumber;
+                CheckInLocation = ticket.CheckInLocation; // 确保 CheckInLocation 在 TrainRideInfo 中存在
+                DepartStation = ticket.DepartStation;
+                ArriveStation = ticket.ArriveStation;
+                DepartStationSearchText = ticket.DepartStation; // 更新搜索文本
+                ArriveStationSearchText = ticket.ArriveStation; // 更新搜索文本
+                DepartStationPinyin = ticket.DepartStationPinyin;
+                ArriveStationPinyin = ticket.ArriveStationPinyin;
+                DepartStationCode = ticket.DepartStationCode;
+                ArriveStationCode = ticket.ArriveStationCode;
+                Money = ticket.Money ?? 0;
+            }
+            
             // 解析车次号
             if (!string.IsNullOrEmpty(ticket.TrainNo))
             {
@@ -1731,12 +1748,16 @@ namespace TA_WPF.ViewModels
                 hint = CustomHint;
             }
 
+            // 确保车站名称以"站"结尾
+            string departStation = Utils.StationNameHelper.EnsureStationSuffix(DepartStation);
+            string arriveStation = Utils.StationNameHelper.EnsureStationSuffix(ArriveStation);
+
             return new TrainRideInfo
             {
                 TicketNumber = TicketNumber,
                 CheckInLocation = CheckInLocation,
-                DepartStation = DepartStation,
-                ArriveStation = ArriveStation,
+                DepartStation = departStation,
+                ArriveStation = arriveStation,
                 DepartStationPinyin = DepartStationPinyin,
                 ArriveStationPinyin = ArriveStationPinyin,
                 DepartStationCode = DepartStationCode,
