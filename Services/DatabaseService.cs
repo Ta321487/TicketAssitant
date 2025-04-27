@@ -54,25 +54,423 @@ namespace TA_WPF.Services
 
         public async Task<List<StationInfo>> GetStationsAsync()
         {
-            var stations = new List<StationInfo>();
+            // 调用分页方法获取所有记录
+            // 传递最大可能的页大小，确保获取所有记录
+            return await GetStationsAsync(1, int.MaxValue, "station_name", true);
+        }
 
-            using (var connection = await GetOpenConnectionWithRetryAsync())
+        /// <summary>
+        /// 获取分页的车站信息
+        /// </summary>
+        /// <param name="pageNumber">页码 (从1开始)</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <param name="orderBy">排序字段</param>
+        /// <param name="ascending">是否升序</param>
+        /// <returns>车站信息列表</returns>
+        public async Task<List<StationInfo>> GetStationsAsync(int pageNumber, int pageSize, string orderBy = "id", bool ascending = true)
+        {
+            var items = new List<StationInfo>();
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0) pageSize = 10; // Default page size
+
+            try
             {
-                string query = "SELECT * FROM station_info ORDER BY station_name";
-
-                using (var command = new MySqlCommand(query, connection))
+                using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
-                    using (var reader = await command.ExecuteReaderAsync())
+                    string direction = ascending ? "ASC" : "DESC";
+                    // Basic validation for orderBy to prevent injection, allow only known columns
+                    string[] allowedColumns = { "id", "station_name", "province", "city", "district", "station_code", "station_pinyin" };
+                    if (!allowedColumns.Contains(orderBy.ToLower()))
                     {
-                        while (await reader.ReadAsync())
+                        orderBy = "id"; // Default to id if invalid column
+                    }
+
+                    string query = "SELECT * FROM station_info ";
+                    
+                    // 添加排序
+                    query += $"ORDER BY `{orderBy}` {direction} ";
+                    
+                    // 只有分页查询需要LIMIT子句
+                    if (pageSize < int.MaxValue)
+                    {
+                        query += "LIMIT @Offset, @PageSize";
+                    }
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        // 只有分页查询需要添加这些参数
+                        if (pageSize < int.MaxValue)
                         {
-                            stations.Add(MapStationInfo(reader));
+                            command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                            command.Parameters.AddWithValue("@PageSize", pageSize);
+                        }
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                items.Add(MapStationInfo(reader));
+                            }
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取车站列表失败: {ex.Message}", ex);
+                throw;
+            }
+            
+            return items;
+        }
 
-            return stations;
+        /// <summary>
+        /// 根据条件构建车站查询
+        /// </summary>
+        /// <param name="command">MySqlCommand对象</param>
+        /// <param name="whereClause">WHERE子句</param>
+        /// <param name="parameters">参数字典</param>
+        /// <returns>车站信息列表</returns>
+        private async Task<List<StationInfo>> QueryStationsAsync(MySqlCommand command, string whereClause = null, Dictionary<string, object> parameters = null)
+        {
+            var items = new List<StationInfo>();
+            
+            try
+            {
+                string query = "SELECT * FROM station_info";
+                
+                // 添加WHERE子句
+                if (!string.IsNullOrWhiteSpace(whereClause))
+                {
+                    query += $" WHERE {whereClause}";
+                }
+                
+                command.CommandText = query;
+                
+                // 添加参数
+                if (parameters != null)
+                {
+                    foreach (var param in parameters)
+                    {
+                        command.Parameters.AddWithValue(param.Key, param.Value);
+                    }
+                }
+                
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        items.Add(MapStationInfo(reader));
+                    }
+                }
+                
+                return items;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"查询车站失败: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取车站总数
+        /// </summary>
+        /// <returns>车站总数</returns>
+        public async Task<int> GetStationCountAsync()
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    using (var command = new MySqlCommand("SELECT COUNT(*) FROM station_info", connection))
+                    {
+                        // Set timeout for count operation as well
+                        command.CommandTimeout = 15; // 15 seconds
+                        object result = await command.ExecuteScalarAsync();
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取车站总数时出错: {ex.Message}", ex);
+                throw new Exception($"获取车站总数时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 根据名称获取车站信息
+        /// </summary>
+        /// <param name="stationName">车站名称</param>
+        /// <returns>车站信息，如果不存在则返回null</returns>
+        public async Task<StationInfo> GetStationByNameAsync(string stationName)
+        {
+            if (string.IsNullOrWhiteSpace(stationName))
+            {
+                return null;
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    var parameters = new Dictionary<string, object>
+                    {
+                        { "@StationName", stationName }
+                    };
+                    
+                    using (var command = new MySqlCommand(null, connection))
+                    {
+                        var results = await QueryStationsAsync(command, "station_name = @StationName", parameters);
+                        return results.FirstOrDefault();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"根据名称获取车站信息失败: {ex.Message}", ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 根据部分名称搜索车站
+        /// </summary>
+        /// <param name="partialName">部分名称</param>
+        /// <returns>匹配的车站列表</returns>
+        public async Task<List<StationInfo>> SearchStationsByNameAsync(string partialName)
+        {
+            if (string.IsNullOrWhiteSpace(partialName))
+                return new List<StationInfo>();
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 修改查询：使用子查询和MIN(id)来获取每个站名的唯一记录
+                    string query = @"SELECT * FROM station_info 
+                                    WHERE id IN (
+                                        SELECT MIN(id) 
+                                        FROM station_info
+                                        WHERE station_name LIKE @PartialName
+                                        GROUP BY station_name
+                                    )
+                                    ORDER BY LENGTH(station_name), station_name
+                                    LIMIT 10";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        // 设置命令超时为10秒
+                        command.CommandTimeout = 10;
+                        command.Parameters.AddWithValue("@PartialName", "%" + partialName + "%");
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            var results = new List<StationInfo>();
+                            while (await reader.ReadAsync())
+                            {
+                                results.Add(MapStationInfo(reader));
+                            }
+                            return results;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"搜索车站失败: {ex.Message}", ex);
+                return new List<StationInfo>();
+            }
+        }
+
+        /// <summary>
+        /// 添加车站信息
+        /// </summary>
+        /// <param name="station">车站信息</param>
+        /// <returns>添加是否成功</returns>
+        public async Task<bool> AddStationAsync(StationInfo station)
+        {
+            if (station == null) throw new ArgumentNullException(nameof(station));
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    return await InsertStationInternalAsync(station, connection, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"添加车站信息失败: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 批量添加车站信息
+        /// </summary>
+        /// <param name="stations">车站信息列表</param>
+        /// <returns>添加成功的数量</returns>
+        public async Task<int> AddStationsAsync(List<StationInfo> stations)
+        {
+            if (stations == null || !stations.Any()) return 0;
+
+            int successCount = 0;
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 使用事务以提高批量插入效率
+                    using (var transaction = await connection.BeginTransactionAsync())
+                    {
+                        foreach (var station in stations)
+                        {
+                            try
+                            {
+                                bool success = await InsertStationInternalAsync(station, connection, transaction as MySqlTransaction);
+                                if (success)
+                                {
+                                    successCount++;
+                                }
+                            }
+                            catch (MySqlException ex)
+                            {
+                                // 记录具体哪个车站添加失败
+                                LogHelper.LogError($"添加车站 {station.StationName} 失败: {ex.Message}", ex);
+                                // 继续处理下一个，不中断事务
+                            }
+                        }
+
+                        // 提交事务
+                        await transaction.CommitAsync();
+                    }
+                }
+
+                return successCount;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"批量添加车站信息失败: {ex.Message}", ex);
+                return successCount; // 返回已经成功添加的数量
+            }
+        }
+
+        /// <summary>
+        /// 内部方法：插入车站数据
+        /// </summary>
+        /// <param name="station">车站信息</param>
+        /// <param name="connection">数据库连接</param>
+        /// <param name="transaction">事务</param>
+        /// <returns>是否成功</returns>
+        private async Task<bool> InsertStationInternalAsync(StationInfo station, MySqlConnection connection, MySqlTransaction transaction)
+        {
+            string query = @"INSERT INTO station_info 
+                           (station_name, province, city, district, longitude, latitude, station_code, station_pinyin) 
+                           VALUES 
+                           (@StationName, @Province, @City, @District, @Longitude, @Latitude, @StationCode, @StationPinyin)";
+
+            using (var command = new MySqlCommand(query, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@StationName", station.StationName);
+                command.Parameters.AddWithValue("@Province", station.Province ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@City", station.City ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@District", station.District ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@Longitude", station.Longitude ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@Latitude", station.Latitude ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@StationCode", station.StationCode ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@StationPinyin", station.StationPinyin ?? (object)DBNull.Value);
+
+                int rowsAffected = await command.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+        }
+
+        /// <summary>
+        /// 根据ID列表删除车站
+        /// </summary>
+        /// <param name="stationIds">车站ID列表</param>
+        /// <returns>是否成功删除</returns>
+        public async Task<bool> DeleteStationsByIdsAsync(List<int> stationIds)
+        {
+            if (stationIds == null || stationIds.Count == 0)
+            {
+                return true;
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 构建包含所有ID的IN子句
+                    string idList = string.Join(",", stationIds);
+                    string query = $"DELETE FROM station_info WHERE id IN ({idList})";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"批量删除车站失败: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 重置车站表的自增ID
+        /// </summary>
+        /// <returns>是否重置成功</returns>
+        public async Task<bool> ResetStationsAutoIncrementAsync()
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 获取当前最大ID
+                    int maxId = 0;
+                    using (var countCommand = new MySqlCommand("SELECT COALESCE(MAX(id), 0) FROM station_info", connection))
+                    {
+                        object result = await countCommand.ExecuteScalarAsync();
+                        maxId = Convert.ToInt32(result);
+                    }
+
+                    // 重置自增值为最大ID+1，确保没有空洞
+                    string query = $"ALTER TABLE station_info AUTO_INCREMENT = {maxId + 1}";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        await command.ExecuteNonQueryAsync();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"重置车站表自增ID失败: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 将 DataReader 映射到 StationInfo 对象
+        /// </summary>
+        private StationInfo MapStationInfo(DbDataReader reader)
+        {
+            return new StationInfo
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("id")),
+                StationName = reader.IsDBNull(reader.GetOrdinal("station_name")) ? null : reader.GetString(reader.GetOrdinal("station_name")),
+                Province = reader.IsDBNull(reader.GetOrdinal("province")) ? null : reader.GetString(reader.GetOrdinal("province")),
+                City = reader.IsDBNull(reader.GetOrdinal("city")) ? null : reader.GetString(reader.GetOrdinal("city")),
+                District = reader.IsDBNull(reader.GetOrdinal("district")) ? null : reader.GetString(reader.GetOrdinal("district")),
+                Longitude = reader.IsDBNull(reader.GetOrdinal("longitude")) ? null : reader.GetString(reader.GetOrdinal("longitude")),
+                Latitude = reader.IsDBNull(reader.GetOrdinal("latitude")) ? null : reader.GetString(reader.GetOrdinal("latitude")),
+                StationCode = reader.IsDBNull(reader.GetOrdinal("station_code")) ? null : reader.GetString(reader.GetOrdinal("station_code")),
+                StationPinyin = reader.IsDBNull(reader.GetOrdinal("station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("station_pinyin"))
+            };
         }
 
         public async Task AddTicketAsync(TrainRideInfo ticket)
@@ -552,61 +950,6 @@ namespace TA_WPF.Services
             return trainRideInfo;
         }
 
-        public async Task<List<StationInfo>> SearchStationsByNameAsync(string partialName)
-        {
-            var stations = new List<StationInfo>();
-
-            if (string.IsNullOrWhiteSpace(partialName))
-                return stations;
-
-            // 创建带有超时设置的连接字符串
-            var builder = new MySqlConnectionStringBuilder(_connectionString)
-            {
-                ConnectionTimeout = 5 // 设置连接超时为5秒
-            };
-
-            using (var connection = await GetOpenConnectionWithRetryAsync())
-            {
-                try
-                {
-                    // 修改查询：使用子查询和MIN(id)来获取每个站名的唯一记录
-                    string query = @"SELECT * FROM station_info 
-                                    WHERE id IN (
-                                        SELECT MIN(id) 
-                                        FROM station_info
-                                        WHERE station_name LIKE @PartialName
-                                        GROUP BY station_name
-                                    )
-                                    ORDER BY LENGTH(station_name), station_name
-                                    LIMIT 10";
-
-                    using (var command = new MySqlCommand(query, connection))
-                    {
-                        // 设置命令超时为3秒
-                        command.CommandTimeout = 10;
-
-                        command.Parameters.AddWithValue("@PartialName", "%" + partialName + "%");
-
-                        using (var reader = await command.ExecuteReaderAsync())
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                stations.Add(MapStationInfo(reader));
-                            }
-                        }
-                    }
-                }
-                catch (MySqlException ex)
-                {
-                    // 记录详细的数据库错误信息
-                    System.Diagnostics.Debug.WriteLine($"搜索车站时数据库错误: {ex.Message}, 错误代码: {ex.Number}");
-                    throw; // 重新抛出异常以便上层处理
-                }
-            }
-
-            return stations;
-        }
-
         /// <summary>
         /// 检测数据库中是否存在指定的表
         /// </summary>
@@ -891,102 +1234,5 @@ namespace TA_WPF.Services
                 return new List<string>();
             }
         }
-
-        #region Station Methods (NEW)
-
-        /// <summary>
-        /// 获取分页的车站信息
-        /// </summary>
-        /// <param name="pageNumber">页码 (从1开始)</param>
-        /// <param name="pageSize">每页大小</param>
-        /// <param name="orderBy">排序字段</param>
-        /// <param name="ascending">是否升序</param>
-        /// <returns>车站信息列表</returns>
-        public async Task<List<StationInfo>> GetStationsAsync(int pageNumber, int pageSize, string orderBy = "id", bool ascending = true)
-        {
-            var items = new List<StationInfo>();
-            if (pageNumber <= 0) pageNumber = 1;
-            if (pageSize <= 0) pageSize = 10; // Default page size
-
-            using (var connection = await GetOpenConnectionWithRetryAsync())
-            {
-                string direction = ascending ? "ASC" : "DESC";
-                // Basic validation for orderBy to prevent injection, allow only known columns
-                string[] allowedColumns = { "id", "station_name", "province", "city", "district", "station_code", "station_pinyin" };
-                if (!allowedColumns.Contains(orderBy.ToLower()))
-                {
-                    orderBy = "id"; // Default to id if invalid column
-                }
-
-                string query = $@"SELECT * FROM station_info
-                                ORDER BY `{orderBy}` {direction} 
-                                LIMIT @Offset, @PageSize";
-
-                using (var command = new MySqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
-                    command.Parameters.AddWithValue("@PageSize", pageSize);
-
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            items.Add(MapStationInfo(reader));
-                        }
-                    }
-                }
-            }
-            return items;
-        }
-
-        /// <summary>
-        /// 获取车站总数
-        /// </summary>
-        /// <returns>车站总数</returns>
-        public async Task<int> GetStationCountAsync()
-        {
-            try
-            {
-                using (var connection = await GetOpenConnectionWithRetryAsync())
-                {
-                    using (var command = new MySqlCommand("SELECT COUNT(*) FROM station_info", connection))
-                    {
-                        // Set timeout for count operation as well
-                        command.CommandTimeout = 15; // 15 seconds
-                        object result = await command.ExecuteScalarAsync();
-                        return Convert.ToInt32(result);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogError($"获取车站总数时出错: {ex.Message}", ex);
-                throw new Exception($"获取车站总数时出错: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// 将 DataReader 映射到 StationInfo 对象
-        /// </summary>
-        private StationInfo MapStationInfo(DbDataReader reader)
-        {
-            return new StationInfo
-            {
-                Id = reader.GetInt32(reader.GetOrdinal("id")),
-                StationName = reader.IsDBNull(reader.GetOrdinal("station_name")) ? null : reader.GetString(reader.GetOrdinal("station_name")),
-                Province = reader.IsDBNull(reader.GetOrdinal("province")) ? null : reader.GetString(reader.GetOrdinal("province")),
-                City = reader.IsDBNull(reader.GetOrdinal("city")) ? null : reader.GetString(reader.GetOrdinal("city")),
-                District = reader.IsDBNull(reader.GetOrdinal("district")) ? null : reader.GetString(reader.GetOrdinal("district")),
-                Longitude = reader.IsDBNull(reader.GetOrdinal("longitude")) ? null : reader.GetString(reader.GetOrdinal("longitude")),
-                Latitude = reader.IsDBNull(reader.GetOrdinal("latitude")) ? null : reader.GetString(reader.GetOrdinal("latitude")),
-                StationCode = reader.IsDBNull(reader.GetOrdinal("station_code")) ? null : reader.GetString(reader.GetOrdinal("station_code")),
-                StationPinyin = reader.IsDBNull(reader.GetOrdinal("station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("station_pinyin"))
-                // Add other properties if they exist in the table/model
-            };
-        }
-
-        // Add methods for AddStationAsync, UpdateStationAsync, DeleteStationAsync later
-
-        #endregion
     }
 }

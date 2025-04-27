@@ -5,9 +5,10 @@ using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows; // Add this for MessageBoxResult
+using System.Windows; // Add this for MessageBoxResult and Application
 using System.Linq;
 using System.Collections.Generic;
+using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -169,10 +170,23 @@ namespace TA_WPF.ViewModels
         // --- Command Methods (Implement logic later or keep as placeholders) ---
         private async void AddStation()
         {
-            // Logic to open AddStationWindow
-            MessageBoxHelper.ShowInfo("添加车站功能稍后实现。");
-            // Example: _navigationService.OpenAddStationWindow(_mainViewModel);
-            // await LoadStationsAsync(); // Refresh after add
+            // 创建StationImportService
+            var stationImportService = new StationImportService(_databaseService);
+            
+            // 创建并显示ImportStationFrom12306Window
+            var importWindow = new ImportStationFrom12306Window(stationImportService, _mainViewModel);
+            
+            // 获取导入ViewModel并设置刷新回调
+            if (importWindow.DataContext is ImportStationFrom12306ViewModel viewModel)
+            {
+                // 设置回调以在导入完成后刷新数据
+                viewModel.DataRefreshCallback = async () => {
+                    await LoadStationsAsync(); 
+                };
+            }
+            
+            importWindow.Owner = Application.Current.MainWindow;
+            importWindow.ShowDialog();
         }
         private bool CanAddStation() => true; // Or based on permissions/state
 
@@ -307,7 +321,7 @@ namespace TA_WPF.ViewModels
             await LoadStationsAsync();
         }
 
-        private async Task LoadStationsAsync()
+        public async Task LoadStationsAsync()
         {
             IsLoading = true;
             try
