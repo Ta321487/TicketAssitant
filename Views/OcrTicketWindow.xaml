@@ -230,10 +230,13 @@
                 <Border Grid.Column="0" Margin="0,0,8,0" Padding="8"
                        BorderBrush="{DynamicResource MaterialDesignDivider}"
                        BorderThickness="1"
-                       CornerRadius="4">
+                       CornerRadius="4"
+                       AllowDrop="True" 
+                       Drop="NoImageBorder_Drop" 
+                       PreviewDragOver="NoImageBorder_PreviewDragOver">
                     <Grid>
                         <!-- 未选择图片时显示的提示 - 使用简单直接的方式 -->
-                        <Grid x:Name="NoImageBorder">
+                        <Grid x:Name="NoImageBorder" AllowDrop="True" Drop="NoImageBorder_Drop" PreviewDragOver="NoImageBorder_PreviewDragOver">
                             <Border Background="Transparent" BorderThickness="0">
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                     <materialDesign:PackIcon Kind="ImageOutline" 
@@ -248,7 +251,7 @@
                                              Foreground="{DynamicResource MaterialDesignBodyLight}"
                                              FontSize="18"
                                              Margin="0,16,0,0"/>
-                                    <TextBlock Text="请点击上方按钮导入车票图片" 
+                                    <TextBlock Text="请点击上方按钮导入车票图片或直接拖入图片" 
                                              HorizontalAlignment="Center" 
                                              TextAlignment="Center"
                                              Foreground="{DynamicResource MaterialDesignBodyLight}"
@@ -902,6 +905,8 @@
                                      Text="{Binding TrainNumber, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource FormTextBoxStyle}"
                                      materialDesign:HintAssist.Hint="车次号"
+                                     PreviewTextInput="TrainNumber_PreviewTextInput"
+                                     InputMethod.IsInputMethodEnabled="False"
                                      IsEnabled="{Binding IsTrainNumberEnabled}"
                                      Margin="0"/>
                             <Button Grid.Column="2" 
@@ -978,6 +983,8 @@
                                      Text="{Binding CoachNo, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource FormNumberTextBoxStyle}"
                                      materialDesign:HintAssist.Hint="车厢号"
+                                     PreviewTextInput="CoachNo_PreviewTextInput"
+                                     InputMethod.IsInputMethodEnabled="False"
                                      IsEnabled="{Binding IsCoachNoEnabled}"
                                      Margin="0"/>
                             <TextBlock Grid.Column="1" 
@@ -1022,6 +1029,7 @@
                                          Style="{StaticResource FormNumberTextBoxStyle}"
                                          materialDesign:HintAssist.Hint="座位号"
                                          PreviewTextInput="SeatNo_PreviewTextInput"
+                                         InputMethod.IsInputMethodEnabled="False"
                                          Margin="0"/>
                                 <ComboBox Grid.Column="1" 
                                           ItemsSource="{Binding SeatPositions}" 
@@ -1332,8 +1340,13 @@
                     MinHeight="36"
                     FontSize="{Binding MainViewModel.FontSize}"
                     Padding="16,8"
-                    IsEnabled="{Binding IsEnvironmentReady}"
                     IsDefault="True">
+                <Button.IsEnabled>
+                    <MultiBinding Converter="{StaticResource BoolToEnabledConverter}">
+                        <Binding Path="IsEnvironmentReady" />
+                        <Binding Path="IsLoading" />
+                    </MultiBinding>
+                </Button.IsEnabled>
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0" VerticalAlignment="Center"/>
                     <TextBlock Text="保存车票" VerticalAlignment="Center"/>

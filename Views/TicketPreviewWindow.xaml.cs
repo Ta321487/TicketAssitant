@@ -17,6 +17,10 @@ namespace TA_WPF.Views
 
             _viewModel = new TicketPreviewViewModel(selectedTicket);
             _viewModel.RequestClose += (s, e) => Close();
+            
+            // 设置当前窗口作为ViewModel的Owner，用于显示中心化消息框
+            _viewModel.OwnerWindow = this;
+            
             DataContext = _viewModel;
 
             // 订阅主题服务的主题变更事件，以便在主题变化时更新窗口样式

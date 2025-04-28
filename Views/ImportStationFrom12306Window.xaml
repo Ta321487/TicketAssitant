@@ -7,7 +7,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels"
         mc:Ignorable="d"
-        Title="从12306导入车站" 
+        Title="从12306导入车站列表" 
         Height="500" 
         Width="600"
         WindowStartupLocation="CenterOwner"
@@ -70,7 +70,7 @@
 
         <!-- 标题 -->
         <TextBlock Grid.Row="0"
-                   Text="从12306导入车站信息"
+                   Text="从12306导入车站列表"
                    Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                    HorizontalAlignment="Center"
                    FontFamily="Microsoft YaHei"

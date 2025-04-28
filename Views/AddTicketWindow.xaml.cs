@@ -289,7 +289,7 @@ namespace TA_WPF.Views
             }
         }
 
-        private void SeatNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void TrainNumber_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             try
             {
@@ -299,7 +299,47 @@ namespace TA_WPF.Views
             }
             catch (Exception ex)
             {
+                LogHelper.LogError("处理车次号输入时出错", ex);
+                e.Handled = true;
+            }
+        }
+
+        private void SeatNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            try
+            {
+                // 检查当前ViewModel
+                if (_viewModel != null)
+                {
+                    // 无论选择什么座位类型，都只允许输入数字
+                    Regex regex = new Regex("[^0-9]+");
+                    e.Handled = regex.IsMatch(e.Text);
+                }
+                else
+                {
+                    // 如果ViewModel不可用，默认只允许输入数字
+                    Regex regex = new Regex("[^0-9]+");
+                    e.Handled = regex.IsMatch(e.Text);
+                }
+            }
+            catch (Exception ex)
+            {
                 LogHelper.LogError("处理座位号输入时出错", ex);
+                e.Handled = true;
+            }
+        }
+
+        private void CoachNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            try
+            {
+                // 只允许输入数字
+                Regex regex = new Regex("[^0-9]+");
+                e.Handled = regex.IsMatch(e.Text);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理车厢号输入时出错", ex);
                 e.Handled = true;
             }
         }

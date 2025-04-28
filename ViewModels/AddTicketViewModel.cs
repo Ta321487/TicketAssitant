@@ -1138,7 +1138,11 @@ namespace TA_WPF.ViewModels
                         break;
                     case "软座":
                     case "硬卧代硬座":
-                        // 这些类型没有特定位置，只有座位号
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("B");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("D");
+                        SeatPositions.Add("F");
                         break;
                     default:
                         // 默认不显示位置选项

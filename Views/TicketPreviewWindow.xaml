@@ -363,8 +363,20 @@
                 <TextBlock Text="身份信息" Grid.Row="25" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding IdentityInfo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                         Grid.Row="26" Grid.Column="0" Grid.ColumnSpan="3"
-                        Style="{StaticResource FormTextBoxStyle}"
-                        IsEnabled="True"/>
+                        x:Name="IdentityInfoTextBox"
+                        IsEnabled="True">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource FormTextBoxStyle}">
+                            <Style.Triggers>
+                                <!-- 当身份证验证失败时，允许文本框可用，但会显示红色边框 -->
+                                <DataTrigger Binding="{Binding IsIdCardValid}" Value="False">
+                                    <Setter Property="BorderBrush" Value="Red"/>
+                                    <Setter Property="BorderThickness" Value="2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
 
                 <!-- 编码区 - 跨所有列，调整行号 -->
                 <TextBlock Text="编码区" Grid.Row="27" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource FormLabelStyle}"/>

@@ -384,6 +384,8 @@
                              Text="{Binding TrainNumber, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource FormTextBoxStyle}"
                              materialDesign:HintAssist.Hint="车次号"
+                             PreviewTextInput="TrainNumber_PreviewTextInput"
+                             InputMethod.IsInputMethodEnabled="False"
                              Margin="0"/>
                 </Grid>
 
@@ -437,6 +439,8 @@
                              Text="{Binding CoachNo, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource FormNumberTextBoxStyle}"
                              materialDesign:HintAssist.Hint="车厢号"
+                             PreviewTextInput="CoachNo_PreviewTextInput"
+                             InputMethod.IsInputMethodEnabled="False"
                              Margin="0"/>
                     <TextBlock Grid.Column="1" 
                                Text="车" 
@@ -469,6 +473,7 @@
                                  Style="{StaticResource FormNumberTextBoxStyle}"
                                  materialDesign:HintAssist.Hint="座位号"
                                  PreviewTextInput="SeatNo_PreviewTextInput"
+                                 InputMethod.IsInputMethodEnabled="False"
                                  Margin="0"/>
                         <ComboBox Grid.Column="1" 
                                   ItemsSource="{Binding SeatPositions}" 

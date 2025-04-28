@@ -132,6 +132,7 @@
             <converters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
             <converters:TicketTypeFlagsConverter x:Key="TicketTypeFlagsConverter" />
             <converters:PaymentChannelFlagsConverter x:Key="PaymentChannelFlagsConverter" />
+            <converters:BoolToEnabledConverter x:Key="BoolToEnabledConverter" />
 
             <!-- 数据表格样式 -->
             <Style TargetType="{x:Type DataGrid}">

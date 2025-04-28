@@ -697,6 +697,8 @@
                                                    Text="{Binding TrainNumber, UpdateSourceTrigger=PropertyChanged}"
                                                    Style="{StaticResource FormTextBoxStyle}"
                                                    materialDesign:HintAssist.Hint="车次号"
+                                                   PreviewTextInput="TrainNumber_PreviewTextInput"
+                                                   InputMethod.IsInputMethodEnabled="False"
                                                    IsEnabled="{Binding IsTrainNumberEnabled}" />
                                         <Button Grid.Column="2"
                                                    Style="{StaticResource MaterialDesignIconButton}"
@@ -772,6 +774,8 @@
                                                    Text="{Binding CoachNo, UpdateSourceTrigger=PropertyChanged}"
                                                    Style="{StaticResource FormNumberTextBoxStyle}"
                                                    materialDesign:HintAssist.Hint="车厢号"
+                                                   PreviewTextInput="CoachNo_PreviewTextInput"
+                                                   InputMethod.IsInputMethodEnabled="False"
                                                    IsEnabled="{Binding IsCoachNoEnabled}" />
                                         <TextBlock Grid.Column="1"
                                                    Text="车"
@@ -812,6 +816,8 @@
                                             <TextBox Grid.Column="0"
                                                        Text="{Binding SeatNo, UpdateSourceTrigger=PropertyChanged}"
                                                        materialDesign:HintAssist.Hint="座位号"
+                                                       PreviewTextInput="TrainNumber_PreviewTextInput"
+                                                       InputMethod.IsInputMethodEnabled="False"
                                                        IsEnabled="{Binding IsSeatInputEnabled}">
                                                 <TextBox.Style>
                                                     <Style TargetType="TextBox" BasedOn="{StaticResource FormNumberTextBoxStyle}">

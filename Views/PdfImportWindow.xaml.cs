@@ -1,7 +1,10 @@
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
+using TA_WPF.Utils;
 using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
@@ -24,6 +27,42 @@ namespace TA_WPF.Views
             InitializeComponent();
             _viewModel = new PdfImportViewModel(mainViewModel, pdfImportService, stationSearchService);
             DataContext = _viewModel;
+        }
+
+        /// <summary>
+        /// 车厢号输入验证，只允许输入数字
+        /// </summary>
+        private void CoachNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            try
+            {
+                // 只允许输入数字
+                Regex regex = new Regex("[^0-9]+");
+                e.Handled = regex.IsMatch(e.Text);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理车厢号输入时出错", ex);
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// 车次号输入验证，只允许输入数字
+        /// </summary>
+        private void TrainNumber_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            try
+            {
+                // 只允许输入数字
+                Regex regex = new Regex("[^0-9]+");
+                e.Handled = regex.IsMatch(e.Text);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理车次号输入时出错", ex);
+                e.Handled = true;
+            }
         }
 
         /// <summary>

@@ -246,14 +246,115 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 座位号输入验证
+        /// 车次号输入验证
         /// </summary>
-        private void SeatNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void TrainNumber_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             // 只允许输入数字
             Regex regex = new Regex("[^0-9]+");
             e.Handled = regex.IsMatch(e.Text);
         }
 
+        /// <summary>
+        /// 座位号输入验证
+        /// </summary>
+        private void SeatNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // 无论选择什么座位类型，都只允许输入数字
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        /// <summary>
+        /// 车厢号输入验证
+        /// </summary>
+        private void CoachNo_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // 只允许输入数字
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        /// <summary>
+        /// 处理拖放图片预览事件，允许拖放
+        /// </summary>
+        private void NoImageBorder_PreviewDragOver(object sender, DragEventArgs e)
+        {
+            // 检查是否有文件被拖放
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                // 不阻止默认行为，允许拖放
+                e.Handled = true;
+                // 显示可以放下的效果
+                e.Effects = DragDropEffects.Copy;
+            }
+        }
+
+        /// <summary>
+        /// 处理拖放图片完成事件
+        /// </summary>
+        private void NoImageBorder_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                // 检查是否有文件被拖放
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    // 获取拖放的文件列表
+                    string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    
+                    // 只取第一个文件
+                    if (files.Length > 0)
+                    {
+                        string filePath = files[0];
+                        string fileExtension = Path.GetExtension(filePath).ToLower();
+                        
+                        // 验证是否为图片文件
+                        if (fileExtension == ".jpg" || fileExtension == ".jpeg" || fileExtension == ".png" || fileExtension == ".bmp")
+                        {
+                            LogHelper.LogInfo($"拖放导入图片: {filePath}");
+                            
+                            // 尝试重置表单状态 - 通过反射调用私有方法
+                            var resetFormMethod = _viewModel.GetType().GetMethod("ResetFormState", 
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (resetFormMethod != null)
+                            {
+                                resetFormMethod.Invoke(_viewModel, null);
+                                LogHelper.LogInfo("已重置表单状态");
+                            }
+                            
+                            // 清除之前的OCR结果
+                            if (_viewModel.OcrResults != null)
+                            {
+                                _viewModel.OcrResults.Clear();
+                                _viewModel.AverageConfidence = 0;
+                                _viewModel.JsonResult = string.Empty;
+                            }
+                            
+                            // 设置新选择的图片路径
+                            _viewModel.SelectedImagePath = filePath;
+                            
+                            // 显示图片加载成功消息
+                            LogHelper.LogInfo($"成功通过拖放导入图片: {Path.GetFileName(filePath)}");
+                            
+                            // 手动触发命令状态更新，确保按钮可用性立即更新
+                            CommandManager.InvalidateRequerySuggested();
+                        }
+                        else
+                        {
+                            MessageBoxHelper.ShowWarning("请选择有效的图片文件(jpg, jpeg, png, bmp)");
+                        }
+                    }
+                }
+                
+                // 标记事件已处理，防止事件冒泡导致重复处理
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("拖放图片时出错", ex);
+                MessageBoxHelper.ShowError($"拖放图片时出错: {ex.Message}");
+            }
+        }
     }
 }

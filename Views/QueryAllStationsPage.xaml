@@ -192,12 +192,12 @@
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Command="{Binding AddStationCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="添加车站"
+                        ToolTip="从12306导入车站列表"
                         Margin="0,0,8,0"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="添加车站" VerticalAlignment="Center"/>
+                        <TextBlock Text="导入车站" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             

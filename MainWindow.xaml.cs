@@ -241,7 +241,7 @@ namespace TA_WPF
         }
 
         /// <summary>
-        /// 窗口状态变化时调整表格列宽
+        /// 窗口状态变化时调整表格列宽的
         /// </summary>
         private void Window_StateChanged(object sender, EventArgs e)
         {

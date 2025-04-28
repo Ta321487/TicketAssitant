@@ -15,6 +15,9 @@ using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
+using System.Text.RegularExpressions;
+using System.Globalization;
+using TA_WPF.Utils;
 
 namespace TA_WPF.ViewModels
 {
@@ -44,6 +47,11 @@ namespace TA_WPF.ViewModels
         private bool _showPSBCPayment;
         private bool _showBOCPayment;
         private bool _showCOMMPayment;
+        private bool _isValidatingIdCard = false; // 添加验证状态标记
+        // 添加获取当前窗口的属性
+        private Window _ownerWindow;
+        private bool _isIdCardValid = true; // 跟踪身份证验证状态
+        private bool _isNewInputSession = true; // 标记是否是新的输入会话
 
         // 设计时构造函数
         public TicketPreviewViewModel() : this(new TrainRideInfo
@@ -65,8 +73,8 @@ namespace TA_WPF.ViewModels
             TicketPurpose = "仅供报销使用",
             Hint = "这是一条提示信息|这也是一条提示信息",
             TicketModificationType = "始发改签",
-            TicketTypeFlags = (int)Models.TicketTypeFlags.ChildTicket, // 设计时默认为儿童票
-            PaymentChannelFlags = (int)Models.PaymentChannelFlags.Alipay | (int)Models.PaymentChannelFlags.WeChat | (int)Models.PaymentChannelFlags.ABC | (int)Models.PaymentChannelFlags.CCB | (int)Models.PaymentChannelFlags.ICBC
+            TicketTypeFlags = (int)TicketTypeFlags.ChildTicket, // 设计时默认为儿童票
+            PaymentChannelFlags = (int)PaymentChannelFlags.Alipay | (int)PaymentChannelFlags.WeChat | (int)PaymentChannelFlags.ABC | (int)PaymentChannelFlags.CCB | (int)PaymentChannelFlags.ICBC
         })
         {
             // 为设计视图添加默认的身份信息和编码区内容
@@ -277,16 +285,203 @@ namespace TA_WPF.ViewModels
             }
         }
 
+        // 添加获取当前窗口的属性
+        public Window OwnerWindow
+        {
+            get => _ownerWindow;
+            set => _ownerWindow = value;
+        }
+
+        // 身份证验证状态属性
+        public bool IsIdCardValid
+        {
+            get => _isIdCardValid;
+            private set
+            {
+                if (_isIdCardValid != value)
+                {
+                    _isIdCardValid = value;
+                    OnPropertyChanged(nameof(IsIdCardValid));
+                }
+            }
+        }
+
         public string IdentityInfo
         {
             get => _identityInfo;
             set
             {
-                if (_identityInfo != value)
+                // 如果新值与旧值相同，则不处理
+                if (_identityInfo == value)
+                    return;
+                
+                // 如果是空值，表示开始新的输入会话
+                if (string.IsNullOrEmpty(value))
                 {
-                    _identityInfo = value;
-                    OnPropertyChanged(nameof(IdentityInfo));
+                    _isNewInputSession = true;
+                    IsIdCardValid = true;
                 }
+                
+                // 处理验证失败后的重新输入
+                if (!_isIdCardValid && !_isNewInputSession)
+                {
+                    // 当验证状态为失败且不是新的输入会话时，阻止输入
+                    return;
+                }
+                
+                _identityInfo = value;
+                _isNewInputSession = false; // 标记不再是新的输入会话
+                
+                // 验证身份证格式，但避免无限循环
+                if (!_isValidatingIdCard)
+                {
+                    ValidateIdCard(value);
+                }
+                
+                OnPropertyChanged(nameof(IdentityInfo));
+            }
+        }
+
+        // 验证身份证号码
+        private void ValidateIdCard(string id)
+        {
+            // 防止重入验证
+            if (_isValidatingIdCard)
+            {
+                return;
+            }
+
+            try
+            {
+                _isValidatingIdCard = true;
+                
+                // 跳过空字符串和长度不足的身份证号（用户可能正在输入）
+                if (string.IsNullOrWhiteSpace(id) || id.Length != 18)
+                {
+                    return;
+                }
+                
+                // 验证基本格式：18位，前17位为数字，最后一位为数字或X/x
+                string pattern = @"^\d{17}[\dXx]$";
+                if (!Regex.IsMatch(id, pattern))
+                {
+                    // 使用当前窗口作为对话框的Owner
+                    MessageBoxHelper.ShowWarning("身份证号格式错误，应为18位！", "格式错误", _ownerWindow);
+                    
+                    // 标记身份证验证失败
+                    IsIdCardValid = false;
+                    
+                    // 验证失败时设置一个空值
+                    _identityInfo = string.Empty;
+                    _isNewInputSession = true; // 重置为新的输入会话
+                    
+                    // 确保属性通知生效
+                    Application.Current.Dispatcher.InvokeAsync(() => {
+                        OnPropertyChanged(nameof(IdentityInfo));
+                        // 给界面一点时间处理属性变更，然后重置验证状态
+                        Task.Delay(50).ContinueWith(_ => {
+                            Application.Current.Dispatcher.InvokeAsync(() => {
+                                IsIdCardValid = true;
+                            });
+                        });
+                    });
+                    
+                    return;
+                }
+
+                // 验证出生日期部分
+                string birthPart = id.Substring(6, 8);
+                string birthDate = birthPart.Insert(6, "-").Insert(4, "-");
+                if (!DateTime.TryParseExact(birthDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                {
+                    MessageBoxHelper.ShowWarning("身份证中的出生日期无效！", "格式错误", _ownerWindow);
+                    
+                    // 标记身份证验证失败
+                    IsIdCardValid = false;
+                    
+                    // 验证失败时设置一个空值
+                    _identityInfo = string.Empty;
+                    _isNewInputSession = true; // 重置为新的输入会话
+                    
+                    // 确保属性通知生效
+                    Application.Current.Dispatcher.InvokeAsync(() => {
+                        OnPropertyChanged(nameof(IdentityInfo));
+                        // 给界面一点时间处理属性变更，然后重置验证状态
+                        Task.Delay(50).ContinueWith(_ => {
+                            Application.Current.Dispatcher.InvokeAsync(() => {
+                                IsIdCardValid = true;
+                            });
+                        });
+                    });
+                    
+                    return;
+                }
+
+                // 验证校验码
+                int[] weights = { 7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2 };
+                string[] checkCodes = { "1", "0", "X", "9", "8", "7", "6", "5", "4", "3", "2" };
+                int sum = 0;
+
+                for (int i = 0; i < 17; i++)
+                    sum += weights[i] * (id[i] - '0');
+
+                char actualCode = char.ToUpper(id[17]); // 处理小写x
+                string expectedCode = checkCodes[sum % 11];
+
+                if (actualCode.ToString() != expectedCode)
+                {
+                    MessageBoxHelper.ShowWarning("身份证号最后一位校验码错误！", "格式错误", _ownerWindow);
+                    
+                    // 标记身份证验证失败
+                    IsIdCardValid = false;
+                    
+                    // 验证失败时设置一个空值
+                    _identityInfo = string.Empty;
+                    _isNewInputSession = true; // 重置为新的输入会话
+                    
+                    // 确保属性通知生效
+                    Application.Current.Dispatcher.InvokeAsync(() => {
+                        OnPropertyChanged(nameof(IdentityInfo));
+                        // 给界面一点时间处理属性变更，然后重置验证状态
+                        Task.Delay(50).ContinueWith(_ => {
+                            Application.Current.Dispatcher.InvokeAsync(() => {
+                                IsIdCardValid = true;
+                            });
+                        });
+                    });
+                    
+                    return;
+                }
+                
+                // 所有验证都通过
+                IsIdCardValid = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"身份证验证过程中出现错误：{ex.Message}", "验证错误", _ownerWindow);
+                
+                // 标记身份证验证失败
+                IsIdCardValid = false;
+                
+                // 发生异常时设置一个空值
+                _identityInfo = string.Empty;
+                _isNewInputSession = true; // 重置为新的输入会话
+                
+                // 确保属性通知生效
+                Application.Current.Dispatcher.InvokeAsync(() => {
+                    OnPropertyChanged(nameof(IdentityInfo));
+                    // 给界面一点时间处理属性变更，然后重置验证状态
+                    Task.Delay(50).ContinueWith(_ => {
+                        Application.Current.Dispatcher.InvokeAsync(() => {
+                            IsIdCardValid = true;
+                        });
+                    });
+                });
+            }
+            finally
+            {
+                // 确保验证状态标记被重置
+                _isValidatingIdCard = false;
             }
         }
 
@@ -1567,12 +1762,12 @@ namespace TA_WPF.ViewModels
                 var paymentChannelFlags = _selectedTicket.PaymentChannelFlags;
 
                 // 根据原始票种信息设置显示选项
-                if ((ticketTypeFlags & (int)Models.TicketTypeFlags.StudentTicket) != 0)
+                if ((ticketTypeFlags & (int)TicketTypeFlags.StudentTicket) != 0)
                 {
                     _showStudentTicket = true;
                 }
 
-                if ((ticketTypeFlags & (int)Models.TicketTypeFlags.DiscountTicket) != 0)
+                if ((ticketTypeFlags & (int)TicketTypeFlags.DiscountTicket) != 0)
                 {
                     _showDiscountTicket = true;
                 }
@@ -1580,61 +1775,61 @@ namespace TA_WPF.ViewModels
                 // 先检测是否有支付宝或微信支付
                 bool hasOnlinePayment = false;
 
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.Alipay) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.Alipay) != 0)
                 {
                     _showAlipayPayment = true;
                     hasOnlinePayment = true;
                 }
 
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.WeChat) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.WeChat) != 0)
                 {
                     _showWeChatPayment = true;
                     hasOnlinePayment = true;
                 }
 
                 // 只有当没有支付宝和微信支付渠道时，才显示网络售票标识
-                if (!hasOnlinePayment && (ticketTypeFlags & (int)Models.TicketTypeFlags.OnlineTicket) != 0)
+                if (!hasOnlinePayment && (ticketTypeFlags & (int)TicketTypeFlags.OnlineTicket) != 0)
                 {
                     _showOnlineTicket = true;
                 }
 
-                if ((ticketTypeFlags & (int)Models.TicketTypeFlags.ChildTicket) != 0)
+                if ((ticketTypeFlags & (int)TicketTypeFlags.ChildTicket) != 0)
                 {
                     _showChildTicket = true;
                 }
 
                 // 设置银行类支付渠道
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.ABC) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.ABC) != 0)
                 {
                     _showABCPayment = true;
                 }
 
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.CCB) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.CCB) != 0)
                 {
                     _showCCBPayment = true;
                 }
 
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.ICBC) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.ICBC) != 0)
                 {
                     _showICBCPayment = true;
                 }
 
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.CMB) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.CMB) != 0)
                 {
                     _showCMBPayment = true;
                 }
 
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.PSBC) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.PSBC) != 0)
                 {
                     _showPSBCPayment = true;
                 }
 
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.BOC) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.BOC) != 0)
                 {
                     _showBOCPayment = true;
                 }
 
-                if ((paymentChannelFlags & (int)Models.PaymentChannelFlags.COMM) != 0)
+                if ((paymentChannelFlags & (int)PaymentChannelFlags.COMM) != 0)
                 {
                     _showCOMMPayment = true;
                 }
