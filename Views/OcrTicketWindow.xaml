@@ -39,6 +39,8 @@
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
             <converters:StationNameConverter x:Key="StationNameConverter" />
             <converters:StringContainsConverter x:Key="StringContainsConverter" />
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             
             <!-- 表单样式 -->
             <Style x:Key="FormLabelStyle" TargetType="TextBlock">
@@ -188,6 +190,19 @@
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="HelpCircleOutline" Margin="0,0,8,0"/>
                     <TextBlock Text="安装指南"/>
+                </StackPanel>
+            </Button>
+            
+            <Button Command="{Binding InstallPythonCommand}" 
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
+                    Margin="0,0,8,0"
+                    Visibility="{Binding IsPythonInstalled, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                    ToolTip="安装Python 3.12.9">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="DownloadOutline" Margin="0,0,8,0"/>
+                    <TextBlock Text="安装Python"/>
                 </StackPanel>
             </Button>
             
@@ -442,11 +457,13 @@
                                     Style="{StaticResource MaterialDesignCircularProgressBar}"
                                     Foreground="{DynamicResource GlobalAccentBrush}"
                                     Margin="0,0,0,16" />
+                        <!-- 加载消息 -->
                         <TextBlock Text="{Binding LoadingMessage}" 
                                  Foreground="White" 
                                  FontSize="{Binding MainViewModel.FontSize}"
                                  HorizontalAlignment="Center"
                                  Margin="0,0,0,16" />
+                        
                         <!-- 添加进度条 -->
                         <ProgressBar x:Name="OcrProgressBar" 
                                     Width="200" 

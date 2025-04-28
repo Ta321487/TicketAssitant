@@ -169,10 +169,11 @@ namespace TA_WPF.ViewModels
             _ocrEnvironmentService.EnvironmentCheckCompleted += OnEnvironmentCheckCompleted;
 
             // 使用项目中现有的RelayCommand实现
-            SelectImageCommand = new RelayCommand(async () => await SelectImage(), CanImportTicket);
+            SelectImageCommand = new RelayCommand(async () => await SelectImage(), () => !IsLoading);
             RunOcrCommand = new RelayCommand(async () => await RunOcr(), CanRunOcr);
-            CheckEnvironmentCommand = new RelayCommand(async () => await CheckEnvironment());
+            CheckEnvironmentCommand = new RelayCommand(async () => await CheckEnvironment(), () => !IsLoading);
             OpenCnocrInstallGuideCommand = new RelayCommand(() => _ocrEnvironmentService.OpenCnocrInstallGuide());
+            InstallPythonCommand = new RelayCommand(async () => await InstallPython(), CanInstallPython);
 
             // 初始化表单相关命令
             SelectDepartStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, true)); // 更新命令以调用新方法
@@ -237,6 +238,7 @@ namespace TA_WPF.ViewModels
         public ICommand RunOcrCommand { get; }
         public ICommand CheckEnvironmentCommand { get; }
         public ICommand OpenCnocrInstallGuideCommand { get; }
+        public ICommand InstallPythonCommand { get; }
 
         /// <summary>
         /// 选中的图片路径
@@ -273,17 +275,17 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// Python是否已安装
         /// </summary>
-        public bool IsPythonInstalled => _ocrEnvironmentService.IsPythonInstalled;
+        public bool? IsPythonInstalled => _ocrEnvironmentService.IsPythonInstalled;
 
         /// <summary>
         /// CNOCR是否已安装
         /// </summary>
-        public bool IsCnocrInstalled => _ocrEnvironmentService.IsCnocrInstalled;
+        public bool? IsCnocrInstalled => _ocrEnvironmentService.IsCnocrInstalled;
 
         /// <summary>
         /// OCR模型是否已安装
         /// </summary>
-        public bool IsOcrModelInstalled => _ocrEnvironmentService.IsOcrModelInstalled;
+        public bool? IsOcrModelInstalled => _ocrEnvironmentService.IsOcrModelInstalled;
 
         /// <summary>
         /// 是否正在加载中
@@ -1895,7 +1897,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private bool CanRunOcr()
         {
-            return !IsLoading && IsPythonInstalled && IsCnocrInstalled && !string.IsNullOrEmpty(SelectedImagePath);
+            return !IsLoading && IsPythonInstalled == true && IsCnocrInstalled == true && !string.IsNullOrEmpty(SelectedImagePath);
         }
 
         /// <summary>
@@ -4301,6 +4303,42 @@ namespace TA_WPF.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        /// <summary>
+        /// 安装Python
+        /// </summary>
+        private async Task InstallPython()
+        {
+            try
+            {
+                IsLoading = true;
+                SetLoadingMessage("准备安装Python...");
+                
+                // 调用服务安装Python
+                await _ocrEnvironmentService.InstallPython();
+                
+                // 安装完成后，重新检查环境
+                await CheckEnvironment();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("安装Python时出错", ex);
+                MessageBoxHelper.ShowError($"安装Python时出错: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+                SetLoadingMessage(string.Empty);
+            }
+        }
+        
+        /// <summary>
+        /// 判断是否可以安装Python
+        /// </summary>
+        private bool CanInstallPython()
+        {
+            return !IsLoading && _ocrEnvironmentService.IsPythonInstalled != true && !_ocrEnvironmentService.IsInstallingPython;
         }
 
     }

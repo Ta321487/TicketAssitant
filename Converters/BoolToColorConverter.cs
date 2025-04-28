@@ -17,9 +17,15 @@ namespace TA_WPF.Converters
         /// <param name="targetType">目标类型</param>
         /// <param name="parameter">转换参数</param>
         /// <param name="culture">区域信息</param>
-        /// <returns>如果为true则返回绿色，否则返回红色</returns>
+        /// <returns>如果为true则返回绿色，如果为false则返回红色，如果为null则返回橙色(表示检测中)</returns>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            if (value == null)
+            {
+                // null值表示检测中状态
+                return new SolidColorBrush(Colors.Orange);
+            }
+            
             if (value is bool boolValue)
             {
                 return boolValue ? new SolidColorBrush(Colors.Green) : new SolidColorBrush(Colors.Red);
