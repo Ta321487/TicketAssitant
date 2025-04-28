@@ -169,11 +169,10 @@ namespace TA_WPF.ViewModels
             _ocrEnvironmentService.EnvironmentCheckCompleted += OnEnvironmentCheckCompleted;
 
             // 使用项目中现有的RelayCommand实现
-            SelectImageCommand = new RelayCommand(async () => await SelectImage(), () => !IsLoading);
+            SelectImageCommand = new RelayCommand(async () => await SelectImage(), CanImportTicket);
             RunOcrCommand = new RelayCommand(async () => await RunOcr(), CanRunOcr);
-            CheckEnvironmentCommand = new RelayCommand(async () => await CheckEnvironment(), () => !IsLoading);
+            CheckEnvironmentCommand = new RelayCommand(async () => await CheckEnvironment());
             OpenCnocrInstallGuideCommand = new RelayCommand(() => _ocrEnvironmentService.OpenCnocrInstallGuide());
-            InstallPythonCommand = new RelayCommand(async () => await InstallPython(), CanInstallPython);
 
             // 初始化表单相关命令
             SelectDepartStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, true)); // 更新命令以调用新方法
@@ -238,7 +237,6 @@ namespace TA_WPF.ViewModels
         public ICommand RunOcrCommand { get; }
         public ICommand CheckEnvironmentCommand { get; }
         public ICommand OpenCnocrInstallGuideCommand { get; }
-        public ICommand InstallPythonCommand { get; }
 
         /// <summary>
         /// 选中的图片路径
@@ -4303,42 +4301,6 @@ namespace TA_WPF.ViewModels
             {
                 IsLoading = false;
             }
-        }
-
-        /// <summary>
-        /// 安装Python
-        /// </summary>
-        private async Task InstallPython()
-        {
-            try
-            {
-                IsLoading = true;
-                SetLoadingMessage("准备安装Python...");
-                
-                // 调用服务安装Python
-                await _ocrEnvironmentService.InstallPython();
-                
-                // 安装完成后，重新检查环境
-                await CheckEnvironment();
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogError("安装Python时出错", ex);
-                MessageBoxHelper.ShowError($"安装Python时出错: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
-                SetLoadingMessage(string.Empty);
-            }
-        }
-        
-        /// <summary>
-        /// 判断是否可以安装Python
-        /// </summary>
-        private bool CanInstallPython()
-        {
-            return !IsLoading && _ocrEnvironmentService.IsPythonInstalled != true && !_ocrEnvironmentService.IsInstallingPython;
         }
 
     }
