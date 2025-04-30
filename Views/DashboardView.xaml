@@ -458,7 +458,8 @@
                             <TextBlock Text="最近活动" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
                         </StackPanel>
                         
-                        <ListView Grid.Row="1" 
+                        <Grid Grid.Row="1"> 
+                            <ListView 
                                   ItemsSource="{Binding RecentActivities}"
                                   ItemTemplate="{StaticResource RecentActivityTemplate}"
                                   ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -466,17 +467,27 @@
                                   Background="Transparent"
                                   BorderThickness="0"
                                   MinHeight="200"
-                                  MaxHeight="300">
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                    <Setter Property="Margin" Value="0,4"/>
-                                    <Setter Property="Padding" Value="8"/>
-                                    <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1"/>
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                        </ListView>
+                                  MaxHeight="300"
+                                  Visibility="{Binding HasRecentActivities, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                                        <Setter Property="Margin" Value="0,4"/>
+                                        <Setter Property="Padding" Value="8"/>
+                                        <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                            </ListView>
+                            
+                            <!-- 空数据提示 -->
+                            <TextBlock Text="暂无数据" 
+                                      Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                                      HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"
+                                      FontSize="{DynamicResource MaterialDesignHeadline5FontSize}"
+                                      Visibility="{Binding HasRecentActivities, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        </Grid>
                     </Grid>
                 </materialDesign:Card>
 
@@ -501,7 +512,8 @@
                                      Background="Transparent"
                                      BorderThickness="0"
                                      MinHeight="200"
-                                     MaxHeight="300">
+                                     MaxHeight="300"
+                                     Visibility="{Binding HasTopRouteData, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
                                         <Setter Property="Margin" Value="0,4"/>

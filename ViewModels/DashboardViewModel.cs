@@ -96,23 +96,6 @@ namespace TA_WPF.ViewModels
             _topRouteData = new ObservableCollection<RouteData>();
             _recentActivities = new ObservableCollection<TrainRideInfo>();
 
-            // 添加初始的"暂无数据"项
-            _topRouteData.Add(new RouteData
-            {
-                From = "暂无数据",
-                To = "",
-                Count = 0,
-                TotalExpense = 0
-            });
-
-            _recentActivities.Add(new TrainRideInfo
-            {
-                TrainNo = "提示",
-                DepartStation = "暂无数据",
-                ArriveStation = "请添加车票记录",
-                DepartDate = DateTime.Now
-            });
-
             // 设置图表显示状态，确保自定义时间段也会显示
             _showMonthlyTicketChart = true;
             _showExpenseChart = true;
@@ -2059,6 +2042,7 @@ namespace TA_WPF.ViewModels
         private void LoadTopRouteData(List<TrainRideInfo> tickets)
         {
             TopRouteData.Clear();
+            OnPropertyChanged(nameof(HasTopRouteData)); // 添加这行以在清空后立即更新状态
 
             try
             {
@@ -2091,16 +2075,17 @@ namespace TA_WPF.ViewModels
                 }
 
                 // 如果没有数据，添加提示信息
-                if (!TopRouteData.Any())
-                {
-                    TopRouteData.Add(new RouteData
-                    {
-                        From = "暂无数据",
-                        To = "",
-                        Count = 0,
-                        TotalExpense = 0
-                    });
-                }
+                // 移除以下代码，因为现在由XAML处理空状态
+                //if (!TopRouteData.Any())
+                //{
+                //    TopRouteData.Add(new RouteData
+                //    {
+                //        From = "暂无数据",
+                //        To = "",
+                //        Count = 0,
+                //        TotalExpense = 0
+                //    });
+                //}
             }
             catch (Exception ex)
             {
@@ -2126,6 +2111,7 @@ namespace TA_WPF.ViewModels
         private void LoadRecentActivities(List<TrainRideInfo> tickets)
         {
             RecentActivities.Clear();
+            OnPropertyChanged(nameof(HasRecentActivities)); // 添加这行以在清空后立即更新状态
 
             // 始终显示最近活动，不受时间范围约束
             _showRecentActivitiesChart = true;
@@ -2146,17 +2132,19 @@ namespace TA_WPF.ViewModels
             }
 
             // 如果没有数据，显示提示
-            if (!RecentActivities.Any())
-            {
-                var tipTicket = new TrainRideInfo
-                {
-                    TrainNo = "提示",
-                    DepartStation = "暂无数据",
-                    ArriveStation = "请添加车票记录",
-                    DepartDate = DateTime.Now
-                };
-                RecentActivities.Add(tipTicket);
-            }
+            // 移除以下代码，因为现在由XAML处理空状态
+            //if (!RecentActivities.Any())
+            //{
+            //    var tipTicket = new TrainRideInfo
+            //    {
+            //        TrainNo = "提示",
+            //        DepartStation = "暂无数据",
+            //        ArriveStation = "请添加车票记录",
+            //        DepartDate = DateTime.Now
+            //    };
+            //    RecentActivities.Add(tipTicket);
+            //}
+            OnPropertyChanged(nameof(HasRecentActivities)); // 在填充数据后再次更新状态
         }
 
         /// <summary>
