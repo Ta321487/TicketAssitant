@@ -39,6 +39,7 @@
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
             <converters:StationNameConverter x:Key="StationNameConverter" />
             <converters:StringContainsConverter x:Key="StringContainsConverter" />
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             
             <!-- 表单样式 -->
             <Style x:Key="FormLabelStyle" TargetType="TextBlock">
@@ -188,6 +189,32 @@
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="HelpCircleOutline" Margin="0,0,8,0"/>
                     <TextBlock Text="安装指南"/>
+                </StackPanel>
+            </Button>
+            
+            <Button Command="{Binding DownloadPythonCommand}" 
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
+                    Margin="0,0,8,0"
+                    ToolTip="下载Python 3.12.9"
+                    Visibility="{Binding IsPythonInstalled, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="DownloadOutline" Margin="0,0,8,0"/>
+                    <TextBlock Text="下载Python"/>
+                </StackPanel>
+            </Button>
+            
+            <Button Command="{Binding DownloadCnocrCommand}" 
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    materialDesign:ButtonAssist.CornerRadius="4"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
+                    Margin="0,0,8,0"
+                    ToolTip="下载安装CNOCR包"
+                    Visibility="{Binding IsCnocrInstalled, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="DownloadOutline" Margin="0,0,8,0"/>
+                    <TextBlock Text="下载CNOCR"/>
                 </StackPanel>
             </Button>
             

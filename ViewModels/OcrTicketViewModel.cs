@@ -173,6 +173,8 @@ namespace TA_WPF.ViewModels
             RunOcrCommand = new RelayCommand(async () => await RunOcr(), CanRunOcr);
             CheckEnvironmentCommand = new RelayCommand(async () => await CheckEnvironment());
             OpenCnocrInstallGuideCommand = new RelayCommand(() => _ocrEnvironmentService.OpenCnocrInstallGuide());
+            DownloadPythonCommand = new RelayCommand(async () => await DownloadPython(), CanDownloadPython);
+            DownloadCnocrCommand = new RelayCommand(async () => await DownloadCnocr(), CanDownloadCnocr);
 
             // 初始化表单相关命令
             SelectDepartStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, true)); // 更新命令以调用新方法
@@ -237,6 +239,8 @@ namespace TA_WPF.ViewModels
         public ICommand RunOcrCommand { get; }
         public ICommand CheckEnvironmentCommand { get; }
         public ICommand OpenCnocrInstallGuideCommand { get; }
+        public ICommand DownloadPythonCommand { get; }
+        public ICommand DownloadCnocrCommand { get; }
 
         /// <summary>
         /// 选中的图片路径
@@ -420,6 +424,11 @@ namespace TA_WPF.ViewModels
         /// 环境是否准备就绪
         /// </summary>
         public bool IsEnvironmentReady => _ocrEnvironmentService.IsEnvironmentReady;
+
+        /// <summary>
+        /// 是否正在下载CNOCR
+        /// </summary>
+        public bool IsDownloadingCnocr => _ocrEnvironmentService.IsDownloadingCnocr;
 
         #region 表单相关属性
 
@@ -1875,7 +1884,8 @@ namespace TA_WPF.ViewModels
                 }
 
                 // 更新OCR模型状态（可能在首次运行时已下载模型）
-                await _ocrEnvironmentService.UpdateOcrModelStatus();
+                // 使用logMessages=true参数，以便在模型状态更改时提供反馈
+                await _ocrEnvironmentService.UpdateOcrModelStatus(true);
             }
             catch (Exception ex)
             {
@@ -4290,17 +4300,105 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                IsLoading = true;
+                // 检查环境
                 await _ocrEnvironmentService.CheckEnvironment();
+                
+                // 添加提示：如果环境就绪但模型未安装，提示用户模型会在识别时自动下载
+                if (_ocrEnvironmentService.IsEnvironmentReady && 
+                    (_ocrEnvironmentService.IsOcrModelInstalled == null || 
+                     _ocrEnvironmentService.IsOcrModelInstalled == false))
+                {
+                    // 提示用户模型会在识别时自动下载
+                    MessageBoxHelper.ShowInfo("Python和CNOCR已安装，OCR模型将在首次识别时自动下载。\n\n请导入图片并点击\"开始识别\"来触发下载。", "环境检测");
+                }
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.ShowError($"检查环境出错: {ex.Message}");
+                LogHelper.LogError("检查OCR环境时出错", ex);
+                MessageBoxHelper.ShowError($"检查OCR环境时出错: {ex.Message}");
+            }
+        }
+
+        private async Task DownloadPython()
+        {
+            try
+            {
+                // 显示正在下载的状态
+                IsLoading = true;
+                LoadingMessage = "正在准备下载Python...";
+                Progress = 0;
+                
+                // 开始下载Python
+                await _ocrEnvironmentService.DownloadPython();
+            }
+            catch (Exception ex)
+            {
+                SetStatusMessage($"下载Python时出错: {ex.Message}");
+                MessageBoxHelper.ShowError($"下载Python时出错: {ex.Message}");
             }
             finally
             {
                 IsLoading = false;
+                LoadingMessage = string.Empty;
             }
+        }
+        
+        private bool CanDownloadPython()
+        {
+            // 如果已经在进行其他操作，则不允许下载
+            if (IsLoading || IsDownloadingModel)
+                return false;
+                
+            // 如果Python已经安装，则不需要下载
+            if (IsPythonInstalled == true)
+                return false;
+                
+            return true;
+        }
+
+        /// <summary>
+        /// 下载安装CNOCR包
+        /// </summary>
+        private async Task DownloadCnocr()
+        {
+            try
+            {
+                // 检查Python是否已安装
+                if (!IsPythonInstalled.HasValue || !IsPythonInstalled.Value)
+                {
+                    MessageBoxHelper.ShowWarning("请先安装Python再安装CNOCR");
+                    return;
+                }
+                
+                // 调用环境服务下载并安装CNOCR
+                await _ocrEnvironmentService.DownloadInstallCnocr();
+            }
+            catch (Exception ex)
+            {
+                // 错误处理
+                MessageBoxHelper.ShowError($"下载CNOCR时出错: {ex.Message}");
+                SetStatusMessage($"下载CNOCR时出错: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 检查是否可以下载CNOCR
+        /// </summary>
+        private bool CanDownloadCnocr()
+        {
+            // 如果Python未安装，不能安装CNOCR
+            if (!IsPythonInstalled.HasValue || !IsPythonInstalled.Value)
+                return false;
+                
+            // 如果已经安装了CNOCR，不需要再次安装
+            if (IsCnocrInstalled.HasValue && IsCnocrInstalled.Value)
+                return false;
+                
+            // 如果正在加载中或下载中，不能开始新的下载
+            if (IsLoading || _ocrEnvironmentService.IsDownloadingPython || _ocrEnvironmentService.IsDownloadingCnocr)
+                return false;
+                
+            return true;
         }
 
     }

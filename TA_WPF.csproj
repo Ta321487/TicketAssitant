@@ -78,8 +78,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Assets\onnx\ch_PP-OCRv4_det_infer.onnx" />
+    <None Remove="Assets\onnx\cnocr-v2.3-densenet_lite_136-gru-epoch=004-ft-model.onnx" />
     <None Remove="Assets\pic\blueTicket.png" />
     <None Remove="Assets\pic\redTicket.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\onnx\ch_PP-OCRv4_det_infer.onnx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\onnx\cnocr-v2.3-densenet_lite_136-gru-epoch=004-ft-model.onnx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
