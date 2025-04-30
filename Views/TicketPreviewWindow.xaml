@@ -738,6 +738,51 @@
                                         <DataTrigger Binding="{Binding HasNoSeat}" Value="True">
                                             <Setter Property="Visibility" Value="Collapsed"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding HasBerthPosition}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- 卧铺座位号显示 - 数字部分 -->
+                        <TextBlock Text="{Binding BerthSeatDisplay}" 
+                                FontWeight="Normal" 
+                                Foreground="Black" 
+                                FontSize="32"
+                                FontFamily="Times New Roman"
+                                Margin="{Binding SeatNumberMargin}" 
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasBerthPosition}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <!-- 卧铺座位号显示 - 铺位类型 -->
+                        <TextBlock Text="{Binding BerthPositionDisplay}" 
+                                FontWeight="Bold" 
+                                Foreground="Black" 
+                                FontSize="28"
+                                FontFamily="SimHei"
+                                Margin="{Binding BerthTypeMargin}"
+                                HorizontalAlignment="Left" 
+                                VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasBerthPosition}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
@@ -796,6 +841,9 @@
                                     <Setter Property="Visibility" Value="Visible"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding HasNoSeat}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding HasBerthPosition}" Value="True">
                                             <Setter Property="Visibility" Value="Collapsed"/>
                                         </DataTrigger>
                                     </Style.Triggers>

@@ -1864,5 +1864,97 @@ namespace TA_WPF.ViewModels
         {
             RequestClose?.Invoke(this, EventArgs.Empty);
         }
+
+        // 判断是否为卧铺座位
+        public bool IsBerthSeat => (_selectedTicket?.SeatType?.Contains("新空调硬卧") == true) || 
+                                  (_selectedTicket?.SeatType?.Contains("新空调软卧") == true);
+
+        // 判断座位号是否包含上中下
+        public bool HasBerthPosition => IsBerthSeat && 
+                                      ((_selectedTicket?.SeatNo?.Contains("上") == true) || 
+                                       (_selectedTicket?.SeatNo?.Contains("中") == true) || 
+                                       (_selectedTicket?.SeatNo?.Contains("下") == true));
+
+        // 获取修改后的座位号显示文本（只返回数字部分）
+        public string BerthSeatDisplay
+        {
+            get
+            {
+                if (!HasBerthPosition || _selectedTicket?.SeatNo == null)
+                    return _selectedTicket?.SeatNo ?? string.Empty;
+                    
+                string seatNo = _selectedTicket.SeatNo;
+                // 提取数字部分
+                if (seatNo.Contains("上"))
+                    return seatNo.Replace("上", "").Replace("号", "");
+                else if (seatNo.Contains("中"))
+                    return seatNo.Replace("中", "").Replace("号", "");
+                else if (seatNo.Contains("下"))
+                    return seatNo.Replace("下", "").Replace("号", "");
+                    
+                return seatNo;
+            }
+        }
+
+        // 铺位类型显示（上铺/中铺/下铺）
+        public string BerthPositionDisplay
+        {
+            get
+            {
+                if (!HasBerthPosition || _selectedTicket?.SeatNo == null)
+                    return string.Empty;
+                    
+                string seatNo = _selectedTicket.SeatNo;
+                if (seatNo.Contains("上"))
+                    return "上铺";
+                else if (seatNo.Contains("中"))
+                    return "中铺";
+                else if (seatNo.Contains("下"))
+                    return "下铺";
+                    
+                return string.Empty;
+            }
+        }
+
+        // 卧铺"铺"字位置
+        public Thickness BerthWordMargin => (Thickness)_currentLayout["SeatNumberWordMargin"];
+
+        // 铺位类型文本位置
+        public Thickness BerthTypeMargin
+        {
+            get
+            {
+                // 获取基础座位号位置
+                Thickness baseMargin = (Thickness)_currentLayout["SeatNumberMargin"];
+                
+                // 计算数字部分宽度 (每个数字约14像素宽)
+                double digitWidth = BerthSeatDisplay.Length * 14;
+                
+                // 红蓝车票使用不同的间距和高度调整(正值向下移动，负值向上移动）
+                double extraSpacing; // 额外添加的间距值
+                double verticalAdjustment; // 垂直位置调整
+                
+                if (IsRedTicket)
+                {
+                    // 红色车票参数
+                    extraSpacing = 2;
+                    verticalAdjustment = 10;
+                }
+                else
+                {
+                    // 蓝色车票参数
+                    extraSpacing = 2;
+                    verticalAdjustment = 4;
+                }
+                
+                // 调整左边距和上边距，让铺位类型显示在适当位置
+                return new Thickness(
+                    baseMargin.Left + digitWidth + extraSpacing,
+                    baseMargin.Top + verticalAdjustment,
+                    baseMargin.Right,
+                    baseMargin.Bottom
+                );
+            }
+        }
     }
 }

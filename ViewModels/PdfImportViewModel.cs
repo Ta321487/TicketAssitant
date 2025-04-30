@@ -159,7 +159,7 @@ namespace TA_WPF.ViewModels
             SeatTypes = new ObservableCollection<string>
             {
                 "新空调硬座", "软座", "新空调硬卧", "新空调软卧",
-                "商务座", "一等座", "二等座", "硬卧代硬座"
+                "商务座", "特等座","一等座", "二等座", "硬卧代硬座"
             };
 
             // 初始化附加信息相关集合
@@ -352,7 +352,12 @@ namespace TA_WPF.ViewModels
             {
                 if (_ticketNumber != value)
                 {
-                    _ticketNumber = value;
+                    if(!string.IsNullOrEmpty(value)){
+                        _ticketNumber = FormValidationHelper.EnsureFirstLetterUpperCase(value);
+                    }
+                    else{
+                        _ticketNumber = value;
+                    }
                     OnPropertyChanged(nameof(TicketNumber));
                 }
             }
@@ -368,7 +373,12 @@ namespace TA_WPF.ViewModels
             {
                 if (_checkInLocation != value)
                 {
-                    _checkInLocation = value;
+                    if(!string.IsNullOrEmpty(value)){
+                        _checkInLocation = FormValidationHelper.EnsureFirstLetterUpperCase(value);
+                    }
+                    else{
+                        _checkInLocation = value;
+                    }
                     OnPropertyChanged(nameof(CheckInLocation));
                 }
             }

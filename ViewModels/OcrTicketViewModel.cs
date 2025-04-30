@@ -442,7 +442,7 @@ namespace TA_WPF.ViewModels
             {
                 if (_ticketNumber != value)
                 {
-                    _ticketNumber = value;
+                    _ticketNumber = FormValidationHelper.EnsureFirstLetterUpperCase(value);
                     OnPropertyChanged(nameof(TicketNumber));
                 }
             }
@@ -458,7 +458,7 @@ namespace TA_WPF.ViewModels
             {
                 if (_checkInLocation != value)
                 {
-                    _checkInLocation = value;
+                    _checkInLocation = FormValidationHelper.EnsureFirstLetterUpperCase(value);
                     OnPropertyChanged(nameof(CheckInLocation));
                 }
             }
@@ -3312,6 +3312,10 @@ namespace TA_WPF.ViewModels
                                     if (text.Contains("商务座"))
                                     {
                                         SelectedSeatType = "商务座";
+                                    }
+                                    else if (text.Contains("特等座"))
+                                    {
+                                        SelectedSeatType = "特等座";
                                     }
                                     else if (text.Contains("一等座"))
                                     {

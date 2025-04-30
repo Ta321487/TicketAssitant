@@ -161,8 +161,8 @@ namespace TA_WPF.ViewModels
 
                 SeatTypes = new ObservableCollection<string>
                 {
-                    "新空调硬座", "软座", "新空调硬卧", "新空调软卧",
-                    "商务座", "一等座", "二等座", "硬卧代硬座"
+                    "新空调硬座", "新空调软座", "新空调硬卧", "新空调软卧",
+                    "商务座", "特等座", "一等座", "二等座", "硬卧代硬座"
                 };
 
                 // 初始化座位位置集合
@@ -319,7 +319,12 @@ namespace TA_WPF.ViewModels
             {
                 if (_checkInLocation != value)
                 {
-                    _checkInLocation = value;
+                    if(!string.IsNullOrEmpty(value)){
+                        _checkInLocation = FormValidationHelper.EnsureFirstLetterUpperCase(value);  
+                    }
+                    else{
+                        _checkInLocation = value;
+                    }
                     OnPropertyChanged(nameof(CheckInLocation));
                 }
             }
@@ -1120,7 +1125,17 @@ namespace TA_WPF.ViewModels
                 switch (_selectedSeatType)
                 {
                     case "商务座":
+                    case "特等座":
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("F");
+                        break;
                     case "一等座":
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("D");
+                        SeatPositions.Add("F");
+                        break;
                     case "二等座":
                         // A-F 座位位置
                         SeatPositions.Add("A");
@@ -1137,6 +1152,7 @@ namespace TA_WPF.ViewModels
                         SeatPositions.Add("下");
                         break;
                     case "软座":
+                        break;
                     case "硬卧代硬座":
                         SeatPositions.Add("A");
                         SeatPositions.Add("B");
