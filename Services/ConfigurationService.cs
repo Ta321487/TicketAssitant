@@ -1,4 +1,5 @@
 using System.Configuration;
+using System.Diagnostics;
 using System.Globalization;
 using TA_WPF.Utils;
 
@@ -58,13 +59,13 @@ namespace TA_WPF.Services
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"验证字体大小设置时出错: {ex.Message}");
+                    Debug.WriteLine($"验证字体大小设置时出错: {ex.Message}");
                     LogHelper.LogError($"验证字体大小设置时出错: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存字体大小设置时出错: {ex.Message}");
+                Debug.WriteLine($"保存字体大小设置时出错: {ex.Message}");
                 LogHelper.LogError($"保存字体大小设置时出错: {ex.Message}");
             }
         }
@@ -94,7 +95,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载字体大小设置时出错: {ex.Message}");
+                Debug.WriteLine($"加载字体大小设置时出错: {ex.Message}");
                 LogHelper.LogError($"加载字体大小设置时出错: {ex.Message}");
             }
 
@@ -156,7 +157,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
+                Debug.WriteLine($"保存数据库历史记录时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"保存数据库历史记录时出错", ex);
             }
         }
@@ -186,7 +187,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存数据库名称时出错: {ex.Message}");
+                Debug.WriteLine($"保存数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"保存数据库名称时出错", ex);
             }
         }
@@ -207,7 +208,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载数据库名称时出错: {ex.Message}");
+                Debug.WriteLine($"加载数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"加载数据库名称时出错", ex);
             }
 
@@ -234,7 +235,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
+                Debug.WriteLine($"加载数据库历史记录时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"加载数据库历史记录时出错", ex);
             }
 
@@ -270,7 +271,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"提取数据库名称时出错: {ex.Message}");
+                Debug.WriteLine($"提取数据库名称时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"提取数据库名称时出错", ex);
             }
 
@@ -326,7 +327,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"解析连接字符串时出错: {ex.Message}");
+                Debug.WriteLine($"解析连接字符串时出错: {ex.Message}");
                 LogHelper.LogSystemError("配置", $"解析连接字符串时出错", ex);
             }
 
@@ -357,7 +358,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存预算金额时出错: {ex.Message}");
+                Debug.WriteLine($"保存预算金额时出错: {ex.Message}");
             }
         }
 
@@ -380,10 +381,74 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"加载预算金额时出错: {ex.Message}");
+                Debug.WriteLine($"加载预算金额设置时出错: {ex.Message}");
             }
 
-            return 2000; // 默认预算金额
+            // 如果未配置或加载失败，返回默认值
+            return 2000;
+        }
+
+        /// <summary>
+        /// 获取配置设置值
+        /// </summary>
+        /// <param name="key">设置键</param>
+        /// <returns>设置值，如果不存在则返回null</returns>
+        public string GetSettingValue(string key)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(key))
+                    return null;
+
+                var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                
+                if (config.AppSettings.Settings[key] != null)
+                {
+                    return config.AppSettings.Settings[key].Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"获取设置{key}时出错: {ex.Message}");
+                LogHelper.LogError($"获取设置{key}时出错: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 保存配置设置值
+        /// </summary>
+        /// <param name="key">设置键</param>
+        /// <param name="value">设置值</param>
+        public void SaveSettingValue(string key, string value)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(key))
+                    return;
+
+                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
+                if (config.AppSettings.Settings[key] == null)
+                {
+                    config.AppSettings.Settings.Add(key, value);
+                }
+                else
+                {
+                    config.AppSettings.Settings[key].Value = value;
+                }
+
+                config.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection("appSettings");
+                
+                LogHelper.LogInfo($"已保存设置{key}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"保存设置{key}时出错: {ex.Message}");
+                LogHelper.LogError($"保存设置{key}时出错: {ex.Message}");
+            }
         }
     }
 }

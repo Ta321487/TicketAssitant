@@ -6,7 +6,8 @@
              xmlns:local="clr-namespace:TA_WPF.Views"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
-             d:DesignHeight="1100" d:DesignWidth="1000">
+             d:DesignHeight="1350" d:DesignWidth="1000"
+             x:Name="root">
     
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -183,16 +184,152 @@
                                         Margin="8,0,0,0"/>
                             </StackPanel>
                         </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+                
+                <!-- 高德地图API设置 -->
+                <materialDesign:Card Margin="0,0,0,16" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="高德地图API设置" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Margin="0,0,0,16"/>
                         
-                        <!-- 日志设置 -->
-                        <Grid Margin="0,16,0,8">
+                        <!-- 注册链接 -->
+                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Left"
+                                Margin="0,0,0,16"
+                                Command="{Binding NavigateToUriCommand}"
+                                CommandParameter="https://console.amap.com/dev/id/phone"
+                                Padding="0"
+                                Foreground="{DynamicResource PrimaryHueMidBrush}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Link" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="没有API？点我去注册" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <!-- API设置 -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="Web服务【获取车站信息功能】:" 
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,16,16"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" 
+                                     Text="{Binding AmapWebServiceKey}"
+                                     Margin="0,0,0,8"
+                                     MaxLength="32"
+                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
+                                     PreviewTextInput="ApiKey_PreviewTextInput">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入Web服务API Key"/>
+                                        <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="Padding" Value="0,4,0,4"/>
+                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="Web端【车站地图功能】:" 
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,16,16"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" 
+                                     Text="{Binding AmapWebKey}"
+                                     Margin="0,0,0,8"
+                                     MaxLength="32"
+                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
+                                     PreviewTextInput="ApiKey_PreviewTextInput">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入Web端API Key"/>
+                                        <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="Padding" Value="0,4,0,4"/>
+                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                       Text="安全密钥（Web端所生成的）:" 
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,16,0"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" 
+                                     Text="{Binding AmapSecurityKey}"
+                                     Margin="0,0,0,0"
+                                     MaxLength="32"
+                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
+                                     PreviewTextInput="ApiKey_PreviewTextInput">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入安全密钥"/>
+                                        <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="Padding" Value="0,4,0,4"/>
+                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                        </Grid>
+                        
+                        <!-- 保存按钮 -->
+                        <Button Content="确定" 
+                                Command="{Binding SaveAmapApiSettingsCommand}"
+                                HorizontalAlignment="Right"
+                                Margin="0,8,0,0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="Background" Value="{DynamicResource GlobalAccentBrush}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter Property="Padding" Value="16,4"/>
+                                    <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="4"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource GlobalAccentLightBrush}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </materialDesign:Card>
+                
+                <!-- 日志管理 -->
+                <materialDesign:Card Margin="0,0,0,16" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="日志管理" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Margin="0,0,0,16"/>
+                        
+                        <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="日志管理" 
+                                <TextBlock Text="日志导出" 
                                            FontSize="16" 
                                            FontWeight="Medium"/>
                                 <TextBlock Text="导出和管理系统日志" 

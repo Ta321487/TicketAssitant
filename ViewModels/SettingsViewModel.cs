@@ -27,6 +27,9 @@ namespace TA_WPF.ViewModels
         private bool _suspendFontSizeUpdate = false; // 是否暂停字体大小更新
         private bool _isLoading;
         private string _systemLogLocation;
+        private string _amapWebServiceKey = "";
+        private string _amapWebKey = "";
+        private string _amapSecurityKey = "";
 
         /// <summary>
         /// 构造函数
@@ -59,6 +62,9 @@ namespace TA_WPF.ViewModels
 
             // 获取系统日志位置
             _systemLogLocation = LogHelper.GetSystemLogPath();
+            
+            // 加载高德地图API配置信息
+            LoadAmapApiSettings();
 
             // 初始化命令
             ModifyConnectionCommand = new RelayCommand(ModifyConnection);
@@ -69,6 +75,8 @@ namespace TA_WPF.ViewModels
             OpenSystemLogDirCommand = new RelayCommand(OpenSystemLogDir);
             OpenAppLogDirCommand = new RelayCommand(OpenAppLogDir);
             ExportAllLogsCommand = new RelayCommand(ExportAllLogs);
+            SaveAmapApiSettingsCommand = new RelayCommand(SaveAmapApiSettings);
+            NavigateToUriCommand = new RelayCommand<string>(NavigateToUri);
         }
 
         /// <summary>
@@ -259,6 +267,54 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 高德地图Web服务API密钥
+        /// </summary>
+        public string AmapWebServiceKey
+        {
+            get => _amapWebServiceKey;
+            set
+            {
+                if (_amapWebServiceKey != value)
+                {
+                    _amapWebServiceKey = value;
+                    OnPropertyChanged(nameof(AmapWebServiceKey));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 高德地图Web端API密钥
+        /// </summary>
+        public string AmapWebKey
+        {
+            get => _amapWebKey;
+            set
+            {
+                if (_amapWebKey != value)
+                {
+                    _amapWebKey = value;
+                    OnPropertyChanged(nameof(AmapWebKey));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 高德地图安全密钥
+        /// </summary>
+        public string AmapSecurityKey
+        {
+            get => _amapSecurityKey;
+            set
+            {
+                if (_amapSecurityKey != value)
+                {
+                    _amapSecurityKey = value;
+                    OnPropertyChanged(nameof(AmapSecurityKey));
+                }
+            }
+        }
+
+        /// <summary>
         /// 重写IsDarkMode属性，确保与BaseViewModel同步
         /// </summary>
         public override bool IsDarkMode
@@ -306,6 +362,16 @@ namespace TA_WPF.ViewModels
         /// 一键导出所有日志命令（用于问题反馈）
         /// </summary>
         public ICommand ExportAllLogsCommand { get; }
+
+        /// <summary>
+        /// 保存高德地图API设置命令
+        /// </summary>
+        public ICommand SaveAmapApiSettingsCommand { get; }
+
+        /// <summary>
+        /// 导航到指定URI的命令
+        /// </summary>
+        public ICommand NavigateToUriCommand { get; }
 
         /// <summary>
         /// 修改连接
@@ -548,7 +614,7 @@ namespace TA_WPF.ViewModels
                 if (Directory.Exists(systemLogPath))
                 {
                     // 使用资源管理器打开目录
-                    System.Diagnostics.Process.Start("explorer.exe", systemLogPath);
+                    Process.Start("explorer.exe", systemLogPath);
 
                     // 记录日志
                     LogHelper.LogInfo($"用户打开了系统日志目录：{systemLogPath}");
@@ -577,7 +643,7 @@ namespace TA_WPF.ViewModels
                 if (Directory.Exists(appLogPath))
                 {
                     // 使用资源管理器打开目录
-                    System.Diagnostics.Process.Start("explorer.exe", appLogPath);
+                    Process.Start("explorer.exe", appLogPath);
 
                     // 记录日志
                     LogHelper.LogInfo($"用户打开了应用程序日志目录：{appLogPath}");
@@ -811,6 +877,93 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 LogHelper.LogError($"创建README文件时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 加载高德地图API配置信息
+        /// </summary>
+        private void LoadAmapApiSettings()
+        {
+            try
+            {
+                // 从配置服务加载API信息
+                AmapWebServiceKey = _configurationService.GetSettingValue("AmapWebServiceKey") ?? "";
+                AmapWebKey = _configurationService.GetSettingValue("AmapWebKey") ?? "";
+                AmapSecurityKey = _configurationService.GetSettingValue("AmapSecurityKey") ?? "";
+
+                // 记录日志
+                LogHelper.LogInfo("已加载高德地图API配置信息");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"加载高德地图API配置信息时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 保存高德地图API配置信息
+        /// </summary>
+        private void SaveAmapApiSettings()
+        {
+            try
+            {
+                // 检查API信息是否为空
+                bool isApiInfoEmpty = string.IsNullOrWhiteSpace(AmapWebServiceKey) && 
+                                     string.IsNullOrWhiteSpace(AmapWebKey) && 
+                                     string.IsNullOrWhiteSpace(AmapSecurityKey);
+                
+                // 无论是否为空，都保存到配置服务
+                _configurationService.SaveSettingValue("AmapWebServiceKey", AmapWebServiceKey);
+                _configurationService.SaveSettingValue("AmapWebKey", AmapWebKey);
+                _configurationService.SaveSettingValue("AmapSecurityKey", AmapSecurityKey);
+
+                if (isApiInfoEmpty)
+                {
+                    // 如果API信息为空，只显示警告信息
+                    MessageBoxHelper.ShowWarning("没检测到有效的API信息，车站相关功能会受到影响。");
+                }
+                else
+                {
+                    // 如果API信息不为空，显示成功消息
+                    MessageBoxHelper.ShowInfo("高德地图API设置已保存");
+                }
+                
+                // 记录日志
+                LogHelper.LogInfo("用户更新了高德地图API配置信息");
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"保存高德地图API配置信息时出错: {ex.Message}");
+                LogHelper.LogError($"保存高德地图API配置信息时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 导航到指定的URI
+        /// </summary>
+        /// <param name="uri">要打开的URI</param>
+        private void NavigateToUri(string uri)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(uri))
+                {
+                    // 使用默认浏览器打开URI
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = uri,
+                        UseShellExecute = true
+                    });
+
+                    // 记录日志
+                    LogHelper.LogInfo($"用户通过应用内链接访问了: {uri}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"打开链接时出错: {ex.Message}");
+                LogHelper.LogError($"打开链接时出错: {ex.Message} URI: {uri}");
             }
         }
     }

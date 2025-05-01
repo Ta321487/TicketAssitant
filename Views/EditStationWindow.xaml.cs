@@ -27,9 +27,19 @@ namespace TA_WPF.Views
 
             // 获取主题服务实例
             _themeService = ThemeService.Instance;
+            
+            // 创建配置服务和地理编码服务实例
+            var configurationService = new ConfigurationService();
+            var geocodingService = new GeocodingService(configurationService);
 
             // 初始化ViewModel
-            _viewModel = new EditStationViewModel(databaseService, stationSearchService, stationToEdit, refreshCallback);
+            _viewModel = new EditStationViewModel(
+                databaseService, 
+                stationSearchService, 
+                geocodingService, 
+                configurationService, 
+                stationToEdit, 
+                refreshCallback);
             
             // 设置DataContext
             DataContext = _viewModel;

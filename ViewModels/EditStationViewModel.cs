@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System;
 using TA_WPF.Utils;
+using System.Collections.Generic;
+using System.Linq;
+using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -13,6 +16,8 @@ namespace TA_WPF.ViewModels
     {
         private readonly DatabaseService _databaseService;
         private readonly StationSearchService _stationSearchService;
+        private readonly GeocodingService _geocodingService;
+        private readonly ConfigurationService _configurationService;
         private StationInfo _stationToEdit;
         private bool _isEditing;
         private string _windowTitle;
@@ -29,10 +34,12 @@ namespace TA_WPF.ViewModels
         private string _stationPinyin;
         private string _stationCode;
 
-        public EditStationViewModel(DatabaseService databaseService, StationSearchService stationSearchService, StationInfo stationToEdit, Action refreshCallback)
+        public EditStationViewModel(DatabaseService databaseService, StationSearchService stationSearchService, GeocodingService geocodingService, ConfigurationService configurationService, StationInfo stationToEdit, Action refreshCallback)
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _stationSearchService = stationSearchService ?? throw new ArgumentNullException(nameof(stationSearchService));
+            _geocodingService = geocodingService ?? throw new ArgumentNullException(nameof(geocodingService));
+            _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _stationToEdit = stationToEdit ?? throw new ArgumentNullException(nameof(stationToEdit));
             _refreshCallback = refreshCallback;
 
@@ -288,10 +295,96 @@ namespace TA_WPF.ViewModels
             CloseWindow?.Invoke(this, EventArgs.Empty);
         }
 
-        private void GetStationInfo()
+        private async void GetStationInfo()
         {
-            // 这里可以添加获取车站信息的逻辑，如通过API获取地理位置信息等
-            MessageBoxHelper.ShowInfo("获取车站信息功能待实现");
+            // 检查车站名称是否为空
+            if (string.IsNullOrWhiteSpace(StationName))
+            {
+                MessageBoxHelper.ShowWarning("请先输入车站名称");
+                return;
+            }
+
+            IsEditing = true;
+
+            try
+            {
+                // 检查API密钥是否配置
+                string apiKey = _configurationService.GetSettingValue("AmapWebServiceKey");
+                if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    MessageBoxHelper.ShowWarning("尚未配置高德地图API密钥，请先到系统设置中添加相关信息。\n\n路径：设置 → 服务设置 → Web服务【获取车站信息功能】");
+                    IsEditing = false;
+                    return;
+                }
+
+                // 调用高德地图API获取车站信息
+                var geocodeResults = await _geocodingService.GetGeocodingAsync(StationName);
+
+                // 检查是否有结果
+                if (geocodeResults == null || geocodeResults.Count == 0)
+                {
+                    MessageBoxHelper.ShowWarning($"未找到'{StationName}'的地理位置信息，请检查车站名称是否正确。");
+                    IsEditing = false;
+                    return;
+                }
+
+                // 处理多个结果的情况
+                GeocodeResult selectedResult;
+                if (geocodeResults.Count > 1)
+                {
+                    // 创建选项列表
+                    var items = geocodeResults.Select(g => g.FormattedAddress).ToList();
+                    var dialog = new SelectDialog(items, "请选择正确的地址信息");
+                    
+                    // 显示对话框
+                    if (dialog.ShowDialog() == true && dialog.SelectedIndex >= 0)
+                    {
+                        selectedResult = geocodeResults[dialog.SelectedIndex];
+                    }
+                    else
+                    {
+                        MessageBoxHelper.ShowError("必须选择一个地址信息才能继续");
+                        IsEditing = false;
+                        return;
+                    }
+                }
+                else
+                {
+                    // 只有一个结果，直接使用
+                    selectedResult = geocodeResults[0];
+                }
+
+                // 更新车站信息
+                Province = selectedResult.Province;
+                City = selectedResult.City;
+                District = selectedResult.District;
+                Longitude = selectedResult.Longitude;
+                Latitude = selectedResult.Latitude;
+
+                MessageBoxHelper.ShowInfo("已成功获取车站地理位置信息");
+            }
+            catch (Exception ex)
+            {
+                // 针对常见错误给出更明确的提示
+                if (ex.Message.Contains("API密钥不正确") || ex.Message.Contains("INVALID_USER_KEY"))
+                {
+                    MessageBoxHelper.ShowError("高德地图API密钥无效，请在系统设置中更新正确的API密钥。\n\n路径：设置 → 服务设置 → Web服务【获取车站信息功能】");
+                }
+                else if (ex.Message.Contains("超出") || ex.Message.Contains("限制"))
+                {
+                    MessageBoxHelper.ShowError("高德地图API访问次数超出限制，请稍后再试或升级您的API密钥。");
+                }
+                else
+                {
+                    MessageBoxHelper.ShowError($"获取车站信息时发生错误：{ex.Message}");
+                }
+                
+                LogHelper.LogError($"获取车站信息失败: {ex.Message}", ex);
+            }
+            finally
+            {
+                IsEditing = false;
+            }
         }
 
         #endregion
