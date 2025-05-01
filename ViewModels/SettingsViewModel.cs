@@ -18,9 +18,9 @@ namespace TA_WPF.ViewModels
         private readonly DatabaseService _databaseService;
 
         private double _fontSize = 13; // 默认字体大小
-        private string _serverAddress = "localhost";
-        private string _username = "root";
-        private string _password = "password";
+        private string _serverAddress = "";
+        private string _username = "";
+        private string _password = "";
         private string _newConnectionString = "";
         private string _newDatabaseName = "";
         private bool _showPassword = false;

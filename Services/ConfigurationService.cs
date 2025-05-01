@@ -284,9 +284,9 @@ namespace TA_WPF.Services
         /// <returns>包含服务器地址、用户名和密码的元组</returns>
         public (string ServerAddress, string Username, string Password) ParseConnectionString(string connectionString)
         {
-            string serverAddress = "localhost";
-            string username = "root";
-            string password = "password";
+            string serverAddress = "";
+            string username = "";
+            string password = "";
 
             try
             {
@@ -310,6 +310,7 @@ namespace TA_WPF.Services
                             case "user":
                             case "uid":
                             case "username":
+                            case "user id":
                                 username = value;
                                 break;
                             case "password":

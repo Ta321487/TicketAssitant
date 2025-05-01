@@ -33,6 +33,9 @@ namespace TA_WPF.ViewModels
         // 添加用于取消校验任务的取消令牌源
         private CancellationTokenSource _validationCancellationTokenSource;
 
+        private bool _isValidatingDepart = false; // 添加出发站校验标记
+        private bool _isValidatingArrive = false; // 添加到达站校验标记
+
         /// <summary>
         /// 窗口关闭事件
         /// </summary>
@@ -1817,9 +1820,26 @@ namespace TA_WPF.ViewModels
         {
             try
             {
+                // 检查是否已经在校验中，如果是则直接返回
+                if ((isDepartStation && _isValidatingDepart) || (!isDepartStation && _isValidatingArrive))
+                {
+                    return;
+                }
+
+                // 设置校验标志
+                if (isDepartStation)
+                    _isValidatingDepart = true;
+                else
+                    _isValidatingArrive = true;
+
                 // 快速检测是否正在重置，优先级最高
                 if (_isResetting)
                 {
+                    // 清除校验标志
+                    if (isDepartStation)
+                        _isValidatingDepart = false;
+                    else
+                        _isValidatingArrive = false;
                     return;
                 }
 
@@ -1830,19 +1850,51 @@ namespace TA_WPF.ViewModels
                     if (button != null && (button.Command == ResetCommand || button.Name == "CloseButton")) // 增加CloseButton判断
                     {
                         _isResetting = (button.Command == ResetCommand); // 只有Reset才设置标志
+                        
+                        // 清除校验标志
+                        if (isDepartStation)
+                            _isValidatingDepart = false;
+                        else
+                            _isValidatingArrive = false;
                         return;
                     }
                 }
                 if (Mouse.DirectlyOver is Button clickedButton && 
                     (clickedButton.Command == SaveCommand || clickedButton.Name == "MinimizeButton" ))
                 {
+                    // 清除校验标志
+                    if (isDepartStation)
+                        _isValidatingDepart = false;
+                    else
+                        _isValidatingArrive = false;
                     return;
                 }
                  // 检测是否在下拉框上操作或下拉框刚关闭
-                if (isDepartStation && IsDepartStationDropdownOpen) return;
-                if (!isDepartStation && IsArriveStationDropdownOpen) return;
+                if (isDepartStation && IsDepartStationDropdownOpen) 
+                {
+                    if (isDepartStation)
+                        _isValidatingDepart = false;
+                    else
+                        _isValidatingArrive = false;
+                    return;
+                }
+                if (!isDepartStation && IsArriveStationDropdownOpen) 
+                {
+                    if (isDepartStation)
+                        _isValidatingDepart = false;
+                    else
+                        _isValidatingArrive = false;
+                    return;
+                }
                 // 添加检测：如果焦点目标是下拉列表项，也暂时不校验
-                if (FocusManager.GetFocusedElement(Application.Current.MainWindow) is ListBoxItem) return;
+                if (FocusManager.GetFocusedElement(Application.Current.MainWindow) is ListBoxItem) 
+                {
+                    if (isDepartStation)
+                        _isValidatingDepart = false;
+                    else
+                        _isValidatingArrive = false;
+                    return;
+                }
                 
 
                 string stationName = isDepartStation ? DepartStation?.Replace("站", "").Trim() : ArriveStation?.Replace("站", "").Trim();
@@ -1853,37 +1905,63 @@ namespace TA_WPF.ViewModels
                 if (string.IsNullOrWhiteSpace(stationName) && string.IsNullOrWhiteSpace(currentCode) && string.IsNullOrWhiteSpace(currentPinyin))
                 {
                      Debug.WriteLine($"[OnStationLostFocus] {(isDepartStation ? "Depart" : "Arrive")} station info is all empty, skipping validation.");
+                    
+                    // 清除校验标志
+                    if (isDepartStation)
+                        _isValidatingDepart = false;
+                    else
+                        _isValidatingArrive = false;
                     return;
                 }
                 
-
-                // 获取当前的取消令牌
-                var cancellationToken = _validationCancellationTokenSource.Token;
-
-                // 使用新的统一方法进行验证和信息设置，并显示警告
-                var validationTask = TryValidateAndSetStationInfoAsync(stationName, isDepartStation, showWarning: true);
-
-                // 不需要 ContinueWith 了，因为 TryValidateAndSetStationInfoAsync 内部处理了UI更新和错误显示
-                await validationTask; // 等待异步验证完成
-
-                // 检测任务是否已取消 (虽然上面已经return，但以防万一)
-                if (cancellationToken.IsCancellationRequested || _isResetting)
+                try
                 {
-                    Debug.WriteLine($"[OnStationLostFocus] Validation for {(isDepartStation ? "Depart" : "Arrive")} cancelled or form resetting.");
-                    return;
-                }
-                
-                Debug.WriteLine($"[OnStationLostFocus] Validation process completed for {(isDepartStation ? "Depart" : "Arrive")} station: {stationName}.");
+                    // 获取当前的取消令牌
+                    var cancellationToken = _validationCancellationTokenSource.Token;
 
+                    // 使用新的统一方法进行验证和信息设置，并显示警告
+                    var validationTask = TryValidateAndSetStationInfoAsync(stationName, isDepartStation, showWarning: true);
+
+                    // 不需要 ContinueWith 了，因为 TryValidateAndSetStationInfoAsync 内部处理了UI更新和错误显示
+                    await validationTask; // 等待异步验证完成
+
+                    // 检测任务是否已取消 (虽然上面已经return，但以防万一)
+                    if (cancellationToken.IsCancellationRequested || _isResetting)
+                    {
+                        Debug.WriteLine($"[OnStationLostFocus] Validation for {(isDepartStation ? "Depart" : "Arrive")} cancelled or form resetting.");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[OnStationLostFocus] Validation process completed for {(isDepartStation ? "Depart" : "Arrive")} station: {stationName}.");
+                    }
+                }
+                finally
+                {
+                    // 无论成功、失败或异常，都要清除校验标志
+                    if (isDepartStation)
+                        _isValidatingDepart = false;
+                    else
+                        _isValidatingArrive = false;
+                }
             }
             catch (OperationCanceledException)
             {
                 Debug.WriteLine($"[OnStationLostFocus] Operation cancelled for {(isDepartStation ? "Depart" : "Arrive")} station.");
                 // 忽略取消的操作
+                // 确保清除校验标志
+                if (isDepartStation)
+                    _isValidatingDepart = false;
+                else
+                    _isValidatingArrive = false;
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"处理站点输入框失去焦点事件时出错: {ex.Message}", ex);
+                // 确保清除校验标志
+                if (isDepartStation)
+                    _isValidatingDepart = false;
+                else
+                    _isValidatingArrive = false;
             }
         }
 
@@ -2153,15 +2231,26 @@ namespace TA_WPF.ViewModels
                     }
                     else if (showWarning)
                     {
-                        if (Stations.Count == 0)
+                        // 修改此处，先检查是否正在进行其他验证操作，避免多次弹窗
+                        bool isCurrentlyValidating = isDepart ? _isValidatingDepart : _isValidatingArrive;
+                        if (!isCurrentlyValidating)
                         {
-                             MessageBoxHelper.ShowWarning("车站表为空，请在车站中心中添加一些车站再来添加车票", "车站信息不完整");
+                            // 只有在没有进行验证时才显示弹窗
+                            if (Stations.Count == 0)
+                            {
+                                MessageBoxHelper.ShowWarning("车站表为空，请在车站中心中添加一些车站再来添加车票", "车站信息不完整");
+                            }
+                            else
+                            {
+                                MessageBoxHelper.ShowWarning($"车站表内不存在车站【{stationName}】，请确认是否输入错误或者在车站中心中添加该车站信息", "车站不存在");
+                            }
+                            OnFocusTextBox(isDepart ? "Depart" : "Arrive");
                         }
                         else
                         {
-                             MessageBoxHelper.ShowWarning($"车站表内不存在车站【{stationName}】，请确认是否输入错误或者在车站中心中添加该车站信息", "车站不存在");
+                            // 记录日志但不弹窗
+                            Debug.WriteLine($"[TryValidateAndSetStationInfoAsync] Skipping warning for {stationType} '{stationName}' - validation already in progress.");
                         }
-                        OnFocusTextBox(isDepart ? "Depart" : "Arrive");
                     }
                     break;
 
@@ -2181,8 +2270,19 @@ namespace TA_WPF.ViewModels
                     }
                     else if (showWarning)
                     {
-                        MessageBoxHelper.ShowWarning(incompleteMsg, "车站信息不完整");
-                        OnFocusTextBox(isDepart ? "Depart" : "Arrive");
+                        // 修改此处，先检查是否正在进行其他验证操作，避免多次弹窗
+                        bool isCurrentlyValidating = isDepart ? _isValidatingDepart : _isValidatingArrive;
+                        if (!isCurrentlyValidating)
+                        {
+                            // 只有在没有进行验证时才显示弹窗
+                            MessageBoxHelper.ShowWarning(incompleteMsg, "车站信息不完整");
+                            OnFocusTextBox(isDepart ? "Depart" : "Arrive");
+                        }
+                        else
+                        {
+                            // 记录日志但不弹窗
+                            Debug.WriteLine($"[TryValidateAndSetStationInfoAsync] Skipping warning for incomplete {stationType} '{stationName}' - validation already in progress.");
+                        }
                     }
                     // 即使信息不完整，也尝试填充已知信息
                     if (isDepart)

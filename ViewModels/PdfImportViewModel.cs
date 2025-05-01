@@ -219,6 +219,16 @@ namespace TA_WPF.ViewModels
                 try
                 {
                     await SearchDepartStationsAsync(DepartStationSearchText);
+                    
+                    // 当搜索结果为空且不是输入初期时，显示站名不存在提示
+                    if (DepartStationSuggestions.Count == 0 && DepartStationSearchText.Length > 1 && IsDepartStationEnabled)
+                    {
+                        // 使用MessageBoxHelper显示警告对话框
+                        string normalizedStationName = StationNameHelper.RemoveStationSuffix(DepartStationSearchText);
+                        MessageBoxHelper.ShowWarning($"出发站【{normalizedStationName}】在车站中心不存在，请先添加该车站信息。");
+                        DepartStationPinyin = string.Empty;
+                        DepartStationCode = string.Empty;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -242,6 +252,16 @@ namespace TA_WPF.ViewModels
                 try
                 {
                     await SearchArriveStationsAsync(ArriveStationSearchText);
+                    
+                    // 当搜索结果为空且不是输入初期时，显示站名不存在提示
+                    if (ArriveStationSuggestions.Count == 0 && ArriveStationSearchText.Length > 1 && IsArriveStationEnabled)
+                    {
+                        // 使用MessageBoxHelper显示警告对话框
+                        string normalizedStationName = StationNameHelper.RemoveStationSuffix(ArriveStationSearchText);
+                        MessageBoxHelper.ShowWarning($"到达站【{normalizedStationName}】在车站中心不存在，请先添加该车站信息。");
+                        ArriveStationPinyin = string.Empty;
+                        ArriveStationCode = string.Empty;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1646,6 +1666,46 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 验证站名是否存在
+        /// </summary>
+        /// <param name="stationName">站名</param>
+        /// <param name="isDepartStation">是否是出发站</param>
+        /// <returns>站名是否存在</returns>
+        private bool ValidateStationName(string stationName, bool isDepartStation)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(stationName) || _stationSearchService == null)
+                {
+                    return false;
+                }
+
+                // 移除站名中可能的"站"字后缀再验证
+                string normalizedStationName = StationNameHelper.RemoveStationSuffix(stationName);
+                
+                // 使用StationSearchService检测是否是有效站点
+                var stationInfo = _stationSearchService.GetStationInfo(normalizedStationName);
+
+                if (stationInfo != null)
+                {
+                    return true;
+                }
+                else
+                {
+                    // 显示警告消息
+                    string stationType = isDepartStation ? "出发站" : "到达站";
+                    MessageBoxHelper.ShowWarning($"{stationType}【{normalizedStationName}】在车站中心不存在，请先添加该车站信息。");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"验证站名时出错: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 导入车票
         /// </summary>
         private async void ImportTicket()
@@ -1653,6 +1713,24 @@ namespace TA_WPF.ViewModels
             try
             {
                 IsLoading = true;
+                
+                // 验证出发站和到达站是否存在
+                string departStationName = DepartStation;
+                string arriveStationName = ArriveStation;
+                
+                // 验证出发站
+                if (!ValidateStationName(departStationName, true))
+                {
+                    IsLoading = false;
+                    return;
+                }
+                
+                // 验证到达站
+                if (!ValidateStationName(arriveStationName, false))
+                {
+                    IsLoading = false;
+                    return;
+                }
                 
                 // 收集表单数据创建车票对象
                 var ticket = CreateTicketFromForm();
@@ -1699,10 +1777,6 @@ namespace TA_WPF.ViewModels
                 IsLoading = false; // 异常时也要设置
                 MessageBoxHelper.ShowError($"导入车票时出错: {ex.Message}");
                 LogHelper.LogError($"导入车票时出错: {ex.Message}");
-            }
-            finally
-            {
-                // IsLoading = false; // 从 finally 块中移除，因为它已在 try/catch 中处理
             }
         }
 
@@ -1862,11 +1936,12 @@ namespace TA_WPF.ViewModels
                     await _stationSearchService.InitializeAsync();
                 }
 
-                // 执行搜索
-                    var stations = await _stationSearchService.SearchStationsAsync(searchText);
+                // 移除可能的"站"后缀再执行搜索
+                string normalizedSearchText = StationNameHelper.RemoveStationSuffix(searchText);
+                var stations = await _stationSearchService.SearchStationsAsync(normalizedSearchText);
 
                 // 使用Dispatcher在UI线程上更新集合
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     // 更新下拉列表和显示状态
                     DepartStationSuggestions = new ObservableCollection<StationInfo>(stations);
@@ -1899,11 +1974,12 @@ namespace TA_WPF.ViewModels
                     await _stationSearchService.InitializeAsync();
                 }
 
-                // 执行搜索
-                    var stations = await _stationSearchService.SearchStationsAsync(searchText);
+                // 移除可能的"站"后缀再执行搜索
+                string normalizedSearchText = StationNameHelper.RemoveStationSuffix(searchText);
+                var stations = await _stationSearchService.SearchStationsAsync(normalizedSearchText);
 
                 // 使用Dispatcher在UI线程上更新集合
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     // 更新下拉列表和显示状态
                     ArriveStationSuggestions = new ObservableCollection<StationInfo>(stations);
@@ -1926,7 +2002,9 @@ namespace TA_WPF.ViewModels
             {
                 if (_stationSearchService != null && !string.IsNullOrEmpty(stationName))
                 {
-                    var station = await _stationSearchService.GetClosestStationMatchAsync(stationName);
+                    // 移除站名中可能的"站"后缀，再进行搜索
+                    string normalizedStationName = StationNameHelper.RemoveStationSuffix(stationName);
+                    var station = await _stationSearchService.GetClosestStationMatchAsync(normalizedStationName);
                     if (station != null)
                     {
                         DepartStationCode = station.StationCode;
@@ -1950,7 +2028,9 @@ namespace TA_WPF.ViewModels
             {
                 if (_stationSearchService != null && !string.IsNullOrEmpty(stationName))
                 {
-                    var station = await _stationSearchService.GetClosestStationMatchAsync(stationName);
+                    // 移除站名中可能的"站"后缀，再进行搜索
+                    string normalizedStationName = StationNameHelper.RemoveStationSuffix(stationName);
+                    var station = await _stationSearchService.GetClosestStationMatchAsync(normalizedStationName);
                     if (station != null)
                     {
                         ArriveStationCode = station.StationCode;
@@ -2155,10 +2235,13 @@ namespace TA_WPF.ViewModels
                 // 保存选中站点
                 SelectedDepartStation = station;
                 
+                // 移除站名中的"站"后缀
+                string stationName = Utils.StationNameHelper.RemoveStationSuffix(station.StationName);
+                
                 // 更新出发站文本框内容
                 _suppressNotifications = true;
-                DepartStationSearchText = station.StationName;
-                DepartStation = station.StationName;
+                DepartStationSearchText = stationName;
+                DepartStation = stationName;
                 DepartStationPinyin = station.StationPinyin;
                 DepartStationCode = station.StationCode;
                 _suppressNotifications = false;
@@ -2168,7 +2251,7 @@ namespace TA_WPF.ViewModels
                 {
                     // 必须先将DepartStationSuggestions清空，然后关闭下拉菜单
                     DepartStationSuggestions = new ObservableCollection<StationInfo>();
-                IsDepartStationDropdownOpen = false;
+                    IsDepartStationDropdownOpen = false;
                 });
                 
                 // 触发输入变更以更新UI
@@ -2200,10 +2283,13 @@ namespace TA_WPF.ViewModels
                 // 保存选中站点
                 SelectedArriveStation = station;
                 
+                // 移除站名中的"站"后缀
+                string stationName = Utils.StationNameHelper.RemoveStationSuffix(station.StationName);
+                
                 // 更新到达站文本框内容
                 _suppressNotifications = true;
-                ArriveStationSearchText = station.StationName;
-                ArriveStation = station.StationName;
+                ArriveStationSearchText = stationName;
+                ArriveStation = stationName;
                 ArriveStationPinyin = station.StationPinyin;
                 ArriveStationCode = station.StationCode;
                 _suppressNotifications = false;
@@ -2213,7 +2299,7 @@ namespace TA_WPF.ViewModels
                 {
                     // 必须先将ArriveStationSuggestions清空，然后关闭下拉菜单
                     ArriveStationSuggestions = new ObservableCollection<StationInfo>();
-                IsArriveStationDropdownOpen = false;
+                    IsArriveStationDropdownOpen = false;
                 });
                 
                 // 触发输入变更以更新UI
