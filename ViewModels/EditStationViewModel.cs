@@ -17,6 +17,7 @@ namespace TA_WPF.ViewModels
         private bool _isEditing;
         private string _windowTitle;
         private Action _refreshCallback;
+        private double _fontSize;  // 添加字体大小属性
 
         // 车站信息属性
         private string _stationName;
@@ -45,6 +46,14 @@ namespace TA_WPF.ViewModels
 
             // 设置窗口标题
             WindowTitle = $"编辑车站 - {_stationName}";
+            
+            // 从应用程序资源获取当前字体大小
+            if (Application.Current?.Resources != null && 
+                Application.Current.Resources.Contains("MaterialDesignFontSize"))
+            {
+                _fontSize = (double)Application.Current.Resources["MaterialDesignFontSize"];
+                OnPropertyChanged(nameof(FontSize));
+            }
         }
 
         #region 属性
@@ -185,6 +194,20 @@ namespace TA_WPF.ViewModels
             get => !string.IsNullOrWhiteSpace(StationName) && 
                    !string.IsNullOrWhiteSpace(StationCode) && 
                    !string.IsNullOrWhiteSpace(StationPinyin);
+        }
+
+        // 添加FontSize属性
+        public double FontSize
+        {
+            get => _fontSize;
+            set
+            {
+                if (_fontSize != value)
+                {
+                    _fontSize = value;
+                    OnPropertyChanged(nameof(FontSize));
+                }
+            }
         }
 
         #endregion

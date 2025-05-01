@@ -11,9 +11,11 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         FontFamily="Microsoft YaHei UI"
+        FontSize="{Binding FontSize}"
         Style="{StaticResource MaterialDesignWindow}"
         Background="{DynamicResource MaterialDesignPaper}"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}">
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        materialDesign:ThemeAssist.Theme="{Binding IsDarkMode, Converter={StaticResource BooleanToThemeConverter}}">
 
     <Window.Resources>
         <ResourceDictionary>
@@ -135,37 +137,54 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- 获取车站信息按钮 -->
+                <!-- 获取车站信息按钮 - 放在左侧 -->
                 <Button 
-                    Grid.Column="1"
-                    Content="获取车站信息" 
+                    Grid.Column="0"
                     Command="{Binding GetStationInfoCommand}"
                     Margin="0,0,10,0"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    ToolTip="通过第三方服务获取车站详细信息" />
+                    Foreground="{DynamicResource PrimaryHueMidBrush}"
+                    HorizontalAlignment="Left"
+                    ToolTip="通过第三方服务获取车站详细信息">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="DatabaseSearch" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="获取车站信息"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- 取消按钮 -->
+                <Button 
+                    Grid.Column="1"
+                    Command="{Binding CancelCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Foreground="{DynamicResource PrimaryHueMidBrush}"
+                    Margin="0,0,10,0"
+                    Height="40"
+                    Width="100"
+                    ToolTip="取消修改并关闭窗口">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Close" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="取消"/>
+                    </StackPanel>
+                </Button>
 
                 <!-- 修改按钮 -->
                 <Button 
                     Grid.Column="2"
-                    Content="修改" 
                     Command="{Binding SaveCommand}"
                     IsEnabled="{Binding CanSaveStation}"
-                    Style="{StaticResource MaterialDesignRaisedButton}"
-                    Margin="10,0"
-                    materialDesign:ButtonAssist.CornerRadius="5"
-                    ToolTip="保存修改内容" />
-
-                <!-- 取消按钮 -->
-                <Button 
-                    Grid.Column="3"
-                    Content="取消" 
-                    Command="{Binding CancelCommand}"
-                    Style="{StaticResource MaterialDesignOutlinedButton}"
-                    materialDesign:ButtonAssist.CornerRadius="5"
-                    ToolTip="取消修改并关闭窗口" />
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Foreground="{DynamicResource PrimaryHueMidBrush}"
+                    Height="40"
+                    Width="100"
+                    ToolTip="保存修改内容">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ContentSave" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="修改"/>
+                    </StackPanel>
+                </Button>
             </Grid>
 
             <!-- 加载指示器 -->
