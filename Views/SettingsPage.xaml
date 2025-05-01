@@ -202,7 +202,7 @@
                                 Command="{Binding NavigateToUriCommand}"
                                 CommandParameter="https://console.amap.com/dev/id/phone"
                                 Padding="0"
-                                Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                Foreground="{DynamicResource GlobalAccentBrush}">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Link" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="没有API？点我去注册" VerticalAlignment="Center"/>
@@ -341,12 +341,23 @@
                             <Button Grid.Column="1" 
                                     Content="一键导出所有日志"
                                     Command="{Binding ExportAllLogsCommand}"
-                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                    materialDesign:ButtonAssist.CornerRadius="4"
-                                    Background="{DynamicResource GlobalAccentBrush}"
-                                    Foreground="White"
-                                    Margin="0,0,0,0"
-                                    ToolTip="导出所有日志和系统信息，用于问题反馈"/>
+                                    ToolTip="导出所有日志和系统信息，用于问题反馈"
+                                    Margin="0,0,0,0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Background" Value="{DynamicResource GlobalAccentBrush}"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="Padding" Value="16,4"/>
+                                        <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="4"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource GlobalAccentLightBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
                         
                         <!-- 日志导出选项 -->

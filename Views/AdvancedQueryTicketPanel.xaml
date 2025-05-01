@@ -30,11 +30,12 @@
             
             <!-- 增强的MaterialDesign输入框样式 - 改善深色模式下的可见性 -->
             <Style x:Key="EnhancedMaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
-                <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
-                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource GlobalAccentBrush}" />
+                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}" />
+                <Setter Property="FontSize" Value="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
                 <Style.Triggers>
                     <Trigger Property="IsKeyboardFocused" Value="True">
-                        <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
+                        <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource GlobalAccentBrush}" />
                         <Setter Property="materialDesign:HintAssist.Background" Value="{DynamicResource MaterialDesignPaper}" />
                     </Trigger>
                 </Style.Triggers>
@@ -45,15 +46,16 @@
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
-                <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
-                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource GlobalAccentBrush}" />
+                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}" />
+                <Setter Property="FontSize" Value="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource GlobalAccentBrush}"/>
                     </Trigger>
                     <Trigger Property="IsKeyboardFocused" Value="True">
-                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
-                        <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource GlobalAccentBrush}"/>
+                        <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource GlobalAccentBrush}" />
                         <Setter Property="materialDesign:HintAssist.Background" Value="{DynamicResource MaterialDesignPaper}" />
                     </Trigger>
                 </Style.Triggers>
@@ -64,12 +66,13 @@
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="FontSize" Value="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource GlobalAccentBrush}"/>
                     </Trigger>
                     <Trigger Property="IsKeyboardFocused" Value="True">
-                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource GlobalAccentBrush}"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -78,14 +81,30 @@
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="FontSize" Value="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource GlobalAccentBrush}"/>
                     </Trigger>
                     <Trigger Property="IsKeyboardFocused" Value="True">
-                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource GlobalAccentBrush}"/>
                     </Trigger>
                 </Style.Triggers>
+            </Style>
+
+            <!-- 自定义ToolTip样式 -->
+            <Style x:Key="CustomToolTipStyle" TargetType="ToolTip">
+                <Setter Property="Background" Value="{DynamicResource PrimaryHueDarkBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="BorderBrush" Value="{DynamicResource GlobalAccentBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="FontSize" Value="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect ShadowDepth="1" BlurRadius="3" Opacity="0.3" Color="Black" />
+                    </Setter.Value>
+                </Setter>
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -93,7 +112,7 @@
     <!-- 高级查询面板 -->
     <Border Background="{DynamicResource MaterialDesignCardBackground}"
             CornerRadius="4"
-            BorderBrush="{DynamicResource MaterialDesignDivider}"
+            BorderBrush="{DynamicResource GlobalAccentBrush}"
             BorderThickness="1"
             Padding="16"
             Visibility="{Binding IsQueryPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -114,7 +133,8 @@
 
                 <!-- 出发站 -->
                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                    <TextBlock Text="出发站" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
+                    <TextBlock Text="出发站" Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                              FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" Margin="0,0,0,4"/>
                     <Grid>
                         <TextBox Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
                                     Style="{StaticResource EnhancedMaterialDesignOutlinedTextBox}"
@@ -125,8 +145,11 @@
                         <Button Style="{StaticResource MaterialDesignIconButton}"
                                 Command="{Binding ClearDepartStationCommand}"
                                 ToolTip="清空出发站"
+                                ToolTipService.ToolTip="清空出发站"
+                                ToolTipService.InitialShowDelay="500"
                                 Width="32" Height="32"
                                 Padding="4"
+                                Foreground="{DynamicResource GlobalAccentBrush}"
                                 HorizontalAlignment="Right"
                                 Margin="0,0,8,0"
                                 Visibility="{Binding SelectedDepartStation, Converter={StaticResource NullToVisibilityConverter}}">
@@ -162,7 +185,8 @@
 
                 <!-- 车次号 -->
                 <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                    <TextBlock Text="车次号" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
+                    <TextBlock Text="车次号" Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                              FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" Margin="0,0,0,4"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="120"/>
@@ -181,8 +205,11 @@
                             <Button Style="{StaticResource MaterialDesignIconButton}"
                                     Command="{Binding ClearTrainNumberCommand}"
                                     ToolTip="清空车次号"
+                                    ToolTipService.ToolTip="清空车次号"
+                                    ToolTipService.InitialShowDelay="500"
                                     Width="32" Height="32"
                                     Padding="4"
+                                    Foreground="{DynamicResource GlobalAccentBrush}"
                                     HorizontalAlignment="Right"
                                     Margin="0,0,8,0"
                                     Visibility="{Binding TrainNumberFilter, Converter={StaticResource StringToVisibilityConverter}}">
@@ -194,7 +221,8 @@
 
                 <!-- 出发年份 -->
                 <StackPanel Grid.Column="2" Margin="0,0,8,0">
-                    <TextBlock Text="出发年份" Style="{StaticResource MaterialDesignBody1TextBlock}" Margin="0,0,0,4"/>
+                    <TextBlock Text="出发年份" Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                              FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" Margin="0,0,0,4"/>
                     <Grid>
                         <ComboBox ItemsSource="{Binding YearOptions}"
                                     DisplayMemberPath="DisplayName"
@@ -204,8 +232,11 @@
                         <Button Style="{StaticResource MaterialDesignIconButton}"
                                 Command="{Binding ClearYearCommand}"
                                 ToolTip="清空年份"
+                                ToolTipService.ToolTip="清空年份"
+                                ToolTipService.InitialShowDelay="500"
                                 Width="32" Height="32"
                                 Padding="4"
+                                Foreground="{DynamicResource GlobalAccentBrush}"
                                 HorizontalAlignment="Right"
                                 Margin="0,0,8,0"
                                 Visibility="{Binding SelectedYearOption, Converter={StaticResource NullToVisibilityConverter}}">
@@ -219,14 +250,23 @@
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,0">
                 <TextBlock Text="查询条件组合方式:" 
                             Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                            FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
                             VerticalAlignment="Center" 
                             Margin="0,0,16,0"/>
                 <RadioButton Content="AND (同时满足所有条件)" 
                                 IsChecked="{Binding IsAndCondition}" 
+                                Foreground="{DynamicResource GlobalAccentBrush}"
+                                Background="{DynamicResource GlobalAccentBrush}"
+                                BorderBrush="{DynamicResource GlobalAccentBrush}"
+                                FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
                                 GroupName="QueryConditionType" 
                                 Margin="0,0,16,0"/>
                 <RadioButton Content="OR (满足任一条件)" 
                                 IsChecked="{Binding IsOrCondition}" 
+                                Foreground="{DynamicResource GlobalAccentBrush}"
+                                Background="{DynamicResource GlobalAccentBrush}"
+                                BorderBrush="{DynamicResource GlobalAccentBrush}"
+                                FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
                                 GroupName="QueryConditionType"/>
             </StackPanel>
 
@@ -235,9 +275,15 @@
                 <Button Content="重置" 
                         Command="{Binding ResetFilterCommand}" 
                         Style="{StaticResource MaterialDesignOutlinedButton}" 
+                        Foreground="{DynamicResource GlobalAccentBrush}"
+                        BorderBrush="{DynamicResource GlobalAccentBrush}"
+                        FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
                         Margin="0,0,16,0"/>
                 <Button Content="{Binding QueryButtonText}" 
                         Command="{Binding ApplyFilterCommand}" 
+                        Background="{DynamicResource GlobalAccentBrush}"
+                        Foreground="White"
+                        FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
                         Style="{StaticResource MaterialDesignRaisedButton}"/>
             </StackPanel>
         </Grid>

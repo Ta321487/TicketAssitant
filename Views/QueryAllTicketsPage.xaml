@@ -225,6 +225,7 @@
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="{Binding SelectionToggleTooltip}"
                         Margin="0,0,8,0"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="{Binding SelectionToggleIcon}" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -235,6 +236,7 @@
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="反选"
                         Margin="0,0,8,0"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="CheckboxMultipleMarkedCircleOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -245,6 +247,7 @@
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="取消选择"
                         Margin="0,0,8,0"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36"
                         Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel Orientation="Horizontal">
@@ -256,6 +259,7 @@
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="修改选中的车票"
                         Margin="0,0,8,0"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36"
                         Visibility="{Binding SelectedItemsCount, Converter={StaticResource IntEqualityToVisibilityConverter}, ConverterParameter=1}">
                     <StackPanel Orientation="Horizontal">
@@ -269,6 +273,7 @@
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="预览选中的车票"
                         Margin="0,0,8,0"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36"
                         IsEnabled="{Binding CanPreviewTicket}"
                         Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -299,6 +304,7 @@
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="高级查询"
                         Margin="0,0,8,0"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Search" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -562,6 +568,7 @@
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="第一页"
                             Margin="0,0,4,0"
+                            Foreground="{DynamicResource GlobalAccentBrush}"
                             IsEnabled="{Binding CanNavigateToFirstPage}">
                         <materialDesign:PackIcon Kind="PageFirst" />
                     </Button>
@@ -569,11 +576,12 @@
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="上一页"
                             Margin="0,0,4,0"
+                            Foreground="{DynamicResource GlobalAccentBrush}"
                             IsEnabled="{Binding CanNavigateToPreviousPage}">
                         <materialDesign:PackIcon Kind="ChevronLeft" />
                     </Button>
                     <Border Background="{DynamicResource MaterialDesignPaper}" 
-                            BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                            BorderBrush="{DynamicResource GlobalAccentBrush}" 
                             BorderThickness="1" 
                             CornerRadius="4"
                             Padding="8,4"
@@ -584,6 +592,7 @@
                                 <TextBlock Text="{Binding CurrentPage}" 
                                            Style="{StaticResource MaterialDesignBody1TextBlock}"
                                            FontWeight="SemiBold"
+                                           Foreground="{DynamicResource GlobalAccentBrush}"
                                            VerticalAlignment="Center"/>
                                 <TextBlock Text=" / " 
                                            Style="{StaticResource MaterialDesignBody1TextBlock}"
@@ -609,6 +618,7 @@
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="下一页"
                             Margin="4,0,0,0"
+                            Foreground="{DynamicResource GlobalAccentBrush}"
                             IsEnabled="{Binding CanNavigateToNextPage}">
                         <materialDesign:PackIcon Kind="ChevronRight" />
                     </Button>
@@ -616,6 +626,7 @@
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="最后一页"
                             Margin="4,0,0,0"
+                            Foreground="{DynamicResource GlobalAccentBrush}"
                             IsEnabled="{Binding CanNavigateToLastPage}">
                         <materialDesign:PackIcon Kind="PageLast" />
                     </Button>

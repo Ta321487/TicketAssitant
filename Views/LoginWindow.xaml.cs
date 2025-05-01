@@ -2007,14 +2007,7 @@ namespace TA_WPF.Views
             {
                 Debug.WriteLine($"显示数据库连接错误提示时出错: {ex.Message}");
                 Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
-                MessageBox.Show("连接数据库时发生错误。请检测您的连接设置。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-        }
-
-        // 保留旧方法，但简化实现，以保持兼容性
-        private async Task ShowMySqlNotInstalledWarning(string serverAddress = "")
-        {
-            await ShowDatabaseConnectionError(serverAddress, "3306", MySqlConnectionStatus.NotInstalled);
         }
 
         // 分割SQL脚本为多个语句

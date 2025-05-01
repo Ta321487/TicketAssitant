@@ -189,7 +189,7 @@
                                                 HorizontalContentAlignment="Left"
                                                 Width="200"
                                                 Margin="0"
-                                                Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                Foreground="{DynamicResource GlobalAccentBrush}">
                                             <Button.ContentTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
@@ -211,7 +211,7 @@
                                                 HorizontalContentAlignment="Left"
                                                 Width="200"
                                                 Margin="0"
-                                                Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                Foreground="{DynamicResource GlobalAccentBrush}">
                                             <Button.ContentTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
@@ -246,7 +246,7 @@
                                                         HorizontalContentAlignment="Left"
                                                         Width="200"
                                                         Margin="0"
-                                                        Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                        Foreground="{DynamicResource GlobalAccentBrush}">
                                                     <Button.ContentTemplate>
                                                         <DataTemplate>
                                                             <StackPanel Orientation="Horizontal">
@@ -266,7 +266,7 @@
                                                         HorizontalContentAlignment="Left"
                                                         Width="200"
                                                         Margin="0"
-                                                        Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                        Foreground="{DynamicResource GlobalAccentBrush}">
                                                     <Button.ContentTemplate>
                                                         <DataTemplate>
                                                             <StackPanel Orientation="Horizontal">
@@ -286,7 +286,7 @@
                                                         HorizontalContentAlignment="Left"
                                                         Width="200"
                                                         Margin="0"
-                                                        Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                        Foreground="{DynamicResource GlobalAccentBrush}">
                                                     <Button.ContentTemplate>
                                                         <DataTemplate>
                                                             <StackPanel Orientation="Horizontal">
@@ -307,7 +307,7 @@
                                                     HorizontalContentAlignment="Left"
                                                     Width="200"
                                                     Margin="0"
-                                                    Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                    Foreground="{DynamicResource GlobalAccentBrush}">
                                                 <Button.ContentTemplate>
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
@@ -335,7 +335,7 @@
                                                     HorizontalContentAlignment="Left"
                                                     Width="200"
                                                     Margin="0"
-                                                    Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                    Foreground="{DynamicResource GlobalAccentBrush}">
                                                 <Button.ContentTemplate>
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
@@ -356,7 +356,7 @@
                                                 Width="200"
                                                 Margin="0"
                                                 Click="SettingsButton_Click"
-                                                Foreground="{DynamicResource PrimaryHueMidBrush}">
+                                                Foreground="{DynamicResource GlobalAccentBrush}">
                                             <Grid Width="200">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
