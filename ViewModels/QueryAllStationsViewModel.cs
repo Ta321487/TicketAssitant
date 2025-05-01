@@ -49,6 +49,9 @@ namespace TA_WPF.ViewModels
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll, CanUnselectAll);
             InvertSelectionCommand = new RelayCommand(InvertSelection, CanInvertSelection);
+            
+            // 添加双击命令
+            DoubleClickEditCommand = new RelayCommand<StationInfo>(DoubleClickEditStation);
         }
 
         // 添加MainViewModel属性，解决绑定错误
@@ -166,6 +169,9 @@ namespace TA_WPF.ViewModels
         public ICommand SelectAllCommand { get; }
         public ICommand UnselectAllCommand { get; }
         public ICommand InvertSelectionCommand { get; }
+        
+        // 添加双击命令
+        public ICommand DoubleClickEditCommand { get; }
 
         // --- Command Methods (Implement logic later or keep as placeholders) ---
         private async void AddStation()
@@ -193,10 +199,19 @@ namespace TA_WPF.ViewModels
         private void EditStation(StationInfo station)
         {
             if (station == null) return;
-            // Logic to open EditStationWindow with selected station
-             MessageBoxHelper.ShowInfo($"编辑车站 '{station.StationName}' 功能稍后实现。");
-            // Example: _navigationService.OpenEditStationWindow(station, _mainViewModel);
-            // await LoadStationsAsync(); // Refresh after edit
+            
+            // 创建StationSearchService
+            var stationSearchService = new StationSearchService(_databaseService);
+            
+            // 创建并显示EditStationWindow
+            var editStationWindow = new EditStationWindow(
+                _databaseService, 
+                stationSearchService, 
+                station, 
+                async () => await LoadStationsAsync());
+            
+            editStationWindow.Owner = Application.Current.MainWindow;
+            editStationWindow.ShowDialog();
         }
         private bool CanEditStation(StationInfo station) => station != null;
 
@@ -403,5 +418,14 @@ namespace TA_WPF.ViewModels
         }
         
         private bool CanDeleteSelectedStations() => HasSelection;
+
+        // 处理双击车站记录的方法
+        private void DoubleClickEditStation(StationInfo station)
+        {
+            if (station != null)
+            {
+                EditStation(station);
+            }
+        }
     }
 }

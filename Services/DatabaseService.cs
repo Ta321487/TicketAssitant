@@ -1234,5 +1234,58 @@ namespace TA_WPF.Services
                 return new List<string>();
             }
         }
+
+        /// <summary>
+        /// 更新车站信息
+        /// </summary>
+        /// <param name="station">要更新的车站信息</param>
+        /// <returns>更新是否成功</returns>
+        public async Task<bool> UpdateStationAsync(StationInfo station)
+        {
+            if (station == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"
+                        UPDATE station_info 
+                        SET 
+                            station_name = @StationName,
+                            province = @Province,
+                            city = @City,
+                            district = @District,
+                            longitude = @Longitude,
+                            latitude = @Latitude,
+                            station_pinyin = @StationPinyin,
+                            station_code = @StationCode
+                        WHERE id = @Id";
+
+                        using (var command = new MySqlCommand(query, connection))
+                        {
+                            command.Parameters.AddWithValue("@Id", station.Id);
+                            command.Parameters.AddWithValue("@StationName", station.StationName);
+                            command.Parameters.AddWithValue("@Province", station.Province ?? (object)DBNull.Value);
+                            command.Parameters.AddWithValue("@City", station.City ?? (object)DBNull.Value);
+                            command.Parameters.AddWithValue("@District", station.District ?? (object)DBNull.Value);
+                            command.Parameters.AddWithValue("@Longitude", station.Longitude ?? (object)DBNull.Value);
+                            command.Parameters.AddWithValue("@Latitude", station.Latitude ?? (object)DBNull.Value);
+                            command.Parameters.AddWithValue("@StationPinyin", station.StationPinyin ?? (object)DBNull.Value);
+                            command.Parameters.AddWithValue("@StationCode", station.StationCode ?? (object)DBNull.Value);
+
+                            int rowsAffected = await command.ExecuteNonQueryAsync();
+                            return rowsAffected > 0;
+                        }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"更新车站信息失败: {ex.Message}", ex);
+                return false;
+            }
+        }
     }
 }

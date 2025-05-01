@@ -298,7 +298,7 @@
                        Visibility="{Binding HasNoData, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             
             <DataGrid ItemsSource="{Binding Stations}"
-                      SelectedItem="{Binding SelectedStation, Mode=TwoWay}"
+                      SelectedItem="{Binding SelectedStation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
                       IsReadOnly="True"
@@ -335,6 +335,12 @@
                       SelectionChanged="DataGrid_SelectionChanged"
                       x:Name="StationsDataGrid"
                       Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                <DataGrid.InputBindings>
+                    <MouseBinding MouseAction="LeftDoubleClick" 
+                                  Command="{Binding DoubleClickEditCommand}" 
+                                  CommandParameter="{Binding SelectedStation}" />
+                </DataGrid.InputBindings>
 
                 <DataGrid.Columns>
                     <!-- ID Column - 隐藏 -->
