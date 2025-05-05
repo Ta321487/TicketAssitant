@@ -249,7 +249,7 @@
                         Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36"
                         Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        IsEnabled="{Binding SelectedItemsCount, Converter={StaticResource IntEqualityToVisibilityConverter}, ConverterParameter=1}">
+                        IsEnabled="{Binding SelectedItemsCount, Converter={StaticResource IntEqualityToVisibilityConverter}, ConverterParameter=1, Mode=OneWay}">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Edit" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <TextBlock Text="修改" VerticalAlignment="Center"/>
@@ -385,26 +385,6 @@
                     <DataGridTextColumn Header="纬度" Binding="{Binding Latitude}" Width="1*" 
                                         ElementStyle="{StaticResource DataGridTextColumnElementStyle}"/>
                 </DataGrid.Columns>
-                
-                <!-- 右键菜单 -->
-                <DataGrid.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="编辑车站" 
-                                  Command="{Binding EditStationCommand}" 
-                                  CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}">
-                            <MenuItem.Icon>
-                                <materialDesign:PackIcon Kind="Edit" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Header="删除车站" 
-                                  Command="{Binding DeleteStationCommand}" 
-                                  CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}">
-                            <MenuItem.Icon>
-                                <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource MaterialDesignErrorBrush}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                    </ContextMenu>
-                </DataGrid.ContextMenu>
             </DataGrid>
         </Grid>
 

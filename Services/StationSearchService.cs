@@ -235,7 +235,7 @@ namespace TA_WPF.Services
         /// <summary>
         /// 确保服务已初始化
         /// </summary>
-        private async Task EnsureInitializedAsync()
+        public async Task EnsureInitializedAsync()
         {
             if (!_isInitialized)
             {

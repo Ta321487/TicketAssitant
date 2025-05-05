@@ -3,7 +3,7 @@ using System.Windows.Controls;
 namespace TA_WPF.Views
 {
     /// <summary>
-    /// Interaction logic for AdvancedQueryStationPanel.xaml
+    /// AdvancedQueryStationPanel.xaml 的交互逻辑
     /// </summary>
     public partial class AdvancedQueryStationPanel : UserControl
     {

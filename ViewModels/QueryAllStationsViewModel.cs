@@ -6,9 +6,11 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using System.Windows; // Add this for MessageBoxResult and Application
+using System.Windows.Controls; // Add this for Grid
 using System.Linq;
 using System.Collections.Generic;
 using TA_WPF.Views;
+using System.Windows.Media;
 
 namespace TA_WPF.ViewModels
 {
@@ -24,6 +26,11 @@ namespace TA_WPF.ViewModels
         private ObservableCollection<StationInfo> _selectedStations;
         private bool _isLoading;
         private double _dataGridRowHeight = 45; // 默认行高为45
+
+        private AdvancedQueryStationViewModel _advancedQueryViewModel;
+        private AdvancedQueryStationPanel _advancedQueryPanel;
+
+        private StationQueryFilterEventArgs _lastQueryFilter;
 
         public QueryAllStationsViewModel(DatabaseService databaseService, PaginationViewModel paginationViewModel, MainViewModel mainViewModel)
         {
@@ -108,6 +115,8 @@ namespace TA_WPF.ViewModels
                     _selectedStations = value;
                     OnPropertyChanged(nameof(SelectedStations));
                     OnPropertyChanged(nameof(HasSelection));
+                    OnPropertyChanged(nameof(SelectedItemsCount));
+                    OnPropertyChanged(nameof(CanEditSelectedStation));
                 }
             }
         }
@@ -121,6 +130,9 @@ namespace TA_WPF.ViewModels
                                     
         // 选中项的数量，用于控制修改按钮的显示与启用状态
         public int SelectedItemsCount => _selectedStations?.Count ?? 0;
+
+        // 是否可以编辑选中的车站（仅当选中一个车站时可编辑）
+        public bool CanEditSelectedStation => SelectedItemsCount == 1;
 
         public int TotalCount
         {
@@ -198,7 +210,8 @@ namespace TA_WPF.ViewModels
 
         private void EditStation(StationInfo station)
         {
-            if (station == null) return;
+            // 确保只有选中一个车站时才能编辑
+            if (station == null || _selectedStations.Count != 1) return;
             
             // 创建StationSearchService
             var stationSearchService = new StationSearchService(_databaseService);
@@ -213,7 +226,7 @@ namespace TA_WPF.ViewModels
             editStationWindow.Owner = Application.Current.MainWindow;
             editStationWindow.ShowDialog();
         }
-        private bool CanEditStation(StationInfo station) => station != null;
+        private bool CanEditStation(StationInfo station) => station != null && _selectedStations.Count == 1;
 
         private async void DeleteStation(StationInfo station)
         {
@@ -236,9 +249,220 @@ namespace TA_WPF.ViewModels
 
         private void OpenAdvancedQuery()
         {
-             MessageBoxHelper.ShowInfo("高级查询功能稍后实现。");
-            // Logic to open/show AdvancedQueryStationPanel
+            try
+            {
+                // 查找QueryAllStationsPage用户控件
+                var queryPage = FindQueryAllStationsPage();
+                if (queryPage != null)
+                {
+                    // 查找QueryPanelContainer
+                    var container = queryPage.FindName("QueryPanelContainer") as System.Windows.Controls.Grid;
+                    if (container != null)
+                    {
+                        // 如果已经创建了高级查询面板，则切换其可见性
+                        if (_advancedQueryViewModel != null && _advancedQueryPanel != null)
+                        {
+                            _advancedQueryViewModel.IsQueryPanelVisible = !_advancedQueryViewModel.IsQueryPanelVisible;
+                            return;
+                        }
+                        
+                        // 创建StationSearchService
+                        var stationSearchService = new StationSearchService(_databaseService);
+                        
+                        // 创建高级查询ViewModel
+                        _advancedQueryViewModel = new AdvancedQueryStationViewModel(_databaseService, stationSearchService);
+                        
+                        // 设置查询面板可见
+                        _advancedQueryViewModel.IsQueryPanelVisible = true;
+                        
+                        // 订阅筛选条件应用事件
+                        _advancedQueryViewModel.FilterApplied += AdvancedQueryViewModel_FilterApplied;
+                        
+                        // 清空容器
+                        container.Children.Clear();
+                        
+                        // 创建高级查询面板
+                        _advancedQueryPanel = new AdvancedQueryStationPanel
+                        {
+                            DataContext = _advancedQueryViewModel
+                        };
+                        
+                        // 添加到容器
+                        container.Children.Add(_advancedQueryPanel);
+                    }
+                    else
+                    {
+                        MessageBoxHelper.ShowError("无法找到查询面板容器(QueryPanelContainer)。");
+                    }
+                }
+                else
+                {
+                    MessageBoxHelper.ShowError("无法找到查询页面(QueryAllStationsPage)。");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"打开高级查询面板时出错: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"打开高级查询面板时出错: {ex.Message}");
+            }
         }
+        
+        /// <summary>
+        /// 查找QueryAllStationsPage用户控件
+        /// </summary>
+        private FrameworkElement FindQueryAllStationsPage()
+        {
+            // 遍历应用程序中的所有窗口
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window.IsActive)
+                {
+                    // 查找主窗口中的Frame或ContentPresenter
+                    var mainContent = window.Content as DependencyObject;
+                    if (mainContent != null)
+                    {
+                        // 尝试查找QueryAllStationsPage
+                        var queryPage = FindChild<Views.QueryAllStationsPage>(mainContent);
+                        if (queryPage != null)
+                        {
+                            return queryPage;
+                        }
+                        
+                        // 如果没有直接找到，可能是嵌套在其他控件中，尝试查找名为QueryAllStationsPageControl的控件
+                        var namedQueryPage = FindChildByName(mainContent, "QueryAllStationsPageControl");
+                        if (namedQueryPage != null)
+                        {
+                            return namedQueryPage;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+        
+        /// <summary>
+        /// 递归查找指定类型的子控件
+        /// </summary>
+        private static T FindChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            // 检查当前对象是否为所需类型
+            if (parent is T found)
+            {
+                return found;
+            }
+
+            // 获取子元素数量
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            
+            // 递归查找每个子元素
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                
+                // 递归查找
+                var result = FindChild<T>(child);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// 递归查找指定名称的子控件
+        /// </summary>
+        private static FrameworkElement FindChildByName(DependencyObject parent, string name)
+        {
+            // 检查当前对象是否为所需名称
+            if (parent is FrameworkElement element && element.Name == name)
+            {
+                return element;
+            }
+
+            // 获取子元素数量
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            
+            // 递归查找每个子元素
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                
+                // 递归查找
+                var result = FindChildByName(child, name);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// 处理高级查询筛选条件应用事件
+        /// </summary>
+        private async void AdvancedQueryViewModel_FilterApplied(object sender, StationQueryFilterEventArgs e)
+        {
+            try
+            {
+                IsLoading = true;
+                
+                // 保存最后一次的查询条件，用于分页时重新应用
+                _lastQueryFilter = e;
+                
+                // 使用新的数据库方法，直接在数据库层面应用查询条件
+                // 获取符合条件的车站总数
+                TotalCount = await _databaseService.GetStationCountAdvancedAsync(
+                    e.StationName,
+                    e.Province,
+                    e.City,
+                    e.District,
+                    e.UseMyDepartStations ? e.MyDepartStations : null
+                );
+                
+                // 更新分页信息
+                _paginationViewModel.TotalItems = TotalCount;
+                _paginationViewModel.CurrentPage = 1; // 重置为第一页
+                
+                // 获取当前页的数据
+                var stations = await _databaseService.QueryStationsAdvancedAsync(
+                    _paginationViewModel.CurrentPage,
+                    _paginationViewModel.PageSize,
+                    e.StationName,
+                    e.Province,
+                    e.City,
+                    e.District,
+                    e.UseMyDepartStations ? e.MyDepartStations : null
+                );
+                
+                // 更新UI数据
+                Stations = new ObservableCollection<StationInfo>(stations);
+                
+                // 清空选择
+                SelectedStations.Clear();
+                
+                // 更新UI状态
+                OnPropertyChanged(nameof(HasData));
+                OnPropertyChanged(nameof(HasNoData));
+                OnPropertyChanged(nameof(HasSelection));
+                OnPropertyChanged(nameof(IsAllSelected));
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"应用高级查询筛选条件时出错: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"应用高级查询筛选条件时出错: {ex.Message}");
+                
+                // 出错时恢复到初始状态
+                await LoadStationsAsync();
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+        
         private bool CanOpenAdvancedQuery() => true;
         
         // --- 选择相关方法 ---
@@ -341,12 +565,33 @@ namespace TA_WPF.ViewModels
             IsLoading = true;
             try
             {
-                TotalCount = await _databaseService.GetStationCountAsync(); // Need to add this method to DatabaseService
-                var stationsData = await _databaseService.GetStationsAsync(
-                    _paginationViewModel.CurrentPage,
-                    _paginationViewModel.PageSize); // Need to add this method to DatabaseService
+                // 检查是否有高级查询条件
+                if (_lastQueryFilter != null)
+                {
+                    // 有高级查询条件，使用高级查询方法
+                    var stations = await _databaseService.QueryStationsAdvancedAsync(
+                        _paginationViewModel.CurrentPage,
+                        _paginationViewModel.PageSize,
+                        _lastQueryFilter.StationName,
+                        _lastQueryFilter.Province,
+                        _lastQueryFilter.City,
+                        _lastQueryFilter.District,
+                        _lastQueryFilter.UseMyDepartStations ? _lastQueryFilter.MyDepartStations : null
+                    );
+                    
+                    Stations = new ObservableCollection<StationInfo>(stations);
+                }
+                else
+                {
+                    // 没有高级查询条件，使用普通查询方法
+                    TotalCount = await _databaseService.GetStationCountAsync(); // Need to add this method to DatabaseService
+                    var stationsData = await _databaseService.GetStationsAsync(
+                        _paginationViewModel.CurrentPage,
+                        _paginationViewModel.PageSize); // Need to add this method to DatabaseService
 
-                Stations = new ObservableCollection<StationInfo>(stationsData);
+                    Stations = new ObservableCollection<StationInfo>(stationsData);
+                }
+                
                 // 清除选择
                 SelectedStations.Clear();
                 
@@ -383,6 +628,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllSelected));
             OnPropertyChanged(nameof(SelectedItemsCount));
+            OnPropertyChanged(nameof(CanEditSelectedStation));
         }
 
         private async void DeleteSelectedStations()

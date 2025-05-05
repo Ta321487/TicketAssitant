@@ -1287,5 +1287,214 @@ namespace TA_WPF.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// 高级查询车站信息
+        /// </summary>
+        /// <param name="pageNumber">页码</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <param name="stationName">车站名称</param>
+        /// <param name="province">省份</param>
+        /// <param name="city">城市</param>
+        /// <param name="district">区/县</param>
+        /// <param name="myDepartStations">我的出发车站列表</param>
+        /// <returns>符合条件的车站列表</returns>
+        public async Task<List<StationInfo>> QueryStationsAdvancedAsync(
+            int pageNumber, 
+            int pageSize, 
+            string stationName = null, 
+            string province = null, 
+            string city = null, 
+            string district = null, 
+            List<string> myDepartStations = null)
+        {
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0) pageSize = 10;
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 构建基础查询
+                    var queryBuilder = new System.Text.StringBuilder("SELECT * FROM station_info");
+                    var parameters = new Dictionary<string, object>();
+                    var conditions = new List<string>();
+
+                    // 添加条件
+                    if (!string.IsNullOrWhiteSpace(stationName))
+                    {
+                        conditions.Add("station_name LIKE @StationName");
+                        parameters["@StationName"] = $"%{stationName}%";
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(province))
+                    {
+                        conditions.Add("province = @Province");
+                        parameters["@Province"] = province;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(city))
+                    {
+                        conditions.Add("city = @City");
+                        parameters["@City"] = city;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(district))
+                    {
+                        conditions.Add("district = @District");
+                        parameters["@District"] = district;
+                    }
+
+                    // 处理我的出发车站列表
+                    if (myDepartStations != null && myDepartStations.Count > 0)
+                    {
+                        var stationPlaceholders = new List<string>();
+                        for (int i = 0; i < myDepartStations.Count; i++)
+                        {
+                            string paramName = $"@DepartStation{i}";
+                            stationPlaceholders.Add(paramName);
+                            parameters[paramName] = myDepartStations[i];
+                        }
+                        
+                        conditions.Add($"station_name IN ({string.Join(", ", stationPlaceholders)})");
+                    }
+
+                    // 添加WHERE子句
+                    if (conditions.Count > 0)
+                    {
+                        queryBuilder.Append(" WHERE ");
+                        
+                        // 使用OR连接条件
+                        string connector = " OR ";
+                        queryBuilder.Append(string.Join(connector, conditions));
+                    }
+
+                    // 添加排序和分页
+                    queryBuilder.Append(" ORDER BY id");
+                    queryBuilder.Append(" LIMIT @Offset, @PageSize");
+                    parameters["@Offset"] = (pageNumber - 1) * pageSize;
+                    parameters["@PageSize"] = pageSize;
+
+                    using (var command = new MySqlCommand(queryBuilder.ToString(), connection))
+                    {
+                        // 添加参数
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.AddWithValue(param.Key, param.Value);
+                        }
+
+                        // 执行查询
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            var results = new List<StationInfo>();
+                            while (await reader.ReadAsync())
+                            {
+                                results.Add(MapStationInfo(reader));
+                            }
+                            return results;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"高级查询车站失败: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 获取高级查询的车站总数
+        /// </summary>
+        /// <param name="stationName">车站名称</param>
+        /// <param name="province">省份</param>
+        /// <param name="city">城市</param>
+        /// <param name="district">区/县</param>
+        /// <param name="myDepartStations">我的出发车站列表</param>
+        /// <returns>符合条件的车站总数</returns>
+        public async Task<int> GetStationCountAdvancedAsync(
+            string stationName = null, 
+            string province = null, 
+            string city = null, 
+            string district = null, 
+            List<string> myDepartStations = null)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 构建基础查询
+                    var queryBuilder = new System.Text.StringBuilder("SELECT COUNT(*) FROM station_info");
+                    var parameters = new Dictionary<string, object>();
+                    var conditions = new List<string>();
+
+                    // 添加条件
+                    if (!string.IsNullOrWhiteSpace(stationName))
+                    {
+                        conditions.Add("station_name LIKE @StationName");
+                        parameters["@StationName"] = $"%{stationName}%";
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(province))
+                    {
+                        conditions.Add("province = @Province");
+                        parameters["@Province"] = province;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(city))
+                    {
+                        conditions.Add("city = @City");
+                        parameters["@City"] = city;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(district))
+                    {
+                        conditions.Add("district = @District");
+                        parameters["@District"] = district;
+                    }
+
+                    // 处理我的出发车站列表
+                    if (myDepartStations != null && myDepartStations.Count > 0)
+                    {
+                        var stationPlaceholders = new List<string>();
+                        for (int i = 0; i < myDepartStations.Count; i++)
+                        {
+                            string paramName = $"@DepartStation{i}";
+                            stationPlaceholders.Add(paramName);
+                            parameters[paramName] = myDepartStations[i];
+                        }
+                        
+                        conditions.Add($"station_name IN ({string.Join(", ", stationPlaceholders)})");
+                    }
+
+                    // 添加WHERE子句
+                    if (conditions.Count > 0)
+                    {
+                        queryBuilder.Append(" WHERE ");
+                        
+                        // 使用OR连接条件
+                        string connector = " OR ";
+                        queryBuilder.Append(string.Join(connector, conditions));
+                    }
+
+                    using (var command = new MySqlCommand(queryBuilder.ToString(), connection))
+                    {
+                        // 添加参数
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.AddWithValue(param.Key, param.Value);
+                        }
+
+                        // 执行查询
+                        return Convert.ToInt32(await command.ExecuteScalarAsync());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取高级查询车站总数失败: {ex.Message}", ex);
+                throw;
+            }
+        }
     }
 }
