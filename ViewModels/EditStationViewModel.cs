@@ -9,6 +9,7 @@ using TA_WPF.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using TA_WPF.Views;
+using System.Collections.ObjectModel;
 
 namespace TA_WPF.ViewModels
 {
@@ -23,6 +24,8 @@ namespace TA_WPF.ViewModels
         private string _windowTitle;
         private Action _refreshCallback;
         private double _fontSize;  // 添加字体大小属性
+        private bool _isFormModified = false; // 表单修改标志
+        private bool _isInitializing = true; // 初始化标志
 
         // 车站信息属性
         private string _stationName;
@@ -33,6 +36,17 @@ namespace TA_WPF.ViewModels
         private string _latitude;
         private string _stationPinyin;
         private string _stationCode;
+        
+        // 原始车站信息（用于比较变更）
+        private StationInfo _originalStationInfo;
+        
+        // 新增属性
+        private int _stationLevel;
+        private string _railwayBureau;
+        private ObservableCollection<KeyValuePair<int, string>> _stationLevels;
+        private ObservableCollection<string> _railwayBureauSuggestions;
+        private string _railwayBureauInput;
+        private bool _isRailwayBureauDropdownOpen;
 
         public EditStationViewModel(DatabaseService databaseService, StationSearchService stationSearchService, GeocodingService geocodingService, ConfigurationService configurationService, StationInfo stationToEdit, Action refreshCallback)
         {
@@ -42,6 +56,27 @@ namespace TA_WPF.ViewModels
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _stationToEdit = stationToEdit ?? throw new ArgumentNullException(nameof(stationToEdit));
             _refreshCallback = refreshCallback;
+            
+            // 保存原始车站信息（用于比较变更）
+            _originalStationInfo = new StationInfo
+            {
+                StationName = stationToEdit.StationName,
+                Province = stationToEdit.Province,
+                City = stationToEdit.City,
+                District = stationToEdit.District,
+                Longitude = stationToEdit.Longitude,
+                Latitude = stationToEdit.Latitude,
+                StationPinyin = stationToEdit.StationPinyin,
+                StationCode = stationToEdit.StationCode,
+                StationLevel = stationToEdit.StationLevel,
+                RailwayBureau = stationToEdit.RailwayBureau
+            };
+
+            // 初始化车站等级列表
+            _stationLevels = new ObservableCollection<KeyValuePair<int, string>>(StationLevelHelper.GetStationLevels());
+            
+            // 初始化铁路局建议列表
+            _railwayBureauSuggestions = new ObservableCollection<string>();
 
             // 加载待编辑的车站信息
             LoadStationInfo();
@@ -50,6 +85,7 @@ namespace TA_WPF.ViewModels
             SaveCommand = new RelayCommand(SaveStation, () => CanSaveStation);
             CancelCommand = new RelayCommand(Cancel);
             GetStationInfoCommand = new RelayCommand(GetStationInfo);
+            RailwayBureauTextChangedCommand = new RelayCommand<string>(OnRailwayBureauTextChanged);
 
             // 设置窗口标题
             WindowTitle = $"编辑车站 - {_stationName}";
@@ -61,6 +97,9 @@ namespace TA_WPF.ViewModels
                 _fontSize = (double)Application.Current.Resources["MaterialDesignFontSize"];
                 OnPropertyChanged(nameof(FontSize));
             }
+            
+            // 初始化完成
+            _isInitializing = false;
         }
 
         #region 属性
@@ -181,6 +220,74 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
+        
+        // 新增属性
+        public int StationLevel
+        {
+            get => _stationLevel;
+            set
+            {
+                if (_stationLevel != value)
+                {
+                    _stationLevel = value;
+                    OnPropertyChanged(nameof(StationLevel));
+                }
+            }
+        }
+        
+        public string RailwayBureau
+        {
+            get => _railwayBureau;
+            set
+            {
+                if (_railwayBureau != value)
+                {
+                    _railwayBureau = value;
+                    _railwayBureauInput = value; // 同步更新输入框文本
+                    OnPropertyChanged(nameof(RailwayBureau));
+                    OnPropertyChanged(nameof(RailwayBureauInput));
+                }
+            }
+        }
+        
+        public string RailwayBureauInput
+        {
+            get => _railwayBureauInput;
+            set
+            {
+                if (_railwayBureauInput != value)
+                {
+                    _railwayBureauInput = value;
+                    OnPropertyChanged(nameof(RailwayBureauInput));
+                    
+                    // 当用户输入时，更新建议列表
+                    UpdateRailwayBureauSuggestions(value);
+                }
+            }
+        }
+        
+        public ObservableCollection<KeyValuePair<int, string>> StationLevels
+        {
+            get => _stationLevels;
+        }
+        
+        public ObservableCollection<string> RailwayBureauSuggestions
+        {
+            get => _railwayBureauSuggestions;
+        }
+        
+        public bool IsRailwayBureauDropdownOpen
+        {
+            get => _isRailwayBureauDropdownOpen;
+            set
+            {
+                if (_isRailwayBureauDropdownOpen != value)
+                {
+                    _isRailwayBureauDropdownOpen = value;
+                    OnPropertyChanged(nameof(IsRailwayBureauDropdownOpen));
+                }
+            }
+        }
 
         public bool IsEditing
         {
@@ -216,6 +323,20 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
+        
+        // 添加表单修改状态属性
+        public bool IsFormModified
+        {
+            get => _isFormModified;
+            private set
+            {
+                if (_isFormModified != value)
+                {
+                    _isFormModified = value;
+                    OnPropertyChanged(nameof(IsFormModified));
+                }
+            }
+        }
 
         #endregion
 
@@ -224,6 +345,7 @@ namespace TA_WPF.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand GetStationInfoCommand { get; }
+        public ICommand RailwayBureauTextChangedCommand { get; }
 
         #endregion
 
@@ -241,6 +363,9 @@ namespace TA_WPF.ViewModels
                 Latitude = _stationToEdit.Latitude;
                 StationPinyin = _stationToEdit.StationPinyin;
                 StationCode = _stationToEdit.StationCode;
+                StationLevel = _stationToEdit.StationLevel;
+                RailwayBureau = _stationToEdit.RailwayBureau;
+                RailwayBureauInput = _stationToEdit.RailwayBureau;
             }
         }
 
@@ -250,6 +375,61 @@ namespace TA_WPF.ViewModels
 
             try
             {
+                // 1. 验证车站名称是否存在于列表中
+                await _stationSearchService.EnsureInitializedAsync();
+                
+                // 检查是否为当前编辑的车站
+                bool isCurrentStation = _stationToEdit.StationName == StationName || 
+                                        _stationToEdit.StationName == StationName + "站" || 
+                                        StationName == _stationToEdit.StationName + "站";
+                
+                // 如果不是当前编辑的车站，则检查是否已存在
+                if (!isCurrentStation)
+                {
+                    bool existsInList = _stationSearchService.Stations
+                        .Any(s => s.StationName == StationName || 
+                                  s.StationName == StationName + "站" || 
+                                  StationName == s.StationName + "站");
+                                  
+                    if (!existsInList)
+                    {
+                        MessageBoxHelper.ShowWarning($"车站名称 '{StationName}' 不在车站列表中，请先添加该车站或选择已有车站。");
+                        IsEditing = false;
+                        return;
+                    }
+                }
+                
+                // 检查是当前编辑的车站之外的其他车站是否已经使用了相同的名称
+                bool isDuplicateName = _stationSearchService.Stations
+                    .Any(s => s.Id != _stationToEdit.Id && 
+                              (s.StationName == StationName || 
+                               s.StationName == StationName + "站" || 
+                               StationName == s.StationName + "站"));
+                               
+                if (isDuplicateName)
+                {
+                    MessageBoxHelper.ShowWarning($"车站名称 '{StationName}' 已存在，请使用其他名称。");
+                    IsEditing = false;
+                    return;
+                }
+                
+                // 2. 验证铁路局名称
+                if (!string.IsNullOrWhiteSpace(RailwayBureauInput))
+                {
+                    string validBureau = RailwayBureauHelper.GetClosestRailwayBureau(RailwayBureauInput);
+                    if (validBureau != null)
+                    {
+                        RailwayBureau = validBureau;
+                    }
+                    else
+                    {
+                        // 如果没有找到匹配的铁路局，直接报错
+                        MessageBoxHelper.ShowError($"输入的铁路局 '{RailwayBureauInput}' 不是标准的铁路局名称，请选择列表中的铁路局。");
+                        IsEditing = false;
+                        return;
+                    }
+                }
+
                 // 更新StationInfo对象
                 _stationToEdit.StationName = StationName;
                 _stationToEdit.Province = Province;
@@ -259,6 +439,8 @@ namespace TA_WPF.ViewModels
                 _stationToEdit.Latitude = Latitude;
                 _stationToEdit.StationPinyin = StationPinyin;
                 _stationToEdit.StationCode = StationCode;
+                _stationToEdit.StationLevel = StationLevel;
+                _stationToEdit.RailwayBureau = RailwayBureau;
 
                 // 使用数据库服务更新车站信息
                 bool success = await _databaseService.UpdateStationAsync(_stationToEdit);
@@ -270,6 +452,9 @@ namespace TA_WPF.ViewModels
                     
                     // 调用回调函数刷新车站列表
                     _refreshCallback?.Invoke();
+                    
+                    // 重置表单修改状态
+                    IsFormModified = false;
                     
                     // 关闭窗口
                     CloseWindow?.Invoke(this, EventArgs.Empty);
@@ -291,6 +476,28 @@ namespace TA_WPF.ViewModels
 
         private void Cancel()
         {
+            // 检查是否有未保存的更改
+            if (HasUnsavedChanges())
+            {
+                // 显示确认对话框
+                var result = MessageBoxHelper.ShowConfirmation(
+                    "您有未保存的修改，是否保存？",
+                    "未保存的修改");
+                    
+                if (result == MessageBoxResult.Yes)
+                {
+                    // 保存更改
+                    SaveStation();
+                    return;
+                }
+                else if (result == MessageBoxResult.Cancel)
+                {
+                    // 取消关闭
+                    return;
+                }
+                // 否则继续关闭窗口，不保存更改
+            }
+            
             // 关闭窗口
             CloseWindow?.Invoke(this, EventArgs.Empty);
         }
@@ -386,10 +593,87 @@ namespace TA_WPF.ViewModels
                 IsEditing = false;
             }
         }
+        
+        /// <summary>
+        /// 处理铁路局输入框文本变化
+        /// </summary>
+        private void OnRailwayBureauTextChanged(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return;
+                
+            // 设置铁路局值
+            RailwayBureauInput = text;
+            RailwayBureau = text;
+            
+            // 关闭下拉框
+            IsRailwayBureauDropdownOpen = false;
+        }
+        
+        /// <summary>
+        /// 更新铁路局建议列表
+        /// </summary>
+        private void UpdateRailwayBureauSuggestions(string inputText)
+        {
+            RailwayBureauSuggestions.Clear();
+            
+            if (!string.IsNullOrWhiteSpace(inputText))
+            {
+                var suggestions = RailwayBureauHelper.GetMatchedRailwayBureaus(inputText);
+                foreach (var suggestion in suggestions)
+                {
+                    RailwayBureauSuggestions.Add(suggestion);
+                }
+                
+                IsRailwayBureauDropdownOpen = suggestions.Count > 0;
+            }
+            else
+            {
+                IsRailwayBureauDropdownOpen = false;
+            }
+        }
+        
+        /// <summary>
+        /// 检查是否有未保存的更改
+        /// </summary>
+        public bool HasUnsavedChanges()
+        {
+            // 如果表单已标记为已修改，则直接返回true
+            if (IsFormModified) return true;
+            
+            // 比较当前值和原始值
+            return 
+                _originalStationInfo.StationName != StationName ||
+                _originalStationInfo.Province != Province ||
+                _originalStationInfo.City != City ||
+                _originalStationInfo.District != District ||
+                _originalStationInfo.Longitude != Longitude ||
+                _originalStationInfo.Latitude != Latitude ||
+                _originalStationInfo.StationPinyin != StationPinyin ||
+                _originalStationInfo.StationCode != StationCode ||
+                _originalStationInfo.StationLevel != StationLevel ||
+                _originalStationInfo.RailwayBureau != RailwayBureau;
+        }
 
         #endregion
 
         // 关闭窗口事件
         public event EventHandler CloseWindow;
+        
+        /// <summary>
+        /// 重写OnPropertyChanged方法，以跟踪表单修改状态
+        /// </summary>
+        protected override void OnPropertyChanged(string propertyName)
+        {
+            base.OnPropertyChanged(propertyName);
+            
+            // 当属性发生更改且不在初始化阶段且不是IsFormModified属性本身时，
+            // 标记表单已被修改
+            if (!_isInitializing && propertyName != nameof(IsFormModified) 
+                                 && propertyName != nameof(IsRailwayBureauDropdownOpen))
+            {
+                IsFormModified = true;
+            }
+        }
     }
 } 

@@ -377,6 +377,20 @@
                     <DataGridTextColumn Header="车站拼音" Binding="{Binding StationPinyin}" Width="1.2*" 
                                         ElementStyle="{StaticResource DataGridTextColumnElementStyle}"/>
                     
+                    <!-- 车站等级 Column -->
+                    <DataGridTextColumn Header="车站等级" Width="0.8*" 
+                                        ElementStyle="{StaticResource DataGridTextColumnElementStyle}">
+                        <DataGridTextColumn.Binding>
+                            <MultiBinding Converter="{StaticResource StationLevelConverter}">
+                                <Binding Path="StationLevel" />
+                            </MultiBinding>
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    
+                    <!-- 铁路局 Column -->
+                    <DataGridTextColumn Header="所属路局" Binding="{Binding RailwayBureau}" Width="1.5*" 
+                                        ElementStyle="{StaticResource DataGridTextColumnElementStyle}"/>
+                    
                     <!-- 经度 Column -->
                     <DataGridTextColumn Header="经度" Binding="{Binding Longitude}" Width="1*" 
                                         ElementStyle="{StaticResource DataGridTextColumnElementStyle}"/>

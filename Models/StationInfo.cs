@@ -18,6 +18,8 @@ namespace TA_WPF.Models
         private string? _stationAddress;
         private string? _stationTelephone;
         private bool _isSelected;
+        private int _stationLevel;
+        private string? _railwayBureau;
 
         public int Id
         {
@@ -171,6 +173,32 @@ namespace TA_WPF.Models
                 {
                     _isSelected = value;
                     OnPropertyChanged(nameof(IsSelected));
+                }
+            }
+        }
+        
+        public int StationLevel
+        {
+            get => _stationLevel;
+            set
+            {
+                if (_stationLevel != value)
+                {
+                    _stationLevel = value;
+                    OnPropertyChanged(nameof(StationLevel));
+                }
+            }
+        }
+        
+        public string RailwayBureau
+        {
+            get => _railwayBureau;
+            set
+            {
+                if (_railwayBureau != value)
+                {
+                    _railwayBureau = value;
+                    OnPropertyChanged(nameof(RailwayBureau));
                 }
             }
         }

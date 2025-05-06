@@ -133,6 +133,7 @@
             <converters:TicketTypeFlagsConverter x:Key="TicketTypeFlagsConverter" />
             <converters:PaymentChannelFlagsConverter x:Key="PaymentChannelFlagsConverter" />
             <converters:BoolToEnabledConverter x:Key="BoolToEnabledConverter" />
+            <converters:StationLevelConverter x:Key="StationLevelConverter" />
 
             <!-- 数据表格样式 -->
             <Style TargetType="{x:Type DataGrid}">

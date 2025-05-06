@@ -77,16 +77,17 @@ namespace TA_WPF.Services
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
+                    // 构建排序方向
                     string direction = ascending ? "ASC" : "DESC";
-                    // Basic validation for orderBy to prevent injection, allow only known columns
-                    string[] allowedColumns = { "id", "station_name", "province", "city", "district", "station_code", "station_pinyin" };
-                    if (!allowedColumns.Contains(orderBy.ToLower()))
-                    {
-                        orderBy = "id"; // Default to id if invalid column
-                    }
-
-                    string query = "SELECT * FROM station_info ";
                     
+                    // 显式列出所有需要的列
+                    string columns = @"`id`, `station_name`, `province`, `city`, `district`, 
+                                     `longitude`, `latitude`, `station_code`, `station_pinyin`, 
+                                     `station_level`, `railway_bureau`";
+
+                    // 构建查询语句
+                    string query = $"SELECT {columns} FROM station_info ";
+
                     // 添加排序
                     query += $"ORDER BY `{orderBy}` {direction} ";
                     
@@ -366,9 +367,9 @@ namespace TA_WPF.Services
         private async Task<bool> InsertStationInternalAsync(StationInfo station, MySqlConnection connection, MySqlTransaction transaction)
         {
             string query = @"INSERT INTO station_info 
-                           (station_name, province, city, district, longitude, latitude, station_code, station_pinyin) 
+                           (station_name, province, city, district, longitude, latitude, station_code, station_pinyin, station_level, railway_bureau) 
                            VALUES 
-                           (@StationName, @Province, @City, @District, @Longitude, @Latitude, @StationCode, @StationPinyin)";
+                           (@StationName, @Province, @City, @District, @Longitude, @Latitude, @StationCode, @StationPinyin, @StationLevel, @RailwayBureau)";
 
             using (var command = new MySqlCommand(query, connection, transaction))
             {
@@ -380,6 +381,8 @@ namespace TA_WPF.Services
                 command.Parameters.AddWithValue("@Latitude", station.Latitude ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@StationCode", station.StationCode ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@StationPinyin", station.StationPinyin ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@StationLevel", station.StationLevel);
+                command.Parameters.AddWithValue("@RailwayBureau", station.RailwayBureau ?? (object)DBNull.Value);
 
                 int rowsAffected = await command.ExecuteNonQueryAsync();
                 return rowsAffected > 0;
@@ -469,7 +472,9 @@ namespace TA_WPF.Services
                 Longitude = reader.IsDBNull(reader.GetOrdinal("longitude")) ? null : reader.GetString(reader.GetOrdinal("longitude")),
                 Latitude = reader.IsDBNull(reader.GetOrdinal("latitude")) ? null : reader.GetString(reader.GetOrdinal("latitude")),
                 StationCode = reader.IsDBNull(reader.GetOrdinal("station_code")) ? null : reader.GetString(reader.GetOrdinal("station_code")),
-                StationPinyin = reader.IsDBNull(reader.GetOrdinal("station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("station_pinyin"))
+                StationPinyin = reader.IsDBNull(reader.GetOrdinal("station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("station_pinyin")),
+                StationLevel = reader.IsDBNull(reader.GetOrdinal("station_level")) ? 0 : reader.GetInt32(reader.GetOrdinal("station_level")),
+                RailwayBureau = reader.IsDBNull(reader.GetOrdinal("railway_bureau")) ? null : reader.GetString(reader.GetOrdinal("railway_bureau"))
             };
         }
 
@@ -1003,6 +1008,8 @@ namespace TA_WPF.Services
                     `latitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '纬度',
                     `station_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站代码',
                     `station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站拼音',
+                    `station_level` int NULL DEFAULT 0 COMMENT '车站等级：1=特等站,2=一等站,4=二等站,8=三等站,16=四等站,32=五等站',
+                    `railway_bureau` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '所属路局',
                     PRIMARY KEY (`id`) USING BTREE,
                     INDEX `station_name`(`station_name` ASC) USING BTREE,
                     INDEX `fk_arrive_code`(`station_code` ASC) USING BTREE,
@@ -1261,7 +1268,9 @@ namespace TA_WPF.Services
                             longitude = @Longitude,
                             latitude = @Latitude,
                             station_pinyin = @StationPinyin,
-                            station_code = @StationCode
+                            station_code = @StationCode,
+                            station_level = @StationLevel,
+                            railway_bureau = @RailwayBureau
                         WHERE id = @Id";
 
                         using (var command = new MySqlCommand(query, connection))
@@ -1275,6 +1284,8 @@ namespace TA_WPF.Services
                             command.Parameters.AddWithValue("@Latitude", station.Latitude ?? (object)DBNull.Value);
                             command.Parameters.AddWithValue("@StationPinyin", station.StationPinyin ?? (object)DBNull.Value);
                             command.Parameters.AddWithValue("@StationCode", station.StationCode ?? (object)DBNull.Value);
+                            command.Parameters.AddWithValue("@StationLevel", station.StationLevel);
+                            command.Parameters.AddWithValue("@RailwayBureau", station.RailwayBureau ?? (object)DBNull.Value);
 
                             int rowsAffected = await command.ExecuteNonQueryAsync();
                             return rowsAffected > 0;

@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:TA_WPF.Views"
         mc:Ignorable="d"
         Title="{Binding WindowTitle}"
-        Width="600" Height="550"
+        Width="600" Height="600"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         FontFamily="Microsoft YaHei UI"
@@ -128,6 +128,58 @@
                         Text="{Binding StationCode, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
                         VerticalAlignment="Center" />
+                        
+                    <!-- 车站等级 -->
+                    <ComboBox 
+                        Margin="0,5,0,15"
+                        Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                        materialDesign:HintAssist.Hint="车站等级"
+                        ItemsSource="{Binding StationLevels}"
+                        SelectedValue="{Binding StationLevel}"
+                        SelectedValuePath="Key"
+                        DisplayMemberPath="Value"
+                        VerticalAlignment="Center" />
+                        
+                    <!-- 所属铁路局 (带自动完成功能) -->
+                    <Grid Margin="0,5,0,15">
+                        <TextBox
+                            x:Name="RailwayBureauTextBox"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            materialDesign:HintAssist.Hint="所属铁路局（输入可联想）"
+                            Text="{Binding RailwayBureauInput, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                            materialDesign:TextFieldAssist.HasClearButton="True"
+                            VerticalAlignment="Center"
+                            materialDesign:TextFieldAssist.TextBoxViewMargin="0,0,0,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" 
+                                            Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Popup 
+                            IsOpen="{Binding IsRailwayBureauDropdownOpen}" 
+                            PlacementTarget="{Binding ElementName=RailwayBureauTextBox}" 
+                            Placement="Bottom" 
+                            Width="{Binding ActualWidth, ElementName=RailwayBureauTextBox}"
+                            VerticalOffset="5"
+                            StaysOpen="False">
+                            <materialDesign:Card UniformCornerRadius="4" Padding="0">
+                                <ListBox 
+                                    x:Name="RailwayBureauListBox"
+                                    ItemsSource="{Binding RailwayBureauSuggestions}" 
+                                    MaxHeight="200"
+                                    Background="{DynamicResource MaterialDesignPaper}"
+                                    SelectionChanged="RailwayBureauListBox_SelectionChanged">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock 
+                                                Text="{Binding}" 
+                                                Padding="8,4" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </materialDesign:Card>
+                        </Popup>
+                    </Grid>
                 </StackPanel>
             </ScrollViewer>
 
