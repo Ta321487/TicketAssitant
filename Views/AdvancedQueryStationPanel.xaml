@@ -217,16 +217,16 @@
                                   materialDesign:HintAssist.Hint="选择省份"
                                   Style="{StaticResource EnhancedMaterialDesignOutlinedComboBox}"
                                   DisplayMemberPath="."/>
-                        <Button Style="{StaticResource MaterialDesignIconButton}"
-                                Command="{Binding ClearProvinceCommand}"
-                                ToolTip="清空地区选择"
-                                ToolTipService.ToolTip="清空地区选择"
-                                ToolTipService.InitialShowDelay="500"
-                                Width="32" Height="32"
+                        <Button Command="{Binding ClearProvinceCommand}"
+                                Style="{StaticResource MaterialDesignIconButton}" 
+                                Foreground="{DynamicResource GlobalAccentBrush}" 
+                                Width="32" 
+                                Height="32"
                                 Padding="4"
-                                Foreground="{DynamicResource GlobalAccentBrush}"
                                 HorizontalAlignment="Right"
-                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Margin="0,0,28,0" 
+                                ToolTip="清空地区选择"
                                 Visibility="{Binding SelectedProvince, Converter={StaticResource NullToVisibilityConverter}}">
                             <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
                         </Button>

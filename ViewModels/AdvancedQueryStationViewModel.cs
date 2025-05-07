@@ -156,6 +156,9 @@ namespace TA_WPF.ViewModels
                     .OrderBy(c => c)
                     .ToList();
 
+                // 在列表开头添加一个空字符串，对应ComboBox中的空选项
+                cities.Insert(0, "");
+                
                 Cities = cities;
             }
             catch (Exception ex)
@@ -187,6 +190,9 @@ namespace TA_WPF.ViewModels
                     .Distinct()
                     .OrderBy(d => d)
                     .ToList();
+                
+                // 在列表开头添加一个空字符串，对应ComboBox中的空选项
+                districts.Insert(0, "");
 
                 Districts = districts;
             }

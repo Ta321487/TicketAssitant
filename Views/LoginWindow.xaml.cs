@@ -444,15 +444,16 @@ namespace TA_WPF.Views
         private void CustomPortCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             PortTextBox.IsEnabled = true;
-            // 启用清空按钮
-            TextFieldAssist.SetHasClearButton(PortTextBox, true);
+            // 移除对内置清除按钮的设置，使用我们自定义的清除按钮
+            // TextFieldAssist.SetHasClearButton(PortTextBox, true);
         }
 
         private void CustomPortCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             PortTextBox.IsEnabled = false;
             PortTextBox.Text = "3306";
-            TextFieldAssist.SetHasClearButton(PortTextBox, false);
+            // 移除对内置清除按钮的设置，使用我们自定义的清除按钮
+            // TextFieldAssist.SetHasClearButton(PortTextBox, false);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -2046,5 +2047,33 @@ namespace TA_WPF.Views
 
             return sql;
         }
+
+        // --- 添加清除按钮的事件处理器 ---
+        private void ClearServerAddress_Click(object sender, RoutedEventArgs e)
+        {
+            ServerAddressTextBox.Clear();
+        }
+
+        private void ClearDatabaseName_Click(object sender, RoutedEventArgs e)
+        {
+            DatabaseNameComboBox.Text = string.Empty;
+            DatabaseNameTextBox.Clear(); // 确保关联的隐藏TextBox也被清空
+        }
+
+        private void ClearUsername_Click(object sender, RoutedEventArgs e)
+        {
+            UsernameTextBox.Clear();
+        }
+
+        private void ClearPassword_Click(object sender, RoutedEventArgs e)
+        {
+            PasswordBox.Clear();
+        }
+
+        private void ClearPort_Click(object sender, RoutedEventArgs e)
+        {
+            PortTextBox.Clear();
+        }
+        // --- 清除按钮事件处理器结束 ---
     }
 }

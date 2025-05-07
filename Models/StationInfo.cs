@@ -34,7 +34,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string StationName
+        public string? StationName
         {
             get => _stationName;
             set
@@ -47,7 +47,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string Province
+        public string? Province
         {
             get => _province;
             set
@@ -60,7 +60,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string City
+        public string? City
         {
             get => _city;
             set
@@ -73,7 +73,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string District
+        public string? District
         {
             get => _district;
             set
@@ -86,7 +86,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string Longitude
+        public string? Longitude
         {
             get => _longitude;
             set
@@ -99,7 +99,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string Latitude
+        public string? Latitude
         {
             get => _latitude;
             set
@@ -112,7 +112,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string StationCode
+        public string? StationCode
         {
             get => _stationCode;
             set
@@ -125,7 +125,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string StationPinyin
+        public string? StationPinyin
         {
             get => _stationPinyin;
             set
@@ -138,7 +138,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string StationAddress
+        public string? StationAddress
         {
             get => _stationAddress;
             set
@@ -151,7 +151,7 @@ namespace TA_WPF.Models
             }
         }
 
-        public string StationTelephone
+        public string? StationTelephone
         {
             get => _stationTelephone;
             set
@@ -190,7 +190,7 @@ namespace TA_WPF.Models
             }
         }
         
-        public string RailwayBureau
+        public string? RailwayBureau
         {
             get => _railwayBureau;
             set
@@ -203,14 +203,14 @@ namespace TA_WPF.Models
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public override string ToString()
+        public override string? ToString()
         {
             return StationName;
         }

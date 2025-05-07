@@ -1375,8 +1375,8 @@ namespace TA_WPF.Services
                     {
                         queryBuilder.Append(" WHERE ");
                         
-                        // 使用OR连接条件
-                        string connector = " OR ";
+                        // 使用AND连接条件，实现级联筛选
+                        string connector = " AND ";
                         queryBuilder.Append(string.Join(connector, conditions));
                     }
 
@@ -1483,8 +1483,8 @@ namespace TA_WPF.Services
                     {
                         queryBuilder.Append(" WHERE ");
                         
-                        // 使用OR连接条件
-                        string connector = " OR ";
+                        // 使用AND连接条件，实现级联筛选
+                        string connector = " AND ";
                         queryBuilder.Append(string.Join(connector, conditions));
                     }
 

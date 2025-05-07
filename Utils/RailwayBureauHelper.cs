@@ -75,7 +75,7 @@ namespace TA_WPF.Utils
         /// </summary>
         /// <param name="inputText">用户输入的文本</param>
         /// <returns>最接近的铁路局名称，如果没有匹配项则返回null</returns>
-        public static string GetClosestRailwayBureau(string inputText)
+        public static string? GetClosestRailwayBureau(string inputText)
         {
             if (string.IsNullOrWhiteSpace(inputText))
             {

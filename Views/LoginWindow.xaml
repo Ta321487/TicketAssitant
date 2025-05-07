@@ -107,25 +107,46 @@
 
                     <!-- 表单内容 -->
                     <!-- 连接地址 -->
-
-                    <TextBox x:Name="ServerAddressTextBox"
-                             Style="{StaticResource ResponsiveTextBox}"
-                             materialDesign:HintAssist.Hint="服务器地址"
-                             materialDesign:TextFieldAssist.HasClearButton="True"
-                             Text=""
-                             Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,8">
+                        <TextBox x:Name="ServerAddressTextBox"
+                                 Style="{StaticResource ResponsiveTextBox}"
+                                 materialDesign:HintAssist.Hint="服务器地址"
+                                 Text=""/>
+                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                Foreground="{DynamicResource GlobalAccentBrush}"
+                                Width="32" Height="32" Padding="4"
+                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Margin="0,0,8,0"
+                                ToolTip="清除"
+                                Click="ClearServerAddress_Click"
+                                Panel.ZIndex="1"
+                                Visibility="{Binding ElementName=ServerAddressTextBox, Path=Text, Converter={StaticResource StringToVisibilityConverter}}">
+                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                        </Button>
+                    </Grid>
 
                     <!-- 数据库名称 -->
-                    <ComboBox x:Name="DatabaseNameComboBox"
-                             Style="{StaticResource ResponsiveComboBox}"
-                             materialDesign:HintAssist.Hint="数据库名称"
-                             IsEditable="True"
-                             Text="{Binding ElementName=DatabaseNameTextBox, Path=Text}"
-                             materialDesign:TextFieldAssist.HasClearButton="True"
-                             IsTextSearchEnabled="True"
-                             StaysOpenOnEdit="True"
-                             Loaded="DatabaseNameComboBox_Loaded"
-                             Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,8">
+                        <ComboBox x:Name="DatabaseNameComboBox"
+                                  Style="{StaticResource ResponsiveComboBox}"
+                                  materialDesign:HintAssist.Hint="数据库名称"
+                                  IsEditable="True"
+                                  Text="{Binding ElementName=DatabaseNameTextBox, Path=Text}"
+                                  IsTextSearchEnabled="True"
+                                  StaysOpenOnEdit="True"
+                                  Loaded="DatabaseNameComboBox_Loaded"/>
+                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                Foreground="{DynamicResource GlobalAccentBrush}"
+                                Width="32" Height="32" Padding="4"
+                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Margin="0,0,8,0"
+                                ToolTip="清除"
+                                Click="ClearDatabaseName_Click"
+                                Panel.ZIndex="1"
+                                Visibility="{Binding ElementName=DatabaseNameComboBox, Path=Text, Converter={StaticResource StringToVisibilityConverter}}">
+                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                        </Button>
+                    </Grid>
 
                     <TextBox x:Name="DatabaseNameTextBox"
                              Text=""
@@ -158,29 +179,53 @@
                     </Expander>
 
                     <!-- 用户名 -->
-                    <TextBox x:Name="UsernameTextBox"
-                             Style="{StaticResource ResponsiveTextBox}"
-                             materialDesign:HintAssist.Hint="用户名"
-                             materialDesign:TextFieldAssist.HasClearButton="True"
-                             Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,8">
+                        <TextBox x:Name="UsernameTextBox"
+                                 Style="{StaticResource ResponsiveTextBox}"
+                                 materialDesign:HintAssist.Hint="用户名"/>
+                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                Foreground="{DynamicResource GlobalAccentBrush}"
+                                Width="32" Height="32" Padding="4"
+                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Margin="0,0,8,0"
+                                ToolTip="清除"
+                                Click="ClearUsername_Click"
+                                Panel.ZIndex="1"
+                                Visibility="{Binding ElementName=UsernameTextBox, Path=Text, Converter={StaticResource StringToVisibilityConverter}}">
+                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                        </Button>
+                    </Grid>
 
                     <!-- 密码 -->
                     <Grid Margin="0,0,0,8">
                         <PasswordBox x:Name="PasswordBox"
-                                    Style="{StaticResource ResponsivePasswordBox}"
-                                    materialDesign:HintAssist.Hint="密码"
-                                    materialDesign:TextFieldAssist.HasClearButton="True"
-                                    KeyDown="PasswordBox_KeyDown"
-                                    KeyUp="PasswordBox_KeyUp"
-                                    GotFocus="PasswordBox_GotFocus"
-                                    LostFocus="PasswordBox_LostFocus"/>
-
+                                     Style="{StaticResource ResponsivePasswordBox}"
+                                     materialDesign:HintAssist.Hint="密码"
+                                     KeyDown="PasswordBox_KeyDown"
+                                     KeyUp="PasswordBox_KeyUp"
+                                     GotFocus="PasswordBox_GotFocus"
+                                     LostFocus="PasswordBox_LostFocus"/>
+                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                Foreground="{DynamicResource GlobalAccentBrush}" 
+                                Width="32" 
+                                Height="32"
+                                Padding="4" 
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Margin="0,0,8,0"
+                                ToolTip="清除"
+                                Click="ClearPassword_Click"
+                                Panel.ZIndex="1"
+                                Visibility="{Binding ElementName=PasswordBox, Path=Password, Converter={StaticResource StringToVisibilityConverter}}">
+                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                        </Button>
                         <materialDesign:PackIcon x:Name="CapsLockIcon"
                                                Kind="KeyboardCapslock"
                                                Foreground="{DynamicResource PrimaryHueMidBrush}"
                                                HorizontalAlignment="Right"
                                                VerticalAlignment="Center"
-                                               Margin="0,0,40,0"
+                                               Margin="0,0,48,0"
+                                               Panel.ZIndex="1"
                                                Visibility="Collapsed"
                                                ToolTip="大写锁定已开启"/>
                     </Grid>
@@ -197,18 +242,34 @@
                                   VerticalAlignment="Center"
                                   Checked="CustomPortCheckBox_Checked"
                                   Unchecked="CustomPortCheckBox_Unchecked"/>
-                        <TextBox x:Name="PortTextBox"
-                                 Grid.Column="1"
-                                 Style="{StaticResource ResponsiveTextBox}"
-                                 materialDesign:HintAssist.Hint="端口号"
-                                 materialDesign:HintAssist.FloatingScale="0.8"
-                                 materialDesign:HintAssist.FloatingOffset="0,-15"
-                                 Text="3306"
-                                 materialDesign:TextFieldAssist.HasClearButton="False"
-                                 IsEnabled="False"
-                                 MinWidth="110"
-                                 Margin="0"
-                                 HorizontalAlignment="Right"/>
+                        <Grid Grid.Column="1">
+                            <TextBox x:Name="PortTextBox"
+                                     Style="{StaticResource ResponsiveTextBox}"
+                                     materialDesign:HintAssist.Hint="端口号"
+                                     materialDesign:HintAssist.FloatingScale="0.8"
+                                     materialDesign:HintAssist.FloatingOffset="0,-15"
+                                     Text="3306"
+                                     materialDesign:TextFieldAssist.HasClearButton="False"
+                                     IsEnabled="False"
+                                     MinWidth="110"
+                                     Margin="0"
+                                     HorizontalAlignment="Right"/>
+                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                    Foreground="{DynamicResource GlobalAccentBrush}" 
+                                    Width="32" 
+                                    Height="32"
+                                    Padding="4" 
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0"
+                                    ToolTip="清除"
+                                    Click="ClearPort_Click"
+                                    Panel.ZIndex="1"
+                                    IsEnabled="{Binding ElementName=PortTextBox, Path=IsEnabled}"
+                                    Visibility="{Binding ElementName=PortTextBox, Path=Text, Converter={StaticResource StringToVisibilityConverter}}">
+                                <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                            </Button>
+                        </Grid>
                     </Grid>
                 </StackPanel>
             </materialDesign:Card>
