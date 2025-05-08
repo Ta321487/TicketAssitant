@@ -25,6 +25,7 @@
             <converters:MultiBooleanToVisibilityConverter x:Key="MultiBooleanToVisibilityConverter"/>
             <converters:ScreenWidthToFontSizeConverter x:Key="ScreenWidthToFontSizeConverter"/>
             <converters:FontSizeIncreaseConverter x:Key="FontSizeIncreaseConverter"/>
+            <converters:ScreenWidthToColumnsConverter x:Key="ScreenWidthToColumnsConverter"/>
             
             <!-- 数据模板 -->
             <DataTemplate x:Key="RecentActivityTemplate">
@@ -145,7 +146,7 @@
         </EventTrigger>
     </UserControl.Triggers>
     
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid x:Name="MainGrid" Margin="16" Opacity="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -300,11 +301,31 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
+                <Grid.Resources>
+                    <Style x:Key="ResponsiveUniformGrid" TargetType="UniformGrid">
+                        <Setter Property="Columns" Value="5"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=ActualWidth, Converter={StaticResource ScreenWidthToColumnsConverter}, ConverterParameter=1600}" Value="True">
+                                <Setter Property="Columns" Value="4"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=ActualWidth, Converter={StaticResource ScreenWidthToColumnsConverter}, ConverterParameter=1300}" Value="True">
+                                <Setter Property="Columns" Value="3"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=ActualWidth, Converter={StaticResource ScreenWidthToColumnsConverter}, ConverterParameter=1000}" Value="True">
+                                <Setter Property="Columns" Value="2"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=ActualWidth, Converter={StaticResource ScreenWidthToColumnsConverter}, ConverterParameter=650}" Value="True">
+                                <Setter Property="Columns" Value="1"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Resources>
+                
                 <!-- 数据卡片区域 -->
-                <WrapPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                <UniformGrid Grid.Row="0" HorizontalAlignment="Stretch" Style="{StaticResource ResponsiveUniformGrid}">
                     <!-- 总车票数卡片 -->
-                    <materialDesign:Card Margin="8" Width="280" Height="180" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <Grid>
+                    <materialDesign:Card Margin="4" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid Height="180">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
@@ -339,8 +360,8 @@
                     </materialDesign:Card>
                     
                     <!-- 本月车票卡片 -->
-                    <materialDesign:Card Margin="8" Width="280" Height="180" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <Grid>
+                    <materialDesign:Card Margin="4" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid Height="180">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
@@ -375,8 +396,8 @@
                     </materialDesign:Card>
                     
                     <!-- 最经常出发的车站卡片 -->
-                    <materialDesign:Card Margin="8" Width="280" Height="180" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <Grid>
+                    <materialDesign:Card Margin="4" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid Height="180">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
@@ -406,8 +427,8 @@
                     </materialDesign:Card>
                     
                     <!-- 最后一次出发的车站卡片 -->
-                    <materialDesign:Card Margin="8" Width="280" Height="180" materialDesign:ShadowAssist.ShadowDepth="Depth2">
-                        <Grid>
+                    <materialDesign:Card Margin="4" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid Height="180">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
@@ -435,7 +456,38 @@
                             </StackPanel>
                         </Grid>
                     </materialDesign:Card>
-                </WrapPanel>
+                    
+                    <!-- 最后一次到达的车站卡片 -->
+                    <materialDesign:Card Margin="4" materialDesign:ShadowAssist.ShadowDepth="Depth2">
+                        <Grid Height="180">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,0" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="TrainCar" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="最后一次到达的车站" 
+                                       Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                                       VerticalAlignment="Center"
+                                       FontSize="{DynamicResource MaterialDesignFontSize}"/>
+                            </StackPanel>
+                            
+                            <StackPanel Grid.Row="1" 
+                                    VerticalAlignment="Center" 
+                                    HorizontalAlignment="Center"
+                                    Margin="16,0">
+                                <TextBlock Text="{Binding LastArrivalStation}" 
+                                       Style="{StaticResource MaterialDesignHeadline2TextBlock}" 
+                                       FontWeight="Bold"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       FontSize="{DynamicResource MediumLargeFontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"/>
+                            </StackPanel>
+                        </Grid>
+                    </materialDesign:Card>
+                </UniformGrid>
             </Grid>
             
             <!-- 常用线路TOP5和最近活动 -->
@@ -733,7 +785,7 @@
                             
                             <TextBox Grid.Column="2"
                                      x:Name="BudgetTextBox"
-                                     Text="{Binding BudgetAmount, StringFormat='{}{0:N0}', Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Text="{Binding BudgetAmount, StringFormat='{}{0:N0}', Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, FallbackValue=0, TargetNullValue=0}"
                                      Width="180"
                                      Height="60"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
