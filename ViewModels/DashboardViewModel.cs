@@ -26,7 +26,6 @@ namespace TA_WPF.ViewModels
         private int _currentRangeTickets;
         private string _mostFrequentDepartureStation;
         private string _lastDepartureStation;
-        private string _lastArrivalStation;
         private DateTime _currentDateTime;
         private DateTime _startDate;
         private DateTime _endDate;
@@ -193,22 +192,6 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 最后一次到达的车站
-        /// </summary>
-        public string LastArrivalStation
-        {
-            get => _lastArrivalStation;
-            set
-            {
-                if (_lastArrivalStation != value)
-                {
-                    _lastArrivalStation = value;
-                    OnPropertyChanged(nameof(LastArrivalStation));
-                }
-            }
-        }
-
-        /// <summary>
         /// 当前系统时间
         /// </summary>
         public DateTime CurrentDateTime
@@ -238,31 +221,39 @@ namespace TA_WPF.ViewModels
                 {
                     _startDate = value;
                     OnPropertyChanged(nameof(StartDate));
+                    // 如果是通过日历控件手动设置日期，则更新SelectedTimeRange为自定义
                     if (!SetTimeRangeInProgress)
                     {
                         SelectedTimeRange = "自定义";
                         OnPropertyChanged(nameof(CurrentRangeText));
                         OnPropertyChanged(nameof(MonthlyTicketXTitle));
 
+                        // 确保图表显示
                         _showMonthlyTicketChart = true;
                         _showExpenseChart = true;
                         OnPropertyChanged(nameof(ShowMonthlyTicketChart));
                         OnPropertyChanged(nameof(ShowExpenseChart));
 
+                        // 清除提示信息
                         _monthlyTicketChartMessage = "";
                         _expenseChartMessage = "";
                         OnPropertyChanged(nameof(MonthlyTicketChartMessage));
                         OnPropertyChanged(nameof(ExpenseChartMessage));
 
+                        // 检测开始日期是否大于结束日期
                         if (_startDate > _endDate)
                         {
+                            // 显示警告对话框
                             Utils.MessageBoxHelper.ShowWarning("开始日期不能大于结束日期，请重新选择！", "日期范围错误");
-                            _startDate = _endDate; 
-                            OnPropertyChanged(nameof(StartDate)); 
+
+                            // 将开始日期重置为结束日期
+                            _startDate = _endDate;
+                            OnPropertyChanged(nameof(StartDate));
                         }
+
                         Debug.WriteLine($"手动更改StartDate: {_startDate:yyyy-MM-dd}，将刷新数据...");
                     }
-                    SafeFireAndForget(RefreshDataAsync, ex => Debug.WriteLine($"[ERROR] Error refreshing data from StartDate setter: {ex}"));
+                    RefreshDataAsync();
                 }
             }
         }
@@ -279,31 +270,39 @@ namespace TA_WPF.ViewModels
                 {
                     _endDate = value;
                     OnPropertyChanged(nameof(EndDate));
+                    // 如果是通过日历控件手动设置日期，则更新SelectedTimeRange为自定义
                     if (!SetTimeRangeInProgress)
                     {
                         SelectedTimeRange = "自定义";
                         OnPropertyChanged(nameof(CurrentRangeText));
                         OnPropertyChanged(nameof(MonthlyTicketXTitle));
 
+                        // 确保图表显示
                         _showMonthlyTicketChart = true;
                         _showExpenseChart = true;
                         OnPropertyChanged(nameof(ShowMonthlyTicketChart));
                         OnPropertyChanged(nameof(ShowExpenseChart));
 
+                        // 清除提示信息
                         _monthlyTicketChartMessage = "";
                         _expenseChartMessage = "";
                         OnPropertyChanged(nameof(MonthlyTicketChartMessage));
                         OnPropertyChanged(nameof(ExpenseChartMessage));
 
+                        // 检测结束日期是否小于开始日期
                         if (_endDate < _startDate)
                         {
+                            // 显示警告对话框
                             MessageBoxHelper.ShowWarning("结束日期不能小于开始日期，请重新选择！", "日期范围错误");
-                            _endDate = _startDate; 
-                            OnPropertyChanged(nameof(EndDate)); 
+
+                            // 将结束日期重置为开始日期
+                            _endDate = _startDate;
+                            OnPropertyChanged(nameof(EndDate));
                         }
+
                         Debug.WriteLine($"手动更改EndDate: {_endDate:yyyy-MM-dd}，将刷新数据...");
                     }
-                    SafeFireAndForget(RefreshDataAsync, ex => Debug.WriteLine($"[ERROR] 刷新 EndDate Set中的数据时出错：{ex}"));
+                    RefreshDataAsync();
                 }
             }
         }
@@ -816,26 +815,6 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public string RecentActivitiesMessage => _recentActivitiesMessage;
 
-        private async void SafeFireAndForget(Func<Task> taskFunc, Action<Exception> errorHandler = null)
-        {
-            try
-            {
-                await taskFunc();
-            }
-            catch (Exception ex)
-            {
-                if (errorHandler != null)
-                {
-                    errorHandler(ex);
-                }
-                else
-                {
-                    Debug.WriteLine($"[ERROR] SafeFireAndForget caught an exception: {ex}");
-                    // Consider logging to a more persistent store or showing a non-blocking user notification
-                }
-            }
-        }
-
         /// <summary>
         /// 设置时间范围
         /// </summary>
@@ -997,14 +976,6 @@ namespace TA_WPF.ViewModels
                     .FirstOrDefault();
 
                 LastDepartureStation = lastTicket != null ? lastTicket.DepartStation : "无数据";
-
-                // 更新最近到达站
-                var lastArrivalTicket = _allTickets
-                    .Where(t => t.DepartDate.HasValue && !string.IsNullOrEmpty(t.ArriveStation))
-                    .OrderByDescending(t => t.DepartDate)
-                    .FirstOrDefault();
-
-                LastArrivalStation = lastArrivalTicket != null ? lastArrivalTicket.ArriveStation : "无数据";
 
                 // 加载图表数据
                 await LoadChartDataAsync(_allTickets);

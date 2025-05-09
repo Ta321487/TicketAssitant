@@ -235,30 +235,14 @@ namespace TA_WPF.ViewModels
             var confirmResult = MessageBoxHelper.ShowConfirmation($"确定要删除车站 '{station.StationName}' 吗？", "确认删除");
             if (confirmResult == MessageBoxResult.Yes) // Check the result
             {
-                try
-                {
-                    IsLoading = true;
-                    // 执行删除操作
-                    bool deleted = await _databaseService.DeleteStationsByIdsAsync(new List<int> { station.Id });
-                    if (deleted) 
-                    {
-                        await LoadStationsAsync(); // 刷新数据
-                        MessageBoxHelper.ShowInfo($"车站 '{station.StationName}' 已成功删除。");
-                    } 
-                    else 
-                    {
-                        MessageBoxHelper.ShowError("删除车站失败。");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogHelper.LogError($"删除车站失败: {ex.Message}", ex);
-                    MessageBoxHelper.ShowError($"删除车站失败: {ex.Message}");
-                }
-                finally
-                {
-                    IsLoading = false;
-                }
+                 MessageBoxHelper.ShowInfo($"删除车站 '{station.StationName}' 功能稍后实现。");
+                // Logic to delete station from database
+                // bool deleted = await _databaseService.DeleteStationAsync(station.Id);
+                // if(deleted) {
+                //    await LoadStationsAsync(); // Refresh after delete
+                // } else {
+                //    MessageBoxHelper.ShowError("删除车站失败。");
+                // }
             }
         }
         private bool CanDeleteStation(StationInfo station) => station != null;
@@ -664,41 +648,18 @@ namespace TA_WPF.ViewModels
             var confirmResult = MessageBoxHelper.ShowConfirmation(message, "确认删除");
             if (confirmResult == MessageBoxResult.Yes)
             {
-                try
-                {
-                    IsLoading = true;
-                    // 获取所有选中车站的ID
-                    var stationIds = _selectedStations.Select(s => s.Id).ToList();
-                    // 执行删除操作
-                    bool deleted = await _databaseService.DeleteStationsByIdsAsync(stationIds);
-                    
-                    if (deleted)
-                    {
-                        await LoadStationsAsync(); // 刷新数据
-                        
-                        if (_selectedStations.Count == 1)
-                        {
-                            MessageBoxHelper.ShowInfo($"车站 '{_selectedStations[0].StationName}' 已成功删除。");
-                        }
-                        else
-                        {
-                            MessageBoxHelper.ShowInfo($"已成功删除 {stationIds.Count} 个车站。");
-                        }
-                    }
-                    else
-                    {
-                        MessageBoxHelper.ShowError("删除车站失败。");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogHelper.LogError($"批量删除车站失败: {ex.Message}", ex);
-                    MessageBoxHelper.ShowError($"批量删除车站失败: {ex.Message}");
-                }
-                finally
-                {
-                    IsLoading = false;
-                }
+                MessageBoxHelper.ShowInfo($"删除选中的 {_selectedStations.Count} 个车站功能稍后实现。");
+                // 此处为删除多条记录的实现逻辑
+                // var stationIds = _selectedStations.Select(s => s.Id).ToList();
+                // bool deleted = await _databaseService.DeleteStationsAsync(stationIds);
+                // if (deleted)
+                // {
+                //     await LoadStationsAsync(); // 刷新数据
+                // }
+                // else
+                // {
+                //     MessageBoxHelper.ShowError("删除车站失败。");
+                // }
             }
         }
         

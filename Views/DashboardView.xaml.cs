@@ -5,7 +5,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using TA_WPF.ViewModels;
-using System.Diagnostics;
 
 namespace TA_WPF.Views
 {
@@ -14,8 +13,6 @@ namespace TA_WPF.Views
     /// </summary>
     public partial class DashboardView : UserControl
     {
-        private bool _isProgrammaticallyChangingBudgetTextBox = false; // 防止 TextChanged 递归的标志
-
         public DashboardView()
         {
             InitializeComponent();
@@ -231,55 +228,7 @@ namespace TA_WPF.Views
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
-            try
-            {
-                // 先检查是否为数字
-                if (!int.TryParse(e.Text, out _))
-                {
-                    e.Handled = true;
-                    return;
-                }
-
-                // 获取文本框
-                var textBox = sender as TextBox;
-                if (textBox != null)
-                {
-                    // 获取当前选择范围前后的文本和新输入的文本组合后的完整字符串
-                    string newText = textBox.Text.Substring(0, textBox.SelectionStart) + 
-                                     e.Text + 
-                                     textBox.Text.Substring(textBox.SelectionStart + textBox.SelectionLength);
-
-                    // 移除逗号（千位分隔符）再解析
-                    newText = newText.Replace(",", "");
-
-                    // 如果文本为空，允许输入
-                    if (string.IsNullOrWhiteSpace(newText))
-                    {
-                        return;
-                    }
-
-                    // 尝试解析为数值
-                    if (double.TryParse(newText, out double value))
-                    {
-                        // 如果值超过10000，拒绝输入
-                        if (value > 10000)
-                        {
-                            e.Handled = true;
-                        }
-                    }
-                    else
-                    {
-                        // 无法解析为数字，拒绝输入
-                        e.Handled = true;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"验证数字输入时出错: {ex.Message}");
-                // 发生异常时，拒绝输入
-                e.Handled = true;
-            }
+            e.Handled = !int.TryParse(e.Text, out _);
         }
 
         /// <summary>
@@ -287,24 +236,13 @@ namespace TA_WPF.Views
         /// </summary>
         private void BudgetTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (_isProgrammaticallyChangingBudgetTextBox)
-                return;
-
             var textBox = sender as TextBox;
-            if (textBox != null)
+            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
             {
-                if (string.IsNullOrWhiteSpace(textBox.Text))
+                // 如果文本框为空，将滑块值设为0
+                if (DataContext is DashboardViewModel viewModel)
                 {
-                    _isProgrammaticallyChangingBudgetTextBox = true;
-                    textBox.Text = "0"; // 如果文本框为空，设置为0
-                    textBox.SelectAll();  // 选择文本框，以便用户可以轻松覆盖
-                    _isProgrammaticallyChangingBudgetTextBox = false;
-
-                    // 确保ViewModel也被更新，尽管绑定"0"应该处理这个问题。
-                    if (DataContext is DashboardViewModel viewModel && viewModel.BudgetAmount != 0)
-                    {
-                        viewModel.BudgetAmount = 0;
-                    }
+                    viewModel.BudgetAmount = 0;
                 }
             }
         }
@@ -314,62 +252,12 @@ namespace TA_WPF.Views
         /// </summary>
         private void BudgetTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            var textBox = sender as TextBox;
-            if (textBox == null)
+            // 允许删除和退格键
+            if (e.Key == Key.Delete || e.Key == Key.Back)
             {
+                // 不做任何处理，允许事件继续传递
                 return;
             }
-
-            // If we are programmatically changing the text, don't interfere.
-            if (_isProgrammaticallyChangingBudgetTextBox)
-            {
-                return;
-            }
-
-            bool willBecomeEmpty = false;
-
-            if (e.Key == Key.Back)
-            {
-                if (textBox.Text.Length == 1 && textBox.SelectionLength == 0 && textBox.CaretIndex == 1)
-                {
-                    // 从末尾删除单个字符
-                    willBecomeEmpty = true;
-                }
-                else if (textBox.SelectionLength == textBox.Text.Length)
-                {
-                    // 所有文本都被选中并将被删除
-                    willBecomeEmpty = true;
-                }
-            }
-            else if (e.Key == Key.Delete)
-            {
-                if (textBox.Text.Length == 1 && textBox.SelectionLength == 0 && textBox.CaretIndex == 0)
-                {
-                    // 从开始删除单个字符
-                    willBecomeEmpty = true;
-                }
-                else if (textBox.SelectionLength == textBox.Text.Length)
-                {
-                    // 所有文本都被选中并将被删除
-                    willBecomeEmpty = true;
-                }
-            }
-
-            if (willBecomeEmpty)
-            {
-                _isProgrammaticallyChangingBudgetTextBox = true;
-                textBox.Text = "0";
-                // 在"0"的末尾放置光标以获得更好的用户体验
-                textBox.CaretIndex = textBox.Text.Length;
-                _isProgrammaticallyChangingBudgetTextBox = false;
-                e.Handled = true; // 这至关重要，以防止原始按键操作
-            }
-            else if (e.Key == Key.Delete || e.Key == Key.Back)
-            {
-                // 允许其他非空删除/退格操作
-                return;
-            }
-            // 对于其他按键，PreviewTextInput (NumberValidationTextBox) 将处理它们。
         }
 
         /// <summary>
@@ -380,53 +268,31 @@ namespace TA_WPF.Views
             var textBox = sender as TextBox;
             if (textBox != null)
             {
-                try
+                if (string.IsNullOrWhiteSpace(textBox.Text))
                 {
-                    if (string.IsNullOrWhiteSpace(textBox.Text))
-                    {
-                        // 如果文本框为空，设置为0
-                        if (DataContext is DashboardViewModel viewModel)
-                        {
-                            viewModel.BudgetAmount = 0;
-                            textBox.Text = "0";
-                        }
-                    }
-                    else if (double.TryParse(textBox.Text.Replace(",", ""), out double value))
-                    {
-                        // 确保值在0-10000范围内
-                        if (value < 0)
-                        {
-                            value = 0;
-                        }
-                        else if (value > 10000)
-                        {
-                            value = 10000;
-                        }
-
-                        if (DataContext is DashboardViewModel viewModel)
-                        {
-                            viewModel.BudgetAmount = value;
-                            textBox.Text = value.ToString("N0");
-                        }
-                    }
-                    else
-                    {
-                        // 无法解析为数字，重置为0
-                        if (DataContext is DashboardViewModel viewModel)
-                        {
-                            viewModel.BudgetAmount = 0;
-                            textBox.Text = "0";
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"处理预算值时出错: {ex.Message}");
-                    // 发生异常时设置为默认值
-                    textBox.Text = "0";
+                    // 如果文本框为空，设置为0
                     if (DataContext is DashboardViewModel viewModel)
                     {
                         viewModel.BudgetAmount = 0;
+                        textBox.Text = "0";
+                    }
+                }
+                else if (double.TryParse(textBox.Text.Replace(",", ""), out double value))
+                {
+                    // 确保值在0-10000范围内
+                    if (value < 0)
+                    {
+                        value = 0;
+                    }
+                    else if (value > 10000)
+                    {
+                        value = 10000;
+                    }
+
+                    if (DataContext is DashboardViewModel viewModel)
+                    {
+                        viewModel.BudgetAmount = value;
+                        textBox.Text = value.ToString("N0");
                     }
                 }
             }
