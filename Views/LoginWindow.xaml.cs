@@ -1285,6 +1285,46 @@ namespace TA_WPF.Views
         // 获取用户友好的错误消息
         private string GetUserFriendlyErrorMessage(string originalMessage)
         {
+            // 如果原始消息是特定的预验证消息，则直接返回，以避免被通用检查覆盖
+            bool isSpecificPreValidatedMessage =
+                originalMessage == "请输入服务器地址" ||
+                originalMessage == "请输入数据库名称" || // 来自 LoginButton_Click
+                originalMessage == "请输入用户名" ||   // 来自 LoginButton_Click
+                originalMessage == "请输入密码" ||     // 来自 LoginButton_Click
+                originalMessage == "请输入端口号" ||   // 来自 LoginButton_Click
+                originalMessage == "端口号必须是数字" || // 来自 LoginButton_Click
+                originalMessage == "端口号必须在1-65535之间" || // 来自 LoginButton_Click
+                originalMessage == "请输入用户名和密码" || // 来自 CreateDatabaseButton_Click (修复目标)
+                originalMessage == "请输入新数据库名称";   // 来自 CreateDatabaseButton_Click
+
+            if (isSpecificPreValidatedMessage)
+            {
+                return originalMessage; // 直接返回预验证的特定错误消息
+            }
+
+            // --- 现有的初始验证块 ---
+            // 仅当 originalMessage 不是上述特定消息之一时（例如，如果 originalMessage 是来自 MySql 的异常消息），此块才会运行
+            if (string.IsNullOrEmpty(ServerAddressTextBox.Text.Trim()))
+                return "请输入服务器地址。";
+
+            if (string.IsNullOrEmpty(DatabaseNameComboBox.Text.Trim())) // 主要用于登录上下文
+                return "请输入数据库名称。";
+
+            if (string.IsNullOrEmpty(UsernameTextBox.Text.Trim())) // 用于登录上下文
+                return "请输入用户名。";
+
+            if (string.IsNullOrEmpty(PasswordBox.Password)) // 用于登录上下文
+                return "请输入密码。";
+
+            if (CustomPortCheckBox.IsChecked == true) // 用于登录上下文
+            {
+                if (string.IsNullOrEmpty(PortTextBox.Text.Trim()))
+                    return "请输入端口号。";
+
+                if (!Regex.IsMatch(PortTextBox.Text.Trim(), @"^\d+$"))
+                    return "端口号必须是数字。";
+            }
+
             // 创建错误类型-消息的映射
             Dictionary<Func<string, bool>, string> errorMessages = new Dictionary<Func<string, bool>, string>
             {
@@ -1359,28 +1399,6 @@ namespace TA_WPF.Views
                 { msg => msg.Contains("AllowPublicKeyRetrieval"),
                   "需要启用公钥检索，请在连接字符串中添加AllowPublicKeyRetrieval=true参数。" }
             };
-
-            // 输入验证错误
-            if (string.IsNullOrEmpty(ServerAddressTextBox.Text.Trim()))
-                return "请输入服务器地址。";
-
-            if (string.IsNullOrEmpty(DatabaseNameComboBox.Text.Trim()))
-                return "请输入数据库名称。";
-
-            if (string.IsNullOrEmpty(UsernameTextBox.Text.Trim()))
-                return "请输入用户名。";
-
-            if (string.IsNullOrEmpty(PasswordBox.Password))
-                return "请输入密码。";
-
-            if (CustomPortCheckBox.IsChecked == true)
-            {
-                if (string.IsNullOrEmpty(PortTextBox.Text.Trim()))
-                    return "请输入端口号。";
-
-                if (!Regex.IsMatch(PortTextBox.Text.Trim(), @"^\d+$"))
-                    return "端口号必须是数字。";
-            }
 
             // 查找匹配的错误消息
             foreach (var pair in errorMessages)
@@ -1565,14 +1583,14 @@ namespace TA_WPF.Views
             try
             {
                 // 构建连接字符串（不包含数据库名称）
-                string connectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
+                string serverLevelConnectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
 
                 // 创建数据库
                 Exception createException = null;
 
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    using (MySqlConnection connection = new MySqlConnection(connectionString))
+                    using (MySqlConnection connection = new MySqlConnection(serverLevelConnectionString))
                     {
                         try
                         {
@@ -1587,8 +1605,12 @@ namespace TA_WPF.Views
                             // 使用新创建的数据库
                             connection.ChangeDatabase(newDatabaseName);
 
+                            // 2. Construct a new connection string that includes the new database name
+                            string dbSpecificConnectionString = $"Server={serverAddress};Port={port};Database={newDatabaseName};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
+
                             // 创建必要的表结构
-                            CreateRequiredTablesUsingService(connectionString);
+                            // 3. Call CreateRequiredTablesUsingService with the new db-specific string and await it
+                            await CreateRequiredTablesUsingService(dbSpecificConnectionString);
                         }
                         catch (MySqlException ex)
                         {
