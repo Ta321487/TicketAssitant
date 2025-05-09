@@ -29,7 +29,7 @@ namespace TA_WPF.Views
         public string ConnectionString { get; private set; } = string.Empty;
         private string _lastDatabaseName = ""; // 默认数据库名称
         private string _lastServerAddress = ""; // 默认服务器地址
-        private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info" }; // 必要的表
+        private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info", "ticket_collections_info", "collection_mapped_tickets_info" }; // 必要的表
         private readonly LoginInfoService _loginInfoService;
 
         public LoginWindow()
@@ -1154,6 +1154,12 @@ namespace TA_WPF.Views
                 
                 // 创建train_ride_info表
                 await databaseService.CreateTrainRideInfoTableAsync();
+
+                // 创建ticket_collections_info表
+                await databaseService.CreateTicketCollectionsInfoTableAsync();
+
+                // 创建collection_mapped_tickets_info表
+                await databaseService.CreateCollectionMappedTicketsInfoTableAsync();
                 
                 Debug.WriteLine("使用DatabaseService创建表成功");
                 LogHelper.LogSystem("数据库", "使用DatabaseService创建必要的表成功");

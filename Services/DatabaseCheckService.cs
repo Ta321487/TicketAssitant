@@ -10,7 +10,7 @@ namespace TA_WPF.Services
     public class DatabaseCheckService
     {
         private readonly DatabaseService _databaseService;
-        private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info" }; // 必要的表
+        private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info", "ticket_collections_info", "collection_mapped_tickets_info" }; // 必要的表
 
         /// <summary>
         /// 构造函数
@@ -31,8 +31,10 @@ namespace TA_WPF.Services
                 // 检查表是否存在
                 bool stationTableExists = await _databaseService.TableExistsAsync("station_info");
                 bool ticketTableExists = await _databaseService.TableExistsAsync("train_ride_info");
+                bool ticketCollectionsTableExists = await _databaseService.TableExistsAsync("ticket_collections_info");
+                bool collectionMappedTicketsTableExists = await _databaseService.TableExistsAsync("collection_mapped_tickets_info");
 
-                if (!stationTableExists || !ticketTableExists)
+                if (!stationTableExists || !ticketTableExists || !ticketCollectionsTableExists || !collectionMappedTicketsTableExists)
                 {
                     // 构建提示消息
                     string message = "数据库中缺少必要的表：\n";
@@ -43,6 +45,14 @@ namespace TA_WPF.Services
                     if (!ticketTableExists)
                     {
                         message += "- 车票信息表 (train_ride_info)\n";
+                    }
+                    if (!ticketCollectionsTableExists)
+                    {
+                        message += "- 车票收藏夹信息表 (ticket_collections_info)\n";
+                    }
+                    if (!collectionMappedTicketsTableExists)
+                    {
+                        message += "- 收藏夹与车票关联表 (collection_mapped_tickets_info)\n";
                     }
                     message += "\n是否立即创建这些表？";
 
@@ -63,6 +73,14 @@ namespace TA_WPF.Services
                         if (!ticketTableExists)
                         {
                             await _databaseService.CreateTrainRideInfoTableAsync();
+                        }
+                        if (!ticketCollectionsTableExists)
+                        {
+                            await _databaseService.CreateTicketCollectionsInfoTableAsync();
+                        }
+                        if (!collectionMappedTicketsTableExists)
+                        {
+                            await _databaseService.CreateCollectionMappedTicketsInfoTableAsync();
                         }
 
                         MessageDialog.Show(

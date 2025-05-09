@@ -1007,7 +1007,7 @@ namespace TA_WPF.Services
                     `longitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '经度',
                     `latitude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '纬度',
                     `station_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站代码',
-                    `station_pinyin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站拼音',
+                    `station_pinyin` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '车站拼音',
                     `station_level` int NULL DEFAULT 0 COMMENT '车站等级：1=特等站,2=一等站,4=二等站,8=三等站,16=四等站,32=五等站',
                     `railway_bureau` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '所属路局',
                     PRIMARY KEY (`id`) USING BTREE,
@@ -1082,6 +1082,87 @@ namespace TA_WPF.Services
                     ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
                     ALTER TABLE `train_ride_info` AUTO_INCREMENT = 1;";
 
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                // 重新启用外键约束检测
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    await enableChecksCmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 创建车票收藏夹信息表
+        /// </summary>
+        public async Task CreateTicketCollectionsInfoTableAsync()
+        {
+            using (var connection = await GetOpenConnectionWithRetryAsync())
+            {
+                // 禁用外键约束检测
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    await disableChecksCmd.ExecuteNonQueryAsync();
+                }
+
+                string query = @"
+                    DROP TABLE IF EXISTS `ticket_collections_info`;
+                    CREATE TABLE `ticket_collections_info`  (
+                      `id` int NOT NULL AUTO_INCREMENT,
+                      `collection_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '收藏夹名称',
+                      `description` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '收藏夹描述',
+                      `cover_image` blob NOT NULL COMMENT '封面图片base64',
+                      `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+                      `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                      `sort_order` int NULL DEFAULT 0 COMMENT '排序顺序',
+                      PRIMARY KEY (`id`) USING BTREE
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;";
+
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                // 重新启用外键约束检测
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    await enableChecksCmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 创建收藏夹与车票关联信息表
+        /// </summary>
+        public async Task CreateCollectionMappedTicketsInfoTableAsync()
+        {
+            using (var connection = await GetOpenConnectionWithRetryAsync())
+            {
+                // 禁用外键约束检测
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    await disableChecksCmd.ExecuteNonQueryAsync();
+                }
+
+                string query = @"
+                    DROP TABLE IF EXISTS `collection_mapped_tickets_info`;
+                    CREATE TABLE `collection_mapped_tickets_info`  (
+                      `id` int NOT NULL AUTO_INCREMENT,
+                      `collection_id` int NOT NULL COMMENT '收藏夹ID',
+                      `ticket_count` int NULL DEFAULT NULL COMMENT '包含车票数量',
+                      `ticket_id` int NOT NULL COMMENT '车票ID',
+                      `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+                      `importance` int NULL DEFAULT 0 COMMENT '评分1-5',
+                      PRIMARY KEY (`id`) USING BTREE,
+                      INDEX `idx_collection`(`collection_id` ASC) USING BTREE,
+                      INDEX `idx_ticket`(`ticket_id` ASC) USING BTREE,
+                      CONSTRAINT `fk_ct_collection` FOREIGN KEY (`collection_id`) REFERENCES `ticket_collections_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                      CONSTRAINT `fk_ct_ticket` FOREIGN KEY (`ticket_id`) REFERENCES `train_ride_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;";
+                
                 using (var command = new MySqlCommand(query, connection))
                 {
                     await command.ExecuteNonQueryAsync();
