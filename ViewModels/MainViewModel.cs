@@ -20,12 +20,14 @@ namespace TA_WPF.ViewModels
         private readonly QueryAllTicketsViewModel _queryAllTicketsViewModel;
         private readonly DashboardViewModel _dashboardViewModel;
         private readonly QueryAllStationsViewModel _queryAllStationsViewModel;
+        private readonly QueryAllCollectionsViewModel _queryAllCollectionsViewModel;
 
         private bool _showWelcome = true;
         private bool _showSettings = false;
         private bool _showQueryAllTickets = false;
         private bool _showDashboardView = false;
         private bool _showQueryAllStations = false;
+        private bool _showQueryAllCollections = false;
         private string _connectionString;
 
         /// <summary>
@@ -54,6 +56,9 @@ namespace TA_WPF.ViewModels
                 // 初始化车站中心视图模型
                 _queryAllStationsViewModel = new QueryAllStationsViewModel(_databaseService, new PaginationViewModel(), this);
 
+                // 初始化车票收藏夹视图模型
+                _queryAllCollectionsViewModel = new QueryAllCollectionsViewModel(_databaseService, new PaginationViewModel(), this);
+
                 // 初始化车票视图模型，传入this作为MainViewModel引用
                 _ticketViewModel = new TicketViewModel(_databaseService, _navigationService, new PaginationViewModel(), this);
 
@@ -65,6 +70,7 @@ namespace TA_WPF.ViewModels
                 TicketListCommand = new RelayCommand(async () => await QueryAllAsync());
                 ShowDashboardCommand = new RelayCommand(ShowDashboard);
                 StationListCommand = new RelayCommand(async () => await QueryAllStationsAsync());
+                CollectionListCommand = new RelayCommand(async () => await QueryAllCollectionsAsync());
 
                 // 新增添加车票相关命令
                 OcrTicketCommand = new RelayCommand(ShowOcrTicketFeatureNotAvailable);
@@ -100,6 +106,11 @@ namespace TA_WPF.ViewModels
         public QueryAllStationsViewModel QueryAllStationsViewModel => _queryAllStationsViewModel;
 
         /// <summary>
+        /// 车票收藏夹视图模型
+        /// </summary>
+        public QueryAllCollectionsViewModel QueryAllCollectionsViewModel => _queryAllCollectionsViewModel;
+
+        /// <summary>
         /// 仪表盘视图模型
         /// </summary>
         public DashboardViewModel DashboardViewModel => _dashboardViewModel;
@@ -124,6 +135,7 @@ namespace TA_WPF.ViewModels
                         ShowQueryAllTickets = false;
                         ShowDashboardView = false;
                         ShowQueryAllStations = false;
+                        ShowQueryAllCollections = false;
                     }
                 }
             }
@@ -149,6 +161,7 @@ namespace TA_WPF.ViewModels
                         ShowQueryAllTickets = false;
                         ShowDashboardView = false;
                         ShowQueryAllStations = false;
+                        ShowQueryAllCollections = false;
                     }
                 }
             }
@@ -174,6 +187,7 @@ namespace TA_WPF.ViewModels
                         ShowSettings = false;
                         ShowDashboardView = false;
                         ShowQueryAllStations = false;
+                        ShowQueryAllCollections = false;
                     }
                 }
             }
@@ -199,6 +213,7 @@ namespace TA_WPF.ViewModels
                         ShowSettings = false;
                         ShowQueryAllTickets = false;
                         ShowQueryAllStations = false;
+                        ShowQueryAllCollections = false;
                     }
                 }
             }
@@ -224,6 +239,33 @@ namespace TA_WPF.ViewModels
                         ShowSettings = false;
                         ShowQueryAllTickets = false;
                         ShowDashboardView = false;
+                        ShowQueryAllCollections = false;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否显示车票收藏夹页面
+        /// </summary>
+        public bool ShowQueryAllCollections
+        {
+            get => _showQueryAllCollections;
+            set
+            {
+                if (_showQueryAllCollections != value)
+                {
+                    _showQueryAllCollections = value;
+                    OnPropertyChanged(nameof(ShowQueryAllCollections));
+
+                    // 如果显示车票收藏夹页，则隐藏其他页面
+                    if (value)
+                    {
+                        ShowWelcome = false;
+                        ShowSettings = false;
+                        ShowQueryAllTickets = false;
+                        ShowDashboardView = false;
+                        ShowQueryAllStations = false;
                     }
                 }
             }
@@ -273,6 +315,11 @@ namespace TA_WPF.ViewModels
         /// 车站中心命令
         /// </summary>
         public ICommand StationListCommand { get; }
+
+        /// <summary>
+        /// 车票收藏夹命令
+        /// </summary>
+        public ICommand CollectionListCommand { get; }
 
         /// <summary>
         /// 修改连接命令
@@ -406,8 +453,33 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private async Task QueryAllStationsAsync()
         {
-            ShowQueryAllStations = true;
-            await _queryAllStationsViewModel.QueryAllAsync();
+            try
+            {
+                ShowQueryAllStations = true;
+                await _queryAllStationsViewModel.QueryAllAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"显示车站中心页面时出错: {ex.Message}");
+                LogHelper.LogError($"显示车站中心页面时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 查询所有车票收藏夹
+        /// </summary>
+        public async Task QueryAllCollectionsAsync()
+        {
+            try
+            {
+                ShowQueryAllCollections = true;
+                await _queryAllCollectionsViewModel.QueryAllAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"显示车票收藏夹页面时出错: {ex.Message}");
+                LogHelper.LogError($"显示车票收藏夹页面时出错: {ex.Message}");
+            }
         }
 
         /// <summary>

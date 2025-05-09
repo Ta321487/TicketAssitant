@@ -319,6 +319,26 @@
                                             </Button>
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
+                                    <TreeViewItem>
+                                        <TreeViewItem.Header>
+                                            <Button Content="车票收藏夹" 
+                                                    Command="{Binding CollectionListCommand}" 
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    HorizontalContentAlignment="Left"
+                                                    Width="200"
+                                                    Margin="0"
+                                                    Foreground="{DynamicResource GlobalAccentBrush}">
+                                                <Button.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="FolderMultiple" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </Button.ContentTemplate>
+                                            </Button>
+                                        </TreeViewItem.Header>
+                                    </TreeViewItem>
                                 </TreeViewItem>
                                 <TreeViewItem IsExpanded="True">
                                     <TreeViewItem.Header>
@@ -394,6 +414,11 @@
                     <views:QueryAllStationsPage Grid.Column="1"
                                                 DataContext="{Binding QueryAllStationsViewModel}"
                                                 Visibility="{Binding DataContext.ShowQueryAllStations, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    
+                    <!-- 车票收藏夹页面 -->
+                    <views:QueryAllCollectionsPage Grid.Column="1"
+                                                   DataContext="{Binding QueryAllCollectionsViewModel}"
+                                                   Visibility="{Binding DataContext.ShowQueryAllCollections, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     
                     <!-- 设置页面 -->
                     <views:SettingsPage Grid.Column="1" 
