@@ -669,6 +669,14 @@ namespace TA_WPF.Views
                     // 构建连接字符串
                     string connectionString = $"Server={serverAddress};Port={port};Database={databaseName};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
 
+                    // 添加支持不同认证方式的参数
+                    if (!connectionString.Contains("Auth") && !connectionString.Contains("allow"))
+                    {
+                        // 添加强制使用mysql_native_password认证模式的参数
+                        // 这对解决caching_sha2_password认证问题非常重要
+                        connectionString += "AllowUserVariables=true;";
+                    }
+
                     // 尝试连接数据库
                     bool connected = false;
                     bool tablesExist = false;
@@ -1604,7 +1612,7 @@ namespace TA_WPF.Views
             try
             {
                 // 构建连接字符串（不包含数据库名称）
-                string serverLevelConnectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
+                string serverLevelConnectionString = $"Server={serverAddress};Port={port};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;AllowUserVariables=true;";
 
                 // 创建数据库
                 Exception createException = null;
@@ -1627,7 +1635,7 @@ namespace TA_WPF.Views
                             connection.ChangeDatabase(newDatabaseName);
 
                             // 2. Construct a new connection string that includes the new database name
-                            string dbSpecificConnectionString = $"Server={serverAddress};Port={port};Database={newDatabaseName};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;";
+                            string dbSpecificConnectionString = $"Server={serverAddress};Port={port};Database={newDatabaseName};User ID={username};Password={password};CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;AllowUserVariables=true;";
 
                             // 创建必要的表结构
                             // 3. Call CreateRequiredTablesUsingService with the new db-specific string and await it

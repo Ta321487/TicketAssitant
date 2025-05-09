@@ -355,7 +355,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 删除收藏夹
         /// </summary>
-        private void DeleteCollection()
+        private async void DeleteCollection()
         {
             if (SelectedCollections.Count == 0) return;
 
@@ -366,8 +366,38 @@ namespace TA_WPF.ViewModels
 
             if (MessageBoxHelper.ShowConfirmation(message) == MessageBoxResult.Yes)
             {
-                // 删除收藏夹（未来实现）
-                MessageBoxHelper.ShowInfo("删除收藏夹功能尚未实现");
+                IsLoading = true;
+                try
+                {
+                    // 获取要删除的收藏夹ID列表
+                    var idsToDelete = SelectedCollections.Select(c => c.Id).ToList();
+                    
+                    // 调用数据库服务删除收藏夹
+                    bool success = await _databaseService.DeleteCollectionsByIdsAsync(idsToDelete);
+                    
+                    if (success)
+                    {
+                        MessageBoxHelper.ShowInfo(SelectedCollections.Count == 1 
+                            ? "收藏夹删除成功"
+                            : $"{SelectedCollections.Count} 个收藏夹删除成功");
+                            
+                        // 刷新收藏夹列表
+                        await LoadCollectionsAsync();
+                    }
+                    else
+                    {
+                        MessageBoxHelper.ShowError("删除收藏夹失败，请稍后重试");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.LogError($"删除收藏夹时出错: {ex.Message}", ex);
+                    MessageBoxHelper.ShowError($"删除收藏夹时出错: {ex.Message}");
+                }
+                finally
+                {
+                    IsLoading = false;
+                }
             }
         }
 

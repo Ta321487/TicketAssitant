@@ -37,6 +37,21 @@ namespace TA_WPF.Services
                 catch (MySqlException ex)
                 {
                     retryCount++;
+                    
+                    // 检查是否为认证问题
+                    bool isAuthIssue = ex.Message.Contains("Access denied") || 
+                                       ex.Message.Contains("Authentication") ||
+                                       ex.Message.Contains("using method");
+                    
+                    if (isAuthIssue)
+                    {
+                        // 记录详细的认证错误信息
+                        LogHelper.LogSystemError("数据库", $"认证失败: {ex.Message}, 错误代码: {ex.Number}", ex);
+                        
+                        // 如果是认证问题，直接抛出异常，因为重试可能无法解决
+                        throw;
+                    }
+                    
                     if (retryCount >= MaxRetryCount)
                     {
                         // 记录详细的最终错误信息
@@ -1972,6 +1987,41 @@ namespace TA_WPF.Services
                     MessageBoxHelper.ShowError($"更新收藏夹失败: {ex.Message}");
                 }
                 
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 根据ID列表删除收藏夹
+        /// </summary>
+        /// <param name="collectionIds">收藏夹ID列表</param>
+        /// <returns>是否删除成功</returns>
+        public async Task<bool> DeleteCollectionsByIdsAsync(List<int> collectionIds)
+        {
+            if (collectionIds == null || collectionIds.Count == 0)
+            {
+                return true; // 没有要删除的ID，视为成功
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 构建包含所有ID的IN子句
+                    string idList = string.Join(",", collectionIds);
+                    string query = $"DELETE FROM ticket_collections_info WHERE id IN ({idList})";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"批量删除收藏夹失败: {ex.Message}", ex);
+                Debug.WriteLine($"批量删除收藏夹失败: {ex.Message}");
                 return false;
             }
         }

@@ -78,7 +78,19 @@
                         <TextBlock Text="暂无封面图片" 
                                   HorizontalAlignment="Center" 
                                   VerticalAlignment="Center"
-                                  Visibility="{Binding HasCoverImage, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Negate}"/>
+                                  FontSize="{Binding MainViewModel.FontSize}"
+                                  Foreground="{DynamicResource MaterialDesignBodyLight}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasCoverImage}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         
                         <!-- 图片预览 -->
                         <Image Stretch="Uniform" 

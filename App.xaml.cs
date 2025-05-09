@@ -261,7 +261,8 @@ namespace TA_WPF
             try
             {
                 // 获取数据库连接字符串
-                string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString ?? "Server=localhost;Database=ta_wpf;User ID=root;Password=";
+                string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString ?? 
+                    "Server=localhost;Database=ta_wpf;User ID=root;Password=;CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;AllowUserVariables=true;";
 
                 // 初始化站点搜索服务
                 var databaseService = new DatabaseService(connectionString);
