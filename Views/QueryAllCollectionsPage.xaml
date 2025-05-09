@@ -29,6 +29,10 @@
             
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converters:ByteArrayToImageConverter x:Key="ByteArrayToImageConverter" />
+            
+            <!-- 自定义转换器，判断byte[]是否非空 -->
+            <converters:ObjectNotNullConverter x:Key="ObjectNotNullConverter" />
             
             <!-- 网格项样式 -->
             <Style x:Key="CollectionGridItemStyle" TargetType="Grid">
@@ -40,7 +44,12 @@
                     </Setter.Value>
                 </Setter>
                 <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <!-- Light Mode Selected -->
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsSelected}" Value="True" />
+                            <Condition Binding="{Binding DataContext.MainViewModel.IsDarkMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False" />
+                        </MultiDataTrigger.Conditions>
                         <Setter Property="Effect">
                             <Setter.Value>
                                 <DropShadowEffect ShadowDepth="3" BlurRadius="10" Direction="320" Opacity="0.5" Color="{DynamicResource Primary700}" />
@@ -51,7 +60,26 @@
                                 <SolidColorBrush Color="{DynamicResource Primary50}" />
                             </Setter.Value>
                         </Setter>
-                    </DataTrigger>
+                    </MultiDataTrigger>
+
+                    <!-- Dark Mode Selected -->
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsSelected}" Value="True" />
+                            <Condition Binding="{Binding DataContext.MainViewModel.IsDarkMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background">
+                            <Setter.Value>
+                                <SolidColorBrush Color="{Binding Source={StaticResource PrimaryHueMidBrush}, Path=Color}" Opacity="0.2" />
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect ShadowDepth="2" BlurRadius="8" Opacity="0.4" Color="{Binding Source={StaticResource MaterialDesignBody}, Path=Color}" />
+                            </Setter.Value>
+                        </Setter>
+                    </MultiDataTrigger>
+
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="{DynamicResource MaterialDesignDivider}" />
                     </Trigger>
@@ -221,6 +249,45 @@
                     </StackPanel>
                 </Button>
 
+                <Button Command="{Binding SelectAllCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="全选"
+                        Margin="0,0,8,0"
+                        Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
+                        Height="36">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CheckboxMultipleMarkedOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="全选" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding InvertSelectionCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="反选"
+                        Margin="0,0,8,0"
+                        Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
+                        Height="36">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CheckboxMultipleMarkedCircleOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="反选" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding UnselectAllCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="取消选择"
+                        Margin="0,0,8,0"
+                        Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
+                        Height="36">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CheckboxMultipleBlankOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="取消选择" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
                 <Button Command="{Binding SortCollectionsCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="排序"
@@ -293,7 +360,7 @@
                      EnableRowVirtualization="True"
                      EnableColumnVirtualization="True"
                      CanUserResizeRows="False"
-                     CanUserSortColumns="True"
+                     CanUserSortColumns="False"
                      CanUserReorderColumns="False"
                      IsManipulationEnabled="True"
                      FontSize="{Binding MainViewModel.FontSize}"
@@ -376,7 +443,7 @@
                         <Setter Property="FontSize" Value="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                         <Setter Property="BorderThickness" Value="0,0,1,0" />
                         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueLightBrush}" />
-                        <Setter Property="Height" Value="40" />
+                        <Setter Property="Height" Value="50" />
                     </Style>
                 </DataGrid.Resources>
                 
@@ -419,6 +486,10 @@
                     <!-- 排序顺序 Column -->
                     <DataGridTextColumn Header="排序顺序" Binding="{Binding SortOrder}" Width="1*" 
                                         ElementStyle="{StaticResource DataGridTextColumnElementStyle}"/>
+                    
+                    <!-- 评分 Column -->
+                    <DataGridTextColumn Header="评分" Binding="{Binding Importance}" Width="1*" 
+                                        ElementStyle="{StaticResource DataGridTextColumnElementStyle}"/>
                 </DataGrid.Columns>
                 <DataGrid.InputBindings>
                     <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding EditCollectionCommand}" />
@@ -426,119 +497,121 @@
             </DataGrid>
             
             <!-- 网格视图 -->
-            <ScrollViewer Visibility="{Binding IsGridView, Converter={StaticResource BooleanToVisibilityConverter}}"
-                         VerticalScrollBarVisibility="Auto"
-                         Margin="0">
-                <ListBox ItemsSource="{Binding Collections}"
-                         SelectedItem="{Binding SelectedCollection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         SelectionMode="Extended"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Padding" Value="0"/>
-                            <Setter Property="Margin" Value="0"/>
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <ContentPresenter/>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Width="200" Height="250" Style="{StaticResource CollectionGridItemStyle}">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="40" />
-                                    <RowDefinition Height="100" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
+            <ListBox ItemsSource="{Binding Collections}"
+                     SelectedItem="{Binding SelectedCollection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     SelectionMode="Extended"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     Visibility="{Binding IsGridView, Converter={StaticResource BooleanToVisibilityConverter}}"
+                     Margin="0">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Width="200" Height="250" Style="{StaticResource CollectionGridItemStyle}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="40" />
+                                <RowDefinition Height="100" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
 
-                                <!-- 收藏夹标题栏 -->
-                                <Border Grid.Row="0" Background="{DynamicResource PrimaryHueMidBrush}">
-                                    <TextBlock Text="{Binding CollectionName}" 
-                                               Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Center"
-                                               HorizontalAlignment="Center"
-                                               Margin="6"
-                                               TextWrapping="NoWrap"
-                                               TextTrimming="CharacterEllipsis" />
-                                </Border>
+                            <!-- 收藏夹标题栏 -->
+                            <Border Grid.Row="0" Background="{DynamicResource PrimaryHueMidBrush}">
+                                <TextBlock Text="{Binding CollectionName}" 
+                                           Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center"
+                                           Margin="6"
+                                           TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Border>
 
-                                <!-- 收藏夹封面图片 -->
-                                <Border Grid.Row="1" Background="White">
-                                    <Grid>
-                                        <!-- 默认图标，当没有图片时显示 -->
-                                        <materialDesign:PackIcon Kind="Folder" 
-                                                                Width="60" 
-                                                                Height="60" 
-                                                                Foreground="{DynamicResource PrimaryHueMidBrush}"
-                                                                Visibility="{Binding CoverImage, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=inverse}" 
-                                                                HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center"/>
-                                        
-                                        <!-- 实际封面图片 -->
-                                        <Image Stretch="Uniform" 
-                                               Margin="6"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               Source="{Binding CoverImage, TargetNullValue={x:Null}}"
-                                               Visibility="{Binding CoverImage, Converter={StaticResource StringToVisibilityConverter}}"/>
-                                    </Grid>
-                                </Border>
+                            <!-- 收藏夹封面图片 -->
+                            <Border Grid.Row="1" Background="White" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource MaterialDesignDivider}">
+                                <Grid>
+                                    <!-- 默认图标或文字，当没有图片时显示 -->
+                                    <TextBlock Text="图片" 
+                                              Foreground="Black" 
+                                              FontSize="24" 
+                                              FontWeight="Bold"
+                                              HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"
+                                              Visibility="{Binding CoverImage, Converter={StaticResource ObjectNotNullConverter}, ConverterParameter=inverse}"/>
+                                    
+                                    <!-- 实际封面图片 -->
+                                    <Image Stretch="UniformToFill" 
+                                           Margin="0"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Width="200"
+                                           Height="100"
+                                           Source="{Binding CoverImage, Converter={StaticResource ByteArrayToImageConverter}}"
+                                           Visibility="{Binding CoverImage, Converter={StaticResource ObjectNotNullConverter}}"/>
+                                </Grid>
+                            </Border>
 
-                                <!-- 车票数量信息 -->
-                                <StackPanel Grid.Row="2" 
-                                            Orientation="Horizontal" 
-                                            HorizontalAlignment="Center"
-                                            Background="{DynamicResource MaterialDesignPaper}"
-                                            Margin="0,4">
-                                    <materialDesign:PackIcon Kind="Ticket" 
-                                                             VerticalAlignment="Center" 
-                                                             Foreground="{DynamicResource PrimaryHueMidBrush}"
-                                                             Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding TicketCount}" 
-                                               VerticalAlignment="Center"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text=" 张车票" 
-                                               VerticalAlignment="Center"
-                                               Margin="2,0,0,0"/>
-                                </StackPanel>
+                            <!-- 车票数量信息 -->
+                            <StackPanel Grid.Row="2" 
+                                        Orientation="Horizontal" 
+                                        HorizontalAlignment="Center"
+                                        Background="{DynamicResource MaterialDesignPaper}"
+                                        Margin="0,4">
+                                <materialDesign:PackIcon Kind="Ticket" 
+                                                         VerticalAlignment="Center" 
+                                                         Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                                         Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding TicketCount}" 
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text=" 张车票" 
+                                           VerticalAlignment="Center"
+                                           Margin="2,0,0,0"/>
+                            </StackPanel>
 
-                                <!-- 收藏夹描述 -->
-                                <TextBlock Grid.Row="3" 
-                                           Text="{Binding Description}" 
-                                           Style="{StaticResource MaterialDesignBody2TextBlock}" 
-                                           Margin="8,4,8,8" 
-                                           TextWrapping="Wrap"
-                                           TextTrimming="CharacterEllipsis"
-                                           MaxHeight="54"
-                                           VerticalAlignment="Top"/>
+                            <!-- 收藏夹描述 -->
+                            <TextBlock Grid.Row="3" 
+                                       Text="{Binding Description}" 
+                                       Style="{StaticResource MaterialDesignBody2TextBlock}" 
+                                       Margin="8,4,8,8" 
+                                       TextWrapping="Wrap"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxHeight="54"
+                                       VerticalAlignment="Top"/>
 
-                                <!-- 鼠标悬停时显示的额外信息 -->
-                                <Border Grid.Row="0" Grid.RowSpan="4" 
-                                        Background="#CC000000" 
-                                        Visibility="Collapsed"
-                                        Panel.ZIndex="1"
-                                        x:Name="HoverInfoPanel">
-                                    <StackPanel VerticalAlignment="Center" Margin="10">
+                            <!-- 鼠标悬停时显示的额外信息 -->
+                            <Border Grid.Row="0" Grid.RowSpan="4" 
+                                    Background="#CC000000" 
+                                    Visibility="Collapsed"
+                                    Panel.ZIndex="1"
+                                    x:Name="HoverInfoPanel">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="230" Focusable="False">
+                                    <StackPanel VerticalAlignment="Top" Margin="10">
                                         <TextBlock Text="{Binding CollectionName}" 
                                                    Foreground="White" 
                                                    FontWeight="Bold" 
@@ -551,52 +624,58 @@
                                             <Run Text="{Binding Description}"/>
                                         </TextBlock>
                                         
-                                        <TextBlock Foreground="White" Margin="0,2">
+                                        <TextBlock Foreground="White" Margin="0,2" TextWrapping="Wrap">
                                             <Run Text="包含车票数量: "/>
                                             <Run Text="{Binding TicketCount}"/>
                                         </TextBlock>
                                         
-                                        <TextBlock Foreground="White" Margin="0,2">
+                                        <TextBlock Foreground="White" Margin="0,2" TextWrapping="Wrap">
                                             <Run Text="创建时间: "/>
                                             <Run Text="{Binding CreateTime, StringFormat=yyyy-MM-dd}"/>
                                         </TextBlock>
                                         
-                                        <TextBlock Foreground="White" Margin="0,2">
+                                        <TextBlock Foreground="White" Margin="0,2" TextWrapping="Wrap">
                                             <Run Text="修改时间: "/>
                                             <Run Text="{Binding UpdateTime, StringFormat=yyyy-MM-dd}"/>
                                         </TextBlock>
+                                        
+                                        <TextBlock Foreground="White" Margin="0,2" TextWrapping="Wrap">
+                                            <Run Text="评分: "/>
+                                            <Run Text="{Binding Importance}"/>
+                                            <Run Text=" 星"/>
+                                        </TextBlock>
                                     </StackPanel>
-                                </Border>
-                            </Grid>
-                            <DataTemplate.Triggers>
-                                <EventTrigger RoutedEvent="Mouse.MouseEnter">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HoverInfoPanel" 
-                                                                           Storyboard.TargetProperty="(UIElement.Visibility)">
-                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-                                            </ObjectAnimationUsingKeyFrames>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                                <EventTrigger RoutedEvent="Mouse.MouseLeave">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HoverInfoPanel" 
-                                                                           Storyboard.TargetProperty="(UIElement.Visibility)">
-                                                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Collapsed}"/>
-                                            </ObjectAnimationUsingKeyFrames>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </DataTemplate.Triggers>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    <ListBox.InputBindings>
-                        <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding EditCollectionCommand}" />
-                    </ListBox.InputBindings>
-                </ListBox>
-            </ScrollViewer>
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HoverInfoPanel" 
+                                                                       Storyboard.TargetProperty="(UIElement.Visibility)">
+                                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                            <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HoverInfoPanel" 
+                                                                       Storyboard.TargetProperty="(UIElement.Visibility)">
+                                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Collapsed}"/>
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                <ListBox.InputBindings>
+                    <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding EditCollectionCommand}" />
+                </ListBox.InputBindings>
+            </ListBox>
         </Grid>
         
         <!-- 分页控件 - Grid.Row=3 -->

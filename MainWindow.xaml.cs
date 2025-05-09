@@ -434,7 +434,7 @@ namespace TA_WPF
                             isDarkMode = Application.Current.Resources["Theme.Dark"] as bool? == true;
                         }
 
-                        // 创建通知卡片
+                        // 创建通知卡片 - 减少对不支持操作的依赖
                         var card = new Card
                         {
                             Padding = new Thickness(16),
@@ -443,13 +443,16 @@ namespace TA_WPF
                             Width = 380, // 增加宽度
                             Background = isDarkMode ?
                                 new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D2D")) :
-                                Brushes.White,
-                            RenderTransform = new ScaleTransform(0.9, 0.9), // 初始缩放比例
-                            Opacity = 0 // 初始透明度为0
+                                Brushes.White
                         };
 
                         // 设置阴影深度
                         ShadowAssist.SetShadowDepth(card, ShadowDepth.Depth3);
+
+                        // 创建一个简单的变换而不是使用ScaleTransform
+                        card.RenderTransformOrigin = new Point(0.5, 0.5);
+                        card.RenderTransform = new ScaleTransform(1, 1);
+                        card.Opacity = 0; // 初始透明度为0
 
                         // 创建内容面板
                         var panel = new StackPanel
@@ -576,114 +579,88 @@ namespace TA_WPF
                         // 将面板添加到卡片
                         card.Content = panel;
 
-                        // 创建弹出窗口
-                        var popup = new Popup
+                        // 创建弹出窗口前确保它是在UI线程上并且所有对象都已被冻结或安全
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            Child = card,
-                            Placement = PlacementMode.Center,
-                            HorizontalOffset = 0,
-                            VerticalOffset = 0,
-                            AllowsTransparency = true,
-                            PopupAnimation = PopupAnimation.None, // 禁用默认动画，使用自定义动画
-                            IsOpen = true,
-                            StaysOpen = true,
-                            PlacementTarget = this
-                        };
-
-                        Debug.WriteLine("Popup已创建并设置为打开状态");
-
-                        // 设置关闭按钮的点击事件
-                        closeButton.Click += (s, e) =>
-                        {
-                            // 创建关闭动画
-                            var fadeOutAnimation = new DoubleAnimation
+                            // 创建弹出窗口
+                            var popup = new Popup
                             {
-                                From = 1,
-                                To = 0,
-                                Duration = TimeSpan.FromMilliseconds(300),
+                                Child = card,
+                                Placement = PlacementMode.Center,
+                                HorizontalOffset = 0,
+                                VerticalOffset = 0,
+                                AllowsTransparency = true,
+                                PopupAnimation = PopupAnimation.None, // 禁用默认动画，使用自定义动画
+                                IsOpen = true,
+                                StaysOpen = true,
+                                PlacementTarget = this
+                            };
+
+                            Debug.WriteLine("Popup已创建并设置为打开状态");
+
+                            // 设置关闭按钮的点击事件
+                            closeButton.Click += (s, e) =>
+                            {
+                                // 创建关闭动画
+                                var fadeOutAnimation = new DoubleAnimation
+                                {
+                                    From = 1,
+                                    To = 0,
+                                    Duration = TimeSpan.FromMilliseconds(300),
+                                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                                };
+
+                                fadeOutAnimation.Completed += (sender, args) =>
+                                {
+                                    popup.IsOpen = false;
+                                };
+
+                                // 应用动画 - 只使用不会引发异常的动画
+                                card.BeginAnimation(UIElement.OpacityProperty, fadeOutAnimation);
+                            };
+
+                            // 创建进入动画 - 简化动画以避免异常
+                            var fadeInAnimation = new DoubleAnimation
+                            {
+                                From = 0,
+                                To = 1,
+                                Duration = TimeSpan.FromMilliseconds(400),
                                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
                             };
 
-                            var scaleOutAnimation = new DoubleAnimation
+                            // 应用进入动画
+                            card.BeginAnimation(OpacityProperty, fadeInAnimation);
+
+                            // 2秒后自动关闭
+                            var timer = new DispatcherTimer
                             {
-                                From = 1,
-                                To = 0.9,
-                                Duration = TimeSpan.FromMilliseconds(300),
-                                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                                Interval = TimeSpan.FromSeconds(2)
                             };
 
-                            fadeOutAnimation.Completed += (sender, args) =>
+                            timer.Tick += (s, e) =>
                             {
-                                popup.IsOpen = false;
+                                timer.Stop();
+
+                                // 创建关闭动画
+                                var fadeOutAnimation = new DoubleAnimation
+                                {
+                                    From = 1,
+                                    To = 0,
+                                    Duration = TimeSpan.FromMilliseconds(300),
+                                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                                };
+
+                                fadeOutAnimation.Completed += (sender, args) =>
+                                {
+                                    popup.IsOpen = false;
+                                };
+
+                                // 应用动画 - 只使用不会引发异常的动画
+                                card.BeginAnimation(OpacityProperty, fadeOutAnimation);
                             };
 
-                            // 应用动画
-                            card.BeginAnimation(UIElement.OpacityProperty, fadeOutAnimation);
-                            (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleOutAnimation);
-                            (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleOutAnimation);
-                        };
-
-                        // 创建进入动画
-                        var fadeInAnimation = new DoubleAnimation
-                        {
-                            From = 0,
-                            To = 1,
-                            Duration = TimeSpan.FromMilliseconds(400),
-                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-                        };
-
-                        var scaleInAnimation = new DoubleAnimation
-                        {
-                            From = 0.9,
-                            To = 1,
-                            Duration = TimeSpan.FromMilliseconds(400),
-                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-                        };
-
-                        // 应用进入动画
-                        card.BeginAnimation(OpacityProperty, fadeInAnimation);
-                        (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleInAnimation);
-                        (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleInAnimation);
-
-                        // 2秒后自动关闭
-                        var timer = new DispatcherTimer
-                        {
-                            Interval = TimeSpan.FromSeconds(2)
-                        };
-
-                        timer.Tick += (s, e) =>
-                        {
-                            timer.Stop();
-
-                            // 创建关闭动画
-                            var fadeOutAnimation = new DoubleAnimation
-                            {
-                                From = 1,
-                                To = 0,
-                                Duration = TimeSpan.FromMilliseconds(300),
-                                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-                            };
-
-                            var scaleOutAnimation = new DoubleAnimation
-                            {
-                                From = 1,
-                                To = 0.9,
-                                Duration = TimeSpan.FromMilliseconds(300),
-                                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-                            };
-
-                            fadeOutAnimation.Completed += (sender, args) =>
-                            {
-                                popup.IsOpen = false;
-                            };
-
-                            // 应用动画
-                            card.BeginAnimation(OpacityProperty, fadeOutAnimation);
-                            (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleXProperty, scaleOutAnimation);
-                            (card.RenderTransform as ScaleTransform).BeginAnimation(ScaleTransform.ScaleYProperty, scaleOutAnimation);
-                        };
-
-                        timer.Start();
+                            timer.Start();
+                        });
 
                         Debug.WriteLine("登录成功提示显示完成");
                     }

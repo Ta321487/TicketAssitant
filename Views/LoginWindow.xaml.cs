@@ -1046,14 +1046,29 @@ namespace TA_WPF.Views
                         // 强制刷新主窗口
                         _mainWindow.UpdateLayout();
 
-                        // 设置主窗口
+                        // 将主窗口设置为应用程序主窗口
                         Application.Current.MainWindow = _mainWindow;
 
                         // 显示主窗口
                         _mainWindow.Show();
 
                         // 显示登录成功提示
-                        _mainWindow.ShowLoginSuccessNotification();
+                        // 确保在UI线程上安全调用，使用Dispatcher.InvokeAsync以避免阻塞UI线程
+                        // 显示登录成功提示
+                        // 使用Dispatcher.InvokeAsync以便可以await，确保异步执行完成
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            try
+                            {
+                                _mainWindow.ShowLoginSuccessNotification();
+                            }
+                            catch (Exception notifyEx)
+                            {
+                                Debug.WriteLine($"显示登录成功提示时出错: {notifyEx.Message}");
+                                LogHelper.LogError($"显示登录成功提示时出错: {notifyEx.Message}", notifyEx);
+                                // 即使显示通知失败，也不影响程序的正常运行
+                            }
+                        }, DispatcherPriority.Background);
 
                         // 记录日志
                         LogHelper.LogSystem("登录", $"用户登录成功，已创建新的MainViewModel，主题模式：{(isDarkMode ? "深色" : "浅色")}");

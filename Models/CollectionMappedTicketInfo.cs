@@ -13,7 +13,7 @@ namespace TA_WPF.Models
         private int _collectionId;
         private int _ticketId;
         private DateTime _addTime;
-        private int _importance;
+
 
         /// <summary>
         /// 映射ID
@@ -79,21 +79,7 @@ namespace TA_WPF.Models
             }
         }
 
-        /// <summary>
-        /// 重要性评分(1-5)
-        /// </summary>
-        public int Importance
-        {
-            get => _importance;
-            set
-            {
-                if (_importance != value)
-                {
-                    _importance = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+
 
         #region INotifyPropertyChanged
 

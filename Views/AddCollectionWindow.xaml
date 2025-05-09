@@ -8,8 +8,8 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         Title="新建收藏夹" 
-        Height="500" 
-        Width="500"
+        Height="650" 
+        Width="650"
         MinHeight="450" 
         MinWidth="450"
         WindowStartupLocation="CenterOwner"
@@ -20,7 +20,7 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="Microsoft YaHei"
-        ResizeMode="CanResize">
+        ResizeMode="CanMinimize">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -110,7 +110,7 @@
 
                 <!-- 评分 -->
                 <TextBlock Text="评分" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" Margin="0,0,0,10"/>
-                <materialDesign:RatingBar Value="{Binding Importance}" Max="5" Margin="0,0,0,20"/>
+                <materialDesign:RatingBar Value="{Binding Importance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Max="5" Margin="0,0,0,20"/>
             </StackPanel>
         </ScrollViewer>
 

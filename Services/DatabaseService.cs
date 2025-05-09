@@ -1,7 +1,9 @@
 using MySql.Data.MySqlClient;
 using System.Data.Common;
+using System.Diagnostics;
 using TA_WPF.Models;
 using TA_WPF.Utils;
+using System.IO;
 
 namespace TA_WPF.Services
 {
@@ -538,7 +540,7 @@ namespace TA_WPF.Services
                 catch (MySqlException ex)
                 {
                     // 记录详细的数据库错误信息
-                    System.Diagnostics.Debug.WriteLine($"数据库错误: {ex.Message}, 错误代码: {ex.Number}");
+                    Debug.WriteLine($"数据库错误: {ex.Message}, 错误代码: {ex.Number}");
                     throw; // 重新抛出异常以便上层处理
                 }
             }
@@ -948,7 +950,7 @@ namespace TA_WPF.Services
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"解析时间出错: {ex.Message}");
+                    Debug.WriteLine($"解析时间出错: {ex.Message}");
                 }
             }
 
@@ -1114,9 +1116,10 @@ namespace TA_WPF.Services
                       `id` int NOT NULL AUTO_INCREMENT,
                       `collection_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '收藏夹名称',
                       `description` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '收藏夹描述',
-                      `cover_image` blob NOT NULL COMMENT '封面图片base64',
+                      `cover_image` mediumblob NOT NULL COMMENT '封面图片base64',
                       `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
                       `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                      `importance` int NULL DEFAULT 0 COMMENT '评分1-5',
                       `sort_order` int NULL DEFAULT 0 COMMENT '排序顺序',
                       PRIMARY KEY (`id`) USING BTREE
                     ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;";
@@ -1155,7 +1158,6 @@ namespace TA_WPF.Services
                       `ticket_count` int NULL DEFAULT NULL COMMENT '包含车票数量',
                       `ticket_id` int NOT NULL COMMENT '车票ID',
                       `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
-                      `importance` int NULL DEFAULT 0 COMMENT '评分1-5',
                       PRIMARY KEY (`id`) USING BTREE,
                       INDEX `idx_collection`(`collection_id` ASC) USING BTREE,
                       INDEX `idx_ticket`(`ticket_id` ASC) USING BTREE,
@@ -1252,7 +1254,7 @@ namespace TA_WPF.Services
                 catch (MySqlException ex)
                 {
                     // 记录详细的数据库错误信息
-                    System.Diagnostics.Debug.WriteLine($"数据库错误: {ex.Message}, 错误代码: {ex.Number}");
+                    Debug.WriteLine($"数据库错误: {ex.Message}, 错误代码: {ex.Number}");
                     throw; // 重新抛出异常以便上层处理
                 }
             }
@@ -1281,7 +1283,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"删除车票时出错: {ex.Message}");
+                Debug.WriteLine($"删除车票时出错: {ex.Message}");
                 return false;
             }
         }
@@ -1318,7 +1320,7 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"获取出发站列表时出错: {ex.Message}");
+                Debug.WriteLine($"获取出发站列表时出错: {ex.Message}");
                 return new List<string>();
             }
         }
@@ -1587,6 +1589,329 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"获取高级查询车站总数失败: {ex.Message}", ex);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// 添加收藏夹信息
+        /// </summary>
+        /// <param name="collection">收藏夹信息</param>
+        /// <returns>添加是否成功</returns>
+        public async Task<bool> AddCollectionAsync(TicketCollectionInfo collection)
+        {
+            if (collection == null)
+            {
+                return false;
+            }
+
+            // 验证必填字段
+            if (string.IsNullOrWhiteSpace(collection.CollectionName))
+            {
+                MessageBoxHelper.ShowError("收藏夹名称不能为空");
+                Debug.WriteLine("添加收藏夹失败: 收藏夹名称不能为空");
+                return false;
+            }
+
+            if (collection.CoverImage == null || collection.CoverImage.Length == 0)
+            {
+                MessageBoxHelper.ShowError("封面图片不能为空");
+                Debug.WriteLine("添加收藏夹失败: 封面图片不能为空");
+                return false;
+            }
+            
+            // 检查图片大小是否超过数据库限制 (16MB - mediumblob限制)
+            // 实际设置为1MB以便有足够余量
+            if (collection.CoverImage.Length > 1024 * 1024) 
+            {
+                MessageBoxHelper.ShowError("图片大小超过限制(1MB)，请使用较小的图片");
+                Debug.WriteLine($"添加收藏夹失败: 图片大小({collection.CoverImage.Length/1024}KB)超过限制(1MB)");
+                return false;
+            }
+
+            // 记录评分值，确保保存前评分值正确
+            Debug.WriteLine($"保存到数据库的评分值: {collection.Importance}");
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"INSERT INTO ticket_collections_info 
+                                   (collection_name, description, cover_image, create_time, update_time, sort_order, importance) 
+                                   VALUES 
+                                   (@CollectionName, @Description, @CoverImage, @CreateTime, @UpdateTime, @SortOrder, @Importance)";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@CollectionName", collection.CollectionName);
+                        command.Parameters.AddWithValue("@Description", collection.Description ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@CoverImage", collection.CoverImage);
+                        command.Parameters.AddWithValue("@CreateTime", collection.CreateTime);
+                        command.Parameters.AddWithValue("@UpdateTime", collection.UpdateTime);
+                        command.Parameters.AddWithValue("@SortOrder", collection.SortOrder);
+                        
+                        // 确保Importance参数类型正确，将其显式转换为int
+                        command.Parameters.AddWithValue("@Importance", (int)collection.Importance);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        bool success = rowsAffected > 0;
+                        
+                        // 记录执行结果
+                        Debug.WriteLine($"添加收藏夹结果: {success}, 影响行数: {rowsAffected}");
+                        
+                        return success;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"添加收藏夹信息失败: {ex.Message}", ex);
+                Debug.WriteLine($"添加收藏夹失败: {ex.Message}");
+                
+                // 如果是数据过长错误，提供更明确的错误信息
+                if (ex.Message.Contains("Data too long"))
+                {
+                    MessageBoxHelper.ShowError("图片数据过大，无法保存到数据库。请选择较小的图片或进一步调整图片尺寸后再试。");
+                }
+                else
+                {
+                    MessageBoxHelper.ShowError($"保存收藏夹失败: {ex.Message}");
+                }
+                
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 获取收藏夹总数
+        /// </summary>
+        /// <returns>收藏夹总数</returns>
+        public async Task<int> GetCollectionCountAsync()
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    using (var command = new MySqlCommand("SELECT COUNT(*) FROM ticket_collections_info", connection))
+                    {
+                        object result = await command.ExecuteScalarAsync();
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取收藏夹总数失败: {ex.Message}", ex);
+                Debug.WriteLine($"获取收藏夹总数失败: {ex.Message}");
+                throw new Exception($"获取收藏夹总数失败: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 获取收藏夹列表
+        /// </summary>
+        /// <param name="pageNumber">页码(从1开始)</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <param name="orderBy">排序字段</param>
+        /// <param name="ascending">是否升序</param>
+        /// <returns>收藏夹列表</returns>
+        public async Task<List<TicketCollectionInfo>> GetCollectionsAsync(int pageNumber = 1, int pageSize = 10, string orderBy = "id", bool ascending = true)
+        {
+            var items = new List<TicketCollectionInfo>();
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0) pageSize = 10;
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 构建排序方向
+                    string direction = ascending ? "ASC" : "DESC";
+                    
+                    string query = $@"SELECT * FROM ticket_collections_info 
+                                   ORDER BY {orderBy} {direction}
+                                   LIMIT @Offset, @PageSize";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                        command.Parameters.AddWithValue("@PageSize", pageSize);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                items.Add(MapCollectionInfo(reader));
+                            }
+                        }
+                    }
+                    
+                    // 获取每个收藏夹关联的车票数量
+                    foreach (var collection in items)
+                    {
+                        string countQuery = "SELECT COUNT(*) FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId";
+                        using (var countCommand = new MySqlCommand(countQuery, connection))
+                        {
+                            countCommand.Parameters.AddWithValue("@CollectionId", collection.Id);
+                            object result = await countCommand.ExecuteScalarAsync();
+                            collection.TicketCount = Convert.ToInt32(result);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取收藏夹列表失败: {ex.Message}", ex);
+                Debug.WriteLine($"获取收藏夹列表失败: {ex.Message}");
+                throw;
+            }
+            
+            return items;
+        }
+        
+        /// <summary>
+        /// 映射数据读取器到收藏夹信息对象
+        /// </summary>
+        /// <param name="reader">数据读取器</param>
+        /// <returns>收藏夹信息对象</returns>
+        private TicketCollectionInfo MapCollectionInfo(DbDataReader reader)
+        {
+            try
+            {
+                // 获取importance的索引
+                int importanceIdx = reader.GetOrdinal("importance");
+                int importanceValue = 0;
+                
+                // 正确读取importance值
+                if (!reader.IsDBNull(importanceIdx))
+                {
+                    importanceValue = reader.GetInt32(importanceIdx);
+                    // 记录读取到的评分值
+                    Debug.WriteLine($"从数据库读取到的评分值: {importanceValue}");
+                }
+                else
+                {
+                    Debug.WriteLine("从数据库读取的评分值为NULL，使用默认值0");
+                }
+                
+            var collection = new TicketCollectionInfo
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("id")),
+                CollectionName = reader.IsDBNull(reader.GetOrdinal("collection_name")) ? null : reader.GetString(reader.GetOrdinal("collection_name")),
+                Description = reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
+                CreateTime = reader.GetDateTime(reader.GetOrdinal("create_time")),
+                UpdateTime = reader.GetDateTime(reader.GetOrdinal("update_time")),
+                SortOrder = reader.IsDBNull(reader.GetOrdinal("sort_order")) ? 0 : reader.GetInt32(reader.GetOrdinal("sort_order")),
+                    Importance = importanceValue, // 使用上面获取的评分值
+            };
+            
+            // 读取BLOB数据(封面图片)
+            if (!reader.IsDBNull(reader.GetOrdinal("cover_image")))
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    byte[] buffer = new byte[1024];
+                    long bytesRead;
+                    long fieldOffset = 0;
+                    using (var stream = reader.GetStream(reader.GetOrdinal("cover_image")))
+                    {
+                        while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+                        {
+                            ms.Write(buffer, 0, (int)bytesRead);
+                            fieldOffset += bytesRead;
+                        }
+                    }
+                    collection.CoverImage = ms.ToArray();
+                }
+            }
+            
+            return collection;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"映射收藏夹信息异常: {ex.Message}");
+                LogHelper.LogError($"映射收藏夹信息异常: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 根据名称查询收藏夹
+        /// </summary>
+        /// <param name="collectionName">收藏夹名称</param>
+        /// <returns>找到的收藏夹信息，如果不存在则返回null</returns>
+        public async Task<TicketCollectionInfo> GetCollectionByNameAsync(string collectionName)
+        {
+            if (string.IsNullOrWhiteSpace(collectionName))
+            {
+                return null;
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = "SELECT * FROM ticket_collections_info WHERE collection_name = @CollectionName LIMIT 1";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@CollectionName", collectionName);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return MapCollectionInfo(reader);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"按名称查询收藏夹失败: {ex.Message}", ex);
+                Debug.WriteLine($"按名称查询收藏夹失败: {ex.Message}");
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// 查询所有与基本名称匹配的收藏夹
+        /// </summary>
+        /// <param name="baseName">基本名称（不包括括号后缀）</param>
+        /// <returns>匹配的收藏夹列表</returns>
+        public async Task<List<string>> GetCollectionNamesByBaseNameAsync(string baseName)
+        {
+            var names = new List<string>();
+            if (string.IsNullOrWhiteSpace(baseName))
+            {
+                return names;
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 使用LIKE查询匹配基本名称开头的所有收藏夹
+                    // 例如: baseName="11"，会匹配"11"、"11(1)"、"11(2)"等
+                    string query = "SELECT collection_name FROM ticket_collections_info WHERE collection_name LIKE @BaseNamePattern";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@BaseNamePattern", baseName + "%");
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                names.Add(reader.GetString(reader.GetOrdinal("collection_name")));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"查询匹配收藏夹名称失败: {ex.Message}", ex);
+                Debug.WriteLine($"查询匹配收藏夹名称失败: {ex.Message}");
+            }
+            
+            return names;
         }
     }
 }

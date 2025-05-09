@@ -167,16 +167,16 @@
                                 <TreeView.Resources>
                                     <!-- 为TreeViewItem添加字体大小绑定 -->
                                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
-                                        <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                                        <!-- <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" /> -->
                                     </Style>
                                     <!-- 为TreeView中的所有TextBlock添加字体大小绑定 -->
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                                        <!-- <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" /> -->
                                         <Setter Property="VerticalAlignment" Value="Center" />
                                     </Style>
                                     <!-- 为TreeView中的所有Button添加字体大小绑定 -->
                                     <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
-                                        <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" />
+                                        <!-- <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" /> -->
                                     </Style>
                                 </TreeView.Resources>
                                 
@@ -194,7 +194,7 @@
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <materialDesign:PackIcon Kind="Home" Margin="0,0,8,0"/>
-                                                        <TextBlock Text="{Binding}" />
+                                                        <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </Button.ContentTemplate>
@@ -216,7 +216,7 @@
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <materialDesign:PackIcon Kind="ViewDashboard" Margin="0,0,8,0"/>
-                                                        <TextBlock Text="{Binding}" />
+                                                        <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </Button.ContentTemplate>
@@ -251,7 +251,7 @@
                                                         <DataTemplate>
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="PencilOutline" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="{Binding}" />
+                                                                <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </Button.ContentTemplate>
@@ -271,7 +271,7 @@
                                                         <DataTemplate>
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CameraOutline" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="{Binding}" />
+                                                                <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </Button.ContentTemplate>
@@ -291,7 +291,7 @@
                                                         <DataTemplate>
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CloudDownloadOutline" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="{Binding}" />
+                                                                <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </Button.ContentTemplate>
@@ -312,7 +312,7 @@
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="DatabaseSearch" Margin="0,0,8,0"/>
-                                                            <TextBlock Text="{Binding}" />
+                                                            <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                                         </StackPanel>
                                                     </DataTemplate>
                                                 </Button.ContentTemplate>
@@ -332,7 +332,7 @@
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="FolderMultiple" Margin="0,0,8,0"/>
-                                                            <TextBlock Text="{Binding}" />
+                                                            <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                                         </StackPanel>
                                                     </DataTemplate>
                                                 </Button.ContentTemplate>
@@ -360,7 +360,7 @@
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="OfficeBuildingOutline" Margin="0,0,8,0"/>
-                                                            <TextBlock Text="{Binding}" />
+                                                            <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                                         </StackPanel>
                                                     </DataTemplate>
                                                 </Button.ContentTemplate>
@@ -384,7 +384,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 
                                                 <materialDesign:PackIcon Grid.Column="0" Kind="Settings" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="1" Text="系统设置" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="系统设置" VerticalAlignment="Center" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                             </Grid>
                                         </Button>
                                     </TreeViewItem.Header>

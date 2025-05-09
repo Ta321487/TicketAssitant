@@ -11,7 +11,6 @@ CREATE TABLE `collection_mapped_tickets_info`  (
   `ticket_count` int NULL DEFAULT NULL COMMENT '包含车票数量',
   `ticket_id` int NOT NULL COMMENT '车票ID',
   `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
-  `importance` int NULL DEFAULT 0 COMMENT '评分1-5',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_collection`(`collection_id` ASC) USING BTREE,
   INDEX `idx_ticket`(`ticket_id` ASC) USING BTREE,

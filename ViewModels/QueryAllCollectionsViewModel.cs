@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.IO;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -313,14 +314,18 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 添加收藏夹
         /// </summary>
-        private void AddCollection()
+        private async void AddCollection()
         {
             // 创建并显示添加收藏夹窗口
-            var addCollectionWindow = new Views.AddCollectionWindow();
+            var addCollectionWindow = new AddCollectionWindow(_databaseService);
             addCollectionWindow.Owner = Application.Current.MainWindow;
-            addCollectionWindow.ShowDialog();
+            bool? result = addCollectionWindow.ShowDialog();
 
-            // 在成功添加后刷新数据（未来实现）
+            // 在成功添加后刷新数据
+            if (result == true)
+            {
+                await LoadCollectionsAsync();
+            }
         }
 
         /// <summary>
@@ -426,7 +431,6 @@ namespace TA_WPF.ViewModels
             foreach (var collection in Collections)
             {
                 collection.IsSelected = true;
-                SelectedCollections.Add(collection);
             }
             NotifySelectionChanged();
         }
@@ -505,53 +509,23 @@ namespace TA_WPF.ViewModels
             IsLoading = true;
             try
             {
-                // 这里只是显示UI，不实际从数据库加载数据
-                // 后续实现时可添加如下代码：
-                // TotalCount = await _databaseService.GetCollectionCountAsync();
-                // var collectionsData = await _databaseService.GetCollectionsAsync(
-                //     _paginationViewModel.CurrentPage,
-                //     _paginationViewModel.PageSize);
+                // 从数据库加载数据
+                TotalCount = await _databaseService.GetCollectionCountAsync();
+                var collectionsData = await _databaseService.GetCollectionsAsync(
+                    _paginationViewModel.CurrentPage,
+                    _paginationViewModel.PageSize);
                 
-                // 模拟数据加载延迟
-                await Task.Delay(500);
+                // 将列表转换为ObservableCollection并更新UI
+                Collections = new ObservableCollection<TicketCollectionInfo>(collectionsData);
                 
-                // 创建一些测试数据
-                var testCollections = new ObservableCollection<TicketCollectionInfo>();
-                
-                // 加载一个测试图片作为默认图片
-                byte[] defaultImageBytes = null;
-                try
+                // 如果没有数据，且TotalCount显示应该有数据，则可能是最后一页没有数据了
+                // 返回到第一页重新加载
+                if (Collections.Count == 0 && TotalCount > 0 && _paginationViewModel.CurrentPage > 1)
                 {
-                    string imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "pic", "blueTicket.png");
-                    if (File.Exists(imagePath))
-                    {
-                        defaultImageBytes = File.ReadAllBytes(imagePath);
-                    }
+                    _paginationViewModel.CurrentPage = 1;
+                    await LoadCollectionsAsync();
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    LogHelper.LogError($"加载默认图片失败: {ex.Message}");
-                }
-                
-                // 添加示例数据
-                for (int i = 1; i <= 10; i++)
-                {
-                    testCollections.Add(new TicketCollectionInfo
-                    {
-                        Id = i,
-                        CollectionName = $"收藏夹 {i}",
-                        Description = $"这是收藏夹{i}的描述内容",
-                        CreateTime = DateTime.Now.AddDays(-i),
-                        UpdateTime = DateTime.Now.AddHours(-i),
-                        TicketCount = i * 5,
-                        SortOrder = i,
-                        CoverImage = defaultImageBytes // 使用默认图片
-                    });
-                }
-                
-                // 更新数据
-                Collections = testCollections;
-                TotalCount = testCollections.Count;
                 
                 // 清除选择
                 SelectedCollections.Clear();

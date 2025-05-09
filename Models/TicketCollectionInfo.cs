@@ -20,6 +20,7 @@ namespace TA_WPF.Models
         private int _sortOrder;
         private int _ticketCount;
         private bool _isSelected;
+        private int _importance;
 
         /// <summary>
         /// 收藏夹ID
@@ -160,6 +161,22 @@ namespace TA_WPF.Models
                 if (_isSelected != value)
                 {
                     _isSelected = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 重要性评分(1-5)
+        /// </summary>
+        public int Importance
+        {
+            get => _importance;
+            set
+            {
+                if (_importance != value)
+                {
+                    _importance = value;
                     OnPropertyChanged();
                 }
             }
