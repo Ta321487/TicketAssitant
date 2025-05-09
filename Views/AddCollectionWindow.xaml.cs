@@ -15,12 +15,13 @@ namespace TA_WPF.Views
         /// 构造函数
         /// </summary>
         /// <param name="databaseService">数据库服务</param>
-        public AddCollectionWindow(DatabaseService databaseService = null)
+        /// <param name="mainViewModel">主视图模型</param>
+        public AddCollectionWindow(DatabaseService databaseService = null, MainViewModel mainViewModel = null)
         {
             InitializeComponent();
             
             // 创建视图模型
-            _viewModel = new AddCollectionViewModel(databaseService);
+            _viewModel = new AddCollectionViewModel(databaseService, mainViewModel);
             
             // 设置DataContext
             DataContext = _viewModel;

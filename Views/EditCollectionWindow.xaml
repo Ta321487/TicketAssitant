@@ -1,4 +1,4 @@
-<Window x:Class="TA_WPF.Views.AddCollectionWindow"
+<Window x:Class="TA_WPF.Views.EditCollectionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -6,9 +6,9 @@
         xmlns:local="clr-namespace:TA_WPF.Views"
         xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:converters="clr-namespace:TA_WPF.Converters"
+        xmlns:converters="clr-namespace:TA_WPF.Converters" 
         mc:Ignorable="d"
-        Title="新建收藏夹" 
+        Title="修改收藏夹" 
         Height="650" 
         Width="650"
         MinHeight="450" 
@@ -45,7 +45,7 @@
 
         <!-- 标题 -->
         <TextBlock Grid.Row="0" 
-                   Text="新建收藏夹" 
+                   Text="修改收藏夹" 
                    Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
                    Margin="0,0,0,20" 
                    HorizontalAlignment="Center"/>
@@ -126,15 +126,15 @@
 
         <!-- 底部按钮 -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button Command="{Binding CreateCommand}" 
+            <Button Command="{Binding SaveCommand}" 
                     IsEnabled="{Binding IsValid}"
                     Style="{StaticResource MaterialDesignFlatButton}"
                     Margin="0,0,10,0"
                     Width="100"
                     Foreground="{DynamicResource GlobalAccentBrush}">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="新建" VerticalAlignment="Center" FontSize="{Binding MainViewModel.FontSize}"/>
+                    <materialDesign:PackIcon Kind="ContentSave" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBlock Text="保存" VerticalAlignment="Center" FontSize="{Binding MainViewModel.FontSize}"/>
                 </StackPanel>
             </Button>
             

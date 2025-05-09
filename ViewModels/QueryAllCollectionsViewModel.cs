@@ -317,7 +317,7 @@ namespace TA_WPF.ViewModels
         private async void AddCollection()
         {
             // 创建并显示添加收藏夹窗口
-            var addCollectionWindow = new AddCollectionWindow(_databaseService);
+            var addCollectionWindow = new AddCollectionWindow(_databaseService, _mainViewModel);
             addCollectionWindow.Owner = Application.Current.MainWindow;
             bool? result = addCollectionWindow.ShowDialog();
 
@@ -329,19 +329,22 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 是否可以添加收藏夹
-        /// </summary>
-        private bool CanAddCollection() => true;
-
-        /// <summary>
         /// 编辑收藏夹
         /// </summary>
-        private void EditCollection()
+        private async void EditCollection()
         {
             if (SelectedCollection == null) return;
 
-            // 创建并显示编辑收藏夹窗口（未来实现）
-            MessageBoxHelper.ShowInfo("编辑收藏夹功能尚未实现");
+            // 创建并显示修改收藏夹窗口
+            var editCollectionWindow = new EditCollectionWindow(SelectedCollection, _databaseService, _mainViewModel);
+            editCollectionWindow.Owner = Application.Current.MainWindow;
+            bool? result = editCollectionWindow.ShowDialog();
+
+            // 在成功修改后刷新数据
+            if (result == true)
+            {
+                await LoadCollectionsAsync();
+            }
         }
 
         /// <summary>

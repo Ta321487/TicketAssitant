@@ -14,12 +14,13 @@ using System.Threading.Tasks;
 namespace TA_WPF.ViewModels
 {
     /// <summary>
-    /// 添加收藏夹视图模型
+    /// 修改收藏夹视图模型
     /// </summary>
-    public class AddCollectionViewModel : BaseViewModel
+    public class EditCollectionViewModel : BaseViewModel
     {
         private readonly DatabaseService _databaseService;
         private readonly MainViewModel _mainViewModel;
+        private readonly TicketCollectionInfo _originalCollection; // 原始收藏夹信息
         private string _collectionName;
         private string _description;
         private byte[] _coverImage;
@@ -30,47 +31,27 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 构造函数
         /// </summary>
+        /// <param name="collection">要编辑的收藏夹信息</param>
         /// <param name="databaseService">数据库服务</param>
         /// <param name="mainViewModel">主视图模型</param>
-        public AddCollectionViewModel(DatabaseService databaseService = null, MainViewModel mainViewModel = null)
+        public EditCollectionViewModel(TicketCollectionInfo collection, DatabaseService databaseService = null, MainViewModel mainViewModel = null)
         {
             _databaseService = databaseService;
             _mainViewModel = mainViewModel;
-            _importance = 3; // 默认重要性为3星
+            _originalCollection = collection;
             
-            // 记录初始化的评分值
-            Debug.WriteLine($"AddCollectionViewModel初始化时的评分值: {_importance}");
+            // 初始化属性
+            CollectionName = collection.CollectionName;
+            Description = collection.Description;
+            CoverImage = collection.CoverImage;
+            Importance = collection.Importance;
             
             // 初始化命令
-            CreateCommand = new RelayCommand(CreateCollection, CanCreateCollection);
+            SaveCommand = new RelayCommand(SaveCollection, CanSaveCollection);
             CancelCommand = new RelayCommand(CancelOperation);
             BrowseImageCommand = new RelayCommand(BrowseImage);
-
-            // 尝试加载默认图片
-            try
-            {
-                string imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "pic", "blueTicket.png");
-                if (File.Exists(imagePath))
-                {
-                    // 读取并处理默认图片
-                    byte[] processedImage = LoadAndResizeImage(imagePath, 200, 100);
-                    
-                    if (processedImage != null && processedImage.Length > 0)
-                    {
-                    CoverImagePath = imagePath;
-                        CoverImage = processedImage;
-                        
-                        // 通知UI更新按钮状态
-                        OnPropertyChanged(nameof(IsValid));
-                        CommandManager.InvalidateRequerySuggested();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogError($"加载默认图片失败: {ex.Message}");
-                Debug.WriteLine($"加载默认图片失败: {ex.Message}");
-            }
+            
+            Debug.WriteLine($"初始化编辑收藏夹视图模型，评分值: {collection.Importance}");
         }
 
         /// <summary>
@@ -152,7 +133,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public string CoverImageFileName => !string.IsNullOrEmpty(CoverImagePath) 
             ? System.IO.Path.GetFileName(CoverImagePath) 
-            : "暂未选择图片";
+            : "暂未选择新图片";
 
         /// <summary>
         /// 是否有封面图片
@@ -202,9 +183,9 @@ namespace TA_WPF.ViewModels
         public bool IsValid => !string.IsNullOrWhiteSpace(CollectionName) && HasCoverImage;
 
         /// <summary>
-        /// 创建收藏夹命令
+        /// 保存收藏夹命令
         /// </summary>
-        public ICommand CreateCommand { get; }
+        public ICommand SaveCommand { get; }
 
         /// <summary>
         /// 取消操作命令
@@ -217,9 +198,9 @@ namespace TA_WPF.ViewModels
         public ICommand BrowseImageCommand { get; }
 
         /// <summary>
-        /// 创建收藏夹方法
+        /// 保存收藏夹方法
         /// </summary>
-        private async void CreateCollection()
+        private async void SaveCollection()
         {
             try
             {
@@ -248,52 +229,60 @@ namespace TA_WPF.ViewModels
                 }
 
                 // 记录重要性评分值，确保评分值正确传递
-                Debug.WriteLine($"创建收藏夹时的评分值: {Importance}");
+                Debug.WriteLine($"修改收藏夹时的评分值: {Importance}");
 
-                // 检查收藏夹名称是否已存在，并添加适当的后缀
+                // 检查收藏夹名称是否发生变更，若变更则检查是否有重名
                 string originalName = CollectionName.Trim();
-                string uniqueName = await GenerateUniqueCollectionNameAsync(originalName);
-
-                // 创建收藏夹对象
-                var collection = new TicketCollectionInfo
+                string uniqueName = originalName;
+                
+                // 只有当名称变更时才需要检查重名
+                if (originalName != _originalCollection.CollectionName)
                 {
+                    uniqueName = await GenerateUniqueCollectionNameAsync(originalName);
+                }
+
+                // 更新收藏夹对象
+                var updatedCollection = new TicketCollectionInfo
+                {
+                    Id = _originalCollection.Id, // 保持原有ID
                     CollectionName = uniqueName, // 使用可能已修改的唯一名称
                     Description = Description,
                     CoverImage = CoverImage,
-                    CreateTime = DateTime.Now,
-                    UpdateTime = DateTime.Now,
-                    SortOrder = 0, // 默认排序顺序
-                    Importance = Importance // 使用用户设置的评分
+                    CreateTime = _originalCollection.CreateTime, // 保持原有创建时间
+                    UpdateTime = DateTime.Now, // 更新修改时间
+                    SortOrder = _originalCollection.SortOrder, // 保持原有排序顺序
+                    Importance = Importance, // 使用用户设置的评分
+                    TicketCount = _originalCollection.TicketCount // 保持原有票数
                 };
 
                 // 保存到数据库
-                bool success = await _databaseService.AddCollectionAsync(collection);
+                bool success = await _databaseService.UpdateCollectionAsync(updatedCollection);
 
                 if (success)
                 {
                     // 如果名称被修改了，提示用户
                     if (uniqueName != originalName)
                     {
-                        MessageBoxHelper.ShowInfo($"收藏夹创建成功，名称已自动调整为 \"{uniqueName}\"");
-                }
-                else
-                {
-                        MessageBoxHelper.ShowInfo("收藏夹创建成功");
-                }
+                        MessageBoxHelper.ShowInfo($"收藏夹修改成功，名称已自动调整为 \"{uniqueName}\"");
+                    }
+                    else
+                    {
+                        MessageBoxHelper.ShowInfo("收藏夹修改成功");
+                    }
 
-                // 关闭窗口
-                CloseWindow();
+                    // 关闭窗口
+                    CloseWindow();
                 }
                 else
                 {
-                    MessageBoxHelper.ShowError("收藏夹创建失败，请重试");
+                    MessageBoxHelper.ShowError("收藏夹修改失败，请重试");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"创建收藏夹异常: {ex.Message}");
-                LogHelper.LogError($"创建收藏夹失败: {ex.Message}", ex);
-                MessageBoxHelper.ShowError($"创建收藏夹失败: {ex.Message}");
+                Debug.WriteLine($"修改收藏夹异常: {ex.Message}");
+                LogHelper.LogError($"修改收藏夹失败: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"修改收藏夹失败: {ex.Message}");
             }
             finally
             {
@@ -310,52 +299,42 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 首先检查原始名称是否已存在
+                // 首先检查原名称是否存在（排除当前正在编辑的收藏夹）
                 var existingCollection = await _databaseService.GetCollectionByNameAsync(baseName);
-                if (existingCollection == null)
+                if (existingCollection == null || existingCollection.Id == _originalCollection.Id)
                 {
-                    // 如果不存在相同名称的收藏夹，直接使用原始名称
+                    // 名称不存在或者就是自己，可以直接使用
                     return baseName;
                 }
 
-                // 获取所有以该名称为基础的收藏夹（如"11"、"11(1)"、"11(2)"等）
-                var similarNames = await _databaseService.GetCollectionNamesByBaseNameAsync(baseName);
-                
-                // 找出最大后缀编号
-                int maxSuffix = 0;
-                foreach (var name in similarNames)
-                {
-                    // 使用正则表达式提取括号中的数字（如"11(3)"中的3）
-                    var match = System.Text.RegularExpressions.Regex.Match(name, @"\((\d+)\)$");
-                    if (match.Success && int.TryParse(match.Groups[1].Value, out int suffix))
-                    {
-                        maxSuffix = Math.Max(maxSuffix, suffix);
-                    }
-                    else if (name == baseName)
-                    {
-                        // 原始名称已存在，至少需要从(1)开始
-                        maxSuffix = Math.Max(maxSuffix, 0);
-                    }
-                }
+                // 名称已存在，需要添加后缀
+                var existingNames = await _databaseService.GetCollectionNamesByBaseNameAsync(baseName);
+                int suffix = 1;
 
-                // 生成新名称，编号+1
-                return $"{baseName}({maxSuffix + 1})";
+                // 寻找可用的后缀
+                string newName;
+                do
+                {
+                    newName = $"{baseName}({suffix})";
+                    suffix++;
+                } while (existingNames.Contains(newName));
+
+                return newName;
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"生成唯一收藏夹名称失败: {ex.Message}", ex);
                 Debug.WriteLine($"生成唯一收藏夹名称失败: {ex.Message}");
+                LogHelper.LogError($"生成唯一收藏夹名称失败: {ex.Message}", ex);
                 
-                // 出现异常时，为安全起见，添加一个时间戳后缀
-                string timestamp = DateTime.Now.ToString("HHmmss");
-                return $"{baseName}({timestamp})";
+                // 发生错误时直接返回原名称
+                return baseName;
             }
         }
 
         /// <summary>
-        /// 是否可以创建收藏夹
+        /// 是否可以保存收藏夹
         /// </summary>
-        private bool CanCreateCollection()
+        private bool CanSaveCollection()
         {
             return IsValid && !IsLoading;
         }
@@ -407,57 +386,47 @@ namespace TA_WPF.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    MessageBoxHelper.ShowError($"读取或处理图片失败: {ex.Message}");
                     Debug.WriteLine($"图片处理异常: {ex.Message}");
+                    LogHelper.LogError($"图片处理异常: {ex.Message}", ex);
+                    MessageBoxHelper.ShowError($"图片处理失败: {ex.Message}");
                 }
             }
         }
-        
+
         /// <summary>
         /// 加载并调整图片尺寸
         /// </summary>
-        /// <param name="imagePath">图片路径</param>
+        /// <param name="filePath">图片文件路径</param>
         /// <param name="maxWidth">最大宽度</param>
-        /// <param name="maxHeight">最大高度</param>
-        /// <returns>处理后的图片字节数组</returns>
-        private byte[] LoadAndResizeImage(string imagePath, int maxWidth, int maxHeight)
+        /// <param name="quality">压缩质量</param>
+        /// <returns>处理后的图片数据</returns>
+        private byte[] LoadAndResizeImage(string filePath, int maxWidth, int quality)
         {
             try
             {
-                // 创建位图
+                // 读取原始图片
                 BitmapImage originalImage = new BitmapImage();
                 originalImage.BeginInit();
-                originalImage.UriSource = new Uri(imagePath);
+                originalImage.UriSource = new Uri(filePath);
                 originalImage.CacheOption = BitmapCacheOption.OnLoad;
                 originalImage.EndInit();
 
-                // 确定缩放比例
-                double scaleX = (double)maxWidth / originalImage.PixelWidth;
-                double scaleY = (double)maxHeight / originalImage.PixelHeight;
-                double scale = Math.Min(scaleX, scaleY); // 等比缩放，取小的缩放比例
-                
-                // 如果图片比目标尺寸小，则不需要缩放
-                if (scale >= 1.0 && originalImage.PixelWidth <= maxWidth && originalImage.PixelHeight <= maxHeight)
-                {
-                    // 直接使用原图，只压缩质量
-                    return CompressImageQuality(File.ReadAllBytes(imagePath), 75);
-                }
-                
-                // 计算缩放后的尺寸
-                int newWidth = (int)(originalImage.PixelWidth * scale);
+                // 计算新尺寸，保持宽高比
+                double scale = (double)maxWidth / originalImage.PixelWidth;
+                int newWidth = maxWidth;
                 int newHeight = (int)(originalImage.PixelHeight * scale);
-                
-                // 创建缩放后的位图
-                TransformedBitmap transformedBitmap = new TransformedBitmap(
+
+                // 创建调整大小后的图片
+                var resizedImage = new TransformedBitmap(
                     originalImage,
                     new ScaleTransform(scale, scale)
                 );
-                
-                // 编码为JPEG
+
+                // 将图片编码为JPEG并返回字节数组
                 JpegBitmapEncoder encoder = new JpegBitmapEncoder();
-                encoder.QualityLevel = 75; // 较好的质量
-                encoder.Frames.Add(BitmapFrame.Create(transformedBitmap));
-                
+                encoder.QualityLevel = quality;
+                encoder.Frames.Add(BitmapFrame.Create(resizedImage));
+
                 using (MemoryStream stream = new MemoryStream())
                 {
                     encoder.Save(stream);
@@ -466,69 +435,9 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"调整图片尺寸失败: {ex.Message}");
-                
-                // 尝试使用备用方法
-                try 
-                {
-                    // 如果转换失败，尝试直接压缩原图
-                    return CompressImageQuality(File.ReadAllBytes(imagePath), 50);
-                }
-                catch (Exception innerEx)
-                {
-                    Debug.WriteLine($"压缩图片失败: {innerEx.Message}");
-                    return null;
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 压缩图片质量
-        /// </summary>
-        /// <param name="imageBytes">原始图片字节数组</param>
-        /// <param name="quality">压缩质量(1-100)</param>
-        /// <returns>压缩后的图片字节数组</returns>
-        private byte[] CompressImageQuality(byte[] imageBytes, int quality)
-        {
-            if (imageBytes == null || imageBytes.Length == 0)
-                return imageBytes;
-                
-            try
-            {
-                // 创建图片源
-                BitmapImage bitmapImage = new BitmapImage();
-                using (var stream = new MemoryStream(imageBytes))
-                {
-                    bitmapImage.BeginInit();
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.StreamSource = stream;
-                    bitmapImage.EndInit();
-                    bitmapImage.Freeze(); // 重要：使位图可在线程间共享
-                }
-
-                // 转换为可写入的位图格式
-                var jpegEncoder = new JpegBitmapEncoder();
-                jpegEncoder.QualityLevel = quality;
-                jpegEncoder.Frames.Add(BitmapFrame.Create(bitmapImage));
-
-                // 保存压缩后的图像
-                using (var outputStream = new MemoryStream())
-                {
-                    jpegEncoder.Save(outputStream);
-                    return outputStream.ToArray();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"压缩图片异常: {ex.Message}");
-                
-                // 如果压缩失败但文件不大，返回原图
-                if (imageBytes.Length <= 100 * 1024)
-                {
-                    return imageBytes;
-                }
-                
-                return null; // 如果压缩失败且文件过大，返回null
+                Debug.WriteLine($"处理图片失败: {ex.Message}");
+                LogHelper.LogError($"处理图片失败: {ex.Message}", ex);
+                return null;
             }
         }
 
@@ -537,8 +446,8 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void CloseWindow()
         {
-            // 获取当前窗口实例并关闭
-            if (Application.Current.Windows.Count > 0)
+            // 获取当前窗口并设置对话框结果
+            if (Application.Current?.Windows != null)
             {
                 foreach (Window window in Application.Current.Windows)
                 {
@@ -546,7 +455,7 @@ namespace TA_WPF.ViewModels
                     {
                         window.DialogResult = true;
                         window.Close();
-                        return;
+                        break;
                     }
                 }
             }

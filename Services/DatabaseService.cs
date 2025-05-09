@@ -1913,5 +1913,67 @@ namespace TA_WPF.Services
             
             return names;
         }
+
+        /// <summary>
+        /// 更新收藏夹信息
+        /// </summary>
+        /// <param name="collection">要更新的收藏夹信息</param>
+        /// <returns>是否更新成功</returns>
+        public async Task<bool> UpdateCollectionAsync(TicketCollectionInfo collection)
+        {
+            if (collection == null || collection.Id <= 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"UPDATE ticket_collections_info 
+                                   SET collection_name = @CollectionName, 
+                                       description = @Description, 
+                                       cover_image = @CoverImage, 
+                                       update_time = @UpdateTime, 
+                                       importance = @Importance 
+                                   WHERE id = @Id";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Id", collection.Id);
+                        command.Parameters.AddWithValue("@CollectionName", collection.CollectionName);
+                        command.Parameters.AddWithValue("@Description", collection.Description ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@CoverImage", collection.CoverImage);
+                        command.Parameters.AddWithValue("@UpdateTime", collection.UpdateTime);
+                        command.Parameters.AddWithValue("@Importance", (int)collection.Importance);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        bool success = rowsAffected > 0;
+                        
+                        // 记录执行结果
+                        Debug.WriteLine($"更新收藏夹结果: {success}, 影响行数: {rowsAffected}");
+                        
+                        return success;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"更新收藏夹信息失败: {ex.Message}", ex);
+                Debug.WriteLine($"更新收藏夹失败: {ex.Message}");
+                
+                // 如果是数据过长错误，提供更明确的错误信息
+                if (ex.Message.Contains("Data too long"))
+                {
+                    MessageBoxHelper.ShowError("图片数据过大，无法保存到数据库。请选择较小的图片或进一步调整图片尺寸后再试。");
+                }
+                else
+                {
+                    MessageBoxHelper.ShowError($"更新收藏夹失败: {ex.Message}");
+                }
+                
+                return false;
+            }
+        }
     }
 }
