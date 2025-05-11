@@ -63,7 +63,7 @@ namespace TA_WPF.ViewModels
             DeleteCollectionCommand = new RelayCommand(DeleteCollection, CanDeleteCollection);
             CopyCollectionCommand = new RelayCommand(CopyCollection, CanCopyCollection);
             MoveCollectionCommand = new RelayCommand(MoveCollection, CanMoveCollection);
-            SortCollectionsCommand = new RelayCommand(SortCollections);
+            SortCollectionsCommand = new RelayCommand<string>(SortCollections);
             
             // 视图切换命令
             ToggleViewCommand = new RelayCommand(ToggleView);
@@ -441,10 +441,131 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 排序收藏夹
         /// </summary>
-        private void SortCollections()
+        /// <param name="sortBy">排序字段：TicketCount_Asc/Desc, UpdateTime_Asc/Desc, CreateTime_Asc/Desc, Importance_Asc/Desc</param>
+        private async void SortCollections(string sortBy)
         {
-            // 排序收藏夹功能实现（未来实现）
-            MessageBoxHelper.ShowInfo("排序收藏夹功能尚未实现");
+            if (string.IsNullOrEmpty(sortBy) || Collections == null || Collections.Count == 0)
+            {
+                return;
+            }
+
+            IsLoading = true;
+            try
+            {
+                // 根据排序字段进行排序
+                IOrderedEnumerable<TicketCollectionInfo> sortedCollections = null;
+                string sortField = sortBy.Split('_')[0];
+                bool isAscending = sortBy.EndsWith("_Asc");
+
+                switch (sortField)
+                {
+                    case "TicketCount":
+                        sortedCollections = isAscending 
+                            ? Collections.OrderBy(c => c.TicketCount) 
+                            : Collections.OrderByDescending(c => c.TicketCount);
+                        break;
+                    case "UpdateTime":
+                        sortedCollections = isAscending 
+                            ? Collections.OrderBy(c => c.UpdateTime) 
+                            : Collections.OrderByDescending(c => c.UpdateTime);
+                        break;
+                    case "CreateTime":
+                        sortedCollections = isAscending 
+                            ? Collections.OrderBy(c => c.CreateTime) 
+                            : Collections.OrderByDescending(c => c.CreateTime);
+                        break;
+                    case "Importance":
+                        sortedCollections = isAscending 
+                            ? Collections.OrderBy(c => c.Importance) 
+                            : Collections.OrderByDescending(c => c.Importance);
+                        break;
+                    default:
+                        sortedCollections = Collections.OrderBy(c => c.Id);
+                        break;
+                }
+
+                // 保存选定状态和临时索引映射
+                Dictionary<int, bool> selectedStates = new Dictionary<int, bool>();
+                
+                // 用于批量更新数据库中的SortOrder
+                Dictionary<int, int> newSortOrders = new Dictionary<int, int>();
+                
+                // 转换为列表以便处理
+                var sortedList = sortedCollections.ToList();
+
+                // 1. 保存选中状态
+                foreach (var collection in Collections)
+                {
+                    selectedStates[collection.Id] = collection.IsSelected;
+                }
+
+                // 2. 分配新的排序顺序值
+                for (int i = 0; i < sortedList.Count; i++)
+                {
+                    var collection = sortedList[i];
+                    
+                    // 更新内存中的SortOrder值
+                    collection.SortOrder = (i + 1) * 10; // 以10为步长，便于将来在中间插入新元素
+                    
+                    // 记录新的排序顺序值，稍后更新数据库
+                    newSortOrders[collection.Id] = collection.SortOrder;
+                }
+
+                // 3. 创建包含更新后SortOrder的新集合
+                var newCollections = new ObservableCollection<TicketCollectionInfo>(sortedList);
+                
+                // 4. 恢复选定状态
+                foreach (var collection in newCollections)
+                {
+                    if (selectedStates.TryGetValue(collection.Id, out bool isSelected))
+                    {
+                        collection.IsSelected = isSelected;
+                    }
+                }
+
+                // 5. 更新UI显示的集合
+                Collections = newCollections;
+
+                // 6. 异步更新数据库中的排序顺序
+                bool updateSuccess = await _databaseService.UpdateCollectionSortOrdersAsync(newSortOrders);
+                
+                if (!updateSuccess)
+                {
+                    // 如果数据库更新失败，记录错误但不影响UI显示
+                    LogHelper.LogError("更新收藏夹排序顺序到数据库失败");
+                }
+
+                // 提示排序完成
+                string sortName = "";
+                string sortDirection = isAscending ? "升序" : "降序";
+                
+                switch (sortField)
+                {
+                    case "TicketCount":
+                        sortName = "车票数量";
+                        break;
+                    case "UpdateTime":
+                        sortName = "修改日期";
+                        break;
+                    case "CreateTime":
+                        sortName = "创建时间";
+                        break;
+                    case "Importance":
+                        sortName = "评分";
+                        break;
+                }
+                
+                MessageBoxHelper.ShowInfo($"已按{sortName}({sortDirection})排序完成");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"排序收藏夹时出错: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"排序收藏夹时出错: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         /// <summary>

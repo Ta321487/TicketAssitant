@@ -114,6 +114,21 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
+        /// 排序按钮点击事件处理程序
+        /// </summary>
+        private void SortButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 打开上下文菜单
+            Button button = sender as Button;
+            if (button != null && button.ContextMenu != null)
+            {
+                button.ContextMenu.PlacementTarget = button;
+                button.ContextMenu.IsOpen = true;
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
         /// 尝试导航到指定页码
         /// </summary>
         private void TryNavigateToPage()

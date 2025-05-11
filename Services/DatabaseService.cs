@@ -1950,7 +1950,8 @@ namespace TA_WPF.Services
                                        description = @Description, 
                                        cover_image = @CoverImage, 
                                        update_time = @UpdateTime, 
-                                       importance = @Importance 
+                                       importance = @Importance,
+                                       sort_order = @SortOrder 
                                    WHERE id = @Id";
 
                     using (var command = new MySqlCommand(query, connection))
@@ -1961,6 +1962,7 @@ namespace TA_WPF.Services
                         command.Parameters.AddWithValue("@CoverImage", collection.CoverImage);
                         command.Parameters.AddWithValue("@UpdateTime", collection.UpdateTime);
                         command.Parameters.AddWithValue("@Importance", (int)collection.Importance);
+                        command.Parameters.AddWithValue("@SortOrder", collection.SortOrder);
 
                         int rowsAffected = await command.ExecuteNonQueryAsync();
                         bool success = rowsAffected > 0;
@@ -2022,6 +2024,65 @@ namespace TA_WPF.Services
             {
                 LogHelper.LogError($"批量删除收藏夹失败: {ex.Message}", ex);
                 Debug.WriteLine($"批量删除收藏夹失败: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 批量更新收藏夹排序顺序
+        /// </summary>
+        /// <param name="collectionSortOrders">收藏夹ID和排序顺序的字典</param>
+        /// <returns>更新是否成功</returns>
+        public async Task<bool> UpdateCollectionSortOrdersAsync(Dictionary<int, int> collectionSortOrders)
+        {
+            if (collectionSortOrders == null || collectionSortOrders.Count == 0)
+            {
+                return true; // 没有要更新的项，视为成功
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 使用事务确保批量更新的原子性
+                    using (var transaction = await connection.BeginTransactionAsync())
+                    {
+                        string query = "UPDATE ticket_collections_info SET sort_order = @SortOrder WHERE id = @Id";
+                        using (var command = new MySqlCommand(query, connection, transaction as MySqlTransaction))
+                        {
+                            // 创建可重用的参数
+                            var idParam = command.Parameters.Add("@Id", MySqlDbType.Int32);
+                            var sortOrderParam = command.Parameters.Add("@SortOrder", MySqlDbType.Int32);
+
+                            // 执行每条更新
+                            int successCount = 0;
+                            foreach (var kvp in collectionSortOrders)
+                            {
+                                idParam.Value = kvp.Key;        // 收藏夹ID
+                                sortOrderParam.Value = kvp.Value; // 排序顺序
+
+                                int rowsAffected = await command.ExecuteNonQueryAsync();
+                                if (rowsAffected > 0)
+                                {
+                                    successCount++;
+                                }
+                            }
+
+                            // 提交事务
+                            await transaction.CommitAsync();
+                            
+                            // 记录执行结果
+                            Debug.WriteLine($"批量更新收藏夹排序顺序结果: {successCount}/{collectionSortOrders.Count} 条记录更新成功");
+                            
+                            return successCount > 0;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"批量更新收藏夹排序顺序失败: {ex.Message}", ex);
+                Debug.WriteLine($"批量更新收藏夹排序顺序失败: {ex.Message}");
                 return false;
             }
         }

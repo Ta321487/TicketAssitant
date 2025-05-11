@@ -33,6 +33,7 @@
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+            <converters:ByteArrayToImageConverter x:Key="ByteArrayToImageConverter" />
         </ResourceDictionary>
     </Window.Resources>
 
@@ -97,7 +98,7 @@
                                Margin="5"
                                Visibility="{Binding HasCoverImage, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Image.Source>
-                                <Binding Path="CoverImage">
+                                <Binding Path="CoverImage" Converter="{StaticResource ByteArrayToImageConverter}">
                                     <Binding.TargetNullValue>
                                         <DrawingImage/>
                                     </Binding.TargetNullValue>
