@@ -532,5 +532,20 @@ namespace TA_WPF.Views
                 LogHelper.LogError("打开修改车票窗口时出错", ex);
             }
         }
+
+        /// <summary>
+        /// 处理导入车票按钮点击事件，显示上下文菜单
+        /// </summary>
+        private void ImportTicketButton_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            if (button != null && button.ContextMenu != null)
+            {
+                button.ContextMenu.PlacementTarget = button;
+                button.ContextMenu.Placement = PlacementMode.Bottom;
+                button.ContextMenu.IsOpen = true;
+                e.Handled = true;
+            }
+        }
     }
 }
