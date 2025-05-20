@@ -112,7 +112,7 @@ namespace TA_WPF.Services
                 }
                 else { Debug.WriteLine($"[PdfImportService] Not enough lines to process station info (Index {stationLineIndex}). Total lines: {lines.Length}."); }
 
-                // --- 提取出发站和到达站拼音 (从第8行) ---
+                // --- 提取出发车站和到达车站拼音 (从第8行) ---
                 int pinyinLineIndex = 7; // 第8行索引
                 if (lines.Length > pinyinLineIndex)
                 {
@@ -307,7 +307,7 @@ namespace TA_WPF.Services
                     await _stationSearchService.InitializeAsync();
                 }
 
-                // 查找出发站信息
+                // 查找出发车站信息
                 if (!string.IsNullOrEmpty(ticket.DepartStation))
                 {
                     var departStation = await _stationSearchService.GetClosestStationMatchAsync(ticket.DepartStation);
@@ -318,7 +318,7 @@ namespace TA_WPF.Services
                     }
                 }
 
-                // 查找到达站信息
+                // 查找到达车站信息
                 if (!string.IsNullOrEmpty(ticket.ArriveStation))
                 {
                     var arriveStation = await _stationSearchService.GetClosestStationMatchAsync(ticket.ArriveStation);

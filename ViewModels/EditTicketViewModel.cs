@@ -58,14 +58,14 @@ namespace TA_WPF.ViewModels
                 // 设置检票口
                 CheckInLocation = _originalTicket.CheckInLocation;
 
-                // 设置出发站，直接赋值不触发校验
+                // 设置出发车站，直接赋值不触发校验
                 _isUpdatingDepartStation = true;
                 DepartStation = _originalTicket.DepartStation?.Replace("站", "");
                 DepartStationPinyin = _originalTicket.DepartStationPinyin;
                 DepartStationCode = _originalTicket.DepartStationCode;
                 _isUpdatingDepartStation = false;
 
-                // 设置到达站，直接赋值不触发校验
+                // 设置到达车站，直接赋值不触发校验
                 _isUpdatingArriveStation = true;
                 ArriveStation = _originalTicket.ArriveStation?.Replace("站", "");
                 ArriveStationPinyin = _originalTicket.ArriveStationPinyin;
@@ -240,9 +240,9 @@ namespace TA_WPF.ViewModels
                 bool departHasError = false;
                 bool arriveHasError = false;
 
-                // 3. 检测出发站和到达站信息
-                departHasError = !ValidateStationInfo(DepartStation, DepartStationCode, DepartStationPinyin, "出发站", errorMessages, _validationErrors);
-                arriveHasError = !ValidateStationInfo(ArriveStation, ArriveStationCode, ArriveStationPinyin, "到达站", errorMessages, _validationErrors);
+                // 3. 检测出发车站和到达车站信息
+                departHasError = !ValidateStationInfo(DepartStation, DepartStationCode, DepartStationPinyin, "出发车站", errorMessages, _validationErrors);
+                arriveHasError = !ValidateStationInfo(ArriveStation, ArriveStationCode, ArriveStationPinyin, "到达车站", errorMessages, _validationErrors);
 
                 // 4. 组合所有错误信息
                 if (_validationErrors.Count > 0 || departHasError || arriveHasError)
@@ -327,7 +327,7 @@ namespace TA_WPF.ViewModels
         /// <param name="stationName">车站名称</param>
         /// <param name="stationCode">车站代码</param>
         /// <param name="stationPinyin">车站拼音</param>
-        /// <param name="stationLabel">车站标签（用于错误消息，例如 "出发站"）</param>
+        /// <param name="stationLabel">车站标签（用于错误消息，例如 "出发车站"）</param>
         /// <param name="errorMessages">用于收集详细错误信息的 StringBuilder</param>
         /// <param name="validationErrors">用于收集简短错误信息的列表</param>
         /// <returns>如果验证通过则返回 true，否则返回 false</returns>
@@ -430,7 +430,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 重写处理站点输入框失去焦点事件的方法，确保初始加载时不触发验证
         /// </summary>
-        /// <param name="isDepartStation">是否为出发站</param>
+        /// <param name="isDepartStation">是否为出发车站</param>
         public override void OnStationLostFocus(bool isDepartStation)
         {
             if (_isInitialLoad) return;  // 初始加载时不执行校验

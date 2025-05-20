@@ -147,9 +147,9 @@
                          materialDesign:HintAssist.Hint="检票位置"
                          Margin="0,8,0,8"/>
 
-                <!-- 第二行：出发站、到达站 -->
+                <!-- 第二行：出发车站、到达车站 -->
                 <TextBlock Grid.Row="1" Grid.Column="0" 
-                           Text="出发站:" 
+                           Text="出发车站:" 
                            Style="{StaticResource FormLabelStyle}"/>
                 <Grid Grid.Row="1" Grid.Column="1" Margin="0,8,16,8">
                     <Grid.ColumnDefinitions>
@@ -160,7 +160,7 @@
                         <TextBox 
                              Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource FormSearchTextBoxStyle}"
-                             materialDesign:HintAssist.Hint="出发站"
+                             materialDesign:HintAssist.Hint="出发车站"
                              Tag="Depart"
                              InputMethod.IsInputMethodEnabled="True"
                              InputMethod.PreferredImeState="On"
@@ -211,7 +211,7 @@
                 </Grid>
 
                 <TextBlock Grid.Row="1" Grid.Column="2" 
-                           Text="到达站:" 
+                           Text="到达车站:" 
                            Style="{StaticResource FormLabelStyle}"/>
                 <Grid Grid.Row="1" Grid.Column="3" Margin="0,8,0,8">
                     <Grid.ColumnDefinitions>
@@ -222,7 +222,7 @@
                         <TextBox 
                              Text="{Binding ArriveStationSearchText, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource FormSearchTextBoxStyle}"
-                             materialDesign:HintAssist.Hint="到达站"
+                             materialDesign:HintAssist.Hint="到达车站"
                              Tag="Arrive"
                              InputMethod.IsInputMethodEnabled="True"
                              InputMethod.PreferredImeState="On"
@@ -272,26 +272,26 @@
                                Margin="4,0,0,0"/>
                 </Grid>
 
-                <!-- 第三行：出发站拼音、到达站拼音 -->
+                <!-- 第三行：出发车站拼音、到达车站拼音 -->
                 <TextBlock Grid.Row="2" Grid.Column="0" 
-                           Text="出发站拼音:" 
+                           Text="出发车站拼音:" 
                            Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Grid.Row="2" Grid.Column="1" 
                          Text="{Binding DepartStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
                          Style="{StaticResource FormTextBoxStyle}"
-                         materialDesign:HintAssist.Hint="出发站拼音"
+                         materialDesign:HintAssist.Hint="出发车站拼音"
                          Margin="0,8,16,8"/>
 
                 <TextBlock Grid.Row="2" Grid.Column="2" 
-                           Text="到达站拼音:" 
+                           Text="到达车站拼音:" 
                            Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Grid.Row="2" Grid.Column="3" 
                          Text="{Binding ArriveStationPinyin, UpdateSourceTrigger=PropertyChanged}" 
                          Style="{StaticResource FormTextBoxStyle}"
-                         materialDesign:HintAssist.Hint="到达站拼音"
+                         materialDesign:HintAssist.Hint="到达车站拼音"
                          Margin="0,8,0,8"/>
 
-                <!-- 第四行：金额、出发站代码 -->
+                <!-- 第四行：金额、出发车站代码 -->
                 <TextBlock Grid.Row="3" Grid.Column="0" 
                            Text="金额:" 
                            Style="{StaticResource FormLabelStyle}"/>
@@ -330,22 +330,22 @@
                 </Grid>
 
                 <TextBlock Grid.Row="3" Grid.Column="2" 
-                           Text="出发站代码:" 
+                           Text="出发车站代码:" 
                            Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Grid.Row="3" Grid.Column="3" 
                          Text="{Binding DepartStationCode, UpdateSourceTrigger=PropertyChanged}" 
                          Style="{StaticResource FormTextBoxStyle}"
-                         materialDesign:HintAssist.Hint="出发站代码"
+                         materialDesign:HintAssist.Hint="出发车站代码"
                          Margin="0,8,0,8"/>
 
-                <!-- 第五行：到达站代码、出发日期 -->
+                <!-- 第五行：到达车站代码、出发日期 -->
                 <TextBlock Grid.Row="4" Grid.Column="0" 
-                           Text="到达站代码:" 
+                           Text="到达车站代码:" 
                            Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Grid.Row="4" Grid.Column="1" 
                          Text="{Binding ArriveStationCode, UpdateSourceTrigger=PropertyChanged}" 
                          Style="{StaticResource FormTextBoxStyle}"
-                         materialDesign:HintAssist.Hint="到达站代码"
+                         materialDesign:HintAssist.Hint="到达车站代码"
                          Margin="0,8,16,8"/>
 
                 <TextBlock Grid.Row="4" Grid.Column="2" 

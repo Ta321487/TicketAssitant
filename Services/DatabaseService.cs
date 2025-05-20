@@ -644,7 +644,7 @@ namespace TA_WPF.Services
         /// <summary>
         /// 根据筛选条件获取车票总数
         /// </summary>
-        /// <param name="departStation">出发站</param>
+        /// <param name="departStation">出发车站</param>
         /// <param name="trainNo">车次号</param>
         /// <param name="year">出发年份</param>
         /// <param name="isAndCondition">是否使用AND条件</param>
@@ -665,7 +665,7 @@ namespace TA_WPF.Services
                         return await GetTotalTrainRideInfoCountAsync();
                     }
 
-                    // 添加出发站筛选条件
+                    // 添加出发车站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
                         // 确保站名以"站"结尾
@@ -706,7 +706,7 @@ namespace TA_WPF.Services
                 }
                 else // OR 条件
                 {
-                    // 添加出发站筛选条件
+                    // 添加出发车站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
                         // 确保站名以"站"结尾
@@ -774,7 +774,7 @@ namespace TA_WPF.Services
         /// </summary>
         /// <param name="pageNumber">页码</param>
         /// <param name="pageSize">每页记录数</param>
-        /// <param name="departStation">出发站</param>
+        /// <param name="departStation">出发车站</param>
         /// <param name="trainNo">车次号</param>
         /// <param name="year">出发年份</param>
         /// <param name="isAndCondition">是否使用AND条件</param>
@@ -797,7 +797,7 @@ namespace TA_WPF.Services
                         return await GetPagedTrainRideInfosAsync(pageNumber, pageSize);
                     }
 
-                    // 添加出发站筛选条件
+                    // 添加出发车站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
                         // 确保站名以"站"结尾
@@ -838,7 +838,7 @@ namespace TA_WPF.Services
                 }
                 else // OR 条件
                 {
-                    // 添加出发站筛选条件
+                    // 添加出发车站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
                         // 确保站名以"站"结尾
@@ -1304,9 +1304,9 @@ namespace TA_WPF.Services
         }
 
         /// <summary>
-        /// 获取所有不同的出发站
+        /// 获取所有不同的出发车站
         /// </summary>
-        /// <returns>不同出发站列表</returns>
+        /// <returns>不同出发车站列表</returns>
         public async Task<List<string>> GetDistinctDepartStationsAsync()
         {
             try
@@ -1335,7 +1335,44 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"获取出发站列表时出错: {ex.Message}");
+                Debug.WriteLine($"获取出发车站列表时出错: {ex.Message}");
+                return new List<string>();
+            }
+        }
+        
+        /// <summary>
+        /// 获取所有不同的到达车站
+        /// </summary>
+        /// <returns>不同到达车站列表</returns>
+        public async Task<List<string>> GetDistinctArriveStationsAsync()
+        {
+            try
+            {
+                var stations = new List<string>();
+
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = "SELECT DISTINCT arrive_station FROM train_ride_info WHERE arrive_station IS NOT NULL ORDER BY arrive_station";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                string stationName = reader.GetString(0);
+                                // 使用工具类确保站名以"站"结尾
+                                stations.Add(StationNameHelper.EnsureStationSuffix(stationName));
+                            }
+                        }
+                    }
+                }
+
+                return stations;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"获取到达车站列表时出错: {ex.Message}");
                 return new List<string>();
             }
         }
@@ -2083,6 +2120,330 @@ namespace TA_WPF.Services
             {
                 LogHelper.LogError($"批量更新收藏夹排序顺序失败: {ex.Message}", ex);
                 Debug.WriteLine($"批量更新收藏夹排序顺序失败: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 获取收藏夹中已有的车票ID列表
+        /// </summary>
+        /// <param name="collectionId">收藏夹ID</param>
+        /// <returns>车票ID列表</returns>
+        public async Task<List<int>> GetCollectionTicketIdsAsync(int collectionId)
+        {
+            var ticketIds = new List<int>();
+            
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = "SELECT ticket_id FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@CollectionId", collectionId);
+                        
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                ticketIds.Add(reader.GetInt32(reader.GetOrdinal("ticket_id")));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取收藏夹中车票ID列表失败: {ex.Message}", ex);
+                Debug.WriteLine($"获取收藏夹中车票ID列表失败: {ex.Message}");
+            }
+            
+            return ticketIds;
+        }
+
+        /// <summary>
+        /// 获取收藏夹中的车票
+        /// </summary>
+        /// <param name="collectionId">收藏夹ID</param>
+        /// <param name="pageNumber">页码</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <returns>车票列表</returns>
+        public async Task<List<TrainRideInfo>> GetCollectionTicketsAsync(int collectionId, int pageNumber = 1, int pageSize = 10)
+        {
+            var tickets = new List<TrainRideInfo>();
+            
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"
+                        SELECT t.* 
+                        FROM train_ride_info t
+                        INNER JOIN collection_mapped_tickets_info m ON t.id = m.ticket_id
+                        WHERE m.collection_id = @CollectionId
+                        ORDER BY m.add_time DESC
+                        LIMIT @Offset, @PageSize";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@CollectionId", collectionId);
+                        command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                        command.Parameters.AddWithValue("@PageSize", pageSize);
+                        
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                tickets.Add(MapTrainRideInfo(reader));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取收藏夹中车票失败: {ex.Message}", ex);
+                Debug.WriteLine($"获取收藏夹中车票失败: {ex.Message}");
+            }
+            
+            return tickets;
+        }
+
+        /// <summary>
+        /// 获取收藏夹中的车票总数
+        /// </summary>
+        /// <param name="collectionId">收藏夹ID</param>
+        /// <returns>车票总数</returns>
+        public async Task<int> GetCollectionTicketCountAsync(int collectionId)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = "SELECT COUNT(*) FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@CollectionId", collectionId);
+                        object result = await command.ExecuteScalarAsync();
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取收藏夹中车票总数失败: {ex.Message}", ex);
+                Debug.WriteLine($"获取收藏夹中车票总数失败: {ex.Message}");
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// 将车票添加到收藏夹
+        /// </summary>
+        /// <param name="collectionId">收藏夹ID</param>
+        /// <param name="ticketId">车票ID</param>
+        /// <returns>是否添加成功</returns>
+        public async Task<bool> AddTicketToCollectionAsync(int collectionId, int ticketId)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 检查是否已存在
+                    string checkQuery = "SELECT COUNT(*) FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId AND ticket_id = @TicketId";
+                    using (var checkCommand = new MySqlCommand(checkQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@CollectionId", collectionId);
+                        checkCommand.Parameters.AddWithValue("@TicketId", ticketId);
+                        int count = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
+                        if (count > 0)
+                        {
+                            // 已存在，视为成功
+                            return true;
+                        }
+                    }
+                    
+                    // 添加映射
+                    string insertQuery = @"
+                        INSERT INTO collection_mapped_tickets_info (collection_id, ticket_id, add_time)
+                        VALUES (@CollectionId, @TicketId, @AddTime)";
+                    
+                    using (var command = new MySqlCommand(insertQuery, connection))
+                    {
+                        command.Parameters.AddWithValue("@CollectionId", collectionId);
+                        command.Parameters.AddWithValue("@TicketId", ticketId);
+                        command.Parameters.AddWithValue("@AddTime", DateTime.Now);
+                        
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"添加车票到收藏夹失败: {ex.Message}", ex);
+                Debug.WriteLine($"添加车票到收藏夹失败: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 批量添加车票到收藏夹
+        /// </summary>
+        /// <param name="mappings">收藏夹与车票的映射列表</param>
+        /// <returns>添加成功的数量</returns>
+        public async Task<int> AddTicketsToCollectionAsync(List<CollectionMappedTicketInfo> mappings)
+        {
+            if (mappings == null || mappings.Count == 0)
+            {
+                return 0;
+            }
+            
+            int successCount = 0;
+            
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 使用事务以提高批量插入效率
+                    using (var transaction = await connection.BeginTransactionAsync())
+                    {
+                        string insertQuery = @"
+                            INSERT INTO collection_mapped_tickets_info (collection_id, ticket_id, add_time)
+                            VALUES (@CollectionId, @TicketId, @AddTime)";
+                        
+                        using (var command = new MySqlCommand(insertQuery, connection, transaction as MySqlTransaction))
+                        {
+                            // 创建可重用的参数
+                            var collectionIdParam = command.Parameters.Add("@CollectionId", MySqlDbType.Int32);
+                            var ticketIdParam = command.Parameters.Add("@TicketId", MySqlDbType.Int32);
+                            var addTimeParam = command.Parameters.Add("@AddTime", MySqlDbType.DateTime);
+                            
+                            foreach (var mapping in mappings)
+                            {
+                                // 检查是否已存在
+                                string checkQuery = "SELECT COUNT(*) FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId AND ticket_id = @TicketId";
+                                using (var checkCommand = new MySqlCommand(checkQuery, connection, transaction as MySqlTransaction))
+                                {
+                                    checkCommand.Parameters.AddWithValue("@CollectionId", mapping.CollectionId);
+                                    checkCommand.Parameters.AddWithValue("@TicketId", mapping.TicketId);
+                                    int count = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
+                                    if (count > 0)
+                                    {
+                                        // 已存在，跳过
+                                        continue;
+                                    }
+                                }
+                                
+                                // 设置参数值
+                                collectionIdParam.Value = mapping.CollectionId;
+                                ticketIdParam.Value = mapping.TicketId;
+                                addTimeParam.Value = mapping.AddTime;
+                                
+                                // 执行插入
+                                int rowsAffected = await command.ExecuteNonQueryAsync();
+                                if (rowsAffected > 0)
+                                {
+                                    successCount++;
+                                }
+                            }
+                        }
+                        
+                        // 提交事务
+                        await transaction.CommitAsync();
+                    }
+                    
+                    // 更新收藏夹中的车票数量
+                    if (successCount > 0 && mappings.Count > 0)
+                    {
+                        await UpdateCollectionTicketCountAsync(mappings[0].CollectionId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"批量添加车票到收藏夹失败: {ex.Message}", ex);
+                Debug.WriteLine($"批量添加车票到收藏夹失败: {ex.Message}");
+            }
+            
+            return successCount;
+        }
+
+        /// <summary>
+        /// 从收藏夹中移除车票
+        /// </summary>
+        /// <param name="collectionId">收藏夹ID</param>
+        /// <param name="ticketIds">车票ID列表</param>
+        /// <returns>是否移除成功</returns>
+        public async Task<bool> RemoveTicketsFromCollectionAsync(int collectionId, List<int> ticketIds)
+        {
+            if (ticketIds == null || ticketIds.Count == 0)
+            {
+                return true;
+            }
+            
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 构建包含所有ID的IN子句
+                    string idList = string.Join(",", ticketIds);
+                    string query = $"DELETE FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId AND ticket_id IN ({idList})";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@CollectionId", collectionId);
+                        
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        
+                        // 更新收藏夹中的车票数量
+                        await UpdateCollectionTicketCountAsync(collectionId);
+                        
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"从收藏夹中移除车票失败: {ex.Message}", ex);
+                Debug.WriteLine($"从收藏夹中移除车票失败: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 更新收藏夹中的车票数量
+        /// </summary>
+        /// <param name="collectionId">收藏夹ID</param>
+        /// <returns>是否更新成功</returns>
+        private async Task<bool> UpdateCollectionTicketCountAsync(int collectionId)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 获取当前车票数量
+                    int ticketCount = await GetCollectionTicketCountAsync(collectionId);
+                    
+                    // 更新收藏夹中的车票数量字段
+                    string query = "UPDATE ticket_collections_info SET update_time = @UpdateTime WHERE id = @CollectionId";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@CollectionId", collectionId);
+                        command.Parameters.AddWithValue("@UpdateTime", DateTime.Now);
+                        
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"更新收藏夹车票数量失败: {ex.Message}", ex);
+                Debug.WriteLine($"更新收藏夹车票数量失败: {ex.Message}");
                 return false;
             }
         }

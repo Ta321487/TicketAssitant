@@ -131,21 +131,21 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- 出发站 -->
+                <!-- 出发车站 -->
                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                    <TextBlock Text="出发站" Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                    <TextBlock Text="出发车站" Style="{StaticResource MaterialDesignBody1TextBlock}" 
                               FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" Margin="0,0,0,4"/>
                     <Grid>
                         <TextBox Text="{Binding DepartStationSearchText, UpdateSourceTrigger=PropertyChanged}"
                                     Style="{StaticResource EnhancedMaterialDesignOutlinedTextBox}"
-                                    materialDesign:HintAssist.Hint="输入出发站"
+                                    materialDesign:HintAssist.Hint="输入出发车站"
                                     InputMethod.IsInputMethodEnabled="True"
                                     InputMethod.PreferredImeState="On"
                                     InputMethod.PreferredImeConversionMode="Native"/>
                         <Button Style="{StaticResource MaterialDesignIconButton}"
                                 Command="{Binding ClearDepartStationCommand}"
-                                ToolTip="清空出发站"
-                                ToolTipService.ToolTip="清空出发站"
+                                ToolTip="清空出发车站"
+                                ToolTipService.ToolTip="清空出发车站"
                                 ToolTipService.InitialShowDelay="500"
                                 Width="32" Height="32"
                                 Padding="4"

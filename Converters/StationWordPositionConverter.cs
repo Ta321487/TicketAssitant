@@ -28,20 +28,20 @@ namespace TA_WPF.Converters
 
                 double baseX = double.Parse(parts[0]);
                 double baseY = double.Parse(parts[1]);
-                double unused1 = double.Parse(parts[2]); // 用于判断是出发站还是到达站
+                double unused1 = double.Parse(parts[2]); // 用于判断是出发车站还是到达车站
 
                 // 车站名称长度
                 int length = stationName.Length;
 
-                // 判断是出发站还是到达站
-                bool isDepartStation = unused1 > 400; // 出发站的第三个参数通常大于400
+                // 判断是出发车站还是到达车站
+                bool isDepartStation = unused1 > 400; // 出发车站的第三个参数通常大于400
 
                 // 根据站名字数和位置调整"站"字水平位置
                 double adjustedX = baseX;
 
                 if (isDepartStation)
                 {
-                    // 出发站调整 - 根据实际图片中的位置
+                    // 出发车站调整 - 根据实际图片中的位置
                     switch (length)
                     {
                         case 1: // 单字站名 - 参考"宋站"的图片
@@ -66,7 +66,7 @@ namespace TA_WPF.Converters
                 }
                 else
                 {
-                    // 到达站调整 - 根据实际图片中的位置
+                    // 到达车站调整 - 根据实际图片中的位置
                     switch (length)
                     {
                         case 1: // 单字站名 - 参考"宋站"的图片

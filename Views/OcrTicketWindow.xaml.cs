@@ -341,7 +341,7 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 出发站失去焦点时处理
+        /// 出发车站失去焦点时处理
         /// </summary>
         private void DepartStation_LostFocus(object sender, RoutedEventArgs e)
         {
@@ -349,7 +349,7 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 到达站失去焦点时处理
+        /// 到达车站失去焦点时处理
         /// </summary>
         private void ArriveStation_LostFocus(object sender, RoutedEventArgs e)
         {

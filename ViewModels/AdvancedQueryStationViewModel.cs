@@ -217,7 +217,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"加载我的出发站列表时出错: {ex.Message}", ex);
+                LogHelper.LogError($"加载我的出发车站列表时出错: {ex.Message}", ex);
             }
         }
 

@@ -204,7 +204,7 @@ namespace TA_WPF.ViewModels
             };
             _selectedYearOption = _yearOptions[1]; // 选择当前年
 
-            // 初始化出发站列表
+            // 初始化出发车站列表
             _departStations = new ObservableCollection<DepartStationItem>
             {
                 new DepartStationItem("北京"),

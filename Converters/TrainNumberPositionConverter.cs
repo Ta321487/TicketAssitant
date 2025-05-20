@@ -19,7 +19,7 @@ namespace TA_WPF.Converters
             double top = 65; // 垂直位置保持不变
             double horizontalPosition = 0; // 水平位置将根据站名长度计算
 
-            // 计算出发站"站"字的位置
+            // 计算出发车站"站"字的位置
             double departStationEndPosition = 0;
             switch (departStationName.Length)
             {
@@ -43,7 +43,7 @@ namespace TA_WPF.Converters
                     break;
             }
 
-            // 计算到达站第一个字的位置
+            // 计算到达车站第一个字的位置
             double arriveStationStartPosition = 530;
 
             // 计算中心点位置

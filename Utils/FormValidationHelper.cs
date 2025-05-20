@@ -35,40 +35,40 @@ namespace TA_WPF.Utils
                 isValid = false;
             }
 
-            // 验证出发站和到达站
+            // 验证出发车站和到达车站
             if (string.IsNullOrWhiteSpace(ticket.DepartStation))
             {
-                errors.Add("未填写出发站");
+                errors.Add("未填写出发车站");
                 isValid = false;
             }
 
             if (string.IsNullOrWhiteSpace(ticket.ArriveStation))
             {
-                errors.Add("未填写到达站");
+                errors.Add("未填写到达车站");
                 isValid = false;
             }
 
             if (string.IsNullOrWhiteSpace(ticket.DepartStationPinyin))
             {
-                errors.Add("未填写出发站拼音");
+                errors.Add("未填写出发车站拼音");
                 isValid = false;
             }
 
             if (string.IsNullOrWhiteSpace(ticket.ArriveStationPinyin))
             {
-                errors.Add("未填写到达站拼音");
+                errors.Add("未填写到达车站拼音");
                 isValid = false;
             }
 
             if (string.IsNullOrWhiteSpace(ticket.DepartStationCode))
             {
-                errors.Add("未填写出发站代码");
+                errors.Add("未填写出发车站代码");
                 isValid = false;
             }
 
             if (string.IsNullOrWhiteSpace(ticket.ArriveStationCode))
             {
-                errors.Add("未填写到达站代码");
+                errors.Add("未填写到达车站代码");
                 isValid = false;
             }
 

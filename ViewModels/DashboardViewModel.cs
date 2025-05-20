@@ -982,7 +982,7 @@ namespace TA_WPF.ViewModels
                                                          t.DepartDate.Value >= StartDate &&
                                                          t.DepartDate.Value <= EndDate);
 
-                // 更新最常用出发站
+                // 更新最常用出发车站
                 var departStationGroups = _allTickets
                     .Where(t => !string.IsNullOrEmpty(t.DepartStation))
                     .GroupBy(t => t.DepartStation)
@@ -990,7 +990,7 @@ namespace TA_WPF.ViewModels
 
                 MostFrequentDepartureStation = departStationGroups.Any() ? departStationGroups.First().Key : "无数据";
 
-                // 更新最近出发站
+                // 更新最近出发车站
                 var lastTicket = _allTickets
                     .Where(t => t.DepartDate.HasValue && !string.IsNullOrEmpty(t.DepartStation))
                     .OrderByDescending(t => t.DepartDate)
@@ -998,7 +998,7 @@ namespace TA_WPF.ViewModels
 
                 LastDepartureStation = lastTicket != null ? lastTicket.DepartStation : "无数据";
 
-                // 更新最近到达站
+                // 更新最近到达车站
                 var lastArrivalTicket = _allTickets
                     .Where(t => t.DepartDate.HasValue && !string.IsNullOrEmpty(t.ArriveStation))
                     .OrderByDescending(t => t.DepartDate)
@@ -2486,12 +2486,12 @@ namespace TA_WPF.ViewModels
     public class RouteData
     {
         /// <summary>
-        /// 出发站
+        /// 出发车站
         /// </summary>
         public string From { get; set; }
 
         /// <summary>
-        /// 到达站
+        /// 到达车站
         /// </summary>
         public string To { get; set; }
 

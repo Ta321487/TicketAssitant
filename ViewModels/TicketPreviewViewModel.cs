@@ -519,7 +519,7 @@ namespace TA_WPF.ViewModels
 
         public string ArriveStationName => _selectedTicket?.ArriveStation?.Replace("站", "") ?? string.Empty;
 
-        // 处理出发站名的字间距展示
+        // 处理出发车站名的字间距展示
         public string DepartStationWithSpacing
         {
             get
@@ -530,7 +530,7 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 处理到达站名的字间距展示
+        // 处理到达车站名的字间距展示
         public string ArriveStationWithSpacing
         {
             get
@@ -675,7 +675,7 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 出发站拼音的水平位置
+        // 出发车站拼音的水平位置
         public double DepartStationPinyinPosition
         {
             get
@@ -683,7 +683,7 @@ namespace TA_WPF.ViewModels
                 if (string.IsNullOrEmpty(_selectedTicket?.DepartStationPinyin))
                     return 83;
 
-                // 根据出发站名称的长度计算拼音的居中位置
+                // 根据出发车站名称的长度计算拼音的居中位置
                 var name = DepartStationName;
                 if (string.IsNullOrEmpty(name)) return 83;
 
@@ -699,7 +699,7 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 到达站拼音的水平位置
+        // 到达车站拼音的水平位置
         public double ArriveStationPinyinPosition
         {
             get
@@ -707,7 +707,7 @@ namespace TA_WPF.ViewModels
                 if (string.IsNullOrEmpty(_selectedTicket?.ArriveStationPinyin))
                     return 540;
 
-                // 根据到达站名称的长度计算拼音的居中位置
+                // 根据到达车站名称的长度计算拼音的居中位置
                 var name = ArriveStationName;
                 if (string.IsNullOrEmpty(name)) return 540;
 
@@ -751,7 +751,7 @@ namespace TA_WPF.ViewModels
         {
             get
             {
-                // 获取出发站"站"字位置
+                // 获取出发车站"站"字位置
                 double departStationEndPosition = 0;
                 switch (DepartStationName?.Length ?? 0)
                 {
@@ -775,7 +775,7 @@ namespace TA_WPF.ViewModels
                         break;
                 }
 
-                // 到达站位置固定
+                // 到达车站位置固定
                 double arriveStationStartPosition = 530;
 
                 // 计算中心点位置
@@ -1185,7 +1185,7 @@ namespace TA_WPF.ViewModels
                 var grid = window.FindName("PreviewGrid") as Grid;
                 if (grid == null) return;
 
-                // 构建默认文件名：出发站-车次号-到达站
+                // 构建默认文件名：出发车站-车次号-到达车站
                 string defaultFileName = $"{_selectedTicket.DepartStation?.Replace("站", "")}-{_selectedTicket.TrainNo}-{_selectedTicket.ArriveStation?.Replace("站", "")}";
 
                 // 创建保存文件对话框
@@ -1330,21 +1330,21 @@ namespace TA_WPF.ViewModels
                 { "TicketNumberMargin", new Thickness(55, 20, 0, 0) },
                 // 检票口位置
                 { "CheckInLocationMargin", new Thickness(510, 20, 0, 0) },
-                // 出发站站名位置
+                // 出发车站站名位置
                 { "DepartStationMargin", new Thickness(60, 60, 0, 0) },
-                // 出发站拼音位置基础值
+                // 出发车站拼音位置基础值
                 { "DepartStationPinyinBaseMargin", new Thickness(-10, 105, 0, 0) },
-                // 出发站"站"字位置参数
+                // 出发车站"站"字位置参数
                 { "DepartStationWordParam", "285,63,513,362" },
                 // 车次号位置
                 { "TrainNumberMargin", new Thickness(356, 60, 0, 0) },
                 // 车次号下箭头位置
                 { "TrainArrowMargin", new Thickness(0, 100, 0, 0) },
-                // 到达站站名位置
+                // 到达车站站名位置
                 { "ArriveStationMargin", new Thickness(540, 60, 0, 0) },
-                // 到达站拼音位置基础值
+                // 到达车站拼音位置基础值
                 { "ArriveStationPinyinBaseMargin", new Thickness(0, 105, 0, 0) },
-                // 到达站"站"字位置参数
+                // 到达车站"站"字位置参数
                 { "ArriveStationWordParam", "763,63,25,351" },
                 // 年月日显示位置
                 { "DateDisplayMargin", new Thickness(60, 145, 0, 0) },
@@ -1608,13 +1608,13 @@ namespace TA_WPF.ViewModels
         // 检票口位置
         public Thickness CheckInLocationMargin => (Thickness)_currentLayout["CheckInLocationMargin"];
 
-        // 出发站站名位置
+        // 出发车站站名位置
         public Thickness DepartStationMargin => (Thickness)_currentLayout["DepartStationMargin"];
 
-        // 出发站拼音位置基础值
+        // 出发车站拼音位置基础值
         public Thickness DepartStationPinyinBaseMargin => (Thickness)_currentLayout["DepartStationPinyinBaseMargin"];
 
-        // 出发站"站"字位置参数
+        // 出发车站"站"字位置参数
         public string DepartStationWordParam => (string)_currentLayout["DepartStationWordParam"];
 
         // 车次号位置
@@ -1623,13 +1623,13 @@ namespace TA_WPF.ViewModels
         // 车次号下箭头位置
         public Thickness TrainArrowMargin => (Thickness)_currentLayout["TrainArrowMargin"];
 
-        // 到达站站名位置
+        // 到达车站站名位置
         public Thickness ArriveStationMargin => (Thickness)_currentLayout["ArriveStationMargin"];
 
-        // 到达站拼音位置基础值
+        // 到达车站拼音位置基础值
         public Thickness ArriveStationPinyinBaseMargin => (Thickness)_currentLayout["ArriveStationPinyinBaseMargin"];
 
-        // 到达站"站"字位置参数
+        // 到达车站"站"字位置参数
         public string ArriveStationWordParam => (string)_currentLayout["ArriveStationWordParam"];
 
         // 年月日显示位置

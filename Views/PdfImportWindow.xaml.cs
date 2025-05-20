@@ -66,7 +66,7 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 出发站列表选择变更事件处理
+        /// 出发车站列表选择变更事件处理
         /// </summary>
         private void DepartStationListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -77,7 +77,7 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 到达站列表选择变更事件处理
+        /// 到达车站列表选择变更事件处理
         /// </summary>
         private void ArriveStationListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

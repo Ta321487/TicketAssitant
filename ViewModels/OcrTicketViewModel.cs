@@ -465,7 +465,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站
+        /// 出发车站
         /// </summary>
         public string DepartStation
         {
@@ -481,7 +481,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站
+        /// 到达车站
         /// </summary>
         public string ArriveStation
         {
@@ -497,7 +497,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站拼音
+        /// 出发车站拼音
         /// </summary>
         public string DepartStationPinyin
         {
@@ -513,7 +513,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站拼音
+        /// 到达车站拼音
         /// </summary>
         public string ArriveStationPinyin
         {
@@ -545,7 +545,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站代码
+        /// 出发车站代码
         /// </summary>
         public string DepartStationCode
         {
@@ -561,7 +561,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站代码
+        /// 到达车站代码
         /// </summary>
         public string ArriveStationCode
         {
@@ -805,7 +805,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站搜索关键词
+        /// 出发车站搜索关键词
         /// </summary>
         public string DepartStationSearchText
         {
@@ -827,7 +827,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站搜索关键词
+        /// 到达车站搜索关键词
         /// </summary>
         public string ArriveStationSearchText
         {
@@ -849,7 +849,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站下拉列表是否打开
+        /// 出发车站下拉列表是否打开
         /// </summary>
         public bool IsDepartStationDropdownOpen
         {
@@ -865,7 +865,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站下拉列表是否打开
+        /// 到达车站下拉列表是否打开
         /// </summary>
         public bool IsArriveStationDropdownOpen
         {
@@ -881,7 +881,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站推荐列表
+        /// 出发车站推荐列表
         /// </summary>
         public ObservableCollection<StationInfo> DepartStationSuggestions
         {
@@ -897,7 +897,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站推荐列表
+        /// 到达车站推荐列表
         /// </summary>
         public ObservableCollection<StationInfo> ArriveStationSuggestions
         {
@@ -933,12 +933,12 @@ namespace TA_WPF.ViewModels
         public ObservableCollection<string> SeatTypes { get; }
 
         /// <summary>
-        /// 选择出发站命令
+        /// 选择出发车站命令
         /// </summary>
         public ICommand SelectDepartStationCommand { get; }
 
         /// <summary>
-        /// 选择到达站命令
+        /// 选择到达车站命令
         /// </summary>
         public ICommand SelectArriveStationCommand { get; }
 
@@ -1345,7 +1345,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站是否启用
+        /// 出发车站是否启用
         /// </summary>
         public bool IsDepartStationEnabled
         {
@@ -1361,7 +1361,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站是否启用
+        /// 到达车站是否启用
         /// </summary>
         public bool IsArriveStationEnabled
         {
@@ -1377,7 +1377,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站拼音是否启用
+        /// 出发车站拼音是否启用
         /// </summary>
         public bool IsDepartStationPinyinEnabled
         {
@@ -1393,7 +1393,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站拼音是否启用
+        /// 到达车站拼音是否启用
         /// </summary>
         public bool IsArriveStationPinyinEnabled
         {
@@ -1425,7 +1425,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站代码是否启用
+        /// 出发车站代码是否启用
         /// </summary>
         public bool IsDepartStationCodeEnabled
         {
@@ -1441,7 +1441,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站代码是否启用
+        /// 到达车站代码是否启用
         /// </summary>
         public bool IsArriveStationCodeEnabled
         {
@@ -2280,17 +2280,17 @@ namespace TA_WPF.ViewModels
                 bool departHasError = false;
                 bool arriveHasError = false;
 
-                // 3. 检测出发站和到达站信息
+                // 3. 检测出发车站和到达车站信息
                 // 只有在用户填写了站名的情况下才检测代码和拼音是否匹配
                 if (!string.IsNullOrWhiteSpace(DepartStation))
                 {
-                    // 通过站名查找出发站信息
+                    // 通过站名查找出发车站信息
                     var departByName = _stationSearchService.Stations
                         .FirstOrDefault(s => s.StationName == DepartStation ||
                                             s.StationName == DepartStation + "站" ||
                                             s.StationName?.Replace("站", "") == DepartStation);
 
-                    // 通过代码查找出发站信息
+                    // 通过代码查找出发车站信息
                     var departByCode = !string.IsNullOrWhiteSpace(DepartStationCode) ?
                         _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == DepartStationCode) : null;
 
@@ -2301,16 +2301,16 @@ namespace TA_WPF.ViewModels
                         if (string.IsNullOrWhiteSpace(DepartStationCode))
                         {
                             // 将代码为空的情况添加到验证错误
-                            if (!validationErrors.Any(e => e.Contains("未填写出发站代码")))
+                            if (!validationErrors.Any(e => e.Contains("未填写出发车站代码")))
                             {
-                                validationErrors.Add("未填写出发站代码");
+                                validationErrors.Add("未填写出发车站代码");
                             }
                         }
                         else if (departByCode == null || departByName.Id != departByCode.Id)
                         {
                             // 代码不匹配
                             departHasError = true;
-                            errorMessages.AppendLine($"出发站【{DepartStation}】的代码错误：");
+                            errorMessages.AppendLine($"出发车站【{DepartStation}】的代码错误：");
                             errorMessages.AppendLine($"- 当前填写的代码【{DepartStationCode}】与车站不匹配");
                             errorMessages.AppendLine($"- 正确的代码应为：【{departByName.StationCode}】");
                             errorMessages.AppendLine();
@@ -2320,16 +2320,16 @@ namespace TA_WPF.ViewModels
                         if (string.IsNullOrWhiteSpace(DepartStationPinyin))
                         {
                             // 将拼音为空的情况添加到验证错误
-                            if (!validationErrors.Any(e => e.Contains("未填写出发站拼音")))
+                            if (!validationErrors.Any(e => e.Contains("未填写出发车站拼音")))
                             {
-                                validationErrors.Add("未填写出发站拼音");
+                                validationErrors.Add("未填写出发车站拼音");
                             }
                         }
                         else if (DepartStationPinyin != departByName.StationPinyin)
                         {
                             // 拼音不匹配
                             departHasError = true;
-                            errorMessages.AppendLine($"出发站【{DepartStation}】的拼音错误：");
+                            errorMessages.AppendLine($"出发车站【{DepartStation}】的拼音错误：");
                             errorMessages.AppendLine($"- 当前填写的拼音【{DepartStationPinyin}】与车站记录不匹配");
                             errorMessages.AppendLine($"- 正确的拼音应为：【{departByName.StationPinyin}】");
                             errorMessages.AppendLine();
@@ -2339,21 +2339,21 @@ namespace TA_WPF.ViewModels
                     else if (departByName == null && departByCode == null)
                     {
                         departHasError = true;
-                        errorMessages.AppendLine($"出发站【{DepartStation}】在车站中心不存在，请先添加该车站信息。");
+                        errorMessages.AppendLine($"出发车站【{DepartStation}】在车站中心不存在，请先添加该车站信息。");
                         errorMessages.AppendLine();
                     }
                 }
 
-                // 检测到达站，逻辑与出发站类似
+                // 检测到达车站，逻辑与出发车站类似
                 if (!string.IsNullOrWhiteSpace(ArriveStation))
                 {
-                    // 通过站名查找到达站信息
+                    // 通过站名查找到达车站信息
                     var arriveByName = _stationSearchService.Stations
                         .FirstOrDefault(s => s.StationName == ArriveStation ||
                                             s.StationName == ArriveStation + "站" ||
                                             s.StationName?.Replace("站", "") == ArriveStation);
 
-                    // 通过代码查找到达站信息
+                    // 通过代码查找到达车站信息
                     var arriveByCode = !string.IsNullOrWhiteSpace(ArriveStationCode) ?
                         _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == ArriveStationCode) : null;
 
@@ -2364,16 +2364,16 @@ namespace TA_WPF.ViewModels
                         if (string.IsNullOrWhiteSpace(ArriveStationCode))
                         {
                             // 将代码为空的情况添加到验证错误
-                            if (!validationErrors.Any(e => e.Contains("未填写到达站代码")))
+                            if (!validationErrors.Any(e => e.Contains("未填写到达车站代码")))
                             {
-                                validationErrors.Add("未填写到达站代码");
+                                validationErrors.Add("未填写到达车站代码");
                             }
                         }
                         else if (arriveByCode == null || arriveByName.Id != arriveByCode.Id)
                         {
                             // 代码不匹配
                             arriveHasError = true;
-                            errorMessages.AppendLine($"到达站【{ArriveStation}】的代码错误：");
+                            errorMessages.AppendLine($"到达车站【{ArriveStation}】的代码错误：");
                             errorMessages.AppendLine($"- 当前填写的代码【{ArriveStationCode}】与车站不匹配");
                             errorMessages.AppendLine($"- 正确的代码应为：【{arriveByName.StationCode}】");
                             errorMessages.AppendLine();
@@ -2383,16 +2383,16 @@ namespace TA_WPF.ViewModels
                         if (string.IsNullOrWhiteSpace(ArriveStationPinyin))
                         {
                             // 将拼音为空的情况添加到验证错误
-                            if (!validationErrors.Any(e => e.Contains("未填写到达站拼音")))
+                            if (!validationErrors.Any(e => e.Contains("未填写到达车站拼音")))
                             {
-                                validationErrors.Add("未填写到达站拼音");
+                                validationErrors.Add("未填写到达车站拼音");
                             }
                         }
                         else if (ArriveStationPinyin != arriveByName.StationPinyin)
                         {
                             // 拼音不匹配
                             arriveHasError = true;
-                            errorMessages.AppendLine($"到达站【{ArriveStation}】的拼音错误：");
+                            errorMessages.AppendLine($"到达车站【{ArriveStation}】的拼音错误：");
                             errorMessages.AppendLine($"- 当前填写的拼音【{ArriveStationPinyin}】与车站记录不匹配");
                             errorMessages.AppendLine($"- 正确的拼音应为：【{arriveByName.StationPinyin}】");
                             errorMessages.AppendLine();
@@ -2402,7 +2402,7 @@ namespace TA_WPF.ViewModels
                     else if (arriveByName == null && arriveByCode == null)
                     {
                         arriveHasError = true;
-                        errorMessages.AppendLine($"到达站【{ArriveStation}】在车站中心不存在，请先添加该车站信息。");
+                        errorMessages.AppendLine($"到达车站【{ArriveStation}】在车站中心不存在，请先添加该车站信息。");
                         errorMessages.AppendLine();
                     }
                 }
@@ -2610,7 +2610,7 @@ namespace TA_WPF.ViewModels
                 List<string> stations = new List<string>();
                 HashSet<string> addedStations = new HashSet<string>(); // 用于去重
 
-                // 首先查找带有"站"字的高置信度文本作为出发站和到达站
+                // 首先查找带有"站"字的高置信度文本作为出发车站和到达车站
                 var highConfidenceStations = new List<(string stationName, double score, int index)>();
 
                 // 遍历所有OCR结果，找出高置信度的站名（无论是否带"站"字）
@@ -2645,7 +2645,7 @@ namespace TA_WPF.ViewModels
                     highConfidenceStations = stationWithSuffix.OrderBy(s => s.index).ToList();
                 }
 
-                // 如果找到至少两个高置信度站名，根据顺序识别出发站和到达站
+                // 如果找到至少两个高置信度站名，根据顺序识别出发车站和到达车站
                 if (highConfidenceStations.Count >= 2)
                 {
                     string departStationName = null;
@@ -2657,23 +2657,23 @@ namespace TA_WPF.ViewModels
                     {
                         departStationName = stationsWithSuffix[0].stationName;
                         arriveStationName = stationsWithSuffix[1].stationName;
-                        LogHelper.LogInfo($"使用带'站'字的文本作为站名：出发站={departStationName}, 到达站={arriveStationName}");
+                        LogHelper.LogInfo($"使用带'站'字的文本作为站名：出发车站={departStationName}, 到达车站={arriveStationName}");
                     }
                     // 如果没有足够的带"站"字的文本，则回退到之前的逻辑
                     else if (highConfidenceStations.Any(s => s.index == 2) && 
                              highConfidenceStations.Any(s => s.index == 3))
                     {
-                        // 索引2作为出发站，索引3作为到达站
+                        // 索引2作为出发车站，索引3作为到达车站
                         departStationName = highConfidenceStations.First(s => s.index == 2).stationName;
                         arriveStationName = highConfidenceStations.First(s => s.index == 3).stationName;
-                        LogHelper.LogInfo($"使用索引2的项作为出发站: {departStationName}, 索引3的项作为到达站: {arriveStationName}");
+                        LogHelper.LogInfo($"使用索引2的项作为出发车站: {departStationName}, 索引3的项作为到达车站: {arriveStationName}");
                     }
                     // 如果没有这些索引但有至少两个站名，使用前两个
                     else
                     {
                         departStationName = highConfidenceStations[0].stationName;
                         arriveStationName = highConfidenceStations[1].stationName;
-                        LogHelper.LogInfo($"使用第一个高置信度项作为出发站: {departStationName}, 第二个作为到达站: {arriveStationName}");
+                        LogHelper.LogInfo($"使用第一个高置信度项作为出发车站: {departStationName}, 第二个作为到达车站: {arriveStationName}");
                     }
                     
                     // 检查是否有误识别车次号为站名的情况
@@ -2683,23 +2683,23 @@ namespace TA_WPF.ViewModels
                          arriveStationName.StartsWith("Z") || arriveStationName.StartsWith("T") || 
                          arriveStationName.StartsWith("Y") || arriveStationName.StartsWith("L")))
                     {
-                        LogHelper.LogInfo($"检测到车次号 {arriveStationName} 被错误填充到到达站，清空到达站字段以便正确识别");
+                        LogHelper.LogInfo($"检测到车次号 {arriveStationName} 被错误填充到到达车站，清空到达车站字段以便正确识别");
                         arriveStationName = null;
                         
-                        // 尝试从所有OCR结果中查找带"站"字的文本作为到达站
+                        // 尝试从所有OCR结果中查找带"站"字的文本作为到达车站
                         foreach (var text in allTexts)
                         {
                             if (text != departStationName && text.EndsWith("站") && 
                                 !addedStations.Contains(text) && !text.Contains("退票"))
                             {
                                 arriveStationName = text;
-                                LogHelper.LogInfo($"找到合适的到达站: {arriveStationName}");
+                                LogHelper.LogInfo($"找到合适的到达车站: {arriveStationName}");
                                 break;
                             }
                         }
                     }
                     
-                    // 处理出发站
+                    // 处理出发车站
                     if (departStationName != null)
                     {
                         string departStationNameWithoutStation = departStationName.EndsWith("站")
@@ -2722,7 +2722,7 @@ namespace TA_WPF.ViewModels
                         var departStationInfo = _stationSearchService.GetStationInfo(departStationName);
                         if (departStationInfo != null)
                         {
-                            LogHelper.LogInfo($"出发站在数据库中找到: {departStationInfo.StationName}");
+                            LogHelper.LogInfo($"出发车站在数据库中找到: {departStationInfo.StationName}");
                             
                             // 车站在数据库中存在
                             if (!string.IsNullOrEmpty(departStationInfo.StationPinyin))
@@ -2741,7 +2741,7 @@ namespace TA_WPF.ViewModels
                             var altStationInfo = _stationSearchService.GetStationInfo(departStationNameWithoutStation);
                             if (altStationInfo != null)
                             {
-                                LogHelper.LogInfo($"出发站(不带站字)在数据库中找到: {altStationInfo.StationName}");
+                                LogHelper.LogInfo($"出发车站(不带站字)在数据库中找到: {altStationInfo.StationName}");
                                 
                                 if (!string.IsNullOrEmpty(altStationInfo.StationPinyin))
                                 {
@@ -2760,7 +2760,7 @@ namespace TA_WPF.ViewModels
                         stations.Add(departStationName);
                     }
                     
-                    // 处理到达站
+                    // 处理到达车站
                     if (arriveStationName != null)
                     {
                         string arriveStationNameWithoutStation = arriveStationName.EndsWith("站")
@@ -2783,7 +2783,7 @@ namespace TA_WPF.ViewModels
                         var arriveStationInfo = _stationSearchService.GetStationInfo(arriveStationName);
                         if (arriveStationInfo != null)
                         {
-                            LogHelper.LogInfo($"到达站在数据库中找到: {arriveStationInfo.StationName}");
+                            LogHelper.LogInfo($"到达车站在数据库中找到: {arriveStationInfo.StationName}");
                             
                             // 车站在数据库中存在
                             if (!string.IsNullOrEmpty(arriveStationInfo.StationPinyin))
@@ -2802,7 +2802,7 @@ namespace TA_WPF.ViewModels
                             var altStationInfo = _stationSearchService.GetStationInfo(arriveStationNameWithoutStation);
                             if (altStationInfo != null)
                             {
-                                LogHelper.LogInfo($"到达站(不带站字)在数据库中找到: {altStationInfo.StationName}");
+                                LogHelper.LogInfo($"到达车站(不带站字)在数据库中找到: {altStationInfo.StationName}");
                                 
                                 if (!string.IsNullOrEmpty(altStationInfo.StationPinyin))
                                 {
@@ -2861,7 +2861,7 @@ namespace TA_WPF.ViewModels
                         ? departStationName.Substring(0, departStationName.Length - 1)
                         : departStationName;
 
-                    LogHelper.LogInfo($"提取出出发站: {departStationNameWithoutStation}");
+                    LogHelper.LogInfo($"提取出出发车站: {departStationNameWithoutStation}");
 
                     // 设置去掉站字的名称
                     DepartStation = departStationNameWithoutStation;
@@ -2879,7 +2879,7 @@ namespace TA_WPF.ViewModels
                     var stationInfo = _stationSearchService.GetStationInfo(departStationName);
                     if (stationInfo != null)
                     {
-                        LogHelper.LogInfo($"出发站在数据库中找到: {stationInfo.StationName}");
+                        LogHelper.LogInfo($"出发车站在数据库中找到: {stationInfo.StationName}");
 
                         // 车站在数据库中存在
                         if (!string.IsNullOrEmpty(stationInfo.StationPinyin))
@@ -2894,12 +2894,12 @@ namespace TA_WPF.ViewModels
                     }
                     else
                     {
-                        LogHelper.LogInfo($"出发站在数据库中未找到: {departStationName}");
+                        LogHelper.LogInfo($"出发车站在数据库中未找到: {departStationName}");
                     }
                     // 如果车站不在数据库内或者代码/拼音为空，这些字段会保持为空
                 }
 
-                // 5. 到达站：第二个车站
+                // 5. 到达车站：第二个车站
                 if (stations.Count > 1 && string.IsNullOrEmpty(ArriveStation))
                 {
                     string arriveStationName = stations[1];
@@ -2908,7 +2908,7 @@ namespace TA_WPF.ViewModels
                         ? arriveStationName.Substring(0, arriveStationName.Length - 1)
                         : arriveStationName;
 
-                    LogHelper.LogInfo($"提取出到达站: {arriveStationNameWithoutStation}");
+                    LogHelper.LogInfo($"提取出到达车站: {arriveStationNameWithoutStation}");
 
                     // 设置去掉站字的名称
                     ArriveStation = arriveStationNameWithoutStation;
@@ -2926,7 +2926,7 @@ namespace TA_WPF.ViewModels
                     var stationInfo = _stationSearchService.GetStationInfo(arriveStationName);
                     if (stationInfo != null)
                     {
-                        LogHelper.LogInfo($"到达站在数据库中找到: {stationInfo.StationName}");
+                        LogHelper.LogInfo($"到达车站在数据库中找到: {stationInfo.StationName}");
 
                         // 车站在数据库中存在
                         if (!string.IsNullOrEmpty(stationInfo.StationPinyin))
@@ -2941,18 +2941,18 @@ namespace TA_WPF.ViewModels
                     }
                     else
                     {
-                        LogHelper.LogInfo($"到达站在数据库中未找到: {arriveStationName}");
+                        LogHelper.LogInfo($"到达车站在数据库中未找到: {arriveStationName}");
                     }
                     // 如果车站不在数据库内或者代码/拼音为空，这些字段会保持为空
                 }
 
-                // 如果前面的方式都没找到到达站，继续尝试从其他OCR结果查找
+                // 如果前面的方式都没找到到达车站，继续尝试从其他OCR结果查找
                 else if (string.IsNullOrEmpty(ArriveStation) && stations.Count < 2 && ocrResults.Count >= 3)
                 {
                     // 从第三个OCR文本开始查找
                     for (int i = 2; i < ocrResults.Count; i++)
                     {
-                        // 跳过已经用于出发站或到达站的元素
+                        // 跳过已经用于出发车站或到达车站的元素
                         if (i == 1 || i == 3) continue;
 
                         string possibleArriveStation = ocrResults[i].Text;
@@ -2976,7 +2976,7 @@ namespace TA_WPF.ViewModels
                                 ? stationNamePart.Substring(0, stationNamePart.Length - 1)
                                 : stationNamePart;
 
-                            LogHelper.LogInfo($"备选方式从OCR结果中提取到达站: {arriveStationNameWithoutStation}");
+                            LogHelper.LogInfo($"备选方式从OCR结果中提取到达车站: {arriveStationNameWithoutStation}");
 
                             // 检测是否是有效站点
                             if (_stationSearchService.IsValidStation(arriveStationNameWithoutStation))
@@ -2997,7 +2997,7 @@ namespace TA_WPF.ViewModels
                                 var stationInfo = _stationSearchService.GetStationInfo(arriveStationNameWithoutStation);
                                 if (stationInfo != null)
                                 {
-                                    LogHelper.LogInfo($"到达站在数据库中找到: {stationInfo.StationName}");
+                                    LogHelper.LogInfo($"到达车站在数据库中找到: {stationInfo.StationName}");
 
                                     // 车站在数据库中存在
                                     if (!string.IsNullOrEmpty(stationInfo.StationPinyin))
@@ -3028,17 +3028,17 @@ namespace TA_WPF.ViewModels
                         SelectedTrainType = match.Groups[1].Value; // 字母部分
                         TrainNumber = match.Groups[2].Value; // 数字部分
                         
-                        // 特殊处理：如果到达站字段包含了车次号，说明是错误填充，需要修正
+                        // 特殊处理：如果到达车站字段包含了车次号，说明是错误填充，需要修正
                         if (ArriveStation == text)
                         {
-                            LogHelper.LogInfo($"检测到车次号 {text} 被错误填充到到达站，清空到达站字段以便正确识别");
+                            LogHelper.LogInfo($"检测到车次号 {text} 被错误填充到到达车站，清空到达车站字段以便正确识别");
                             ArriveStation = string.Empty;
                             ArriveStationSearchText = string.Empty;
                             // 确保UI更新
                             OnPropertyChanged(nameof(ArriveStation));
                             OnPropertyChanged(nameof(ArriveStationSearchText));
                             
-                            // 重新检查其他OCR结果中是否包含正确的到达站
+                            // 重新检查其他OCR结果中是否包含正确的到达车站
                             foreach (var result in ocrResults)
                             {
                                 if (result.Text != text && 
@@ -3053,7 +3053,7 @@ namespace TA_WPF.ViewModels
                                         ? arriveStationName.Substring(0, arriveStationName.Length - 1)
                                         : arriveStationName;
                                     
-                                    LogHelper.LogInfo($"找到可能的正确到达站: {arriveStationNameWithoutStation}");
+                                    LogHelper.LogInfo($"找到可能的正确到达车站: {arriveStationNameWithoutStation}");
                                     
                                     // 设置去掉站字的名称
                                     ArriveStation = arriveStationNameWithoutStation;
@@ -4284,7 +4284,7 @@ namespace TA_WPF.ViewModels
                     
                     // 不清空站点信息，保留无效站名并显示提示
                     LogHelper.LogInfo($"站点 \"{displayText}\" 不存在于数据库中，建议在车站表中完善该站信息");
-                    MessageBoxHelper.ShowWarning($"{(isDepartStation ? "出发站" : "到达站")}【{displayText}】在车站中心不存在，请先添加该车站信息。");
+                    MessageBoxHelper.ShowWarning($"{(isDepartStation ? "出发车站" : "到达车站")}【{displayText}】在车站中心不存在，请先添加该车站信息。");
 
                     // 仍然设置站名，但不设置拼音和代码
                     // 使用内部设置方法，传入空代码和拼音

@@ -2,8 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 using TA_WPF.Models;
 using TA_WPF.ViewModels;
+using TA_WPF.Utils;
 
 namespace TA_WPF.Views
 {
@@ -186,6 +188,12 @@ namespace TA_WPF.Views
         /// </summary>
         private void Collection_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // 如果是双击，不在这里处理，让事件冒泡给ListBox的MouseDoubleClick处理
+            if (e.ClickCount == 2)
+            {
+                return;
+            }
+
             if (sender is Grid grid && grid.DataContext is TicketCollectionInfo collection)
             {
                 var viewModel = DataContext as QueryAllCollectionsViewModel;
@@ -209,15 +217,74 @@ namespace TA_WPF.Views
                         viewModel.SelectedCollections.Remove(collection);
                     }
                 }
+            }
+        }
 
-                // 如果是双击，触发编辑命令
-                if (e.ClickCount == 2 && viewModel.SelectedCollections.Count == 1)
+        /// <summary>
+        /// DataGrid双击事件处理
+        /// </summary>
+        private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var viewModel = DataContext as QueryAllCollectionsViewModel;
+            if (viewModel == null) return;
+
+            // 从DataGrid获取选中的行
+            if (sender is DataGrid dataGrid && dataGrid.SelectedItem is TicketCollectionInfo collection)
+            {
+                // 确保只有当前项被选中
+                foreach (var item in viewModel.Collections)
                 {
-                    if (viewModel.EditCollectionCommand.CanExecute(null))
-                    {
-                        viewModel.EditCollectionCommand.Execute(null);
-                    }
+                    item.IsSelected = (item == collection);
                 }
+                
+                // 清空并重新设置选中集合
+                viewModel.SelectedCollections.Clear();
+                viewModel.SelectedCollections.Add(collection);
+                
+                // 设置当前选择项
+                viewModel.SelectedCollection = collection;
+                
+                // 执行打开命令
+                if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
+                {
+                    viewModel.OpenCollectionTicketsCommand.Execute(null);
+                }
+                
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// ListBox双击事件处理
+        /// </summary>
+        private void ListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+                {
+            var viewModel = DataContext as QueryAllCollectionsViewModel;
+            if (viewModel == null) return;
+
+            // 从原始事件源获取数据上下文
+            if (e.OriginalSource is FrameworkElement element && element.DataContext is TicketCollectionInfo collection)
+            {
+                // 确保只有当前项被选中
+                foreach (var item in viewModel.Collections)
+                {
+                    item.IsSelected = (item == collection);
+                }
+                
+                // 清空并重新设置选中集合
+                viewModel.SelectedCollections.Clear();
+                viewModel.SelectedCollections.Add(collection);
+                
+                // 设置当前选择项
+                viewModel.SelectedCollection = collection;
+                
+                // 执行打开命令
+                if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
+                    {
+                    viewModel.OpenCollectionTicketsCommand.Execute(null);
+                    }
+                
+                e.Handled = true;
             }
         }
     }

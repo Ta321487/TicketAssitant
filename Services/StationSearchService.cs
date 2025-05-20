@@ -149,7 +149,7 @@ namespace TA_WPF.Services
         /// 处理站点输入框失去焦点事件
         /// </summary>
         /// <param name="stationName">站点名称</param>
-        /// <param name="isDepartStation">是否为出发站</param>
+        /// <param name="isDepartStation">是否为出发车站</param>
         /// <returns>处理后的站点信息，如果找不到匹配站点则返回null</returns>
         public async Task<StationInfo> HandleStationLostFocusAsync(string stationName, bool isDepartStation)
         {
@@ -293,7 +293,7 @@ namespace TA_WPF.Services
         /// 处理站点输入框失去焦点事件 (同步版本，不推荐使用)
         /// </summary>
         /// <param name="stationName">站点名称</param>
-        /// <param name="isDepartStation">是否为出发站</param>
+        /// <param name="isDepartStation">是否为出发车站</param>
         /// <returns>处理后的站点信息，如果找不到匹配站点则返回null</returns>
         [Obsolete("请使用异步版本 HandleStationLostFocusAsync，避免阻塞UI线程")]
         public StationInfo HandleStationLostFocus(string stationName, bool isDepartStation)

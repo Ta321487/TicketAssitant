@@ -35,19 +35,19 @@ namespace TA_WPF.ViewModels
     }
 
     /// <summary>
-    /// 出发站选项类，用于表示出发站筛选下拉列表中的选项
+    /// 出发车站选项类，用于表示出发车站筛选下拉列表中的选项
     /// </summary>
     public class DepartStationItem
     {
         /// <summary>
-        /// 获取或设置出发站名称
+        /// 获取或设置出发车站名称
         /// </summary>
         public string DepartStation { get; set; }
 
         /// <summary>
         /// 构造函数
         /// </summary>
-        /// <param name="departStation">出发站名称</param>
+        /// <param name="departStation">出发车站名称</param>
         public DepartStationItem(string departStation)
         {
             DepartStation = departStation;

@@ -118,7 +118,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 获取当前筛选条件
         /// </summary>
-        /// <returns>筛选条件元组 (出发站, 车次, 年份, 是否为AND条件)</returns>
+        /// <returns>筛选条件元组 (出发车站, 车次, 年份, 是否为AND条件)</returns>
         private (string departStation, string fullTrainNo, int? yearValue, bool isAndCondition) GetCurrentFilterConditions()
         {
             var departStation = AdvancedQueryViewModel.SelectedDepartStation?.DepartStation;
@@ -350,13 +350,13 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 异步加载出发站列表
+        /// 异步加载出发车站列表
         /// </summary>
         private async void LoadDepartStationsAsync()
         {
             try
             {
-                // 获取已有的出发站点
+                // 获取已有的出发车站点
                 var departStations = await _databaseService.GetDistinctDepartStationsAsync();
 
                 // 转换为DepartStationItem列表
@@ -372,7 +372,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.ShowError($"加载出发站列表时出错: {ex.Message}");
+                MessageBoxHelper.ShowError($"加载出发车站列表时出错: {ex.Message}");
             }
         }
 
@@ -395,7 +395,7 @@ namespace TA_WPF.ViewModels
                 if (string.IsNullOrWhiteSpace(searchText))
                     return;
 
-                // 搜索出发站
+                // 搜索出发车站
                 var stations = await _databaseService.SearchStationsByNameAsync(searchText);
 
                 // 添加到建议列表
@@ -409,12 +409,12 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"搜索出发站时出错: {ex.Message}", ex);
+                LogHelper.LogError($"搜索出发车站时出错: {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// 选择出发站
+        /// 选择出发车站
         /// </summary>
         private void SelectDepartStation(StationInfo station)
         {
@@ -432,7 +432,7 @@ namespace TA_WPF.ViewModels
             DepartStationSearchText = stationName;
             _isUpdatingDepartStation = false;
 
-            // 创建并设置选中的出发站
+            // 创建并设置选中的出发车站
             SelectedDepartStation = new DepartStationItem(stationName);
 
             // 不要自动应用筛选，等待用户点击查询按钮
@@ -579,7 +579,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 清空出发站条件
+        /// 清空出发车站条件
         /// </summary>
         private void ClearDepartStation()
         {
@@ -814,7 +814,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 选中的出发站
+        /// 选中的出发车站
         /// </summary>
         public DepartStationItem? SelectedDepartStation
         {
@@ -931,7 +931,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站列表
+        /// 出发车站列表
         /// </summary>
         public ObservableCollection<DepartStationItem> DepartStations
         {
@@ -947,7 +947,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站搜索建议
+        /// 出发车站搜索建议
         /// </summary>
         public ObservableCollection<StationInfo> DepartStationSuggestions
         {
@@ -963,7 +963,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站下拉框是否打开
+        /// 出发车站下拉框是否打开
         /// </summary>
         public bool IsDepartStationDropdownOpen
         {
@@ -979,7 +979,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站搜索文本
+        /// 出发车站搜索文本
         /// </summary>
         public string DepartStationSearchText
         {
@@ -1134,7 +1134,7 @@ namespace TA_WPF.ViewModels
         public ICommand CustomYearCommand { get; }
 
         /// <summary>
-        /// 清空出发站条件命令
+        /// 清空出发车站条件命令
         /// </summary>
         public ICommand ClearDepartStationCommand { get; }
 
@@ -1149,7 +1149,7 @@ namespace TA_WPF.ViewModels
         public ICommand ClearYearCommand { get; }
 
         /// <summary>
-        /// 选择出发站命令
+        /// 选择出发车站命令
         /// </summary>
         public ICommand SelectDepartStationCommand { get; }
 

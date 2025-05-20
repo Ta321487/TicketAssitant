@@ -13,6 +13,7 @@ using System.IO;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using TA_WPF.Views;
+using System.Diagnostics;
 
 namespace TA_WPF.ViewModels
 {
@@ -72,6 +73,9 @@ namespace TA_WPF.ViewModels
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll, CanUnselectAll);
             InvertSelectionCommand = new RelayCommand(InvertSelection, CanInvertSelection);
+
+            // 打开收藏夹车票窗口命令
+            OpenCollectionTicketsCommand = new RelayCommand(OpenCollectionTickets, CanOpenCollectionTickets);
         }
 
         /// <summary>
@@ -306,6 +310,11 @@ namespace TA_WPF.ViewModels
         /// 反选命令
         /// </summary>
         public ICommand InvertSelectionCommand { get; }
+
+        /// <summary>
+        /// 打开收藏夹车票窗口命令
+        /// </summary>
+        public ICommand OpenCollectionTicketsCommand { get; }
 
         #endregion
 
@@ -641,6 +650,28 @@ namespace TA_WPF.ViewModels
         /// 是否可以反选
         /// </summary>
         private bool CanInvertSelection() => Collections.Count > 0;
+
+        /// <summary>
+        /// 打开收藏夹车票窗口
+        /// </summary>
+        private void OpenCollectionTickets()
+        {
+            // 输出调试信息，检查方法是否被调用
+            Debug.WriteLine($"正在打开收藏夹：{SelectedCollection?.CollectionName ?? "未选择收藏夹"}");
+
+            if (SelectedCollection == null) return;
+
+            // 创建并显示收藏夹车票窗口
+            var collectionTicketsWindow = new Views.CollectionTicketsWindow(SelectedCollection, _databaseService, _mainViewModel);
+            collectionTicketsWindow.Owner = Application.Current.MainWindow;
+            collectionTicketsWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            collectionTicketsWindow.ShowDialog();
+        }
+
+        /// <summary>
+        /// 是否可以打开收藏夹车票窗口
+        /// </summary>
+        private bool CanOpenCollectionTickets() => SelectedItemsCount == 1;
 
         #endregion
 

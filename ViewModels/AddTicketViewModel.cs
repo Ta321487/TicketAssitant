@@ -33,8 +33,8 @@ namespace TA_WPF.ViewModels
         // 添加用于取消校验任务的取消令牌源
         private CancellationTokenSource _validationCancellationTokenSource;
 
-        private bool _isValidatingDepart = false; // 添加出发站校验标记
-        private bool _isValidatingArrive = false; // 添加到达站校验标记
+        private bool _isValidatingDepart = false; // 添加出发车站校验标记
+        private bool _isValidatingArrive = false; // 添加到达车站校验标记
 
         /// <summary>
         /// 窗口关闭事件
@@ -340,7 +340,7 @@ namespace TA_WPF.ViewModels
             {
                 if (_departStation != value)
                 {
-                    Debug.WriteLine($"[DepartStation] 正在设置出发站: '{value}'");
+                    Debug.WriteLine($"[DepartStation] 正在设置出发车站: '{value}'");
                     _departStation = value;
                     OnPropertyChanged(nameof(DepartStation));
                     // 不在这里调用ValidateStationName，而是在输入完成后再检测
@@ -355,7 +355,7 @@ namespace TA_WPF.ViewModels
             {
                 if (_arriveStation != value)
                 {
-                    Debug.WriteLine($"[ArriveStation] 正在设置到达站: '{value}'");
+                    Debug.WriteLine($"[ArriveStation] 正在设置到达车站: '{value}'");
                     _arriveStation = value;
                     OnPropertyChanged(nameof(ArriveStation));
                     // 不在这里调用ValidateStationName，而是在输入完成后再检测
@@ -1558,7 +1558,7 @@ namespace TA_WPF.ViewModels
         /// 搜索车站
         /// </summary>
         /// <param name="searchText">搜索文本</param>
-        /// <param name="isDepartStation">是否为出发站</param>
+        /// <param name="isDepartStation">是否为出发车站</param>
         protected virtual async void SearchStations(string searchText, bool isDepartStation)
         {
             try
@@ -1583,7 +1583,7 @@ namespace TA_WPF.ViewModels
 
                 if (isDepartStation)
                 {
-                    // 更新出发站建议列表
+                    // 更新出发车站建议列表
                     DepartStationSuggestions.Clear();
                     foreach (var station in suggestions)
                     {
@@ -1593,7 +1593,7 @@ namespace TA_WPF.ViewModels
                 }
                 else
                 {
-                    // 更新到达站建议列表
+                    // 更新到达车站建议列表
                     ArriveStationSuggestions.Clear();
                     foreach (var station in suggestions)
                     {
@@ -1621,7 +1621,7 @@ namespace TA_WPF.ViewModels
             {
                 IsDepartStationDropdownOpen = false;
                 
-                // 设置出发站文本 (标记为正在更新，避免触发重复搜索)
+                // 设置出发车站文本 (标记为正在更新，避免触发重复搜索)
                 _isUpdatingDepartStation = true;
                 DepartStationSearchText = stationName;
                 DepartStation = stationName; 
@@ -1634,7 +1634,7 @@ namespace TA_WPF.ViewModels
             {
                 IsArriveStationDropdownOpen = false;
                 
-                // 设置到达站文本 (标记为正在更新，避免触发重复搜索)
+                // 设置到达车站文本 (标记为正在更新，避免触发重复搜索)
                 _isUpdatingArriveStation = true;
                 ArriveStationSearchText = stationName;
                 ArriveStation = stationName; 
@@ -1663,7 +1663,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         /// <param name="station">车站信息对象</param>
         /// <param name="stationName">车站名称</param>
-        /// <param name="isDepartStation">是否为出发站</param>
+        /// <param name="isDepartStation">是否为出发车站</param>
         /// <returns>返回是否完整 (true=完整, false=不完整)</returns>
         private bool CheckStationCompleteness(StationInfo station, string stationName, bool isDepartStation)
         {
@@ -1699,7 +1699,7 @@ namespace TA_WPF.ViewModels
         /// 检测站点信息完整性
         /// </summary>
         /// <param name="station">站点信息</param>
-        /// <param name="isDepartStation">是否为出发站</param>
+        /// <param name="isDepartStation">是否为出发车站</param>
         private void CheckStationInfoCompleteness(StationInfo station, bool isDepartStation)
         {
             try
@@ -1815,7 +1815,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 处理站点输入框失去焦点事件
         /// </summary>
-        /// <param name="isDepartStation">是否为出发站</param>
+        /// <param name="isDepartStation">是否为出发车站</param>
         public virtual async void OnStationLostFocus(bool isDepartStation)
         {
             try
@@ -2093,87 +2093,13 @@ namespace TA_WPF.ViewModels
                     break;
             }
         }
-
-        private bool ValidateStationInfo(string stationName, string stationCode, string stationPinyin, 
-                                       bool isDepart, StringBuilder errorMessages)
-        {
-            if (string.IsNullOrWhiteSpace(stationName)) return true;
-            
-            bool hasError = false;
-            
-            // 通过站名查找站点信息
-            var stationByName = _stationSearchService.Stations
-                .FirstOrDefault(s => s.StationName == stationName ||
-                                   s.StationName == stationName + "站" ||
-                                   s.StationName?.Replace("站", "") == stationName);
-                                   
-            // 通过代码查找站点信息
-            var stationByCode = !string.IsNullOrWhiteSpace(stationCode) ?
-                _stationSearchService.Stations.FirstOrDefault(s => s.StationCode == stationCode) : null;
-                
-            string stationType = isDepart ? "出发站" : "到达站";
-            
-            // 如果站名能找到，但代码不匹配或为空
-            if (stationByName != null)
-            {
-                // 检测代码是否匹配或为空
-                if (string.IsNullOrWhiteSpace(stationCode))
-                {
-                    // 将代码为空的情况添加到验证错误
-                    string errorMsg = $"未填写{stationType}代码";
-                    if (!_validationErrors.Any(e => e.Contains(errorMsg)))
-                    {
-                        _validationErrors.Add(errorMsg);
-                    }
-                }
-                else if (stationByCode == null || stationByName.Id != stationByCode.Id)
-                {
-                    // 代码不匹配
-                    hasError = true;
-                    errorMessages.AppendLine($"{stationType}【{stationName}】的代码错误：");
-                    errorMessages.AppendLine($"- 当前填写的代码【{stationCode}】与车站不匹配");
-                    errorMessages.AppendLine($"- 正确的代码应为：【{stationByName.StationCode}】");
-                    errorMessages.AppendLine();
-                }
-
-                // 检测拼音是否匹配或为空
-                if (string.IsNullOrWhiteSpace(stationPinyin))
-                {
-                    // 将拼音为空的情况添加到验证错误
-                    string errorMsg = $"未填写{stationType}拼音";
-                    if (!_validationErrors.Any(e => e.Contains(errorMsg)))
-                    {
-                        _validationErrors.Add(errorMsg);
-                    }
-                }
-                else if (stationPinyin != stationByName.StationPinyin)
-                {
-                    // 拼音不匹配
-                    hasError = true;
-                    errorMessages.AppendLine($"{stationType}【{stationName}】的拼音错误：");
-                    errorMessages.AppendLine($"- 当前填写的拼音【{stationPinyin}】与车站记录不匹配");
-                    errorMessages.AppendLine($"- 正确的拼音应为：【{stationByName.StationPinyin}】");
-                    errorMessages.AppendLine();
-                }
-            }
-            // 如果无法通过站名找到匹配的车站
-            else if (stationByName == null && stationByCode == null)
-            {
-                hasError = true;
-                errorMessages.AppendLine($"{stationType}【{stationName}】在车站中心不存在，请先添加该车站信息。");
-                errorMessages.AppendLine();
-            }
-            
-            return !hasError;
-        }
-
         // --- Start of New Helper Methods ---
 
         /// <summary>
         /// 尝试验证并设置车站信息（代码、拼音）。
         /// </summary>
         /// <param name="stationName">要验证的车站名称（不含'站'）。</param>
-        /// <param name="isDepart">是否为出发站。</param>
+        /// <param name="isDepart">是否为出发车站。</param>
         /// <param name="station">如果找到并验证通过，输出找到的车站信息。</param>
         /// <param name="errorMessages">用于收集验证错误的StringBuilder，如果为null则不收集。</param>
         /// <param name="showWarning">是否在信息不完整时显示MessageBox警告。</param>
@@ -2204,7 +2130,7 @@ namespace TA_WPF.ViewModels
 
             // 使用StationSearchService进行验证
             var (status, station) = await _stationSearchService.ValidateStationCompleteAsync(stationName);
-            string stationType = isDepart ? "出发站" : "到达站";
+            string stationType = isDepart ? "出发车站" : "到达车站";
 
             switch (status)
             {

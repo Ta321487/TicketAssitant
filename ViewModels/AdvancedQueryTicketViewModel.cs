@@ -63,7 +63,7 @@ namespace TA_WPF.ViewModels
             // 初始化站点建议列表
             DepartStationSuggestions = new ObservableCollection<StationInfo>();
 
-            // 设计时不加载数据，但创建空的出发站列表
+            // 设计时不加载数据，但创建空的出发车站列表
             DepartStations = new ObservableCollection<DepartStationItem>();
 
             // 设计时的数据库服务为空
@@ -93,7 +93,7 @@ namespace TA_WPF.ViewModels
             // 初始化站点建议列表
             DepartStationSuggestions = new ObservableCollection<StationInfo>();
 
-            // 异步加载出发站列表
+            // 异步加载出发车站列表
             LoadDepartStationsAsync();
         }
 
@@ -135,13 +135,13 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 异步加载出发站列表
+        /// 异步加载出发车站列表
         /// </summary>
         private async void LoadDepartStationsAsync()
         {
             try
             {
-                // 获取已有的出发站点
+                // 获取已有的出发车站点
                 var departStations = await _databaseService.GetDistinctDepartStationsAsync();
 
                 // 转换为DepartStationItem列表
@@ -157,7 +157,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.ShowError($"加载出发站列表时出错: {ex.Message}");
+                MessageBoxHelper.ShowError($"加载出发车站列表时出错: {ex.Message}");
             }
         }
 
@@ -231,7 +231,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 选中的出发站
+        /// 选中的出发车站
         /// </summary>
         public DepartStationItem? SelectedDepartStation
         {
@@ -333,7 +333,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站列表
+        /// 出发车站列表
         /// </summary>
         public ObservableCollection<DepartStationItem> DepartStations
         {
@@ -349,7 +349,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站搜索建议
+        /// 出发车站搜索建议
         /// </summary>
         public ObservableCollection<StationInfo> DepartStationSuggestions
         {
@@ -365,7 +365,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站下拉框是否打开
+        /// 出发车站下拉框是否打开
         /// </summary>
         public bool IsDepartStationDropdownOpen
         {
@@ -381,7 +381,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站搜索文本
+        /// 出发车站搜索文本
         /// </summary>
         public string DepartStationSearchText
         {
@@ -490,7 +490,7 @@ namespace TA_WPF.ViewModels
         public ICommand CustomYearCommand { get; }
 
         /// <summary>
-        /// 清空出发站命令
+        /// 清空出发车站命令
         /// </summary>
         public ICommand ClearDepartStationCommand { get; }
 
@@ -505,7 +505,7 @@ namespace TA_WPF.ViewModels
         public ICommand ClearYearCommand { get; }
 
         /// <summary>
-        /// 选择出发站命令
+        /// 选择出发车站命令
         /// </summary>
         public ICommand SelectDepartStationCommand { get; }
 
@@ -532,7 +532,7 @@ namespace TA_WPF.ViewModels
                 if (string.IsNullOrWhiteSpace(searchText))
                     return;
 
-                // 搜索出发站
+                // 搜索出发车站
                 var stations = await _databaseService.SearchStationsByNameAsync(searchText);
 
                 // 添加到建议列表
@@ -546,12 +546,12 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"搜索出发站时出错: {ex.Message}", ex);
+                LogHelper.LogError($"搜索出发车站时出错: {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// 选择出发站
+        /// 选择出发车站
         /// </summary>
         private void SelectDepartStation(StationInfo station)
         {
@@ -569,7 +569,7 @@ namespace TA_WPF.ViewModels
             DepartStationSearchText = stationName;
             _isUpdatingDepartStation = false;
 
-            // 创建并设置选中的出发站
+            // 创建并设置选中的出发车站
             SelectedDepartStation = new DepartStationItem(stationName);
         }
 
@@ -705,7 +705,7 @@ namespace TA_WPF.ViewModels
                     yearValue = _selectedYearOption.Year.Value;
                 }
 
-                // 获取出发站
+                // 获取出发车站
                 string departStation = null;
                 if (_selectedDepartStation != null)
                 {
@@ -714,7 +714,7 @@ namespace TA_WPF.ViewModels
 
                 // 记录查询条件
                 System.Diagnostics.Debug.WriteLine("应用查询条件:");
-                System.Diagnostics.Debug.WriteLine($"  出发站: {departStation}");
+                System.Diagnostics.Debug.WriteLine($"  出发车站: {departStation}");
                 System.Diagnostics.Debug.WriteLine($"  车次号: {fullTrainNo}");
                 System.Diagnostics.Debug.WriteLine($"  出发年份: {yearValue}");
                 System.Diagnostics.Debug.WriteLine($"  查询条件组合方式: {(_isAndCondition ? "AND" : "OR")}");
@@ -760,7 +760,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 清空出发站条件
+        /// 清空出发车站条件
         /// </summary>
         private void ClearDepartStation()
         {

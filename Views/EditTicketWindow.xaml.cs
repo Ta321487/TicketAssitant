@@ -370,7 +370,7 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 出发站输入框失去焦点事件处理方法
+        /// 出发车站输入框失去焦点事件处理方法
         /// </summary>
         private void DepartStation_LostFocus(object sender, RoutedEventArgs e)
         {
@@ -379,17 +379,17 @@ namespace TA_WPF.Views
                 // 如果窗口正在关闭，不触发校验
                 if (_isClosing) return;
 
-                // 调用ViewModel中的处理方法，传入参数表示这是出发站
+                // 调用ViewModel中的处理方法，传入参数表示这是出发车站
                 _viewModel.OnStationLostFocus(true);
             }
             catch (Exception ex)
             {
-                LogHelper.LogError("处理出发站失去焦点事件时出错", ex);
+                LogHelper.LogError("处理出发车站失去焦点事件时出错", ex);
             }
         }
 
         /// <summary>
-        /// 到达站输入框失去焦点事件处理方法
+        /// 到达车站输入框失去焦点事件处理方法
         /// </summary>
         private void ArriveStation_LostFocus(object sender, RoutedEventArgs e)
         {
@@ -398,12 +398,12 @@ namespace TA_WPF.Views
                 // 如果窗口正在关闭，不触发校验
                 if (_isClosing) return;
 
-                // 调用ViewModel中的处理方法，传入参数表示这是到达站
+                // 调用ViewModel中的处理方法，传入参数表示这是到达车站
                 _viewModel.OnStationLostFocus(false);
             }
             catch (Exception ex)
             {
-                LogHelper.LogError("处理到达站失去焦点事件时出错", ex);
+                LogHelper.LogError("处理到达车站失去焦点事件时出错", ex);
             }
         }
 

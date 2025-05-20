@@ -209,7 +209,7 @@ namespace TA_WPF.ViewModels
             if (_suppressNotifications)
                 return;
 
-            // 当出发站搜索文本变更时，进行搜索
+            // 当出发车站搜索文本变更时，进行搜索
             if (e.PropertyName == nameof(DepartStationSearchText) && !string.IsNullOrWhiteSpace(DepartStationSearchText))
             {
                 // 如果设置了忽略标记，则跳过搜索
@@ -225,14 +225,14 @@ namespace TA_WPF.ViewModels
                     {
                         // 使用MessageBoxHelper显示警告对话框
                         string normalizedStationName = StationNameHelper.RemoveStationSuffix(DepartStationSearchText);
-                        MessageBoxHelper.ShowWarning($"出发站【{normalizedStationName}】在车站中心不存在，请先添加该车站信息。");
+                        MessageBoxHelper.ShowWarning($"出发车站【{normalizedStationName}】在车站中心不存在，请先添加该车站信息。");
                         DepartStationPinyin = string.Empty;
                         DepartStationCode = string.Empty;
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogHelper.LogError($"搜索出发站时出错: {ex.Message}", ex);
+                    LogHelper.LogError($"搜索出发车站时出错: {ex.Message}", ex);
                 }
                 
                 // 如果用户已经启用了编辑模式，则尝试根据输入搜索并填充车站代码和拼音
@@ -242,7 +242,7 @@ namespace TA_WPF.ViewModels
                 }
             }
             
-            // 当到达站搜索文本变更时，进行搜索
+            // 当到达车站搜索文本变更时，进行搜索
             if (e.PropertyName == nameof(ArriveStationSearchText) && !string.IsNullOrWhiteSpace(ArriveStationSearchText))
             {
                 // 如果设置了忽略标记，则跳过搜索
@@ -258,14 +258,14 @@ namespace TA_WPF.ViewModels
                     {
                         // 使用MessageBoxHelper显示警告对话框
                         string normalizedStationName = StationNameHelper.RemoveStationSuffix(ArriveStationSearchText);
-                        MessageBoxHelper.ShowWarning($"到达站【{normalizedStationName}】在车站中心不存在，请先添加该车站信息。");
+                        MessageBoxHelper.ShowWarning($"到达车站【{normalizedStationName}】在车站中心不存在，请先添加该车站信息。");
                         ArriveStationPinyin = string.Empty;
                         ArriveStationCode = string.Empty;
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogHelper.LogError($"搜索到达站时出错: {ex.Message}", ex);
+                    LogHelper.LogError($"搜索到达车站时出错: {ex.Message}", ex);
                 }
                 
                 // 如果用户已经启用了编辑模式，则尝试根据输入搜索并填充车站代码和拼音
@@ -351,12 +351,12 @@ namespace TA_WPF.ViewModels
         public ICommand ToggleFieldCommand { get; }
 
         /// <summary>
-        /// 选择出发站命令
+        /// 选择出发车站命令
         /// </summary>
         public ICommand SelectDepartStationCommand { get; }
         
         /// <summary>
-        /// 选择到达站命令
+        /// 选择到达车站命令
         /// </summary>
         public ICommand SelectArriveStationCommand { get; }
 
@@ -405,7 +405,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站
+        /// 出发车站
         /// </summary>
         public string DepartStation
         {
@@ -427,7 +427,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站
+        /// 到达车站
         /// </summary>
         public string ArriveStation
         {
@@ -449,7 +449,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站拼音
+        /// 出发车站拼音
         /// </summary>
         public string DepartStationPinyin
         {
@@ -465,7 +465,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站拼音
+        /// 到达车站拼音
         /// </summary>
         public string ArriveStationPinyin
         {
@@ -497,7 +497,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站代码
+        /// 出发车站代码
         /// </summary>
         public string DepartStationCode
         {
@@ -513,7 +513,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站代码
+        /// 到达车站代码
         /// </summary>
         public string ArriveStationCode
         {
@@ -995,7 +995,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站搜索文本
+        /// 出发车站搜索文本
         /// </summary>
         public string DepartStationSearchText
         {
@@ -1011,7 +1011,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站搜索文本
+        /// 到达车站搜索文本
         /// </summary>
         public string ArriveStationSearchText
         {
@@ -1027,7 +1027,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站建议列表
+        /// 出发车站建议列表
         /// </summary>
         public ObservableCollection<StationInfo> DepartStationSuggestions
         {
@@ -1043,7 +1043,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站建议列表
+        /// 到达车站建议列表
         /// </summary>
         public ObservableCollection<StationInfo> ArriveStationSuggestions
         {
@@ -1059,7 +1059,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 是否显示出发站下拉列表
+        /// 是否显示出发车站下拉列表
         /// </summary>
         public bool IsDepartStationDropdownOpen
         {
@@ -1068,7 +1068,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 是否显示到达站下拉列表
+        /// 是否显示到达车站下拉列表
         /// </summary>
         public bool IsArriveStationDropdownOpen
         {
@@ -1077,7 +1077,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 选中的出发站
+        /// 选中的出发车站
         /// </summary>
         public StationInfo SelectedDepartStation
         {
@@ -1086,7 +1086,7 @@ namespace TA_WPF.ViewModels
         }
         
         /// <summary>
-        /// 选中的到达站
+        /// 选中的到达车站
         /// </summary>
         public StationInfo SelectedArriveStation
         {
@@ -1171,7 +1171,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站字段是否启用
+        /// 出发车站字段是否启用
         /// </summary>
         public bool IsDepartStationEnabled
         {
@@ -1179,7 +1179,7 @@ namespace TA_WPF.ViewModels
             set
             {
                 SetProperty(ref _isDepartStationEnabled, value);
-                // 出发站启用时，拼音和代码也应启用（如果需要用户输入）
+                // 出发车站启用时，拼音和代码也应启用（如果需要用户输入）
                 if (value)
                 {
                     IsDepartStationPinyinEnabled = true;
@@ -1189,7 +1189,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站字段是否启用
+        /// 到达车站字段是否启用
         /// </summary>
         public bool IsArriveStationEnabled
         {
@@ -1197,7 +1197,7 @@ namespace TA_WPF.ViewModels
             set
             {
                 SetProperty(ref _isArriveStationEnabled, value);
-                // 到达站启用时，拼音和代码也应启用（如果需要用户输入）
+                // 到达车站启用时，拼音和代码也应启用（如果需要用户输入）
                 if (value)
                 {
                     IsArriveStationPinyinEnabled = true;
@@ -1207,7 +1207,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站拼音字段是否启用
+        /// 出发车站拼音字段是否启用
         /// </summary>
         public bool IsDepartStationPinyinEnabled
         {
@@ -1216,7 +1216,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站拼音字段是否启用
+        /// 到达车站拼音字段是否启用
         /// </summary>
         public bool IsArriveStationPinyinEnabled
         {
@@ -1234,7 +1234,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 出发站代码字段是否启用
+        /// 出发车站代码字段是否启用
         /// </summary>
         public bool IsDepartStationCodeEnabled
         {
@@ -1243,7 +1243,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 到达站代码字段是否启用
+        /// 到达车站代码字段是否启用
         /// </summary>
         public bool IsArriveStationCodeEnabled
         {
@@ -1669,7 +1669,7 @@ namespace TA_WPF.ViewModels
         /// 验证站名是否存在
         /// </summary>
         /// <param name="stationName">站名</param>
-        /// <param name="isDepartStation">是否是出发站</param>
+        /// <param name="isDepartStation">是否是出发车站</param>
         /// <returns>站名是否存在</returns>
         private bool ValidateStationName(string stationName, bool isDepartStation)
         {
@@ -1693,7 +1693,7 @@ namespace TA_WPF.ViewModels
                 else
                 {
                     // 显示警告消息
-                    string stationType = isDepartStation ? "出发站" : "到达站";
+                    string stationType = isDepartStation ? "出发车站" : "到达车站";
                     MessageBoxHelper.ShowWarning($"{stationType}【{normalizedStationName}】在车站中心不存在，请先添加该车站信息。");
                     return false;
                 }
@@ -1714,18 +1714,18 @@ namespace TA_WPF.ViewModels
             {
                 IsLoading = true;
                 
-                // 验证出发站和到达站是否存在
+                // 验证出发车站和到达车站是否存在
                 string departStationName = DepartStation;
                 string arriveStationName = ArriveStation;
                 
-                // 验证出发站
+                // 验证出发车站
                 if (!ValidateStationName(departStationName, true))
                 {
                     IsLoading = false;
                     return;
                 }
                 
-                // 验证到达站
+                // 验证到达车站
                 if (!ValidateStationName(arriveStationName, false))
                 {
                     IsLoading = false;
@@ -1917,7 +1917,7 @@ namespace TA_WPF.ViewModels
         }
         
         /// <summary>
-        /// 搜索出发站
+        /// 搜索出发车站
         /// </summary>
         /// <param name="searchText">搜索文本</param>
         private async Task SearchDepartStationsAsync(string searchText)
@@ -1950,12 +1950,12 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"搜索出发站时出错: {ex.Message}");
+                LogHelper.LogError($"搜索出发车站时出错: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// 搜索到达站
+        /// 搜索到达车站
         /// </summary>
         /// <param name="searchText">搜索文本</param>
         private async Task SearchArriveStationsAsync(string searchText)
@@ -1988,12 +1988,12 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"搜索到达站时出错: {ex.Message}");
+                LogHelper.LogError($"搜索到达车站时出错: {ex.Message}");
             }
         }
         
         /// <summary>
-        /// 搜索出发站并自动填充代码和拼音
+        /// 搜索出发车站并自动填充代码和拼音
         /// </summary>
         /// <param name="stationName">车站名称</param>
         private async void SearchDepartStationAsync(string stationName)
@@ -2014,12 +2014,12 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"搜索出发站信息时出错: {ex.Message}");
+                LogHelper.LogError($"搜索出发车站信息时出错: {ex.Message}");
             }
         }
         
         /// <summary>
-        /// 搜索到达站并自动填充代码和拼音
+        /// 搜索到达车站并自动填充代码和拼音
         /// </summary>
         /// <param name="stationName">车站名称</param>
         private async void SearchArriveStationAsync(string stationName)
@@ -2040,7 +2040,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"搜索到达站信息时出错: {ex.Message}");
+                LogHelper.LogError($"搜索到达车站信息时出错: {ex.Message}");
             }
         }
 
@@ -2220,7 +2220,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 选择出发站
+        /// 选择出发车站
         /// </summary>
         private void SelectDepartStation(StationInfo station)
         {
@@ -2238,7 +2238,7 @@ namespace TA_WPF.ViewModels
                 // 移除站名中的"站"后缀
                 string stationName = Utils.StationNameHelper.RemoveStationSuffix(station.StationName);
                 
-                // 更新出发站文本框内容
+                // 更新出发车站文本框内容
                 _suppressNotifications = true;
                 DepartStationSearchText = stationName;
                 DepartStation = stationName;
@@ -2260,7 +2260,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(DepartStationPinyin));
                 OnPropertyChanged(nameof(DepartStationCode));
                 
-                System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] 出发站已更新为: " + DepartStationSearchText);
+                System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] 出发车站已更新为: " + DepartStationSearchText);
                 
                 // 重置忽略标志
                 _ignoreSearchTextChange = false;
@@ -2268,7 +2268,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 选择到达站
+        /// 选择到达车站
         /// </summary>
         private void SelectArriveStation(StationInfo station)
         {
@@ -2286,7 +2286,7 @@ namespace TA_WPF.ViewModels
                 // 移除站名中的"站"后缀
                 string stationName = Utils.StationNameHelper.RemoveStationSuffix(station.StationName);
                 
-                // 更新到达站文本框内容
+                // 更新到达车站文本框内容
                 _suppressNotifications = true;
                 ArriveStationSearchText = stationName;
                 ArriveStation = stationName;
@@ -2308,7 +2308,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(ArriveStationPinyin));
                 OnPropertyChanged(nameof(ArriveStationCode));
                 
-                System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] 到达站已更新为: " + ArriveStationSearchText);
+                System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] 到达车站已更新为: " + ArriveStationSearchText);
                 
                 // 重置忽略标志
                 _ignoreSearchTextChange = false;
@@ -2316,7 +2316,7 @@ namespace TA_WPF.ViewModels
         }
         
         /// <summary>
-        /// 处理出发站选择事件
+        /// 处理出发车站选择事件
         /// </summary>
         public void HandleDepartStationSelected()
         {
@@ -2327,7 +2327,7 @@ namespace TA_WPF.ViewModels
         }
         
         /// <summary>
-        /// 处理到达站选择事件
+        /// 处理到达车站选择事件
         /// </summary>
         public void HandleArriveStationSelected()
         {

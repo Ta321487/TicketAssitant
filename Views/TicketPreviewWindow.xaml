@@ -135,13 +135,13 @@
                     <RowDefinition Height="Auto" />
                     <!-- 4: 出发车站/车次号 文本框 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 5: 出发站拼音/到达车站 标签 -->
+                    <!-- 5: 出发车站拼音/到达车站 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 6: 出发站拼音/到达车站 文本框 -->
+                    <!-- 6: 出发车站拼音/到达车站 文本框 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 7: 出发日期/到达站拼音 标签 -->
+                    <!-- 7: 出发日期/到达车站拼音 标签 -->
                     <RowDefinition Height="Auto" />
-                    <!-- 8: 出发日期/到达站拼音 文本框 -->
+                    <!-- 8: 出发日期/到达车站拼音 文本框 -->
                     <RowDefinition Height="Auto" />
                     <!-- 9: 车厢号/出发时间 标签 -->
                     <RowDefinition Height="Auto" />
@@ -206,8 +206,8 @@
                         Grid.Row="4" Grid.Column="0"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
-                <!-- 出发站拼音 -->
-                <TextBlock Text="出发站拼音" Grid.Row="5" Grid.Column="0" Style="{StaticResource FormLabelStyle}"/>
+                <!-- 出发车站拼音 -->
+                <TextBlock Text="出发车站拼音" Grid.Row="5" Grid.Column="0" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding SelectedTicket.DepartStationPinyin, Mode=OneWay}" 
                         Grid.Row="6" Grid.Column="0"
                         Style="{StaticResource FormTextBoxStyle}"/>
@@ -261,8 +261,8 @@
                         Grid.Row="6" Grid.Column="2"
                         Style="{StaticResource FormTextBoxStyle}"/>
 
-                <!-- 到达站拼音 -->
-                <TextBlock Text="到达站拼音" Grid.Row="7" Grid.Column="2" Style="{StaticResource FormLabelStyle}"/>
+                <!-- 到达车站拼音 -->
+                <TextBlock Text="到达车站拼音" Grid.Row="7" Grid.Column="2" Style="{StaticResource FormLabelStyle}"/>
                 <TextBox Text="{Binding SelectedTicket.ArriveStationPinyin, Mode=OneWay}" 
                         Grid.Row="8" Grid.Column="2"
                         Style="{StaticResource FormTextBoxStyle}"/>
@@ -498,7 +498,7 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </StackPanel>
-                        <!-- 出发站站名 -->
+                        <!-- 出发车站站名 -->
                         <TextBlock Text="{Binding DepartStationWithSpacing}" 
                                 FontWeight="Bold"
                                 FontFamily="SimHei" 
@@ -509,7 +509,7 @@
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top" />
 
-                        <!-- 出发站拼音 -->
+                        <!-- 出发车站拼音 -->
                         <TextBlock Text="{Binding SelectedTicket.DepartStationPinyin, Converter={StaticResource FirstLetterToUpperConverter}}" 
                                 FontWeight="Normal" 
                                 Foreground="Black"
@@ -523,7 +523,7 @@
                             </TextBlock.RenderTransform>
                         </TextBlock>
 
-                        <!-- 出发站"站"字 -->
+                        <!-- 出发车站"站"字 -->
                         <TextBlock Text="站" 
                                 FontWeight="Bold" 
                                 Foreground="Black" 
@@ -572,7 +572,7 @@
                             </Path.Data>
                         </Path>
 
-                        <!-- 到达站站名 -->
+                        <!-- 到达车站站名 -->
                         <TextBlock Text="{Binding ArriveStationWithSpacing}" 
                                 FontWeight="Bold" 
                                 Foreground="Black"
@@ -583,7 +583,7 @@
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top" />
 
-                        <!-- 到达站拼音 -->
+                        <!-- 到达车站拼音 -->
                         <TextBlock Text="{Binding SelectedTicket.ArriveStationPinyin, Converter={StaticResource FirstLetterToUpperConverter}}" 
                                 FontWeight="Normal" 
                                 Foreground="Black" 
@@ -597,7 +597,7 @@
                             </TextBlock.RenderTransform>
                         </TextBlock>
 
-                        <!-- 到达站"站"字 -->
+                        <!-- 到达车站"站"字 -->
                         <TextBlock Text="站" 
                                 FontWeight="Bold" 
                                 Foreground="Black" 
