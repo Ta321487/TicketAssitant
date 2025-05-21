@@ -62,6 +62,15 @@ namespace TA_WPF.Views
             
             // 添加DataGrid的键盘事件处理，支持Ctrl+A全选
             TicketsDataGrid.PreviewKeyDown += TicketsDataGrid_PreviewKeyDown;
+            
+            // 添加订阅ViewModel的选择变更事件
+            _viewModel.SelectionChanged += ViewModel_SelectionChanged;
+            
+            // 窗口关闭时取消订阅事件
+            this.Closed += (s, e) =>
+            {
+                _viewModel.SelectionChanged -= ViewModel_SelectionChanged;
+            };
         }
 
         /// <summary>
@@ -72,8 +81,11 @@ namespace TA_WPF.Views
             // 处理Ctrl+A全选
             if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control)
             {
+                if (_viewModel != null && _viewModel.SelectAllCommand.CanExecute(null))
+                {
                 _viewModel.SelectAllCommand.Execute(null);
                 e.Handled = true;
+                }
             }
         }
         
@@ -93,33 +105,35 @@ namespace TA_WPF.Views
                 // 当DataGrid的选择变更时，同步更新ViewModel中的选择状态
                 if (sender is DataGrid dataGrid && _viewModel != null)
                 {
-                    // 使用延迟更新，避免在UI线程中进行过多操作
-                    Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                    // 获取当前激活的键盘修饰键状态
+                    bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+                    bool isShiftPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+
+                    // 先处理移除的项
+                    foreach (TrainRideInfo item in e.RemovedItems)
                     {
-                        try 
+                        item.IsSelected = false;
+                        if (_viewModel.SelectedTickets.Contains(item))
                         {
-                            // 确保所有选中项的状态都正确
-                            foreach (TrainRideInfo item in dataGrid.SelectedItems)
-                            {
-                                if (!item.IsSelected)
-                                    item.IsSelected = true;
-                            }
-                            
-                            // 确保所有未选中项的状态都正确
-                            foreach (TrainRideInfo item in _viewModel.Tickets)
-                            {
-                                if (!dataGrid.SelectedItems.Contains(item) && item.IsSelected)
-                                    item.IsSelected = false;
-                            }
+                            _viewModel.SelectedTickets.Remove(item);
                         }
-                        finally
+                    }
+
+                    // 再处理添加的项
+                    foreach (TrainRideInfo item in e.AddedItems)
+                    {
+                        item.IsSelected = true;
+                        if (!_viewModel.SelectedTickets.Contains(item))
                         {
-                            _isInternalSelectionChange = false;
+                            _viewModel.SelectedTickets.Add(item);
                         }
-                    }));
+                    }
+                    
+                    // 手动通知ViewModel选择状态已变更
+                    _viewModel.NotifySelectionChanged();
                 }
             }
-            catch
+            finally
             {
                 _isInternalSelectionChange = false;
             }
@@ -301,6 +315,39 @@ namespace TA_WPF.Views
             // 恢复显示页码信息
             pageInfoPanel.Visibility = Visibility.Visible;
             pageNumberInput.Visibility = Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// 处理ViewModel选择变更事件，更新DataGrid的选择状态
+        /// </summary>
+        private void ViewModel_SelectionChanged(object sender, CollectionTicketsViewModel.TicketSelectionChangedEventArgs e)
+        {
+            try
+            {
+                _isInternalSelectionChange = true;
+                
+                // 清除之前对应的选择项
+                foreach (var item in e.RemovedItems)
+                {
+                    if (TicketsDataGrid.SelectedItems.Contains(item))
+                    {
+                        TicketsDataGrid.SelectedItems.Remove(item);
+                    }
+                }
+                
+                // 添加新的选择项
+                foreach (var item in e.AddedItems)
+                {
+                    if (!TicketsDataGrid.SelectedItems.Contains(item))
+                    {
+                        TicketsDataGrid.SelectedItems.Add(item);
+                    }
+                }
+            }
+            finally
+            {
+                _isInternalSelectionChange = false;
+            }
         }
     }
 }

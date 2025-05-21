@@ -282,6 +282,7 @@
                       HeadersVisibility="Column"
                       SelectionMode="Extended"
                       SelectionUnit="FullRow"
+                      SelectionChanged="TicketsDataGrid_SelectionChanged"
                       EnableRowVirtualization="True"
                       EnableColumnVirtualization="True"
                       VirtualizingPanel.VirtualizationMode="Recycling"
@@ -311,8 +312,7 @@
                       Padding="0"
                       AlternationCount="2"
                       ColumnWidth="*"
-                      Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}"
-                      SelectionChanged="TicketsDataGrid_SelectionChanged">
+                      Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
                 
                 <DataGrid.Resources>
                     <!-- 完全覆盖MaterialDesign默认的选中样式 -->
@@ -321,14 +321,7 @@
                 
                 <!-- 数据表格样式 -->
                 <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
-                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="Transparent"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
+                    <StaticResource ResourceKey="DataGridRowStyle"/>
                 </DataGrid.RowStyle>
                 <DataGrid.CellStyle>
                     <StaticResource ResourceKey="DataGridCellStyle"/>

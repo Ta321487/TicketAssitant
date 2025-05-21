@@ -287,18 +287,22 @@ namespace TA_WPF.Views
             var viewModel = DataContext as QueryAllTicketsViewModel;
             if (viewModel == null) return;
 
-            // 处理新选中的项
-            foreach (TrainRideInfo item in e.AddedItems)
-            {
-                // 更新模型的选中状态
-                item.IsSelected = true;
-            }
+            // 获取当前激活的键盘修饰键状态，用于处理多选和连续选择
+            bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+            bool isShiftPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 
             // 处理取消选中的项
             foreach (TrainRideInfo item in e.RemovedItems)
             {
                 // 更新模型的选中状态
                 item.IsSelected = false;
+            }
+
+            // 处理新选中的项
+            foreach (TrainRideInfo item in e.AddedItems)
+            {
+                // 更新模型的选中状态
+                item.IsSelected = true;
             }
 
             // 检测是否需要更新全选状态
@@ -342,8 +346,57 @@ namespace TA_WPF.Views
         /// </summary>
         private void TicketsDataGrid_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            // 不再干扰DataGrid的默认选择行为
-            // 所有选择状态的同步都通过DataGridRow_Selected和DataGridRow_Unselected事件处理
+            // 检查是否按下了Ctrl键或Shift键
+            bool isModifierKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl) ||
+                                       Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+                               
+            // 如果没有按下修饰键且当前是全选状态，则模拟单击行为
+            if (!isModifierKeyPressed && DataContext is TicketBaseViewModel viewModel && viewModel.IsAllSelected)
+            {
+                // 获取DataGrid引用
+                var dataGrid = sender as DataGrid;
+                if (dataGrid == null) return;
+                
+                // 获取点击位置下的行
+                DependencyObject dep = (DependencyObject)e.OriginalSource;
+                DataGridRow row = null;
+                
+                // 向上查找DataGridRow
+                while ((dep != null) && !(dep is DataGridRow))
+                {
+                    dep = VisualTreeHelper.GetParent(dep);
+                }
+                
+                if (dep is DataGridRow clickedRow)
+                {
+                    row = clickedRow;
+                }
+                
+                // 如果点击了有效行，则取消全选并仅选中此行
+                if (row != null && row.Item is TrainRideInfo clickedItem)
+                {
+                    // 清除当前DataGrid的所有选择，然后只选择当前行
+                    dataGrid.SelectedItems.Clear();
+                    dataGrid.SelectedItem = clickedItem;
+                    clickedItem.IsSelected = true;
+                    
+                    // 更新其他项的选择状态为false
+                    foreach (var item in viewModel.TrainRideInfos)
+                    {
+                        if (item != clickedItem && item.IsSelected)
+                        {
+                            item.IsSelected = false;
+                        }
+                    }
+                    
+                    // 更新ViewModel中的选中状态
+                    viewModel.IsAllSelected = false;
+                    viewModel.UpdateSelectedItemsCountExternal(1);
+                    
+                    // 阻止默认的选择行为
+                    e.Handled = true;
+                }
+            }
         }
 
         /// <summary>
@@ -357,6 +410,13 @@ namespace TA_WPF.Views
                 if (!item.IsSelected)
                 {
                     item.IsSelected = true;
+                    
+                    // 获取ViewModel并更新选中状态
+                    if (DataContext is TicketBaseViewModel viewModel)
+                    {
+                        // 通知ViewModel更新选中状态
+                        viewModel.UpdateSelectedItemsCountExternal(viewModel.TrainRideInfos.Count(t => t.IsSelected));
+                    }
                 }
             }
         }
@@ -372,6 +432,31 @@ namespace TA_WPF.Views
                 if (item.IsSelected)
                 {
                     item.IsSelected = false;
+                    
+                    // 获取ViewModel并更新选中状态
+                    if (DataContext is TicketBaseViewModel viewModel)
+                    {
+                        // 通知ViewModel更新选中状态
+                        viewModel.UpdateSelectedItemsCountExternal(viewModel.TrainRideInfos.Count(t => t.IsSelected));
+                        
+                        // 如果ViewModel的IsAllSelected为true但并非所有项都被选中，则更新IsAllSelected
+                        if (viewModel.IsAllSelected && !Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl))
+                        {
+                            // 使用反射获取私有字段_isUpdatingAllSelected
+                            var field = typeof(TicketBaseViewModel).GetField("_isUpdatingAllSelected", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (field != null)
+                            {
+                                // 设置_isUpdatingAllSelected为true，避免循环调用
+                                field.SetValue(viewModel, true);
+                                
+                                // 更新全选状态
+                                viewModel.IsAllSelected = false;
+                                
+                                // 设置_isUpdatingAllSelected为false
+                                field.SetValue(viewModel, false);
+                            }
+                        }
+                    }
                 }
             }
         }

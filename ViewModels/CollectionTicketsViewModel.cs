@@ -10,6 +10,7 @@ using TA_WPF.Utils;
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Windows.Input; // Added for CommandManager
+using System.Collections.Generic;
 
 namespace TA_WPF.ViewModels
 {
@@ -201,14 +202,14 @@ namespace TA_WPF.ViewModels
         public bool HasNoData => _tickets == null || _tickets.Count == 0;
 
         /// <summary>
-        /// 是否有选中项
-        /// </summary>
-        public bool HasSelectedItems => SelectedItemsCount > 0;
-
-        /// <summary>
         /// 选中项数量
         /// </summary>
         public int SelectedItemsCount => _selectedTickets?.Count ?? 0;
+
+        /// <summary>
+        /// 是否有选中项
+        /// </summary>
+        public bool HasSelectedItems => SelectedItemsCount > 0;
 
         /// <summary>
         /// 窗口标题
@@ -366,6 +367,12 @@ namespace TA_WPF.ViewModels
                         // 刷新选择状态
                         SynchronizeSelectionStates();
                     }
+                    
+                    // 通知DataGrid更新选中状态
+                    SelectionChanged?.Invoke(this, new TicketSelectionChangedEventArgs(
+                        new List<TrainRideInfo>(), // 没有移除的项
+                        Tickets.ToList() // 所有当前页面的票都被添加到选择中
+                    ));
                 }
                 finally
                 {
@@ -374,7 +381,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 同步选择状态，确保UI和模型数据一致
         /// </summary>
@@ -420,10 +427,26 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void UnselectAll()
         {
+            // 没有选中项时不执行操作
+            if (Tickets == null || Tickets.Count == 0 || SelectedTickets.Count == 0)
+                return;
+                
+            // 备份当前选中项以便触发事件
+            var previousSelected = new List<TrainRideInfo>(_selectedTickets);
+            
             foreach (var ticket in Tickets)
             {
                 ticket.IsSelected = false;
             }
+            
+            SelectedTickets.Clear();
+            NotifySelectionChanged();
+            
+            // 通知DataGrid更新选中状态
+            SelectionChanged?.Invoke(this, new TicketSelectionChangedEventArgs(
+                previousSelected, // 之前选中的项都被移除
+                new List<TrainRideInfo>() // 没有新增的选中项
+            ));
         }
 
         /// <summary>
@@ -436,10 +459,31 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void InvertSelection()
         {
+            if (Tickets == null || Tickets.Count == 0)
+                return;
+                
+            var currentSelection = new HashSet<TrainRideInfo>(_selectedTickets);
+            var toAdd = new List<TrainRideInfo>();
+            var toRemove = new List<TrainRideInfo>(_selectedTickets);
+            
             foreach (var ticket in Tickets)
             {
-                ticket.IsSelected = !ticket.IsSelected;
+                bool previousState = ticket.IsSelected;
+                ticket.IsSelected = !previousState;
+                
+                if (!previousState)
+                {
+                    toAdd.Add(ticket);
+                }
             }
+            
+            SynchronizeSelectionStates();
+            
+            // 通知DataGrid更新选中状态
+            SelectionChanged?.Invoke(this, new TicketSelectionChangedEventArgs(
+                toRemove,  // 之前选中现在取消选中的项
+                toAdd      // 之前未选中现在选中的项
+            ));
         }
 
         /// <summary>
@@ -534,8 +578,8 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private async Task<List<TrainRideInfo>> LoadTicketsFromDatabaseAsync()
         {
-            // 使用数据库服务获取收藏夹内的车票
-            return await _databaseService.GetCollectionTicketsAsync(
+            // 使用数据库服务获取收藏夹内的车票（使用最新的车票信息）
+            return await _databaseService.GetCollectionTicketsWithLatestInfoAsync(
                 _collection.Id,
                 _paginationViewModel.CurrentPage,
                 _paginationViewModel.PageSize);
@@ -664,18 +708,38 @@ namespace TA_WPF.ViewModels
             NotifySelectionChanged();
         }
 
-        private void NotifySelectionChanged()
+        /// <summary>
+        /// 通知选择状态变化
+        /// </summary>
+        public void NotifySelectionChanged()
         {
             OnPropertyChanged(nameof(SelectedItemsCount));
             OnPropertyChanged(nameof(HasSelectedItems));
 
-            // (RemoveTicketsCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            // (SelectAllCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            // (UnselectAllCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            // (InvertSelectionCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            CommandManager.InvalidateRequerySuggested(); // Use CommandManager to re-evaluate command states
+            // Use CommandManager to re-evaluate command states
+            CommandManager.InvalidateRequerySuggested(); 
         }
 
+        #endregion
+
+        #region Selection Event
+
+        // 事件用于通知View更新DataGrid的选中状态
+        public event EventHandler<TicketSelectionChangedEventArgs> SelectionChanged;
+
+        // 事件参数类
+        public class TicketSelectionChangedEventArgs : EventArgs
+        {
+            public List<TrainRideInfo> RemovedItems { get; }
+            public List<TrainRideInfo> AddedItems { get; }
+            
+            public TicketSelectionChangedEventArgs(List<TrainRideInfo> removedItems, List<TrainRideInfo> addedItems)
+            {
+                RemovedItems = removedItems;
+                AddedItems = addedItems;
+            }
+        }
+        
         #endregion
     }
 } 

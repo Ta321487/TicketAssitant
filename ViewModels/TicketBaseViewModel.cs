@@ -607,6 +607,9 @@ namespace TA_WPF.ViewModels
         /// </summary>
         protected virtual void SelectAll()
         {
+            if (TrainRideInfos == null || TrainRideInfos.Count == 0)
+                return;
+            
             // 设置全选状态
             IsAllSelected = true;
 
@@ -618,6 +621,10 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(SelectionToggleText));
             OnPropertyChanged(nameof(SelectionToggleIcon));
             OnPropertyChanged(nameof(SelectionToggleTooltip));
+            
+            // 通知DataGrid更新选中状态（这是关键步骤）
+            // 通过强制刷新命令状态来触发UI更新
+            CommandManager.InvalidateRequerySuggested();
         }
 
         /// <summary>
@@ -625,6 +632,9 @@ namespace TA_WPF.ViewModels
         /// </summary>
         protected virtual void UnselectAll()
         {
+            if (TrainRideInfos == null || TrainRideInfos.Count == 0)
+                return;
+                
             // 设置取消全选状态
             IsAllSelected = false;
 
@@ -636,6 +646,9 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(SelectionToggleText));
             OnPropertyChanged(nameof(SelectionToggleIcon));
             OnPropertyChanged(nameof(SelectionToggleTooltip));
+            
+            // 通知DataGrid更新选中状态
+            CommandManager.InvalidateRequerySuggested();
         }
 
         /// <summary>
@@ -643,6 +656,9 @@ namespace TA_WPF.ViewModels
         /// </summary>
         protected virtual void ToggleSelection()
         {
+            if (TrainRideInfos == null || TrainRideInfos.Count == 0)
+                return;
+                
             // 切换全选状态
             IsAllSelected = !IsAllSelected;
 
@@ -654,6 +670,9 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(SelectionToggleText));
             OnPropertyChanged(nameof(SelectionToggleIcon));
             OnPropertyChanged(nameof(SelectionToggleTooltip));
+            
+            // 通知DataGrid更新选中状态
+            CommandManager.InvalidateRequerySuggested();
         }
 
         /// <summary>
@@ -718,22 +737,25 @@ namespace TA_WPF.ViewModels
             // 批量更新所有项的选择状态
             foreach (var item in TrainRideInfos)
             {
-                // 仅当需要更改状态时才更新，避免不必要的UI更新
-                if (item.IsSelected != isSelected)
-                {
-                    item.IsSelected = isSelected;
-                }
+                // 无论当前状态如何，强制设置为新状态
+                // 这样可以确保模型与UI保持同步
+                item.IsSelected = isSelected;
             }
 
-            // 更新UI状态（改为同步更新，避免使用Dispatcher触发更新问题）
+            // 强制更新选中项计数
             UpdateSelectedItemsCount();
+            
+            // 通知UI更新相关属性
             OnPropertyChanged(nameof(HasSelectedItems));
             OnPropertyChanged(nameof(SelectionToggleText));
             OnPropertyChanged(nameof(SelectionToggleIcon));
             OnPropertyChanged(nameof(SelectionToggleTooltip));
 
-            // 刷新命令状态
+            // 强制刷新命令状态和DataGrid选择状态
             CommandManager.InvalidateRequerySuggested();
+            
+            // 触发属性变更，确保绑定更新
+            OnPropertyChanged(nameof(TrainRideInfos));
         }
 
         /// <summary>
@@ -1237,15 +1259,20 @@ namespace TA_WPF.ViewModels
                         // 应用选择状态到所有项
                         ApplySelectionToAll(value);
                     }
-
-                    // 通知UI更新切换按钮的文本和图标
-                    OnPropertyChanged(nameof(IsAllSelected));
-                    OnPropertyChanged(nameof(SelectionToggleText));
-                    OnPropertyChanged(nameof(SelectionToggleIcon));
-                    OnPropertyChanged(nameof(SelectionToggleTooltip));
-
-                    // 刷新命令状态
-                    CommandManager.InvalidateRequerySuggested();
+                    else
+                    {
+                        // 即使是内部更新，也要通知UI更新
+                        OnPropertyChanged(nameof(IsAllSelected));
+                        OnPropertyChanged(nameof(SelectionToggleText));
+                        OnPropertyChanged(nameof(SelectionToggleIcon));
+                        OnPropertyChanged(nameof(SelectionToggleTooltip));
+                        
+                        // 触发绑定更新
+                        OnPropertyChanged(nameof(TrainRideInfos));
+                        
+                        // 强制刷新命令状态
+                        CommandManager.InvalidateRequerySuggested();
+                    }
                 }
             }
         }
