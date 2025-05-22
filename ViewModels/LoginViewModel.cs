@@ -40,6 +40,7 @@ namespace TA_WPF.ViewModels
         private bool _isLoginButtonEnabled = true;
         private bool _isCapsLockOn = false;
         private double _fontSize = 13;
+        private bool _isLoading = false;
 
         // 表和连接字符串相关
         public List<string> RequiredTables { get; } = new List<string> { "station_info", "train_ride_info", "ticket_collections_info", "collection_mapped_tickets_info" };
@@ -62,6 +63,20 @@ namespace TA_WPF.ViewModels
                 if (_serverAddress != value)
                 {
                     _serverAddress = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        // 是否正在加载（连接中）
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                if (_isLoading != value)
+                {
+                    _isLoading = value;
                     OnPropertyChanged();
                 }
             }
@@ -333,6 +348,7 @@ namespace TA_WPF.ViewModels
             }
 
             IsLoginButtonEnabled = false;
+            IsLoading = true;
 
             try
             {
@@ -359,6 +375,7 @@ namespace TA_WPF.ViewModels
                     
                     ErrorOccurred?.Invoke(this, errorMessage);
                     IsLoginButtonEnabled = true;
+                    IsLoading = false;
                     return;
                 }
 
@@ -460,6 +477,7 @@ namespace TA_WPF.ViewModels
             finally
             {
                 IsLoginButtonEnabled = true;
+                IsLoading = false;
             }
         }
 

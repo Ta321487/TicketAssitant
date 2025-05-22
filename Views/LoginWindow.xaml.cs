@@ -290,20 +290,20 @@ namespace TA_WPF.Views
                     return;
                 }
 
+                // 首先调用ViewModel的ToggleTheme方法来切换和保存主题设置
+                ViewModel.ToggleTheme();
+
                 // 创建主题服务
                 var themeService = ThemeService.Instance;
 
-                // 获取当前主题状态
+                // 获取当前主题状态（已经被ViewModel切换过）
                 bool isDarkTheme = themeService.IsDarkThemeActive();
 
-                // 切换到相反的主题
-                bool newIsDarkTheme = !isDarkTheme;
+                // 使用集中的方法应用主题到窗口UI
+                themeService.ApplyThemeToWindow(this, isDarkTheme, ThemeIcon, MainCard);
 
-                // 使用集中的方法应用主题到窗口
-                themeService.ApplyThemeToWindow(this, newIsDarkTheme, ThemeIcon, MainCard);
-
-                Debug.WriteLine($"主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
-                LogHelper.LogSystem("登录", $"窗口主题已切换为: {(newIsDarkTheme ? "深色" : "浅色")}");
+                Debug.WriteLine($"主题已设置为: {(isDarkTheme ? "深色" : "浅色")}");
+                LogHelper.LogSystem("登录", $"窗口主题已设置为: {(isDarkTheme ? "深色" : "浅色")}");
             }
             catch (Exception ex)
             {

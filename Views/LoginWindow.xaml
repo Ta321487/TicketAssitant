@@ -87,7 +87,6 @@
                 </Button>
                 <Button x:Name="ThemeToggleButton"
                         Style="{StaticResource MaterialDesignFloatingActionMiniButton}"
-                        Command="{Binding ToggleThemeCommand}"
                         Click="ThemeToggleButton_Click"
                         ToolTip="切换深色/浅色模式">
                     <materialDesign:PackIcon x:Name="ThemeIcon" Kind="WeatherNight" Width="20" Height="20"/>
@@ -341,6 +340,26 @@
                     </StackPanel>
                 </materialDesign:Card>
             </Popup>
+
+            <!-- 等待连接动画层 -->
+            <Grid Grid.Row="0" Grid.RowSpan="3" 
+                  Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.Background>
+                    <SolidColorBrush Color="#000000" Opacity="0.5"/>
+                </Grid.Background>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
+                                 Value="0" 
+                                 IsIndeterminate="True" 
+                                 Width="60" 
+                                 Height="60"
+                                 Margin="0,0,0,16"/>
+                    <TextBlock Text="正在连接..." 
+                               Foreground="White"
+                               FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize, Converter={StaticResource FontSizeIncreaseConverter}, ConverterParameter=2}"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
 
             <!-- 底部消息提示 -->
             <materialDesign:Snackbar x:Name="LoginSnackbar"
