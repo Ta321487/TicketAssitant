@@ -42,7 +42,7 @@ namespace TA_WPF.Views
         /// <summary>
         /// 数据上下文变更事件处理
         /// </summary>
-        private void DashboardView_DataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
+        private void DashboardView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (e.NewValue is DashboardViewModel viewModel)
             {

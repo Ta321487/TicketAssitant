@@ -18,6 +18,7 @@ using Size = System.Windows.Size;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using TA_WPF.Utils;
+using System.Diagnostics;
 
 namespace TA_WPF.ViewModels
 {
@@ -620,7 +621,7 @@ namespace TA_WPF.ViewModels
             if (length <= 1) return stationName;
 
             // 调试输出，查看处理前的站名和长度
-            System.Diagnostics.Debug.WriteLine($"原始站名: '{stationName}', 长度: {length}");
+            Debug.WriteLine($"原始站名: '{stationName}', 长度: {length}");
 
             string result;
             if (length == 2)
@@ -650,7 +651,7 @@ namespace TA_WPF.ViewModels
             }
 
             // 调试输出，查看处理后的结果
-            System.Diagnostics.Debug.WriteLine($"处理后的结果: '{result}'");
+            Debug.WriteLine($"处理后的结果: '{result}'");
             return result;
         }
 
@@ -1242,24 +1243,18 @@ namespace TA_WPF.ViewModels
                         encoder.Save(fileStream);
                     }
 
-                    // 使用MaterialDesign风格的对话框显示成功消息
-                    MessageDialog.Show(
+                    MessageBoxHelper.ShowInformation(
                         "图片导出成功！",
                         "提示",
-                        MessageType.Information,
-                        MessageButtons.Ok,
                         window);
                 }
             }
             catch (Exception ex)
             {
-                // 使用MaterialDesign风格的对话框显示错误消息
                 var currentWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
-                MessageDialog.Show(
+                MessageBoxHelper.ShowError(
                     $"导出图片时发生错误：{ex.Message}",
                     "错误",
-                    MessageType.Error,
-                    MessageButtons.Ok,
                     currentWindow);
             }
         }

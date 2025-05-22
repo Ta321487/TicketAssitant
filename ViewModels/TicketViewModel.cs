@@ -109,7 +109,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"后台刷新数据时出错: {ex.Message}");
-                // 不显示错误消息，因为这是后台操作
+                LogHelper.LogError($"后台刷新数据时出错: {ex.Message}", ex);
             }
         }
 
@@ -140,6 +140,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"查询数据时出错: {ex.Message}");
+                LogHelper.LogError($"查询数据时出错: {ex.Message}", ex);
             }
             finally
             {
@@ -181,6 +182,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"加载数据时出错: {ex.Message}");
+                LogHelper.LogError($"加载数据时出错: {ex.Message}", ex);
             }
             finally
             {
@@ -273,6 +275,7 @@ namespace TA_WPF.ViewModels
             {
                 Debug.WriteLine($"加载页面数据时出错: {ex.Message}");
                 MessageBoxHelper.ShowError($"加载页面数据时出错: {ex.Message}");
+                LogHelper.LogError($"加载页面数据时出错: {ex.Message}", ex);
             }
             finally
             {

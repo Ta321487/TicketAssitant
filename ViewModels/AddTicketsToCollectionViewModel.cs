@@ -840,6 +840,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"添加车票失败: {ex.Message}", "错误");
+                LogHelper.LogError($"添加车票失败: {ex.Message}", ex);
                 Debug.WriteLine($"添加车票失败: {ex.Message}");
             }
             finally
@@ -898,7 +899,8 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"加载车票数据失败: {ex.Message}", "错误");
-            }
+                LogHelper.LogError($"加载车票数据失败: {ex.Message}", ex);
+                }
             finally
             {
                 IsLoading = false;
@@ -919,6 +921,7 @@ namespace TA_WPF.ViewModels
             {
                 // 记录错误但继续执行，返回空列表
                 Debug.WriteLine($"获取已有车票ID失败: {ex.Message}");
+                LogHelper.LogError($"获取已有车票ID失败: {ex.Message}", ex);
                 return new List<int>();
             }
         }
@@ -958,6 +961,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"获取车票总数失败: {ex.Message}", "错误");
+                LogHelper.LogError($"获取车票总数失败: {ex.Message}", ex);
                 return 0;
             }
         }
@@ -990,6 +994,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"获取车票列表失败: {ex.Message}", "错误");
+                LogHelper.LogError($"获取车票列表失败: {ex.Message}", ex);
                 return new List<TrainRideInfo>();
             }
         }
@@ -1007,6 +1012,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"添加车票到收藏夹失败: {ex.Message}", "错误");
+                LogHelper.LogError($"添加车票到收藏夹失败: {ex.Message}", ex);
                 return 0;
             }
         }

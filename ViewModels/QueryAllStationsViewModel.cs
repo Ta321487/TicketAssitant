@@ -5,8 +5,8 @@ using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows; // Add this for MessageBoxResult and Application
-using System.Windows.Controls; // Add this for Grid
+using System.Windows;
+using System.Windows.Controls;
 using System.Linq;
 using System.Collections.Generic;
 using TA_WPF.Views;
@@ -18,7 +18,7 @@ namespace TA_WPF.ViewModels
     {
         private readonly DatabaseService _databaseService;
         private readonly PaginationViewModel _paginationViewModel;
-        private readonly MainViewModel _mainViewModel; // If interaction with MainViewModel is needed
+        private readonly MainViewModel _mainViewModel;
 
         private ObservableCollection<StationInfo> _stations;
         private int _totalCount;
@@ -46,11 +46,11 @@ namespace TA_WPF.ViewModels
 
             // Initialize commands
             RefreshCommand = new RelayCommand(async () => await LoadStationsAsync());
-            AddStationCommand = new RelayCommand(AddStation, CanAddStation); // Implement logic later
-            EditStationCommand = new RelayCommand<StationInfo>(EditStation, CanEditStation); // Implement logic later
-            DeleteStationCommand = new RelayCommand<StationInfo>(DeleteStation, CanDeleteStation); // Implement logic later
-            DeleteStationsCommand = new RelayCommand(DeleteSelectedStations, CanDeleteSelectedStations); // 添加删除多条命令
-            AdvancedQueryCommand = new RelayCommand(OpenAdvancedQuery, CanOpenAdvancedQuery); // Implement logic later
+            AddStationCommand = new RelayCommand(AddStation, CanAddStation); 
+            EditStationCommand = new RelayCommand<StationInfo>(EditStation, CanEditStation); 
+            DeleteStationCommand = new RelayCommand<StationInfo>(DeleteStation, CanDeleteStation); 
+            DeleteStationsCommand = new RelayCommand(DeleteSelectedStations, CanDeleteSelectedStations); 
+            AdvancedQueryCommand = new RelayCommand(OpenAdvancedQuery, CanOpenAdvancedQuery); 
             
             // 添加选择相关命令
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
@@ -185,7 +185,6 @@ namespace TA_WPF.ViewModels
         // 添加双击命令
         public ICommand DoubleClickEditCommand { get; }
 
-        // --- Command Methods (Implement logic later or keep as placeholders) ---
         private async void AddStation()
         {
             // 创建StationImportService
@@ -233,7 +232,7 @@ namespace TA_WPF.ViewModels
             if (station == null) return;
             // Use ShowConfirmation instead of ShowConfirm
             var confirmResult = MessageBoxHelper.ShowConfirmation($"确定要删除车站 '{station.StationName}' 吗？", "确认删除");
-            if (confirmResult == MessageBoxResult.Yes) // Check the result
+            if (confirmResult == MessageBoxResult.Yes)
             {
                 try
                 {
@@ -272,7 +271,7 @@ namespace TA_WPF.ViewModels
                 if (queryPage != null)
                 {
                     // 查找QueryPanelContainer
-                    var container = queryPage.FindName("QueryPanelContainer") as System.Windows.Controls.Grid;
+                    var container = queryPage.FindName("QueryPanelContainer") as Grid;
                     if (container != null)
                     {
                         // 如果已经创建了高级查询面板，则切换其可见性
@@ -309,6 +308,7 @@ namespace TA_WPF.ViewModels
                     else
                     {
                         MessageBoxHelper.ShowError("无法找到查询面板容器(QueryPanelContainer)。");
+                        LogHelper.LogError("无法找到查询面板容器(QueryPanelContainer)。");
                     }
                 }
                 else
@@ -600,10 +600,10 @@ namespace TA_WPF.ViewModels
                 else
                 {
                     // 没有高级查询条件，使用普通查询方法
-                    TotalCount = await _databaseService.GetStationCountAsync(); // Need to add this method to DatabaseService
+                    TotalCount = await _databaseService.GetStationCountAsync();
                     var stationsData = await _databaseService.GetStationsAsync(
                         _paginationViewModel.CurrentPage,
-                        _paginationViewModel.PageSize); // Need to add this method to DatabaseService
+                        _paginationViewModel.PageSize);
 
                     Stations = new ObservableCollection<StationInfo>(stationsData);
                 }
@@ -636,7 +636,6 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // --- Helper Methods (if needed) ---
 
         // 添加方法用于通知UI更新选择状态
         public void NotifySelectionChanged()

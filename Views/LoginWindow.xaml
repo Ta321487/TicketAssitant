@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TA_WPF.Views"
+        xmlns:vm="clr-namespace:TA_WPF.ViewModels"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         d:DesignHeight="890" d:DesignWidth="450"
@@ -21,6 +22,10 @@
         KeyDown="Window_KeyDown"
         Loaded="Window_Loaded">
 
+    <Window.DataContext>
+        <vm:LoginViewModel />
+    </Window.DataContext>
+    
     <Window.Resources>
         <ResourceDictionary>
             <Style x:Key="ResponsiveTextBlock" TargetType="TextBlock">
@@ -82,6 +87,7 @@
                 </Button>
                 <Button x:Name="ThemeToggleButton"
                         Style="{StaticResource MaterialDesignFloatingActionMiniButton}"
+                        Command="{Binding ToggleThemeCommand}"
                         Click="ThemeToggleButton_Click"
                         ToolTip="切换深色/浅色模式">
                     <materialDesign:PackIcon x:Name="ThemeIcon" Kind="WeatherNight" Width="20" Height="20"/>
@@ -111,16 +117,16 @@
                         <TextBox x:Name="ServerAddressTextBox"
                                  Style="{StaticResource ResponsiveTextBox}"
                                  materialDesign:HintAssist.Hint="服务器地址"
-                                 Text=""/>
+                                 Text="{Binding ServerAddress, UpdateSourceTrigger=PropertyChanged}"/>
                         <Button Style="{StaticResource MaterialDesignIconButton}"
                                 Foreground="{DynamicResource GlobalAccentBrush}"
                                 Width="32" Height="32" Padding="4"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
                                 Margin="0,0,8,0"
                                 ToolTip="清除"
-                                Click="ClearServerAddress_Click"
+                                Command="{Binding ClearServerAddressCommand}"
                                 Panel.ZIndex="1"
-                                Visibility="{Binding ElementName=ServerAddressTextBox, Path=Text, Converter={StaticResource StringToVisibilityConverter}}">
+                                Visibility="{Binding ServerAddress, Converter={StaticResource StringToVisibilityConverter}}">
                             <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
                         </Button>
                     </Grid>
@@ -131,25 +137,25 @@
                                   Style="{StaticResource ResponsiveComboBox}"
                                   materialDesign:HintAssist.Hint="数据库名称"
                                   IsEditable="True"
-                                  Text="{Binding ElementName=DatabaseNameTextBox, Path=Text}"
+                                  Text="{Binding DatabaseName, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding DatabaseHistory}"
                                   IsTextSearchEnabled="True"
-                                  StaysOpenOnEdit="True"
-                                  Loaded="DatabaseNameComboBox_Loaded"/>
+                                  StaysOpenOnEdit="True"/>
                         <Button Style="{StaticResource MaterialDesignIconButton}"
                                 Foreground="{DynamicResource GlobalAccentBrush}"
                                 Width="32" Height="32" Padding="4"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
                                 Margin="0,0,8,0"
                                 ToolTip="清除"
-                                Click="ClearDatabaseName_Click"
+                                Command="{Binding ClearDatabaseNameCommand}"
                                 Panel.ZIndex="1"
-                                Visibility="{Binding ElementName=DatabaseNameComboBox, Path=Text, Converter={StaticResource StringToVisibilityConverter}}">
+                                Visibility="{Binding DatabaseName, Converter={StaticResource StringToVisibilityConverter}}">
                             <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
                         </Button>
                     </Grid>
 
                     <TextBox x:Name="DatabaseNameTextBox"
-                             Text=""
+                             Text="{Binding DatabaseName, UpdateSourceTrigger=PropertyChanged}"
                              Visibility="Collapsed"/>
 
                     <!-- 创建新数据库区域 -->
@@ -164,6 +170,7 @@
                             <TextBox x:Name="NewDatabaseNameTextBox"
                                      Style="{StaticResource ResponsiveTextBox}"
                                      materialDesign:HintAssist.Hint="新数据库名称"
+                                     Text="{Binding NewDatabaseName, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="0,0,8,0"/>
                             <Button x:Name="CreateDatabaseButton"
                                     Content="创建"
@@ -171,7 +178,7 @@
                                     Style="{StaticResource MaterialDesignFlatButton}"
                                     materialDesign:ButtonAssist.CornerRadius="4"
                                     Foreground="{DynamicResource GlobalAccentBrush}"
-                                    Click="CreateDatabaseButton_Click"
+                                    Command="{Binding CreateDatabaseCommand}"
                                     Height="48"
                                     FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"
                                     MinWidth="80"/>
@@ -182,16 +189,17 @@
                     <Grid Margin="0,0,0,8">
                         <TextBox x:Name="UsernameTextBox"
                                  Style="{StaticResource ResponsiveTextBox}"
-                                 materialDesign:HintAssist.Hint="用户名"/>
+                                 materialDesign:HintAssist.Hint="用户名"
+                                 Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
                         <Button Style="{StaticResource MaterialDesignIconButton}"
                                 Foreground="{DynamicResource GlobalAccentBrush}"
                                 Width="32" Height="32" Padding="4"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
                                 Margin="0,0,8,0"
                                 ToolTip="清除"
-                                Click="ClearUsername_Click"
+                                Command="{Binding ClearUsernameCommand}"
                                 Panel.ZIndex="1"
-                                Visibility="{Binding ElementName=UsernameTextBox, Path=Text, Converter={StaticResource StringToVisibilityConverter}}">
+                                Visibility="{Binding Username, Converter={StaticResource StringToVisibilityConverter}}">
                             <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
                         </Button>
                     </Grid>
@@ -214,7 +222,7 @@
                                 VerticalAlignment="Center"
                                 Margin="0,0,8,0"
                                 ToolTip="清除"
-                                Click="ClearPassword_Click"
+                                Command="{Binding ClearPasswordCommand}"
                                 Panel.ZIndex="1"
                                 Visibility="{Binding ElementName=PasswordBox, Path=Password, Converter={StaticResource StringToVisibilityConverter}}">
                             <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
@@ -226,7 +234,7 @@
                                                VerticalAlignment="Center"
                                                Margin="0,0,48,0"
                                                Panel.ZIndex="1"
-                                               Visibility="Collapsed"
+                                               Visibility="{Binding IsCapsLockOn, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                ToolTip="大写锁定已开启"/>
                     </Grid>
 
@@ -239,18 +247,17 @@
                         <CheckBox x:Name="CustomPortCheckBox" 
                                   Content="自定义端口号" 
                                   Margin="0,0,8,0"
-                                  VerticalAlignment="Center"
-                                  Checked="CustomPortCheckBox_Checked"
-                                  Unchecked="CustomPortCheckBox_Unchecked"/>
+                                  IsChecked="{Binding IsCustomPort}"
+                                  VerticalAlignment="Center"/>
                         <Grid Grid.Column="1">
                             <TextBox x:Name="PortTextBox"
                                      Style="{StaticResource ResponsiveTextBox}"
                                      materialDesign:HintAssist.Hint="端口号"
                                      materialDesign:HintAssist.FloatingScale="0.8"
                                      materialDesign:HintAssist.FloatingOffset="0,-15"
-                                     Text="3306"
+                                     Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
                                      materialDesign:TextFieldAssist.HasClearButton="False"
-                                     IsEnabled="False"
+                                     IsEnabled="{Binding IsCustomPort}"
                                      MinWidth="110"
                                      Margin="0"
                                      HorizontalAlignment="Right"/>
@@ -263,10 +270,10 @@
                                     VerticalAlignment="Center"
                                     Margin="0,0,8,0"
                                     ToolTip="清除"
-                                    Click="ClearPort_Click"
+                                    Command="{Binding ClearPortCommand}"
                                     Panel.ZIndex="1"
-                                    IsEnabled="{Binding ElementName=PortTextBox, Path=IsEnabled}"
-                                    Visibility="{Binding ElementName=PortTextBox, Path=Text, Converter={StaticResource StringToVisibilityConverter}}">
+                                    IsEnabled="{Binding IsCustomPort}"
+                                    Visibility="{Binding Port, Converter={StaticResource StringToVisibilityConverter}}">
                                 <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
                             </Button>
                         </Grid>
@@ -286,7 +293,8 @@
                         Grid.Column="0"
                         Style="{StaticResource MaterialDesignFlatButton}"
                         materialDesign:ButtonAssist.CornerRadius="4"
-                        Click="LoginButton_Click"
+                        Command="{Binding LoginCommand}"
+                        IsEnabled="{Binding IsLoginButtonEnabled}"
                         Margin="0,0,8,0"
                         Height="48"
                         FontSize="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=FontSize}"
@@ -297,6 +305,7 @@
                         Grid.Column="1"
                         Style="{StaticResource MaterialDesignFlatButton}"
                         materialDesign:ButtonAssist.CornerRadius="4"
+                        Command="{Binding CancelCommand}"
                         Click="CancelButton_Click"
                         Margin="8,0,0,0"
                         Height="48"
@@ -320,12 +329,12 @@
                                     Width="120"
                                     Minimum="12" 
                                     Maximum="20" 
-                                    Value="13"
+                                    Value="{Binding FontSize}"
                                     TickFrequency="1"
                                     IsSnapToTickEnabled="True"
                                     ValueChanged="FontSizeSlider_ValueChanged"/>
                             <TextBlock x:Name="FontSizeValueText" 
-                                       Text="13pt" 
+                                       Text="{Binding FontSize, StringFormat={}{0:N0}pt}" 
                                        Margin="8,0,0,0" 
                                        VerticalAlignment="Center"/>
                         </StackPanel>

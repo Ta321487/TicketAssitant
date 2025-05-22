@@ -479,8 +479,42 @@ namespace TA_WPF
         // 处理Task未观察到的异常
         private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            LogHelper.LogSystemError("异常处理", "未观察到的Task异常", e.Exception);
-            e.SetObserved(); // 标记为已观察，防止应用程序崩溃
+            try
+            {
+                // 标记异常为已观察，防止应用程序崩溃
+                e.SetObserved();
+
+                // 获取实际异常
+                Exception? ex = e.Exception?.InnerException;
+                if (ex != null)
+                {
+                    // 检查是否为HwndSource相关异常
+                    if (ex is ArgumentException && ex.Message.Contains("Hwnd"))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"忽略HwndSource相关异常: {ex.Message}");
+                        LogHelper.LogError("忽略HwndSource相关异常", ex);
+                        return;
+                    }
+                    
+                    // 检查是否是Visual Studio设计器相关异常
+                    if (ex.StackTrace != null && 
+                        (ex.StackTrace.Contains("Microsoft.VisualStudio") || 
+                        ex.StackTrace.Contains("DesignTools")))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"忽略Visual Studio设计器相关异常: {ex.Message}");
+                        LogHelper.LogError("忽略Visual Studio设计器相关异常", ex);
+                        return;
+                    }
+                    
+                    // 处理其他异常
+                    LogHelper.LogSystemError("异常处理", "未观察到的Task异常", ex);
+                }
+            }
+            catch (Exception handlerEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"处理未观察的Task异常时发生错误: {handlerEx.Message}");
+                LogHelper.LogError("处理未观察的Task异常时发生错误", handlerEx);
+            }
         }
 
         /// <summary>

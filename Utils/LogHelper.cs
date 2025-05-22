@@ -44,26 +44,38 @@ namespace TA_WPF.Utils
             }
         }
 
+        /// <summary>
+        /// 记录应用程序信息日志
+        /// </summary>
         public static void LogInfo(string message)
         {
-            Log("INFO", message);
+            WriteLog("INFO", message, LogType.AppOnly);
         }
 
+        /// <summary>
+        /// 记录应用程序警告日志
+        /// </summary>
         public static void LogWarning(string message)
         {
-            Log("WARNING", message);
+            WriteLog("WARNING", message, LogType.AppOnly);
         }
 
+        /// <summary>
+        /// 记录应用程序错误日志
+        /// </summary>
         public static void LogError(string message)
         {
-            Log("ERROR", message);
+            WriteLog("ERROR", message, LogType.AppOnly);
         }
 
+        /// <summary>
+        /// 记录应用程序带异常的错误日志
+        /// </summary>
         public static void LogError(string message, Exception exception)
         {
             if (exception == null)
             {
-                Log("ERROR", message);
+                WriteLog("ERROR", message, LogType.AppOnly);
                 return;
             }
 
@@ -84,47 +96,7 @@ namespace TA_WPF.Utils
                 innerException = innerException.InnerException;
             }
 
-            Log("ERROR", sb.ToString());
-        }
-
-        /// <summary>
-        /// 记录车票相关信息日志
-        /// </summary>
-        public static void LogTicket(string action, string ticketInfo)
-        {
-            string message = $"车票{action}: {ticketInfo}";
-            Log("INFO", message);
-        }
-
-        /// <summary>
-        /// 记录车票相关警告日志
-        /// </summary>
-        public static void LogTicketWarning(string action, string ticketInfo)
-        {
-            string message = $"车票{action}: {ticketInfo}";
-            Log("WARNING", message);
-        }
-
-        /// <summary>
-        /// 记录车票相关错误日志
-        /// </summary>
-        public static void LogTicketError(string action, string ticketInfo, Exception exception = null)
-        {
-            string message = $"车票{action}失败: {ticketInfo}";
-            if (exception == null)
-            {
-                Log("ERROR", message);
-            }
-            else
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine(message);
-                sb.AppendLine($"异常类型: {exception.GetType().FullName}");
-                sb.AppendLine($"异常消息: {exception.Message}");
-                sb.AppendLine($"堆栈跟踪: {exception.StackTrace}");
-
-                Log("ERROR", sb.ToString());
-            }
+            WriteLog("ERROR", sb.ToString(), LogType.AppOnly);
         }
 
         /// <summary>
@@ -133,7 +105,7 @@ namespace TA_WPF.Utils
         public static void LogSystem(string component, string message)
         {
             string logMessage = $"系统组件[{component}]: {message}";
-            Log("INFO", logMessage);
+            WriteLog("INFO", logMessage, LogType.SystemOnly);
         }
 
         /// <summary>
@@ -142,7 +114,7 @@ namespace TA_WPF.Utils
         public static void LogSystemWarning(string component, string message)
         {
             string logMessage = $"系统组件[{component}]警告: {message}";
-            Log("WARNING", logMessage);
+            WriteLog("WARNING", logMessage, LogType.SystemOnly);
         }
 
         /// <summary>
@@ -153,7 +125,7 @@ namespace TA_WPF.Utils
             if (exception == null)
             {
                 string logMessage = $"系统组件[{component}]错误: {message}";
-                Log("ERROR", logMessage);
+                WriteLog("ERROR", logMessage, LogType.SystemOnly);
             }
             else
             {
@@ -163,11 +135,19 @@ namespace TA_WPF.Utils
                 sb.AppendLine($"异常消息: {exception.Message}");
                 sb.AppendLine($"堆栈跟踪: {exception.StackTrace}");
 
-                Log("ERROR", sb.ToString());
+                WriteLog("ERROR", sb.ToString(), LogType.SystemOnly);
             }
         }
 
-        private static void Log(string level, string message)
+        // 日志类型枚举
+        private enum LogType
+        {
+            AppOnly,        // 仅应用程序日志
+            SystemOnly,     // 仅系统日志
+            AppAndSystem    // 同时写入两种日志
+        }
+
+        private static void WriteLog(string level, string message, LogType logType)
         {
             if (!_isInitialized)
             {
@@ -189,32 +169,17 @@ namespace TA_WPF.Utils
                     {
                         lock (LockObj)
                         {
-                            // 判断是否为系统相关日志或车票相关日志
-                            bool isSystemLog = IsSystemLog(message);
-                            bool isTicketLog = IsTicketLog(message);
-
-                            // 系统级别日志仅写入系统日志文件
-                            if (isSystemLog)
+                            // 根据日志类型决定写入位置
+                            if (logType == LogType.SystemOnly || logType == LogType.AppAndSystem)
                             {
                                 string systemLogPath = Path.Combine(SystemLogPath, SystemLogFileName);
                                 File.AppendAllText(systemLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
                             }
-                            // 车票相关日志仅写入应用程序日志
-                            else if (isTicketLog)
+                            
+                            if (logType == LogType.AppOnly || logType == LogType.AppAndSystem)
                             {
                                 string appLogPath = Path.Combine(LogFilePath, LogFileName);
                                 File.AppendAllText(appLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
-                            }
-                            // 其他日志写入两个文件
-                            else
-                            {
-                                // 写入应用程序日志
-                                string appLogPath = Path.Combine(LogFilePath, LogFileName);
-                                File.AppendAllText(appLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
-
-                                // 写入系统日志
-                                string systemLogPath = Path.Combine(SystemLogPath, SystemLogFileName);
-                                File.AppendAllText(systemLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
                             }
                         }
                         success = true;
@@ -234,54 +199,6 @@ namespace TA_WPF.Utils
             {
                 Debug.WriteLine($"写入日志时出错: {ex.Message}");
             }
-        }
-
-        /// <summary>
-        /// 判断是否为系统级别日志
-        /// </summary>
-        private static bool IsSystemLog(string message)
-        {
-            // 系统级别：数据库、创建窗口等相关日志
-            string[] systemKeywords =
-            {
-                "数据库", "连接", "MySQL", "初始化", "配置", "窗口",
-                "服务器", "IP", "目录", "文件", "配置文件", "设置",
-                "COM初始化", "异常堆栈", "System", "Database", "Window"
-            };
-
-            foreach (var keyword in systemKeywords)
-            {
-                if (message.Contains(keyword))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 判断是否为车票相关日志
-        /// </summary>
-        private static bool IsTicketLog(string message)
-        {
-            // 车票相关：车票操作、查询等相关日志
-            string[] ticketKeywords =
-            {
-                "车票", "添加车票", "修改车票", "删除车票", "查询车票",
-                "保存车票", "加载车票", "刷新车票", "导出车票",
-                "Ticket", "车站", "座位", "金额", "出发", "到达"
-            };
-
-            foreach (var keyword in ticketKeywords)
-            {
-                if (message.Contains(keyword))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         /// <summary>

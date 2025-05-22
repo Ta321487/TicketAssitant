@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Windows.Shapes;
+using Calendar = System.Windows.Controls.Calendar;
 
 namespace TA_WPF.Utils
 {
@@ -27,33 +29,33 @@ namespace TA_WPF.Utils
 
         private Style CreateChineseCalendarStyle()
         {
-            var style = new Style(typeof(System.Windows.Controls.Calendar));
+            var style = new Style(typeof(Calendar));
 
             // 设置日历的基本属性
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.DisplayModeProperty, CalendarMode.Month));
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.SelectionModeProperty, CalendarSelectionMode.SingleDate));
+            style.Setters.Add(new Setter(Calendar.DisplayModeProperty, CalendarMode.Month));
+            style.Setters.Add(new Setter(Calendar.SelectionModeProperty, CalendarSelectionMode.SingleDate));
 
             // 设置日历的视觉样式
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.BackgroundProperty, Brushes.White));
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(221, 221, 221))));
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.BorderThicknessProperty, new Thickness(1)));
+            style.Setters.Add(new Setter(Calendar.BackgroundProperty, Brushes.White));
+            style.Setters.Add(new Setter(Calendar.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(221, 221, 221))));
+            style.Setters.Add(new Setter(Calendar.BorderThicknessProperty, new Thickness(1)));
 
             // 设置日历的字体
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.FontFamilyProperty, new FontFamily("Microsoft YaHei")));
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.FontSizeProperty, 12.0));
+            style.Setters.Add(new Setter(Calendar.FontFamilyProperty, new FontFamily("Microsoft YaHei")));
+            style.Setters.Add(new Setter(Calendar.FontSizeProperty, 12.0));
 
             // 设置日历的语言和文化
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.LanguageProperty, System.Windows.Markup.XmlLanguage.GetLanguage("zh-CN")));
+            style.Setters.Add(new Setter(Calendar.LanguageProperty, System.Windows.Markup.XmlLanguage.GetLanguage("zh-CN")));
 
             // 自定义日历单元格模板
             var calendarDayButtonStyle = new Style(typeof(CalendarDayButton));
             calendarDayButtonStyle.Setters.Add(new Setter(CalendarDayButton.TemplateProperty, CreateCalendarDayButtonTemplate()));
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.CalendarDayButtonStyleProperty, calendarDayButtonStyle));
+            style.Setters.Add(new Setter(Calendar.CalendarDayButtonStyleProperty, calendarDayButtonStyle));
 
             // 自定义日历头部模板
             var calendarButtonStyle = new Style(typeof(CalendarButton));
             calendarButtonStyle.Setters.Add(new Setter(CalendarButton.FontWeightProperty, FontWeights.Bold));
-            style.Setters.Add(new Setter(System.Windows.Controls.Calendar.CalendarButtonStyleProperty, calendarButtonStyle));
+            style.Setters.Add(new Setter(Calendar.CalendarButtonStyleProperty, calendarButtonStyle));
 
             return style;
         }
@@ -67,9 +69,9 @@ namespace TA_WPF.Utils
             rootGrid.Name = "RootGrid";
 
             // 创建背景矩形
-            var background = new FrameworkElementFactory(typeof(System.Windows.Shapes.Rectangle));
+            var background = new FrameworkElementFactory(typeof(Rectangle));
             background.Name = "Background";
-            background.SetValue(System.Windows.Shapes.Rectangle.FillProperty, new TemplateBindingExtension(Control.BackgroundProperty));
+            background.SetValue(Rectangle.FillProperty, new TemplateBindingExtension(Control.BackgroundProperty));
             rootGrid.AppendChild(background);
 
             // 创建内容呈现器

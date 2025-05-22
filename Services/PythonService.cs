@@ -8,6 +8,7 @@ using System.Windows;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using TA_WPF.Utils;
 
 namespace TA_WPF.Services
 {
@@ -96,6 +97,7 @@ namespace TA_WPF.Services
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"搜索Python安装路径时出错: {ex.Message}");
+                        LogHelper.LogSystemError("Python环境", $"搜索Python安装路径时出错", ex);
                     }
                 }
             }
@@ -154,6 +156,7 @@ namespace TA_WPF.Services
                                 versionInfo = error.ToString().Trim();
                             
                             Debug.WriteLine($"已检测到Python安装: {versionInfo}");
+                            LogHelper.LogSystem("Python", $"已检测到Python安装: {versionInfo}");
                             
                             // 更新当前Python路径
                             _pythonExePath = command;
@@ -263,6 +266,7 @@ namespace TA_WPF.Services
                                         foreach (var file in subModelFiles)
                                         {
                                             Debug.WriteLine($"在子目录中找到OCR模型文件: {file}");
+                                            LogHelper.LogSystem("Python环境", $"在子目录中找到OCR模型文件: {file}");
                                         }
                                         return true;
                                     }
@@ -270,6 +274,7 @@ namespace TA_WPF.Services
                                 catch (Exception ex)
                                 {
                                     Debug.WriteLine($"搜索子目录时出错: {ex.Message}");
+                                    LogHelper.LogSystemError("Python", $"搜索子目录时出错: {ex.Message}");
                                     // 继续搜索其他目录
                                 }
                             }
@@ -277,17 +282,21 @@ namespace TA_WPF.Services
                         catch (Exception ex)
                         {
                             Debug.WriteLine($"搜索模型文件时出错: {ex.Message}");
+                            LogHelper.LogSystemError("模型",$"搜索模型文件时出错: {ex.Message}", ex);
+
                             // 继续搜索其他目录
                         }
                     }
                 }
 
                 Debug.WriteLine("未找到任何OCR模型文件");
+                LogHelper.LogSystemWarning("模型", "未找到任何OCR模型文件");
                 return false;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"检查OCR模型安装状态时出错: {ex.Message}");
+                LogHelper.LogSystemError("模型", $"检查OCR模型安装状态时出错: {ex.Message}");
                 return false;
             }
         }
@@ -319,6 +328,7 @@ namespace TA_WPF.Services
                         if (Directory.Exists(cnocrPath))
                         {
                             Debug.WriteLine($"找到cnocr包路径: {cnocrPath}");
+                            LogHelper.LogSystem("模型", $"找到cnocr包路径: {cnocrPath}");
                             return cnocrPath;
                         }
                     }
@@ -327,6 +337,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"获取Python site-packages目录时出错: {ex.Message}");
+                LogHelper.LogSystemError("Python环境", $"获取Python site-packages目录时出错", ex);
             }
             
             return null;
@@ -345,8 +356,10 @@ namespace TA_WPF.Services
                 if (!modelInstalled)
                 {
                     Debug.WriteLine("OCR模型不存在，尝试从内置资源复制模型文件");
+                    LogHelper.LogSystemWarning("模型", "OCR模型不存在，尝试从内置资源复制模型文件");
                     bool copySuccess = await CopyModelFilesFromAssets();
                     Debug.WriteLine($"从内置资源复制模型文件{(copySuccess ? "成功" : "失败")}");
+
                 }
 
                 // 创建一个临时Python脚本
@@ -812,6 +825,7 @@ except Exception as e:
                                 // 替换为更友好的中文提示
                                 errorBuilder.AppendLine("网络连接超时：连接到模型服务器失败，但不影响使用已下载的模型");
                                 Debug.WriteLine("OCR错误: 网络连接超时，连接到模型服务器失败");
+                                LogHelper.LogSystemError("网络", "网络连接超时：连接到模型服务器失败，但不影响使用已下载的模型");
                                 return;
                             }
                             

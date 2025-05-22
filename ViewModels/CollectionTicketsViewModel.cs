@@ -562,6 +562,7 @@ namespace TA_WPF.ViewModels
             {
                 MessageBoxHelper.ShowError($"加载收藏夹车票列表失败: {ex.Message}");
                 Debug.WriteLine($"加载收藏夹车票列表错误: {ex.Message}");
+                LogHelper.LogError($"加载收藏夹车票列表错误: {ex.Message}");
                 Tickets?.Clear();
                 SelectedTickets?.Clear();
                 TotalCount = 0;
@@ -579,7 +580,7 @@ namespace TA_WPF.ViewModels
         private async Task<List<TrainRideInfo>> LoadTicketsFromDatabaseAsync()
         {
             // 使用数据库服务获取收藏夹内的车票（使用最新的车票信息）
-            return await _databaseService.GetCollectionTicketsWithLatestInfoAsync(
+            return await _databaseService.GetCollectionTicketsAsync(
                 _collection.Id,
                 _paginationViewModel.CurrentPage,
                 _paginationViewModel.PageSize);

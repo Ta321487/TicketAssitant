@@ -550,7 +550,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"打开添加车票窗口时出错: {ex.Message}");
-                LogHelper.LogTicketError("添加", "打开添加车票窗口时失败", ex);
+                LogHelper.LogError($"添加 - 打开添加车票窗口时失败: {ex.Message}", ex);
             }
         }
 
@@ -570,7 +570,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"修改车票时出错: {ex.Message}");
-                LogHelper.LogTicketError("修改", "执行车票修改操作时失败", ex);
+                LogHelper.LogError($"修改 - 执行车票修改操作时失败: {ex.Message}", ex);
             }
         }
 
@@ -598,7 +598,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"修改车票时出错: {ex.Message}");
-                LogHelper.LogTicketError("修改", $"双击修改车票(ID:{ticket?.Id})时失败", ex);
+                LogHelper.LogError($"修改 - 双击修改车票(ID:{ticket?.Id})时失败: {ex.Message}", ex);
             }
         }
 
@@ -885,7 +885,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"删除车票时出错: {ex.Message}");
-                LogHelper.LogTicketError("删除", $"删除选中的车票(共{selectedTickets.Count}张)时失败", ex);
+                LogHelper.LogError($"删除 - 删除选中的车票(共{selectedTickets.Count}张)时失败: {ex.Message}", ex);
             }
             finally
             {
@@ -936,7 +936,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"刷新数据时出错: {ex.Message}");
-                LogHelper.LogTicketError("刷新", "刷新车票数据时失败", ex);
+                LogHelper.LogError($"刷新 - 刷新车票数据时失败: {ex.Message}", ex);
             }
             finally
             {

@@ -151,7 +151,7 @@ namespace TA_WPF.ViewModels
         /// 封面图片文件名
         /// </summary>
         public string CoverImageFileName => !string.IsNullOrEmpty(CoverImagePath) 
-            ? System.IO.Path.GetFileName(CoverImagePath) 
+            ? Path.GetFileName(CoverImagePath) 
             : "暂未选择图片";
 
         /// <summary>
@@ -243,6 +243,7 @@ namespace TA_WPF.ViewModels
                 {
                     Debug.WriteLine("数据库服务未初始化，无法保存收藏夹");
                     MessageBoxHelper.ShowError("保存失败：数据库服务未初始化");
+                    LogHelper.LogSystemError("AddCollectionViewModel", "数据库服务未初始化，无法保存收藏夹");
                     IsLoading = false;
                     return;
                 }
@@ -409,6 +410,7 @@ namespace TA_WPF.ViewModels
                 {
                     MessageBoxHelper.ShowError($"读取或处理图片失败: {ex.Message}");
                     Debug.WriteLine($"图片处理异常: {ex.Message}");
+                    LogHelper.LogError($"图片处理异常: {ex.Message}", ex);
                 }
             }
         }
@@ -467,7 +469,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"调整图片尺寸失败: {ex.Message}");
-                
+                LogHelper.LogError($"调整图片尺寸失败: {ex.Message}", ex);
                 // 尝试使用备用方法
                 try 
                 {
@@ -477,6 +479,7 @@ namespace TA_WPF.ViewModels
                 catch (Exception innerEx)
                 {
                     Debug.WriteLine($"压缩图片失败: {innerEx.Message}");
+                    LogHelper.LogError($"压缩图片失败: {innerEx.Message}", innerEx);
                     return null;
                 }
             }

@@ -382,7 +382,7 @@ namespace TA_WPF.ViewModels
             NewConnectionString = $"server={ServerAddress};user={Username};password={Password};";
 
             // 记录日志
-            LogHelper.LogInfo("用户请求修改数据库连接");
+            LogHelper.LogSystem("设置 - 数据库","用户请求修改数据库连接");
         }
 
         /// <summary>
@@ -416,7 +416,7 @@ namespace TA_WPF.ViewModels
                         MessageBoxHelper.ShowInfo("已注销连接信息，请重新登录");
 
                         // 记录日志
-                        LogHelper.LogInfo("用户更新了数据库连接信息");
+                        LogHelper.LogSystem("设置 - 数据库","用户更新了数据库连接信息");
 
                         // 隐藏加载动画
                         IsLoading = false;
@@ -432,7 +432,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"更新连接时出错: {ex.Message}");
-                LogHelper.LogError($"更新连接时出错: {ex.Message}");
+                LogHelper.LogSystemError("设置 - 数据库",$"更新连接时出错: {ex.Message}");
                 IsLoading = false;
             }
         }
@@ -465,7 +465,7 @@ namespace TA_WPF.ViewModels
                     MessageBoxHelper.ShowInfo("已更新数据库连接信息，应用程序将返回登录界面");
 
                     // 记录日志
-                    LogHelper.LogInfo($"用户更新了数据库名称为: {NewDatabaseName}，应用程序将返回登录界面");
+                    LogHelper.LogSystem("设置 - 数据库", $"用户更新了数据库名称为: {NewDatabaseName}，应用程序将返回登录界面");
 
                     // 强制垃圾回收
                     GC.Collect();
@@ -478,7 +478,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"更新数据库名称时出错: {ex.Message}");
-                LogHelper.LogError($"更新数据库名称时出错: {ex.Message}");
+                LogHelper.LogSystemError("设置 - 数据库", $"更新数据库名称时出错: {ex.Message}");
             }
         }
 
@@ -520,12 +520,13 @@ namespace TA_WPF.ViewModels
                         MessageBoxHelper.ShowInfo($"应用程序日志已成功导出到：\n{dialog.FileName}");
 
                         // 记录日志
-                        LogHelper.LogInfo($"用户导出了应用程序日志到：{dialog.FileName}");
+                        LogHelper.LogSystem("设置 - 日志", $"用户导出了应用程序日志到：{dialog.FileName}");
                     }
                     else
                     {
                         // 显示错误消息
                         MessageBoxHelper.ShowError("导出日志失败，日志文件不存在。");
+                        LogHelper.LogSystemError("设置 - 日志", "用户导出了应用程序日志，但日志文件不存在。");
                     }
                 }
 
@@ -535,7 +536,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"导出日志时出错: {ex.Message}");
-                LogHelper.LogError($"导出日志时出错: {ex.Message}");
+                LogHelper.LogSystemError("设置 - 日志", $"导出日志时出错: {ex.Message}");
                 IsLoading = false;
             }
         }
@@ -582,7 +583,7 @@ namespace TA_WPF.ViewModels
                         MessageBoxHelper.ShowInfo(message);
 
                         // 记录日志
-                        LogHelper.LogInfo($"用户导出了系统日志到：{dialog.FileName}");
+                        LogHelper.LogSystemError("设置 - 日志", $"用户导出了系统日志到：{dialog.FileName}");
                     }
                     else
                     {
@@ -597,7 +598,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"导出系统日志时出错: {ex.Message}");
-                LogHelper.LogError($"导出系统日志时出错: {ex.Message}");
+                LogHelper.LogSystemError("设置 - 日志", $"导出系统日志时出错: {ex.Message}");
                 IsLoading = false;
             }
         }
@@ -617,17 +618,19 @@ namespace TA_WPF.ViewModels
                     Process.Start("explorer.exe", systemLogPath);
 
                     // 记录日志
-                    LogHelper.LogInfo($"用户打开了系统日志目录：{systemLogPath}");
+                    LogHelper.LogSystem("设置 - 日志", $"用户打开了系统日志目录：{systemLogPath}");
                 }
                 else
                 {
                     MessageBoxHelper.ShowWarning("系统日志目录不存在，可能是权限问题或目录已被删除。");
+                    LogHelper.LogSystemWarning("设置 - 系统日志", "系统日志目录不存在，可能是权限问题或目录已被删除。");
                 }
             }
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"打开系统日志目录时出错: {ex.Message}");
                 LogHelper.LogError($"打开系统日志目录时出错: {ex.Message}");
+                LogHelper.LogSystemError("设置 - 日志", $"用户尝试打开系统日志目录时出错：{ex.Message}");
             }
         }
 
@@ -646,17 +649,18 @@ namespace TA_WPF.ViewModels
                     Process.Start("explorer.exe", appLogPath);
 
                     // 记录日志
-                    LogHelper.LogInfo($"用户打开了应用程序日志目录：{appLogPath}");
+                    LogHelper.LogSystem("设置 - 日志", $"用户打开了应用程序日志目录：{appLogPath}");
                 }
                 else
                 {
                     MessageBoxHelper.ShowWarning("应用程序日志目录不存在，可能是权限问题或目录已被删除。");
+                    LogHelper.LogWarning("应用程序日志目录不存在，可能是权限问题或目录已被删除。");
                 }
             }
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"打开应用程序日志目录时出错: {ex.Message}");
-                LogHelper.LogError($"打开应用程序日志目录时出错: {ex.Message}");
+                LogHelper.LogSystemError("设置 - 日志", $"打开应用程序日志目录时出错: {ex.Message}");
             }
         }
 
@@ -759,7 +763,7 @@ namespace TA_WPF.ViewModels
                         MessageBoxHelper.ShowInfo(message);
 
                         // 记录日志
-                        LogHelper.LogInfo($"用户一键导出了所有日志到临时文件夹：{tempFolderPath}");
+                        LogHelper.LogSystem("设置 - 日志",$"用户一键导出了所有日志到临时文件夹：{tempFolderPath}");
 
                         // 打开临时文件夹
                         Process.Start("explorer.exe", tempFolderPath);
@@ -772,7 +776,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"导出所有日志时出错: {ex.Message}");
-                LogHelper.LogError($"导出所有日志时出错: {ex.Message}", ex);
+                LogHelper.LogSystemError("设置 - 日志", $"导出所有日志时出错: {ex.Message}", ex);
                 IsLoading = false;
             }
         }
@@ -821,7 +825,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"导出系统信息时出错: {ex.Message}", ex);
+                LogHelper.LogSystemError("设置 - 日志", $"导出系统信息时出错: {ex.Message}", ex);
             }
         }
 
@@ -876,7 +880,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"创建README文件时出错: {ex.Message}", ex);
+                LogHelper.LogSystemError("设置 - 日志", $"创建README文件时出错: {ex.Message}", ex);
             }
         }
 
@@ -922,6 +926,7 @@ namespace TA_WPF.ViewModels
                 {
                     // 如果API信息为空，只显示警告信息
                     MessageBoxHelper.ShowWarning("没检测到有效的API信息，车站相关功能会受到影响。");
+                    LogHelper.LogSystemWarning("设置 - 高德地图API", "没检测到有效的API信息，车站相关功能会受到影响。");
                 }
                 else
                 {
@@ -930,7 +935,7 @@ namespace TA_WPF.ViewModels
                 }
                 
                 // 记录日志
-                LogHelper.LogInfo("用户更新了高德地图API配置信息");
+                LogHelper.LogSystem("设置 - 高德地图API", "用户更新了高德地图API配置信息");
             }
             catch (Exception ex)
             {

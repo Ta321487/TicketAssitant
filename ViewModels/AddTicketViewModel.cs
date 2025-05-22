@@ -1425,7 +1425,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"保存车票时出错: {ex.Message}");
-                LogHelper.LogTicketError("添加", "保存车票时出错", ex);
+                LogHelper.LogError($"保存车票时出错: {ex.Message}", ex);
             }
         }
 
@@ -1695,37 +1695,6 @@ namespace TA_WPF.ViewModels
             return true;
         }
 
-        /// <summary>
-        /// 检测站点信息完整性
-        /// </summary>
-        /// <param name="station">站点信息</param>
-        /// <param name="isDepartStation">是否为出发车站</param>
-        private void CheckStationInfoCompleteness(StationInfo station, bool isDepartStation)
-        {
-            try
-            {
-                if (station == null) return;
-
-                // 确保不是用户点击了命令按钮
-                if (Mouse.DirectlyOver is Button button)
-                {
-                    // 如果当前鼠标悬停在命令按钮上，则不进行校验
-                    if (button.Command != null &&
-                        (button.Command == SaveCommand || button.Command == ResetCommand ||
-                         button.Name == "MinimizeButton" || button.Name == "CloseButton"))
-                    {
-                        return;
-                    }
-                }
-
-                // 使用提取的公共方法检查车站信息完整性
-                CheckStationCompleteness(station, station.StationName, isDepartStation);
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogError($"检测站点信息完整性时出错: {ex.Message}", ex);
-            }
-        }
 
         // 添加字体大小变化处理方法
         private void OnFontSizeChanged(object sender, FontSizeChangedEventArgs e)
@@ -1928,11 +1897,11 @@ namespace TA_WPF.ViewModels
                     // 检测任务是否已取消 (虽然上面已经return，但以防万一)
                     if (cancellationToken.IsCancellationRequested || _isResetting)
                     {
-                        Debug.WriteLine($"[OnStationLostFocus] Validation for {(isDepartStation ? "Depart" : "Arrive")} cancelled or form resetting.");
+                        Debug.WriteLine($"[OnStationLostFocus] 取消或重置表单对 {(isDepartStation ? "出发车站" : "到达车站")}进行验证。");
                     }
                     else
                     {
-                        Debug.WriteLine($"[OnStationLostFocus] Validation process completed for {(isDepartStation ? "Depart" : "Arrive")} station: {stationName}.");
+                        Debug.WriteLine($"[OnStationLostFocus] 对 {(isDepartStation ? "出发车站" : "到达车站")} 的验证完成。车站名称: {stationName}.");
                     }
                 }
                 finally
@@ -1946,7 +1915,7 @@ namespace TA_WPF.ViewModels
             }
             catch (OperationCanceledException)
             {
-                Debug.WriteLine($"[OnStationLostFocus] Operation cancelled for {(isDepartStation ? "Depart" : "Arrive")} station.");
+                Debug.WriteLine($"[OnStationLostFocus] 已取消对 {(isDepartStation ? "出发" : "到达")} 车站的验证.");
                 // 忽略取消的操作
                 // 确保清除校验标志
                 if (isDepartStation)
@@ -2170,12 +2139,13 @@ namespace TA_WPF.ViewModels
                             {
                                 MessageBoxHelper.ShowWarning($"车站表内不存在车站【{stationName}】，请确认是否输入错误或者在车站中心中添加该车站信息", "车站不存在");
                             }
-                            OnFocusTextBox(isDepart ? "Depart" : "Arrive");
+                            OnFocusTextBox(isDepart ? "出发车站" : "到达车站");
                         }
                         else
                         {
                             // 记录日志但不弹窗
-                            Debug.WriteLine($"[TryValidateAndSetStationInfoAsync] Skipping warning for {stationType} '{stationName}' - validation already in progress.");
+                            LogHelper.LogWarning($"[TryValidateAndSetStationInfoAsync] 跳过 {stationType} '{stationName}' 的警告 - 验证已在进行中。");
+
                         }
                     }
                     break;
@@ -2207,7 +2177,7 @@ namespace TA_WPF.ViewModels
                         else
                         {
                             // 记录日志但不弹窗
-                            Debug.WriteLine($"[TryValidateAndSetStationInfoAsync] Skipping warning for incomplete {stationType} '{stationName}' - validation already in progress.");
+                            LogHelper.LogWarning($"[TryValidateAndSetStationInfoAsync] 跳过 {stationType} '{stationName}' 的警告 - 验证已在进行中。");
                         }
                     }
                     // 即使信息不完整，也尝试填充已知信息

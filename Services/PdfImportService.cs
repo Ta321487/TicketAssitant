@@ -62,10 +62,10 @@ namespace TA_WPF.Services
         /// <returns>提取的车票信息</returns>
         public TrainRideInfo ParsePdfContent(string content)
         {
-            Debug.WriteLine("[PdfImportService] Starting ParsePdfContent...");
+            Debug.WriteLine("[PdfImportService] 开始解析PDF内容...");
             if (string.IsNullOrEmpty(content))
             {
-                Debug.WriteLine("[PdfImportService] Content is null or empty, returning null.");
+                Debug.WriteLine("[PdfImportService] 内容为空，返回null。");
                 return null;
             }
 
@@ -75,7 +75,7 @@ namespace TA_WPF.Services
             try
             {
                 var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                Debug.WriteLine($"[PdfImportService] Total lines found: {lines.Length}");
+                Debug.WriteLine($"[PdfImportService] 共找到{lines.Length}行内容");
 
                 // --- 提取订单号 (填充到取票号字段) ---
                 var orderNumberRegex = new Regex(@"订\s*单\s*号[：:]\s*(\S+)");
@@ -86,11 +86,11 @@ namespace TA_WPF.Services
                     if (orderMatch.Success)
                     {
                         ticket.TicketNumber = orderMatch.Groups[1].Value.Trim();
-                        Debug.WriteLine($"[PdfImportService] Extracted TicketNumber (from OrderNo): '{ticket.TicketNumber}'");
+                        Debug.WriteLine($"[PdfImportService] 提取的取票号(来自订单号): '{ticket.TicketNumber}'");
                     }
-                    else { Debug.WriteLine("[PdfImportService] Order number regex matched line, but group extraction failed."); }
+                    else { Debug.WriteLine("[PdfImportService] 订单号正则表达式匹配到行，但分组提取失败。"); }
                 }
-                else { Debug.WriteLine("[PdfImportService] No line matched order number regex."); }
+                else { Debug.WriteLine("[PdfImportService] 没有行匹配订单号正则表达式。"); }
 
                 // --- 提取车次和站点信息 (从第6行) ---
                 int stationLineIndex = 5; // 第6行索引
@@ -103,14 +103,14 @@ namespace TA_WPF.Services
                         ticket.TrainNo = parts[0].Trim();         // Example: "7516" or "G1234"
                         ticket.DepartStation = parts[1].Trim(); // Example: "白银市"
                         ticket.ArriveStation = parts[2].Trim(); // Example: "白银西"
-                        Debug.WriteLine($"[PdfImportService] Extracted TrainNo: '{ticket.TrainNo}', DepartStation: '{ticket.DepartStation}', ArriveStation: '{ticket.ArriveStation}'");
+                        Debug.WriteLine($"[PdfImportService] 提取到车次: '{ticket.TrainNo}', 出发站: '{ticket.DepartStation}', 到达站: '{ticket.ArriveStation}'");
 
                         // **移除/注释掉 Pinyin 自动填充**
                         // EnrichStationInfo(ticket); 
                     }
-                    else { Debug.WriteLine($"[PdfImportService] Station line (Index {stationLineIndex}) parts count: {parts.Length}, expected >= 3."); }
+                    else { Debug.WriteLine($"[PdfImportService] 站点行(索引 {stationLineIndex})部分数量: {parts.Length}, 预期 >= 3。"); }
                 }
-                else { Debug.WriteLine($"[PdfImportService] Not enough lines to process station info (Index {stationLineIndex}). Total lines: {lines.Length}."); }
+                else { Debug.WriteLine($"[PdfImportService] 没有足够的行来处理站点信息(索引 {stationLineIndex})。总行数: {lines.Length}。"); }
 
                 // --- 提取出发车站和到达车站拼音 (从第8行) ---
                 int pinyinLineIndex = 7; // 第8行索引
@@ -122,11 +122,11 @@ namespace TA_WPF.Services
                     {
                         ticket.DepartStationPinyin = pinyinParts[0].Trim(); // Example: "Baiyinshi"
                         ticket.ArriveStationPinyin = pinyinParts[1].Trim(); // Example: "Baiyinxi"
-                        Debug.WriteLine($"[PdfImportService] Extracted DepartStationPinyin: '{ticket.DepartStationPinyin}', ArriveStationPinyin: '{ticket.ArriveStationPinyin}'");
+                        Debug.WriteLine($"[PdfImportService] 提取到出发站拼音: '{ticket.DepartStationPinyin}', 到达站拼音: '{ticket.ArriveStationPinyin}'");
                     }
-                    else { Debug.WriteLine($"[PdfImportService] Pinyin line (Index {pinyinLineIndex}) parts count: {pinyinParts.Length}, expected >= 2."); }
+                    else { Debug.WriteLine($"[PdfImportService] 拼音行(索引 {pinyinLineIndex})部分数量: {pinyinParts.Length}, 预期 >= 2。"); }
                 }
-                else { Debug.WriteLine($"[PdfImportService] Not enough lines to process pinyin info (Index {pinyinLineIndex}). Total lines: {lines.Length}."); }
+                else { Debug.WriteLine($"[PdfImportService] 没有足够的行来处理拼音信息(索引 {pinyinLineIndex})。总行数: {lines.Length}。"); }
 
                 // --- 提取出发日期和时间 ---
                 var dateTimeRegex = new Regex(@"开车时间\s*(\d{4})年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*(\d{1,2}):(\d{1,2})");
@@ -145,14 +145,13 @@ namespace TA_WPF.Services
                             int minute = int.Parse(dateTimeMatch.Groups[5].Value);
                             ticket.DepartDate = new DateTime(year, month, day);
                             ticket.DepartTime = new TimeSpan(hour, minute, 0);
-                            Debug.WriteLine($"[PdfImportService] Extracted DepartDate: {ticket.DepartDate:yyyy-MM-dd}, DepartTime: {ticket.DepartTime:hh\\:mm}");
+                            Debug.WriteLine($"[PdfImportService] 提取到出发日期: {ticket.DepartDate:yyyy-MM-dd}, 出发时间: {ticket.DepartTime:hh\\:mm}");
                         }
-                        catch (FormatException ex)
-                        { Debug.WriteLine($"[PdfImportService] Error parsing date/time parts: {ex.Message}"); }
+                                                catch (FormatException ex)                        { Debug.WriteLine($"[PdfImportService] 解析日期/时间部分时出错: {ex.Message}"); }
                     }
-                    else { Debug.WriteLine("[PdfImportService] DateTime regex matched line, but group extraction failed."); }
+                    else { Debug.WriteLine("[PdfImportService] 日期时间正则表达式匹配到行，但分组提取失败。"); }
                 }
-                else { Debug.WriteLine("[PdfImportService] No line matched DateTime regex."); }
+                else { Debug.WriteLine("[PdfImportService] 没有行匹配日期时间正则表达式。"); }
 
                 // --- 提取金额 ---
                 var moneyRegex = new Regex(@"票价[：:]\s*(\d+\.?\d*)");
@@ -202,7 +201,7 @@ namespace TA_WPF.Services
 
                         // --- 提取票种和支付渠道标志 ---
                         string remainingSeatLine = seatLine.Substring(seatMatch.Index + seatMatch.Length).Trim();
-                        Debug.WriteLine($"[PdfImportService] Remaining seat line for flags: '{remainingSeatLine}'");
+                        Debug.WriteLine($"[PdfImportService] 用于标记的剩余座位行: '{remainingSeatLine}'");
 
                         if (remainingSeatLine.Contains("孩"))
                         {
@@ -227,16 +226,16 @@ namespace TA_WPF.Services
                         else if (remainingSeatLine.Contains("微")) { ticket.PaymentChannelFlags |= (int)PaymentChannelFlags.WeChat; Debug.WriteLine("[PdfImportService] 检测到 '微' (WeChat)"); }
 
                     }
-                    else { Debug.WriteLine($"[PdfImportService] Seat line (Index {seatLineIndex}) '{seatLine}' did not match regex."); }
+                    else { Debug.WriteLine($"[PdfImportService] 座位行(索引 {seatLineIndex}) '{seatLine}' 不匹配正则表达式。"); }
                 }
-                else { Debug.WriteLine($"[PdfImportService] Not enough lines to process seat info (Index {seatLineIndex}). Total lines: {lines.Length}."); }
+                else { Debug.WriteLine($"[PdfImportService] 没有足够的行来处理座位信息(索引 {seatLineIndex})。总行数: {lines.Length}。"); }
 
-                Debug.WriteLine("[PdfImportService] Finished parsing attempts.");
+                Debug.WriteLine("[PdfImportService] 完成解析尝试。");
                 return ticket;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[PdfImportService] *** EXCEPTION during parsing: {ex.Message} *** StackTrace: {ex.StackTrace}");
+                Debug.WriteLine($"[PdfImportService] *** 解析过程中出现异常: {ex.Message} *** 堆栈跟踪: {ex.StackTrace}");
                 LogHelper.LogError($"解析PDF内容时出错: {ex.Message}");
                 return null; // 返回 null 很可能导致 UI 字段变为空白
             }

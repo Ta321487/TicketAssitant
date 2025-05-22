@@ -309,6 +309,7 @@ namespace TA_WPF.Services
                             if (!IsCnocrInstalled.HasValue || !IsCnocrInstalled.Value) errorMessage += "\n- CNOCR未安装";
                             
                             MessageBoxHelper.ShowWarning($"{errorMessage}\n\n请先安装所需环境再使用OCR识别功能。");
+                            LogHelper.LogWarning($"{errorMessage}\n\n请先安装所需环境再使用OCR识别功能。");
                         }
                     });
                 }
@@ -327,6 +328,7 @@ namespace TA_WPF.Services
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     MessageBoxHelper.ShowError($"检查环境时出错: {ex.Message}");
+                    LogHelper.LogError(StatusMessage, ex);
                 });
                 
                 // 触发环境检测完成事件
@@ -364,6 +366,7 @@ namespace TA_WPF.Services
             {
                 StatusMessage = $"无法打开浏览器：{ex.Message}";
                 MessageBoxHelper.ShowError($"无法打开浏览器：{ex.Message}");
+                LogHelper.LogError($"无法打开浏览器：{ex.Message}");
             }
         }
         
@@ -379,6 +382,7 @@ namespace TA_WPF.Services
                 if (IsPythonInstalled != true)
                 {
                     MessageBoxHelper.ShowWarning("请先安装Python再安装CNOCR");
+                    LogHelper.LogWarning("CNOCR安装失败：Python未安装");
                     return;
                 }
                 
@@ -470,6 +474,7 @@ namespace TA_WPF.Services
                                 if (!string.IsNullOrEmpty(e.Data))
                                 {
                                     Debug.WriteLine($"CNOCR安装输出: {e.Data}");
+                                    LogHelper.LogInfo($"CNOCR安装输出：{ e.Data}");
                                     output.AppendLine(e.Data);
                                     
                                     // 更新加载消息显示下载进度信息
@@ -489,6 +494,7 @@ namespace TA_WPF.Services
                                 if (!string.IsNullOrEmpty(e.Data))
                                 {
                                     Debug.WriteLine($"CNOCR安装错误: {e.Data}");
+                                    LogHelper.LogError($"CNOCR安装错误: {e.Data}");
                                     error.AppendLine(e.Data);
                                 }
                             };
@@ -525,6 +531,7 @@ namespace TA_WPF.Services
                                 // 安装失败
                                 LoadingMessage = $"CNOCR安装失败，退出代码: {process.ExitCode}";
                                 StatusMessage = "CNOCR安装失败";
+                                LogHelper.LogError($"CNOCR安装失败，退出代码: {process.ExitCode}");
                                 
                                 string errorMessage = error.ToString();
                                 if (string.IsNullOrEmpty(errorMessage))
@@ -556,6 +563,7 @@ namespace TA_WPF.Services
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     MessageBoxHelper.ShowError($"安装CNOCR时出错: {ex.Message}");
+                    LogHelper.LogError($"安装CNOCR时出错: {ex.Message}");
                 });
             }
             finally
@@ -611,6 +619,7 @@ namespace TA_WPF.Services
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"终止CNOCR安装进程时出错: {ex.Message}");
+                        LogHelper.LogError($"终止CNOCR安装进程时出错: {ex.Message}", ex);
                     }
                     finally
                     {
@@ -654,6 +663,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"取消CNOCR安装时出错: {ex.Message}");
+                LogHelper.LogError($"取消CNOCR安装时出错: {ex.Message}");
             }
         }
         
@@ -724,6 +734,7 @@ namespace TA_WPF.Services
                             catch (Exception ex)
                             {
                                 Debug.WriteLine($"删除CNOCR目录失败: {dir}, 错误: {ex.Message}");
+                                LogHelper.LogError($"删除CNOCR目录失败, 错误: {ex.Message}");
                                 // 继续处理，不要中断流程
                             }
                         }
@@ -737,6 +748,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"清理CNOCR安装时出错: {ex.Message}");
+                LogHelper.LogError($"清理CNOCR安装时出错: {ex.Message}");
                 // 继续处理，不要中断流程
             }
         }
@@ -1077,6 +1089,7 @@ namespace TA_WPF.Services
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         MessageBoxHelper.ShowError($"下载Python时出错: {ex.Message}");
+                        LogHelper.LogError($"下载Python时出错: {ex.Message}", ex);
                     });
                 }
             }
@@ -1185,6 +1198,7 @@ namespace TA_WPF.Services
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"删除临时安装文件时出错: {ex.Message}");
+                        LogHelper.LogError($"删除临时安装文件时出错: {ex.Message}");
                     }
                     finally
                     {
@@ -1218,6 +1232,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"取消下载时出错: {ex.Message}");
+                LogHelper.LogError("取消下载时出错", ex);
             }
         }
 
@@ -1340,6 +1355,7 @@ namespace TA_WPF.Services
                                 await Application.Current.Dispatcher.InvokeAsync(() =>
                                 {
                                     MessageBoxHelper.ShowError("无法安装Python，请检查您的用户权限。");
+                                    LogHelper.LogError("无法安装Python，可能是用户权限不足。");
                                 });
                             }
                         }
@@ -1556,6 +1572,7 @@ namespace TA_WPF.Services
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             MessageBoxHelper.ShowInfo("CNSTD文本检测模块安装完成！");
+                            LogHelper.LogInfo("CNSTD文本检测模块安装完成！");
                         });
                     }
                 }
@@ -1582,6 +1599,7 @@ namespace TA_WPF.Services
                         Application.Current.Dispatcher.Invoke(() =>
                         {
                             MessageBoxHelper.ShowError($"CNSTD安装失败，请检查网络连接或尝试手动安装。\n\n错误信息: {errorMsg}");
+                            LogHelper.LogError($"CNSTD安装失败，请检查网络连接或尝试手动安装。\n\n错误信息: {errorMsg}");
                         });
                     }
                 }
@@ -1593,13 +1611,14 @@ namespace TA_WPF.Services
                 LoadingMessage = "安装出错";
                 
                 Debug.WriteLine($"CNSTD安装过程中发生异常: {ex.Message}");
-                
+                LogHelper.LogError($"CNSTD安装过程中发生错误: {ex.Message}");
                 // 显示错误消息
                 if (!_isWindowClosed)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         MessageBoxHelper.ShowError($"CNSTD安装过程中发生错误: {ex.Message}");
+
                     });
                 }
             }

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TA_WPF.Models;
+using TA_WPF.Utils;
 using TA_WPF.ViewModels;
 
 namespace TA_WPF.Services
@@ -324,6 +325,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"加载页面数据时出错: {ex.Message}");
+                LogHelper.LogError($"加载页面数据时出错: {ex.Message}", ex);
                 throw;
             }
             finally
@@ -345,6 +347,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"获取总记录数时出错: {ex.Message}");
+                LogHelper.LogSystemError("分页", $"获取总记录数时出错", ex);
                 throw;
             }
         }

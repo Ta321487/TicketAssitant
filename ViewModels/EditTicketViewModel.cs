@@ -185,7 +185,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"加载车票数据时出错: {ex.Message}");
-                LogHelper.LogTicketError("加载", $"加载车票数据ID:{_ticketId}时出错", ex);
+                LogHelper.LogError($"加载 - 加载车票数据ID:{_ticketId}时出错: {ex.Message}", ex);
             }
         }
 
@@ -317,7 +317,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"保存车票时出错: {ex.Message}");
-                LogHelper.LogTicketError("修改", $"保存车票ID:{_ticketId}时出错", ex);
+                LogHelper.LogError($"修改 - 保存车票ID:{_ticketId}时出错: {ex.Message}", ex);
             }
         }
 

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using TA_WPF.Models;
+using TA_WPF.Utils;
 
 namespace TA_WPF.ViewModels
 {

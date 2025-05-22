@@ -187,8 +187,8 @@ namespace TA_WPF.Views
             _tooltipText = new TextBlock
             {
                 Padding = new Thickness(8),
-                Background = System.Windows.Media.Brushes.DarkSlateGray,
-                Foreground = System.Windows.Media.Brushes.White,
+                Background = Brushes.DarkSlateGray,
+                Foreground = Brushes.White,
                 FontSize = 14
             };
 
@@ -296,7 +296,7 @@ namespace TA_WPF.Views
                     _pageNumberTooltip.IsOpen = true;
 
                     // 3秒后自动关闭提示
-                    var timer = new System.Windows.Threading.DispatcherTimer();
+                    var timer = new DispatcherTimer();
                     timer.Interval = TimeSpan.FromSeconds(3);
                     timer.Tick += (s, args) =>
                     {

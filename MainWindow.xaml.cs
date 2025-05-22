@@ -12,6 +12,7 @@ using System.Windows.Threading;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.ViewModels;
+using System.Threading.Tasks;
 
 namespace TA_WPF
 {
@@ -66,12 +67,83 @@ namespace TA_WPF
 
                 // 等待UI完全加载后再获取控件引用
                 this.Loaded += MainWindow_Loaded;
+
+                // 添加未观察到的Task异常处理器
+                TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"MainWindow构造函数异常: {ex.Message}");
                 Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
                 MessageBox.Show($"初始化窗口时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// 处理未观察到的Task异常
+        /// </summary>
+        private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+        {
+            try
+            {
+                // 标记异常为已观察，防止应用程序崩溃
+                e.SetObserved();
+
+                // 获取实际异常
+                Exception? ex = e.Exception?.InnerException;
+                if (ex != null)
+                {
+                    // 记录日志
+                    Debug.WriteLine($"捕获到未观察的Task异常: {ex.Message}");
+                    LogHelper.LogError("捕获到未观察的Task异常", ex);
+
+                    // 如果是DialogHost相关的异常，可以忽略它
+                    if (ex is InvalidOperationException && ex.Message.Contains("DialogHost"))
+                    {
+                        Debug.WriteLine("忽略DialogHost相关异常：" + ex.Message);
+                        return;
+                    }
+                    
+                    // 处理HwndSource相关的异常
+                    if (ex is ArgumentException && ex.Message.Contains("Hwnd"))
+                    {
+                        Debug.WriteLine("忽略HwndSource相关异常：" + ex.Message);
+                        // 这通常是Visual Studio设计器的问题，可以安全忽略
+                        return;
+                    }
+                    
+                    // 处理其他未识别的异常
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        try
+                        {
+                            // 只有在非设计模式下才显示错误消息
+                            if (!System.ComponentModel.DesignerProperties.GetIsInDesignMode(new DependencyObject()))
+                            {
+                                // 检查是否是Visual Studio设计器相关异常
+                                if (ex.StackTrace != null && 
+                                    (ex.StackTrace.Contains("Microsoft.VisualStudio") || 
+                                    ex.StackTrace.Contains("DesignTools")))
+                                {
+                                    Debug.WriteLine("忽略Visual Studio设计器相关异常");
+                                    return;
+                                }
+                                
+                                // 显示通用错误消息
+                                MessageBox.Show($"发生了未处理的异常: {ex.Message}", 
+                                    "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
+                        }
+                        catch (Exception msgEx)
+                        {
+                            Debug.WriteLine($"显示错误消息时出错: {msgEx.Message}");
+                        }
+                    }));
+                }
+            }
+            catch (Exception handlerEx)
+            {
+                Debug.WriteLine($"处理未观察的Task异常时发生错误: {handlerEx.Message}");
             }
         }
 
@@ -89,13 +161,36 @@ namespace TA_WPF
                     this.Icon = new BitmapImage(iconUri);
 
                     // 确保任务栏图标也被设置
-                    WindowInteropHelper helper = new WindowInteropHelper(this);
-                    HwndSource source = HwndSource.FromHwnd(helper.Handle);
-                    source.AddHook(new HwndSourceHook(WndProc));
+                    if (PresentationSource.FromVisual(this) != null)
+                    {
+                        WindowInteropHelper helper = new WindowInteropHelper(this);
+                        if (helper.Handle != IntPtr.Zero)
+                        {
+                            HwndSource source = HwndSource.FromHwnd(helper.Handle);
+                            if (source != null)
+                            {
+                                source.AddHook(new HwndSourceHook(WndProc));
+                            }
+                            else
+                            {
+                                Debug.WriteLine("警告：无法获取有效的HwndSource");
+                            }
+                        }
+                        else
+                        {
+                            Debug.WriteLine("警告：窗口句柄为零");
+                        }
+                    }
+                    else 
+                    {
+                        Debug.WriteLine("警告：窗口尚未完全初始化，PresentationSource为空");
+                    }
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"设置窗口图标时出错: {ex.Message}");
+                    LogHelper.LogSystemError("主窗口", "设置窗口图标时出错", ex);
+                    // 继续执行，不要因图标设置失败而中断其他初始化
                 }
 
                 // 获取控件引用
@@ -158,6 +253,7 @@ namespace TA_WPF
             {
                 Debug.WriteLine($"MainWindow_Loaded异常: {ex.Message}");
                 Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+                LogHelper.LogSystemError("主窗口", "窗口加载异常", ex);
             }
         }
 
@@ -304,83 +400,36 @@ namespace TA_WPF
         {
             try
             {
+                // 取消注册未观察到的Task异常处理器
+                TaskScheduler.UnobservedTaskException -= TaskScheduler_UnobservedTaskException;
+                
                 // 检测是否是用户手动关闭窗口
                 if (Application.Current.MainWindow == this && Owner == null)
                 {
                     // 取消当前关闭操作
                     e.Cancel = true;
 
-                    // 创建对话框内容
-                    var dialogContent = new StackPanel
+                    // 检查对话框是否已经打开
+                    bool isDialogOpen = DialogHost.IsDialogOpen("RootDialog");
+                    if (isDialogOpen)
                     {
-                        Margin = new Thickness(16)
-                    };
-
-                    // 添加标题和消息
-                    dialogContent.Children.Add(new TextBlock
-                    {
-                        Text = "确认退出",
-                        FontSize = 18,
-                        FontWeight = FontWeights.Bold,
-                        Margin = new Thickness(0, 0, 0, 8)
-                    });
-
-                    dialogContent.Children.Add(new TextBlock
-                    {
-                        Text = "确定要退出应用程序吗？",
-                        Margin = new Thickness(0, 0, 0, 16)
-                    });
-
-                    // 创建按钮面板
-                    var buttonPanel = new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        HorizontalAlignment = HorizontalAlignment.Right
-                    };
-
-                    // 创建对话框按钮
-                    var noButton = new Button
-                    {
-                        Content = "否",
-                        Command = DialogHost.CloseDialogCommand,
-                        CommandParameter = false,
-                        Style = TryFindResource("MaterialDesignFlatButton") as Style,
-                        Margin = new Thickness(8, 0, 0, 0)
-                    };
-
-                    var yesButton = new Button
-                    {
-                        Content = "是",
-                        Command = DialogHost.CloseDialogCommand,
-                        CommandParameter = true,
-                        Style = TryFindResource("MaterialDesignFlatButton") as Style,
-                        Margin = new Thickness(8, 0, 0, 0)
-                    };
-
-                    // 添加按钮到按钮面板
-                    buttonPanel.Children.Add(noButton);
-                    buttonPanel.Children.Add(yesButton);
-
-                    // 添加按钮面板到对话框内容
-                    dialogContent.Children.Add(buttonPanel);
-
-                    // 显示对话框并等待结果
-                    DialogHost.Show(dialogContent, "RootDialog", (sender, args) =>
-                    {
-                        // 检测用户选择
-                        if (args.Parameter is bool result && result)
+                        Debug.WriteLine("对话框已经打开，先尝试关闭已打开的对话框");
+                        try
                         {
-                            // 用户确认退出，清理资源
-                            if (DataContext is MainViewModel viewModel)
-                            {
-                                // 记录日志
-                                LogHelper.LogInfo("用户手动关闭了主窗口，应用程序将退出");
-                            }
-
-                            // 关闭应用程序
-                            Application.Current.Shutdown();
+                            // 尝试关闭已打开的对话框
+                            DialogHost.Close("RootDialog");
                         }
-                    });
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"尝试关闭已打开的对话框时出错: {ex.Message}");
+                        }
+                    }
+                    
+                    // 短暂延迟后再显示确认对话框，确保之前的对话框已关闭
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() => 
+                    {
+                        ShowExitConfirmationDialog();
+                    }), DispatcherPriority.Background);
                 }
             }
             catch (Exception ex)
@@ -390,6 +439,95 @@ namespace TA_WPF
 
                 // 发生异常时，允许应用程序关闭
                 e.Cancel = false;
+            }
+        }
+
+        /// <summary>
+        /// 显示退出确认对话框
+        /// </summary>
+        private void ShowExitConfirmationDialog()
+        {
+            try
+            {
+                // 创建对话框内容
+                var dialogContent = new StackPanel
+                {
+                    Margin = new Thickness(16)
+                };
+
+                // 添加标题和消息
+                dialogContent.Children.Add(new TextBlock
+                {
+                    Text = "确认退出",
+                    FontSize = 18,
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(0, 0, 0, 8)
+                });
+
+                dialogContent.Children.Add(new TextBlock
+                {
+                    Text = "确定要退出应用程序吗？",
+                    Margin = new Thickness(0, 0, 0, 16)
+                });
+
+                // 创建按钮面板
+                var buttonPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right
+                };
+
+                // 创建对话框按钮
+                var noButton = new Button
+                {
+                    Content = "否",
+                    Command = DialogHost.CloseDialogCommand,
+                    CommandParameter = false,
+                    Style = TryFindResource("MaterialDesignFlatButton") as Style,
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+
+                var yesButton = new Button
+                {
+                    Content = "是",
+                    Command = DialogHost.CloseDialogCommand,
+                    CommandParameter = true,
+                    Style = TryFindResource("MaterialDesignFlatButton") as Style,
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+
+                // 添加按钮到按钮面板
+                buttonPanel.Children.Add(noButton);
+                buttonPanel.Children.Add(yesButton);
+
+                // 添加按钮面板到对话框内容
+                dialogContent.Children.Add(buttonPanel);
+
+                // 显示对话框并等待结果
+                DialogHost.Show(dialogContent, "RootDialog", (sender, args) =>
+                {
+                    // 检测用户选择
+                    if (args.Parameter is bool result && result)
+                    {
+                        // 用户确认退出，清理资源
+                        if (DataContext is MainViewModel viewModel)
+                        {
+                            // 记录日志
+                            LogHelper.LogInfo("用户手动关闭了主窗口，应用程序将退出");
+                        }
+
+                        // 关闭应用程序
+                        Application.Current.Shutdown();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"显示退出确认对话框时出错: {ex.Message}");
+                LogHelper.LogSystemError("主窗口", "显示退出确认对话框时出错", ex);
+                
+                // 发生异常时，直接关闭应用程序
+                Application.Current.Shutdown();
             }
         }
 

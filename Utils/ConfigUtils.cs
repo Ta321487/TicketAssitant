@@ -1,4 +1,5 @@
 using System.Configuration;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace TA_WPF.Utils
@@ -38,7 +39,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"保存配置'{key}'时出错: {ex.Message}");
+                Debug.WriteLine($"保存配置'{key}'时出错: {ex.Message}");
                 return false;
             }
         }
@@ -89,7 +90,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"读取配置'{key}'时出错: {ex.Message}");
+                Debug.WriteLine($"读取配置'{key}'时出错: {ex.Message}");
                 return defaultValue;
             }
         }

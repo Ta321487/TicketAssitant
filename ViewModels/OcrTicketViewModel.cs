@@ -2490,7 +2490,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"保存车票时出错: {ex.Message}");
-                LogHelper.LogTicketError("OCR导入", "保存车票时出错", ex);
+                LogHelper.LogError($"OCR导入 - 保存车票时出错: {ex.Message}", ex);
             }
         }
 
@@ -4338,6 +4338,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 SetStatusMessage($"下载Python时出错: {ex.Message}");
+                LogHelper.LogError($"下载Python时出错：{ex.Message}");
                 MessageBoxHelper.ShowError($"下载Python时出错: {ex.Message}");
             }
             finally
@@ -4381,6 +4382,7 @@ namespace TA_WPF.ViewModels
             {
                 // 错误处理
                 MessageBoxHelper.ShowError($"下载CNOCR时出错: {ex.Message}");
+                LogHelper.LogError("下载CNOCR时出错", ex);
                 SetStatusMessage($"下载CNOCR时出错: {ex.Message}");
             }
         }

@@ -1,6 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
+using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -82,6 +94,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"初始化主视图模型时出错: {ex.Message}");
+                LogHelper.LogSystemError("MainViewModel", "初始化主视图模型时出错", ex);
             }
         }
 
@@ -529,65 +542,6 @@ namespace TA_WPF.ViewModels
             {
                 MessageBoxHelper.ShowError($"打开12306 PDF导入车票窗口时出错: {ex.Message}");
                 LogHelper.LogError($"打开12306 PDF导入车票窗口时出错: {ex.Message}");
-            }
-        }
-    }
-
-    // 简单的命令实现
-    public class RelayCommand : ICommand
-    {
-        private readonly Action _execute;
-        private readonly Func<bool>? _canExecute;
-
-        public RelayCommand(Action execute, Func<bool>? canExecute = null)
-        {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute;
-        }
-
-        public event EventHandler? CanExecuteChanged
-        {
-            add => CommandManager.RequerySuggested += value;
-            remove => CommandManager.RequerySuggested -= value;
-        }
-
-        public bool CanExecute(object? parameter) => _canExecute == null || _canExecute();
-
-        public void Execute(object? parameter) => _execute();
-    }
-
-    // 支持泛型参数的命令实现
-    public class RelayCommand<T> : ICommand
-    {
-        private readonly Action<T> _execute;
-        private readonly Func<T, bool>? _canExecute;
-
-        public RelayCommand(Action<T> execute, Func<T, bool>? canExecute = null)
-        {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute;
-        }
-
-        public event EventHandler? CanExecuteChanged
-        {
-            add => CommandManager.RequerySuggested += value;
-            remove => CommandManager.RequerySuggested -= value;
-        }
-
-        public bool CanExecute(object? parameter)
-        {
-            if (parameter is T typedParameter || parameter == null && default(T) == null)
-            {
-                return _canExecute == null || _canExecute((T)parameter!);
-            }
-            return false;
-        }
-
-        public void Execute(object? parameter)
-        {
-            if (parameter is T typedParameter || parameter == null && default(T) == null)
-            {
-                _execute((T)parameter!);
             }
         }
     }

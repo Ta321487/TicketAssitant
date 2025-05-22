@@ -359,6 +359,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"保存预算金额时出错: {ex.Message}");
+                LogHelper.LogError($"保存预算金额时出错: {ex.Message}");
             }
         }
 
@@ -382,6 +383,7 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"加载预算金额设置时出错: {ex.Message}");
+                LogHelper.LogError($"加载预算金额设置时出错: {ex.Message}", ex);
             }
 
             // 如果未配置或加载失败，返回默认值

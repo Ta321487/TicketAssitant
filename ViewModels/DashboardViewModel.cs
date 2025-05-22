@@ -256,13 +256,13 @@ namespace TA_WPF.ViewModels
 
                         if (_startDate > _endDate)
                         {
-                            Utils.MessageBoxHelper.ShowWarning("开始日期不能大于结束日期，请重新选择！", "日期范围错误");
+                            MessageBoxHelper.ShowWarning("开始日期不能大于结束日期，请重新选择！", "日期范围错误");
                             _startDate = _endDate; 
                             OnPropertyChanged(nameof(StartDate)); 
                         }
                         Debug.WriteLine($"手动更改StartDate: {_startDate:yyyy-MM-dd}，将刷新数据...");
                     }
-                    SafeFireAndForget(RefreshDataAsync, ex => Debug.WriteLine($"[ERROR] Error refreshing data from StartDate setter: {ex}"));
+                    SafeFireAndForget(RefreshDataAsync, ex => Debug.WriteLine($"[ERROR] 刷新 StartDate 设置器的数据时出错： {ex}"));
                 }
             }
         }
@@ -830,8 +830,8 @@ namespace TA_WPF.ViewModels
                 }
                 else
                 {
-                    Debug.WriteLine($"[ERROR] SafeFireAndForget caught an exception: {ex}");
-                    // Consider logging to a more persistent store or showing a non-blocking user notification
+                    Debug.WriteLine($"[ERROR] SafeFireAndForget 捕获了异常： {ex}");
+                    LogHelper.LogError($"[ERROR] SafeFireAndForget 捕获了异常： {ex}");
                 }
             }
         }
@@ -2119,6 +2119,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"加载热门路线数据时出错: {ex.Message}");
+                LogHelper.LogError($"加载热门路线数据时出错: {ex.Message}");
 
                 // 出错时添加提示信息
                 TopRouteData.Add(new RouteData
@@ -2214,6 +2215,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"刷新数据时出错: {ex.Message}");
+                LogHelper.LogError("刷新数据时出错", ex);
                 // 可以在这里添加错误提示逻辑
             }
             finally

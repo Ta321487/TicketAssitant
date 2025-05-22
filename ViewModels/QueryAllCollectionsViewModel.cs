@@ -564,7 +564,7 @@ namespace TA_WPF.ViewModels
                         break;
                 }
                 
-                MessageBoxHelper.ShowInfo($"已按{sortName}({sortDirection})排序完成");
+                Debug.WriteLine($"已按{sortName}({sortDirection})排序完成");
             }
             catch (Exception ex)
             {
@@ -748,7 +748,7 @@ namespace TA_WPF.ViewModels
 
         #endregion
 
-        #region Private Helper Methods for Selection Synchronization
+        #region 用于选择同步的专用辅助方法
 
         private void SubscribeToCollectionItemChanges(ObservableCollection<TicketCollectionInfo> collection)
         {

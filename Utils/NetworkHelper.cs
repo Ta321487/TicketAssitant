@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -51,7 +52,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"获取本地IP地址时出错: {ex.Message}");
+                Debug.WriteLine($"获取本地IP地址时出错: {ex.Message}");
                 LogHelper.LogSystemError("网络", $"获取本地IP地址时出错", ex);
             }
 
@@ -92,7 +93,7 @@ namespace TA_WPF.Utils
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"获取数据库服务器IP地址时出错: {ex.Message}");
+                Debug.WriteLine($"获取数据库服务器IP地址时出错: {ex.Message}");
                 LogHelper.LogSystemError("网络", $"获取数据库服务器IP地址时出错", ex);
             }
 

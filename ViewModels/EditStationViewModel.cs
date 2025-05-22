@@ -467,6 +467,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"更新车站信息时发生错误：{ex.Message}");
+                LogHelper.LogError($"更新车站信息时发生错误：{ex.Message}", ex);
             }
             finally
             {
@@ -584,6 +585,7 @@ namespace TA_WPF.ViewModels
                 else
                 {
                     MessageBoxHelper.ShowError($"获取车站信息时发生错误：{ex.Message}");
+                    LogHelper.LogError($"获取车站信息时发生错误：{ex.Message}", ex);
                 }
                 
                 LogHelper.LogError($"获取车站信息失败: {ex.Message}", ex);

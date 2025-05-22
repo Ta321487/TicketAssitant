@@ -10,6 +10,7 @@ using TA_WPF.Utils;
 using TA_WPF.Models;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace TA_WPF.ViewModels
 {
@@ -1511,6 +1512,7 @@ namespace TA_WPF.ViewModels
             {
                 // 解析失败，可能是格式不支持等
                 MessageBoxHelper.ShowWarning("无法从此PDF中解析出车票信息，请检查文件内容或手动输入。");
+                LogHelper.LogWarning("无法从PDF中解析出车票信息。");
                 ResetFormFieldsState(); // 重置字段状态
                 IsQuestionButtonEnabled = false; // 解析失败时禁用问号按钮
             }
@@ -2224,7 +2226,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void SelectDepartStation(StationInfo station)
         {
-            System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] SelectDepartStation执行，参数站点: " + 
+            Debug.WriteLine("[PdfImportViewModel] SelectDepartStation执行，参数站点: " + 
                 (station?.StationName ?? "null"));
             
             if (station != null)
@@ -2247,7 +2249,7 @@ namespace TA_WPF.ViewModels
                 _suppressNotifications = false;
                 
                 // 确保在UI线程上关闭下拉列表
-                System.Windows.Application.Current.Dispatcher.Invoke(() => 
+                Application.Current.Dispatcher.Invoke(() => 
                 {
                     // 必须先将DepartStationSuggestions清空，然后关闭下拉菜单
                     DepartStationSuggestions = new ObservableCollection<StationInfo>();
@@ -2260,7 +2262,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(DepartStationPinyin));
                 OnPropertyChanged(nameof(DepartStationCode));
                 
-                System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] 出发车站已更新为: " + DepartStationSearchText);
+                Debug.WriteLine("[PdfImportViewModel] 出发车站已更新为: " + DepartStationSearchText);
                 
                 // 重置忽略标志
                 _ignoreSearchTextChange = false;
@@ -2272,7 +2274,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void SelectArriveStation(StationInfo station)
         {
-            System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] SelectArriveStation执行，参数站点: " + 
+            Debug.WriteLine("[PdfImportViewModel] SelectArriveStation执行，参数站点: " + 
                 (station?.StationName ?? "null"));
             
             if (station != null)
@@ -2295,7 +2297,7 @@ namespace TA_WPF.ViewModels
                 _suppressNotifications = false;
                 
                 // 确保在UI线程上关闭下拉列表
-                System.Windows.Application.Current.Dispatcher.Invoke(() => 
+                Application.Current.Dispatcher.Invoke(() => 
                 {
                     // 必须先将ArriveStationSuggestions清空，然后关闭下拉菜单
                     ArriveStationSuggestions = new ObservableCollection<StationInfo>();
@@ -2308,7 +2310,7 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(ArriveStationPinyin));
                 OnPropertyChanged(nameof(ArriveStationCode));
                 
-                System.Diagnostics.Debug.WriteLine("[PdfImportViewModel] 到达车站已更新为: " + ArriveStationSearchText);
+                Debug.WriteLine("[PdfImportViewModel] 到达车站已更新为: " + ArriveStationSearchText);
                 
                 // 重置忽略标志
                 _ignoreSearchTextChange = false;

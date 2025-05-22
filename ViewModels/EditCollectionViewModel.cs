@@ -132,7 +132,7 @@ namespace TA_WPF.ViewModels
         /// 封面图片文件名
         /// </summary>
         public string CoverImageFileName => !string.IsNullOrEmpty(CoverImagePath) 
-            ? System.IO.Path.GetFileName(CoverImagePath) 
+            ? Path.GetFileName(CoverImagePath) 
             : "暂未选择新图片";
 
         /// <summary>
@@ -223,6 +223,7 @@ namespace TA_WPF.ViewModels
                 if (_databaseService == null)
                 {
                     Debug.WriteLine("数据库服务未初始化，无法保存收藏夹");
+                    LogHelper.LogSystemError("收藏夹", "数据库服务未初始化");
                     MessageBoxHelper.ShowError("保存失败：数据库服务未初始化");
                     IsLoading = false;
                     return;
