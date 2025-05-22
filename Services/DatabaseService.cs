@@ -1844,16 +1844,32 @@ namespace TA_WPF.Services
                     Debug.WriteLine("从数据库读取的评分值为NULL，使用默认值0");
                 }
                 
-            var collection = new TicketCollectionInfo
-            {
-                Id = reader.GetInt32(reader.GetOrdinal("id")),
-                CollectionName = reader.IsDBNull(reader.GetOrdinal("collection_name")) ? null : reader.GetString(reader.GetOrdinal("collection_name")),
-                Description = reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
-                CreateTime = reader.GetDateTime(reader.GetOrdinal("create_time")),
-                UpdateTime = reader.GetDateTime(reader.GetOrdinal("update_time")),
-                SortOrder = reader.IsDBNull(reader.GetOrdinal("sort_order")) ? 0 : reader.GetInt32(reader.GetOrdinal("sort_order")),
+                // 获取ticket_count的值
+                int ticketCount = 0;
+                if (reader.HasRows && reader.FieldCount > 0)
+                {
+                    // 检查是否有ticket_count字段
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetName(i).Equals("ticket_count", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ticketCount = reader.IsDBNull(i) ? 0 : reader.GetInt32(i);
+                            break;
+                        }
+                    }
+                }
+                
+                var collection = new TicketCollectionInfo
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("id")),
+                    CollectionName = reader.IsDBNull(reader.GetOrdinal("collection_name")) ? null : reader.GetString(reader.GetOrdinal("collection_name")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
+                    CreateTime = reader.GetDateTime(reader.GetOrdinal("create_time")),
+                    UpdateTime = reader.GetDateTime(reader.GetOrdinal("update_time")),
+                    SortOrder = reader.IsDBNull(reader.GetOrdinal("sort_order")) ? 0 : reader.GetInt32(reader.GetOrdinal("sort_order")),
                     Importance = importanceValue, // 使用上面获取的评分值
-            };
+                    TicketCount = ticketCount     // 设置车票数量
+                };
             
             // 读取BLOB数据(封面图片)
             if (!reader.IsDBNull(reader.GetOrdinal("cover_image")))
@@ -2445,6 +2461,43 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"更新收藏夹车票数量失败: {ex.Message}", ex);
                 Debug.WriteLine($"更新收藏夹车票数量失败: {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// 获取所有收藏夹
+        /// </summary>
+        public async Task<List<TicketCollectionInfo>> GetAllCollectionsAsync()
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"SELECT tci.*, 
+                                        (SELECT COUNT(*) FROM collection_mapped_tickets_info cmti WHERE cmti.collection_id = tci.id) AS ticket_count
+                                    FROM ticket_collections_info tci
+                                    ORDER BY tci.sort_order ASC, tci.update_time DESC";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            var collections = new List<TicketCollectionInfo>();
+                            
+                            while (await reader.ReadAsync())
+                            {
+                                collections.Add(MapCollectionInfo(reader));
+                            }
+                            
+                            return collections;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取所有收藏夹失败: {ex.Message}", ex);
+                return new List<TicketCollectionInfo>();
             }
         }
     }

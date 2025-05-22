@@ -188,7 +188,7 @@
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="FolderPlus" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="新建收藏夹" VerticalAlignment="Center"/>
+                        <TextBlock Text="新建" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -202,7 +202,7 @@
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="FolderEdit" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="修改收藏夹" VerticalAlignment="Center"/>
+                        <TextBlock Text="修改" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -216,7 +216,7 @@
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="ContentCopy" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="复制收藏夹" VerticalAlignment="Center"/>
+                        <TextBlock Text="复制" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -230,7 +230,7 @@
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="ContentCut" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="移动收藏夹" VerticalAlignment="Center"/>
+                        <TextBlock Text="移动" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -245,7 +245,7 @@
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="删除收藏夹" VerticalAlignment="Center"/>
+                        <TextBlock Text="删除" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -399,15 +399,13 @@
             </StackPanel>
         </Grid>
 
-        <!-- Grid.Row=1的容器，用于高级查询面板 -->
         <Grid Grid.Row="1" x:Name="QueryPanelContainer" Margin="10,10,10,0">
-            <!-- 这里可以添加高级查询面板的实现 -->
         </Grid>
 
         <!-- 数据显示区域 - Grid.Row=2 -->
         <Grid Grid.Row="2" Margin="10">
             <!-- 暂无数据提示 -->
-            <TextBlock Text="暂无收藏夹数据" 
+            <TextBlock Text="暂无数据" 
                       HorizontalAlignment="Center" 
                       VerticalAlignment="Center"
                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
@@ -511,7 +509,7 @@
                         <Setter Property="FontSize" Value="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                         <Setter Property="BorderThickness" Value="0,0,1,0" />
                         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueLightBrush}" />
-                        <Setter Property="Height" Value="50" />
+                        <Setter Property="Height" Value="{Binding DataContext.DataGridRowHeight, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
                     </Style>
                 </DataGrid.Resources>
                 

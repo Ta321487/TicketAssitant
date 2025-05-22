@@ -422,8 +422,16 @@ namespace TA_WPF.ViewModels
         {
             if (SelectedCollection == null) return;
 
-            // 复制收藏夹功能实现（未来实现）
-            MessageBoxHelper.ShowInfo("复制收藏夹功能尚未实现");
+            // 创建复制车票窗口
+            var copyCollectionWindow = new Views.CopyMoveCollectionWindow(SelectedCollection, false, _databaseService, _mainViewModel);
+            copyCollectionWindow.Owner = Application.Current.MainWindow;
+            bool? result = copyCollectionWindow.ShowDialog();
+
+            // 如果成功复制，刷新列表
+            if (result == true && copyCollectionWindow.Result?.Success == true)
+            {
+                RefreshCommand.Execute(null);
+            }
         }
 
         /// <summary>
@@ -438,8 +446,23 @@ namespace TA_WPF.ViewModels
         {
             if (SelectedCollections.Count == 0) return;
 
-            // 移动收藏夹功能实现（未来实现）
-            MessageBoxHelper.ShowInfo("移动收藏夹功能尚未实现");
+            // 仅支持单个收藏夹的移动
+            if (SelectedCollections.Count > 1)
+            {
+                MessageBoxHelper.ShowInfo("每次只能移动一个收藏夹");
+                return;
+            }
+
+            // 创建移动车票窗口
+            var moveCollectionWindow = new Views.CopyMoveCollectionWindow(SelectedCollection, true, _databaseService, _mainViewModel);
+            moveCollectionWindow.Owner = Application.Current.MainWindow;
+            bool? result = moveCollectionWindow.ShowDialog();
+
+            // 如果成功移动，刷新列表
+            if (result == true && moveCollectionWindow.Result?.Success == true)
+            {
+                RefreshCommand.Execute(null);
+            }
         }
 
         /// <summary>

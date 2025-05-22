@@ -55,4 +55,12 @@
 
 ### 数据库配置
 1. 确保已安装MySQL 8.0或更高版本 (如果没有安装也不要紧，本程序将指导您安装MySQL数据库)
-2. OCR训练集文件 
+2. OCR训练集文件
+
+
+###  使用方法
+日志系统（面向开发者：）
+
+1.用户操作日志：使用LogInfo/LogWarning/LogError方法，只记录到应用程序日志
+
+2.系统日志：使用LogSystem/LogSystemlarning/LogSystemError方法，只记录到系统日志

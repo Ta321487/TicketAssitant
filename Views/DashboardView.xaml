@@ -26,6 +26,7 @@
             <converters:ScreenWidthToFontSizeConverter x:Key="ScreenWidthToFontSizeConverter"/>
             <converters:FontSizeIncreaseConverter x:Key="FontSizeIncreaseConverter"/>
             <converters:ScreenWidthToColumnsConverter x:Key="ScreenWidthToColumnsConverter"/>
+            <converters:BooleanToPackIconKindConverter x:Key="BooleanToPackIconKindConverter"/>
             
             <!-- 数据模板 -->
             <DataTemplate x:Key="RecentActivityTemplate">
@@ -211,7 +212,7 @@
                             ToolTip="{Binding IsFullScreen, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='退出全屏|全屏'}"
                             Command="{Binding ToggleFullScreenCommand}"
                             Margin="8,0,0,0">
-                        <materialDesign:PackIcon Kind="{Binding IsFullScreen, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='FullscreenExit|Fullscreen'}" 
+                        <materialDesign:PackIcon Kind="{Binding IsFullScreen, Converter={StaticResource BooleanToPackIconKindConverter}, ConverterParameter='FullscreenExit|Fullscreen'}" 
                                                Height="24" Width="24"/>
                     </Button>
                 </StackPanel>
