@@ -425,6 +425,7 @@
                      EnableRowVirtualization="True"
                      EnableColumnVirtualization="True"
                      CanUserResizeRows="False"
+                     CanUserResizeColumns="False"
                      CanUserSortColumns="False"
                      CanUserReorderColumns="False"
                      IsManipulationEnabled="True"

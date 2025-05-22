@@ -613,11 +613,15 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void SelectAll()
         {
-            SelectedCollections.Clear();
+            _isBatchSelectionOperation = true;
+            
+            // 只设置IsSelected状态，不手动添加到SelectedCollections
             foreach (var collection in Collections)
             {
                 collection.IsSelected = true;
             }
+            
+            _isBatchSelectionOperation = false;
             NotifySelectionChanged();
         }
 
@@ -631,11 +635,15 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void UnselectAll()
         {
+            _isBatchSelectionOperation = true;
+            
             foreach (var collection in Collections)
             {
                 collection.IsSelected = false;
             }
-            SelectedCollections.Clear();
+            // SelectedCollections在NotifySelectionChanged中会被重建
+            
+            _isBatchSelectionOperation = false;
             NotifySelectionChanged();
         }
 
@@ -649,23 +657,15 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void InvertSelection()
         {
-            var newSelection = new ObservableCollection<TicketCollectionInfo>();
+            _isBatchSelectionOperation = true;
             
+            // 只设置IsSelected状态，不手动添加到SelectedCollections
             foreach (var collection in Collections)
             {
                 collection.IsSelected = !collection.IsSelected;
-                if (collection.IsSelected)
-                {
-                    newSelection.Add(collection);
-                }
             }
             
-            SelectedCollections.Clear();
-            foreach (var collection in newSelection)
-            {
-                SelectedCollections.Add(collection);
-            }
-            
+            _isBatchSelectionOperation = false;
             NotifySelectionChanged();
         }
 
@@ -723,6 +723,8 @@ namespace TA_WPF.ViewModels
                     _paginationViewModel.CurrentPage,
                     _paginationViewModel.PageSize);
                 
+                _isBatchSelectionOperation = true;
+                
                 // 将列表转换为ObservableCollection并更新UI
                 Collections = new ObservableCollection<TicketCollectionInfo>(collectionsData);
                 
@@ -731,12 +733,15 @@ namespace TA_WPF.ViewModels
                 if (Collections.Count == 0 && TotalCount > 0 && _paginationViewModel.CurrentPage > 1)
                 {
                     _paginationViewModel.CurrentPage = 1;
+                    _isBatchSelectionOperation = false;
                     await LoadCollectionsAsync();
                     return;
                 }
                 
                 // 清除选择
                 SelectedCollections.Clear();
+                
+                _isBatchSelectionOperation = false;
                 
                 // 通知UI更新
                 NotifySelectionChanged();
@@ -762,10 +767,12 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void NotifySelectionChanged()
         {
+            RefreshSelectedCollectionsFromSource(); // 确保从Collections集合中刷新选中状态
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllSelected));
             OnPropertyChanged(nameof(SelectedItemsCount));
             OnPropertyChanged(nameof(CanEditSelectedCollection));
+            OnPropertyChanged(nameof(SelectedCollections));
             CommandManager.InvalidateRequerySuggested();
         }
 
@@ -831,6 +838,8 @@ namespace TA_WPF.ViewModels
             NotifySelectionChanged(); // 集合更改后，依赖于选择的属性可能需要更新
         }
 
+        private bool _isBatchSelectionOperation = false;
+        
         private void CollectionItem_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(TicketCollectionInfo.IsSelected))
@@ -851,7 +860,12 @@ namespace TA_WPF.ViewModels
                             _selectedCollections.Remove(item);
                         }
                     }
-                    NotifySelectionChanged(); // IsSelected更改后，依赖于选择的属性需要更新
+                    
+                    // 只有在非批量操作时才立即通知属性更改
+                    if (!_isBatchSelectionOperation)
+                    {
+                        NotifySelectionChanged(); // IsSelected更改后，依赖于选择的属性需要更新
+                    }
                 }
             }
         }

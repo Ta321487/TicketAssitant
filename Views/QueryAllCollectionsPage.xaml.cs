@@ -231,6 +231,12 @@ namespace TA_WPF.Views
             // 从DataGrid获取选中的行
             if (sender is DataGrid dataGrid && dataGrid.SelectedItem is TicketCollectionInfo collection)
             {
+                // 设置批量操作标志(如有该字段)
+                var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (field != null)
+                    field.SetValue(viewModel, true);
+                
                 // 确保只有当前项被选中
                 foreach (var item in viewModel.Collections)
                 {
@@ -240,6 +246,10 @@ namespace TA_WPF.Views
                 // 清空并重新设置选中集合
                 viewModel.SelectedCollections.Clear();
                 viewModel.SelectedCollections.Add(collection);
+                
+                // 重置批量操作标志
+                if (field != null)
+                    field.SetValue(viewModel, false);
                 
                 // 设置当前选择项
                 viewModel.SelectedCollection = collection;
@@ -265,6 +275,12 @@ namespace TA_WPF.Views
             // 从原始事件源获取数据上下文
             if (e.OriginalSource is FrameworkElement element && element.DataContext is TicketCollectionInfo collection)
             {
+                // 设置批量操作标志(如有该字段)
+                var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (field != null)
+                    field.SetValue(viewModel, true);
+                    
                 // 确保只有当前项被选中
                 foreach (var item in viewModel.Collections)
                 {
@@ -274,6 +290,10 @@ namespace TA_WPF.Views
                 // 清空并重新设置选中集合
                 viewModel.SelectedCollections.Clear();
                 viewModel.SelectedCollections.Add(collection);
+                
+                // 重置批量操作标志
+                if (field != null)
+                    field.SetValue(viewModel, false);
                 
                 // 设置当前选择项
                 viewModel.SelectedCollection = collection;
