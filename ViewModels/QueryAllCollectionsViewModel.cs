@@ -484,89 +484,106 @@ namespace TA_WPF.ViewModels
             IsLoading = true;
             try
             {
-                // 根据排序字段进行排序
-                IOrderedEnumerable<TicketCollectionInfo> sortedCollections = null;
+                // 解析排序方式
                 string sortField = sortBy.Split('_')[0];
                 bool isAscending = sortBy.EndsWith("_Asc");
-
-                switch (sortField)
-                {
-                    case "TicketCount":
-                        sortedCollections = isAscending 
-                            ? Collections.OrderBy(c => c.TicketCount) 
-                            : Collections.OrderByDescending(c => c.TicketCount);
-                        break;
-                    case "UpdateTime":
-                        sortedCollections = isAscending 
-                            ? Collections.OrderBy(c => c.UpdateTime) 
-                            : Collections.OrderByDescending(c => c.UpdateTime);
-                        break;
-                    case "CreateTime":
-                        sortedCollections = isAscending 
-                            ? Collections.OrderBy(c => c.CreateTime) 
-                            : Collections.OrderByDescending(c => c.CreateTime);
-                        break;
-                    case "Importance":
-                        sortedCollections = isAscending 
-                            ? Collections.OrderBy(c => c.Importance) 
-                            : Collections.OrderByDescending(c => c.Importance);
-                        break;
-                    default:
-                        sortedCollections = Collections.OrderBy(c => c.Id);
-                        break;
-                }
-
-                // 保存选定状态和临时索引映射
+                
+                // 记住当前页中选中的项
                 Dictionary<int, bool> selectedStates = new Dictionary<int, bool>();
-                
-                // 用于批量更新数据库中的SortOrder
-                Dictionary<int, int> newSortOrders = new Dictionary<int, int>();
-                
-                // 转换为列表以便处理
-                var sortedList = sortedCollections.ToList();
-
-                // 1. 保存选中状态
                 foreach (var collection in Collections)
                 {
                     selectedStates[collection.Id] = collection.IsSelected;
                 }
 
-                // 2. 分配新的排序顺序值
-                for (int i = 0; i < sortedList.Count; i++)
+                // 处理特殊字段 - 车票数量排序需要特殊处理
+                if (sortField == "TicketCount")
                 {
-                    var collection = sortedList[i];
+                    // 获取所有集合
+                    var allCollections = await _databaseService.GetAllCollectionsAsync();
                     
-                    // 更新内存中的SortOrder值
-                    collection.SortOrder = (i + 1) * 10; // 以10为步长，便于将来在中间插入新元素
+                    // 根据车票数量排序
+                    var sortedCollections = isAscending 
+                        ? allCollections.OrderBy(c => c.TicketCount) 
+                        : allCollections.OrderByDescending(c => c.TicketCount);
                     
-                    // 记录新的排序顺序值，稍后更新数据库
-                    newSortOrders[collection.Id] = collection.SortOrder;
-                }
-
-                // 3. 创建包含更新后SortOrder的新集合
-                var newCollections = new ObservableCollection<TicketCollectionInfo>(sortedList);
-                
-                // 4. 恢复选定状态
-                foreach (var collection in newCollections)
-                {
-                    if (selectedStates.TryGetValue(collection.Id, out bool isSelected))
+                    // 应用分页
+                    int skipCount = (_paginationViewModel.CurrentPage - 1) * _paginationViewModel.PageSize;
+                    var pagedCollections = sortedCollections
+                        .Skip(skipCount)
+                        .Take(_paginationViewModel.PageSize)
+                        .ToList();
+                    
+                    // 更新总数
+                    TotalCount = allCollections.Count;
+                    
+                    // 将排序后的集合设置到UI
+                    _isBatchSelectionOperation = true;
+                    
+                    // 将列表转换为ObservableCollection并更新UI
+                    var newCollections = new ObservableCollection<TicketCollectionInfo>(pagedCollections);
+                    
+                    // 恢复选中状态
+                    foreach (var collection in newCollections)
                     {
-                        collection.IsSelected = isSelected;
+                        if (selectedStates.TryGetValue(collection.Id, out bool isSelected))
+                        {
+                            collection.IsSelected = isSelected;
+                        }
                     }
+                    
+                    // 更新UI显示的集合
+                    Collections = newCollections;
+                    
+                    _isBatchSelectionOperation = false;
                 }
-
-                // 5. 更新UI显示的集合
-                Collections = newCollections;
-
-                // 6. 异步更新数据库中的排序顺序
-                bool updateSuccess = await _databaseService.UpdateCollectionSortOrdersAsync(newSortOrders);
-                
-                if (!updateSuccess)
+                else
                 {
-                    // 如果数据库更新失败，记录错误但不影响UI显示
-                    LogHelper.LogError("更新收藏夹排序顺序到数据库失败");
+                    // 其他排序字段正常处理
+                    string dbSortField;
+                    switch (sortField)
+                    {
+                        case "UpdateTime":
+                            dbSortField = "update_time";
+                            break;
+                        case "CreateTime":
+                            dbSortField = "create_time";
+                            break;
+                        case "Importance":
+                            dbSortField = "importance";
+                            break;
+                        default:
+                            dbSortField = "id";
+                            break;
+                    }
+                    
+                    // 直接使用DatabaseService按指定字段获取已排序的数据
+                    TotalCount = await _databaseService.GetCollectionCountAsync();
+                    var collectionsData = await _databaseService.GetCollectionsAsync(
+                        _paginationViewModel.CurrentPage,
+                        _paginationViewModel.PageSize,
+                        dbSortField,
+                        isAscending);
+                    
+                    _isBatchSelectionOperation = true;
+                    
+                    // 将列表转换为ObservableCollection并更新UI
+                    var newCollections = new ObservableCollection<TicketCollectionInfo>(collectionsData);
+                    
+                    // 恢复选中状态
+                    foreach (var collection in newCollections)
+                    {
+                        if (selectedStates.TryGetValue(collection.Id, out bool isSelected))
+                        {
+                            collection.IsSelected = isSelected;
+                        }
+                    }
+                    
+                    // 更新UI显示的集合
+                    Collections = newCollections;
+                    
+                    _isBatchSelectionOperation = false;
                 }
-
+                
                 // 提示排序完成
                 string sortName = "";
                 string sortDirection = isAscending ? "升序" : "降序";
@@ -588,6 +605,9 @@ namespace TA_WPF.ViewModels
                 }
                 
                 Debug.WriteLine($"已按{sortName}({sortDirection})排序完成");
+                
+                // 通知UI更新
+                NotifySelectionChanged();
             }
             catch (Exception ex)
             {

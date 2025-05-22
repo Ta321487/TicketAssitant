@@ -743,7 +743,13 @@ namespace TA_WPF.ViewModels
                 }
             }
             
-            UpdateSelectedItemsCount();
+            // 确保更新选中项计数
+            SelectedItemsCount = Tickets.Count;
+            HasSelectedItems = SelectedItemsCount > 0;
+            
+            // 通知UI
+            OnPropertyChanged(nameof(SelectedTickets));
+            CommandManager.InvalidateRequerySuggested();
         }
 
         /// <summary>
@@ -764,8 +770,16 @@ namespace TA_WPF.ViewModels
                 ticket.IsSelected = false;
             }
             
+            // 清空选中项集合
             SelectedTickets.Clear();
-            UpdateSelectedItemsCount();
+            
+            // 确保更新选中项计数
+            SelectedItemsCount = 0;
+            HasSelectedItems = false;
+            
+            // 通知UI
+            OnPropertyChanged(nameof(SelectedTickets));
+            CommandManager.InvalidateRequerySuggested();
         }
 
         /// <summary>

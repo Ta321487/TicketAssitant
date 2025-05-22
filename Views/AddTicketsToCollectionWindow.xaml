@@ -75,14 +75,14 @@
                 <Setter Property="TextWrapping" Value="NoWrap" />
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 <Setter Property="FontWeight" Value="Normal" />
-                <Setter Property="FontSize" Value="{Binding Path=DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" />
+                <Setter Property="FontSize" Value="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" />
                 <Setter Property="Padding" Value="4,2" />
             </Style>
             
             <!-- 数据表格行样式 -->
             <Style x:Key="DataGridRowStyle" TargetType="DataGridRow">
                 <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <Setter Property="Height" Value="{Binding Path=DataContext.DataGridRowHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" />
+                <Setter Property="Height" Value="{Binding DataContext.DataGridRowHeight, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="BorderBrush" Value="Transparent" />
@@ -109,7 +109,7 @@
                 <Setter Property="HorizontalContentAlignment" Value="Center" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="FontSize" Value="{Binding Path=DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" />
+                <Setter Property="FontSize" Value="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" />
                 <Setter Property="Background" Value="{DynamicResource PrimaryHueDarkBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource PrimaryHueDarkForegroundBrush}" />
                 <Setter Property="Padding" Value="12,8" />
@@ -239,6 +239,19 @@
                 <DataGrid.Resources>
                     <!-- 完全覆盖MaterialDesign默认的选中样式 -->
                     <SolidColorBrush x:Key="MaterialDesignSelection" Color="#00000000" />
+                    <Style TargetType="DataGridDetailsPresenter">
+                        <Setter Property="SelectiveScrollingGrid.SelectiveScrollingOrientation" 
+                                Value="{Binding AreRowDetailsFrozen, 
+                                RelativeSource={RelativeSource AncestorType=DataGrid}, 
+                                Converter={x:Static DataGrid.RowDetailsScrollingConverter}}" />
+                    </Style>
+                    <Style TargetType="DataGridRowHeader">
+                        <Setter Property="Visibility" 
+                                Value="{Binding HeadersVisibility, 
+                                ConverterParameter={x:Static DataGridHeadersVisibility.Row}, 
+                                Converter={x:Static DataGrid.HeadersVisibilityConverter}, 
+                                RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                    </Style>
                 </DataGrid.Resources>
                 
                 <!-- 数据表格样式 -->

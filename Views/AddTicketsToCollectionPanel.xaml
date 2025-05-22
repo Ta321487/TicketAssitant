@@ -28,7 +28,7 @@
             <Style x:Key="EnhancedMaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
                 <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
                 <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
-                <Setter Property="FontSize" Value="{Binding Path=DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" />
+                <Setter Property="FontSize" Value="{Binding MainViewModel.FontSize}" />
                 <Style.Triggers>
                     <Trigger Property="IsKeyboardFocused" Value="True">
                         <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
@@ -44,7 +44,7 @@
                 <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
                 <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
                 <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
-                <Setter Property="FontSize" Value="{Binding Path=DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
+                <Setter Property="FontSize" Value="{Binding MainViewModel.FontSize}"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>

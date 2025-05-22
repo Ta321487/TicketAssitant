@@ -86,6 +86,16 @@ namespace TA_WPF.Views
         {
             if (sender is DataGrid dataGrid)
             {
+                // 判断是否由SelectAll或UnselectAll触发的事件
+                // 如果SelectedTickets数量与滚动条位置无关，则说明是由VM全选/取消选择触发的
+                if ((_viewModel.SelectedTickets.Count == _viewModel.Tickets.Count && _viewModel.SelectedTickets.Count > 0 && 
+                    dataGrid.SelectedItems.Count == _viewModel.Tickets.Count) ||
+                    (_viewModel.SelectedTickets.Count == 0 && dataGrid.SelectedItems.Count == 0))
+                {
+                    // 由SelectAll或UnselectAll触发的，不需要更新ViewModel
+                    return;
+                }
+                
                 // 清空已选中项集合
                 _viewModel.SelectedTickets.Clear();
                 
