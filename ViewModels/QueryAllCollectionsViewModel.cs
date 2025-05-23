@@ -33,6 +33,13 @@ namespace TA_WPF.ViewModels
         private bool _isLoading;
         private bool _isGridView = true; // 默认为网格视图
         private bool _isQueryPanelVisible = false;
+        private string _currentSortField = "sort_order"; // 默认排序字段
+        private bool _currentSortAscending = true; // 默认升序
+        
+        // 添加静态字段保存排序状态
+        private static string _savedSortField = "sort_order";
+        private static bool _savedSortAscending = true;
+        private static bool _hasCustomSorting = false;
 
         // 用于跟踪上次查询条件的变量 (未来实现使用)
         // private CollectionQueryFilterEventArgs _lastQueryFilter;
@@ -49,16 +56,23 @@ namespace TA_WPF.ViewModels
             _paginationViewModel = paginationViewModel ?? throw new ArgumentNullException(nameof(paginationViewModel));
             _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
 
+            // 从静态变量中恢复排序状态
+            if (_hasCustomSorting)
+            {
+                _currentSortField = _savedSortField;
+                _currentSortAscending = _savedSortAscending;
+            }
+
             _collections = new ObservableCollection<TicketCollectionInfo>();
             _selectedCollections = new ObservableCollection<TicketCollectionInfo>();
             _collections.CollectionChanged += Collections_CollectionChanged; // 订阅集合自身的变化
             
             // 订阅分页事件
-            _paginationViewModel.PageChanged += async (s, e) => await LoadCollectionsAsync();
-            _paginationViewModel.PageSizeChanged += async (s, e) => await LoadCollectionsAsync();
+            _paginationViewModel.PageChanged += async (s, e) => await LoadCollectionsAsync(false);
+            _paginationViewModel.PageSizeChanged += async (s, e) => await LoadCollectionsAsync(false);
 
             // 初始化命令
-            RefreshCommand = new RelayCommand(async () => await LoadCollectionsAsync());
+            RefreshCommand = new RelayCommand(async () => await LoadCollectionsAsync(true));
             AddCollectionCommand = new RelayCommand(AddCollection);
             EditCollectionCommand = new RelayCommand(EditCollection, CanEditCollection);
             DeleteCollectionCommand = new RelayCommand(DeleteCollection, CanDeleteCollection);
@@ -333,7 +347,7 @@ namespace TA_WPF.ViewModels
             // 在成功添加后刷新数据
             if (result == true)
             {
-                await LoadCollectionsAsync();
+                await LoadCollectionsAsync(true);
             }
         }
 
@@ -352,7 +366,7 @@ namespace TA_WPF.ViewModels
             // 在成功修改后刷新数据
             if (result == true)
             {
-                await LoadCollectionsAsync();
+                await LoadCollectionsAsync(true);
             }
         }
 
@@ -391,7 +405,7 @@ namespace TA_WPF.ViewModels
                             : $"{SelectedCollections.Count} 个收藏夹删除成功");
                             
                         // 刷新收藏夹列表
-                        await LoadCollectionsAsync();
+                        await LoadCollectionsAsync(true);
                     }
                     else
                     {
@@ -494,6 +508,32 @@ namespace TA_WPF.ViewModels
                 {
                     selectedStates[collection.Id] = collection.IsSelected;
                 }
+
+                // 保存当前排序状态，以便分页时使用
+                switch (sortField)
+                {
+                    case "TicketCount":
+                        _currentSortField = "ticket_count";
+                        break;
+                    case "UpdateTime":
+                        _currentSortField = "update_time";
+                        break;
+                    case "CreateTime":
+                        _currentSortField = "create_time";
+                        break;
+                    case "Importance":
+                        _currentSortField = "importance";
+                        break;
+                    default:
+                        _currentSortField = "sort_order";
+                        break;
+                }
+                _currentSortAscending = isAscending;
+                
+                // 保存排序状态到静态变量
+                _savedSortField = _currentSortField;
+                _savedSortAscending = _currentSortAscending;
+                _hasCustomSorting = true;
 
                 // 处理特殊字段 - 车票数量排序需要特殊处理
                 if (sortField == "TicketCount")
@@ -726,22 +766,38 @@ namespace TA_WPF.ViewModels
         public async Task QueryAllAsync()
         {
             _paginationViewModel.CurrentPage = 1; // 重置到第一页
-            await LoadCollectionsAsync();
+            // 不再重置排序状态，而是使用已保存的状态
+            await LoadCollectionsAsync(false);
         }
 
         /// <summary>
         /// 加载收藏夹数据
         /// </summary>
-        public async Task LoadCollectionsAsync()
+        /// <param name="resetSort">是否重置排序状态</param>
+        public async Task LoadCollectionsAsync(bool resetSort = false)
         {
             IsLoading = true;
             try
             {
-                // 从数据库加载数据
+                // 如果需要重置排序状态
+                if (resetSort)
+                {
+                    _currentSortField = "sort_order";
+                    _currentSortAscending = true;
+                    
+                    // 同时重置静态变量
+                    _savedSortField = "sort_order";
+                    _savedSortAscending = true;
+                    _hasCustomSorting = false;
+                }
+
+                // 从数据库加载数据，使用当前的排序状态
                 TotalCount = await _databaseService.GetCollectionCountAsync();
                 var collectionsData = await _databaseService.GetCollectionsAsync(
                     _paginationViewModel.CurrentPage,
-                    _paginationViewModel.PageSize);
+                    _paginationViewModel.PageSize,
+                    _currentSortField,
+                    _currentSortAscending);
                 
                 _isBatchSelectionOperation = true;
                 
@@ -754,7 +810,7 @@ namespace TA_WPF.ViewModels
                 {
                     _paginationViewModel.CurrentPage = 1;
                     _isBatchSelectionOperation = false;
-                    await LoadCollectionsAsync();
+                    await LoadCollectionsAsync(false);  // 不重置排序状态
                     return;
                 }
                 
@@ -794,6 +850,120 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(CanEditSelectedCollection));
             OnPropertyChanged(nameof(SelectedCollections));
             CommandManager.InvalidateRequerySuggested();
+        }
+
+        /// <summary>
+        /// 更新项目排序顺序（拖拽排序）
+        /// </summary>
+        /// <param name="draggedItem">被拖拽的项</param>
+        /// <param name="targetItem">放置的目标项</param>
+        public async void UpdateItemOrder(TicketCollectionInfo draggedItem, TicketCollectionInfo targetItem)
+        {
+            if (draggedItem == null || targetItem == null || draggedItem == targetItem)
+                return;
+                
+            try
+            {
+                IsLoading = true;
+                
+                // 获取当前所有收藏夹
+                var allCollections = await _databaseService.GetAllCollectionsAsync();
+                
+                // 排序按SortOrder字段
+                var sortedCollections = allCollections.OrderBy(c => c.SortOrder).ToList();
+                
+                // 找到拖拽项和目标项的索引
+                int draggedIndex = sortedCollections.FindIndex(c => c.Id == draggedItem.Id);
+                int targetIndex = sortedCollections.FindIndex(c => c.Id == targetItem.Id);
+                
+                if (draggedIndex < 0 || targetIndex < 0)
+                    return;
+                
+                // 重新计算排序顺序值
+                Dictionary<int, int> newSortOrders = new Dictionary<int, int>();
+                
+                // 从列表中移除拖拽项
+                var itemToMove = sortedCollections[draggedIndex];
+                sortedCollections.RemoveAt(draggedIndex);
+                
+                // 插入到新位置
+                sortedCollections.Insert(targetIndex, itemToMove);
+                
+                // 重新分配排序值，以10为步长
+                for (int i = 0; i < sortedCollections.Count; i++)
+                {
+                    var collection = sortedCollections[i];
+                    int newSortOrder = (i + 1) * 10;
+                    
+                    // 如果排序值有变化，加入到更新字典
+                    if (collection.SortOrder != newSortOrder)
+                    {
+                        collection.SortOrder = newSortOrder;
+                        newSortOrders[collection.Id] = newSortOrder;
+                    }
+                }
+                
+                // 更新数据库中的排序顺序
+                if (newSortOrders.Count > 0)
+                {
+                    bool success = await _databaseService.UpdateCollectionSortOrdersAsync(newSortOrders);
+                    if (!success)
+                    {
+                        LogHelper.LogError("更新收藏夹排序顺序失败");
+                    }
+                    else
+                    {
+                        // 手动拖拽排序后，重置为默认的sort_order排序
+                        _currentSortField = "sort_order";
+                        _currentSortAscending = true;
+                        
+                        // 更新静态变量
+                        _savedSortField = "sort_order";
+                        _savedSortAscending = true;
+                        _hasCustomSorting = true;
+                    }
+                }
+                
+                // 仅更新当前UI中的数据顺序，而不是重新加载数据
+                _isBatchSelectionOperation = true;
+                
+                // 获取当前视图中相同的对象引用
+                var currentItems = Collections.ToList();
+                
+                // 清空集合
+                Collections.Clear();
+                
+                // 按照新的顺序重新添加项目
+                foreach (var collection in sortedCollections)
+                {
+                    // 尝试在当前页找到对应的项
+                    var existingItem = currentItems.FirstOrDefault(c => c.Id == collection.Id);
+                    if (existingItem != null)
+                    {
+                        // 使用已有的对象实例以保持选中状态
+                        Collections.Add(existingItem);
+                    }
+                }
+                
+                _isBatchSelectionOperation = false;
+                
+                // 通知数据已改变
+                NotifySelectionChanged();
+                
+                Debug.WriteLine($"收藏夹拖拽排序完成：{draggedItem.CollectionName} 移动到 {targetItem.CollectionName} 位置");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"更新排序顺序时出错: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"更新排序顺序失败: {ex.Message}");
+                
+                // 发生错误时重新加载数据
+                await LoadCollectionsAsync(false);  // 修改为不重置排序
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         #endregion

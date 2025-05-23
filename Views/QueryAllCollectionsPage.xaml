@@ -570,7 +570,12 @@
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      Visibility="{Binding IsGridView, Converter={StaticResource BooleanToVisibilityConverter}}"
                      Margin="0"
-                     MouseDoubleClick="ListBox_MouseDoubleClick">
+                     MouseDoubleClick="ListBox_MouseDoubleClick"
+                     AllowDrop="True"
+                     PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
+                     PreviewMouseMove="ListBox_PreviewMouseMove"
+                     PreviewDragOver="ListBox_PreviewDragOver"
+                     Drop="ListBox_Drop">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel />

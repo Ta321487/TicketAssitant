@@ -372,20 +372,33 @@
                             Padding="8,4"
                             Margin="4,0"
                             Height="36">
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" x:Name="PageInfoPanel" MouseLeftButtonDown="PageInfoPanel_MouseLeftButtonDown">
                             <TextBlock Text="{Binding PaginationViewModel.CurrentPage}" 
-                                       Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource PrimaryHueMidBrush}"
-                                       VerticalAlignment="Center"/>
+                                   Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                   VerticalAlignment="Center"/>
                             <TextBlock Text=" / " 
-                                       Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                       VerticalAlignment="Center"/>
+                                   Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                   VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding PaginationViewModel.TotalPages}" 
-                                       Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                       VerticalAlignment="Center"/>
+                                   Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                   VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
+                    <TextBox x:Name="PageNumberInput"
+                             Width="60"
+                             Height="36"
+                             Margin="4,0"
+                             Style="{StaticResource MaterialDesignTextBox}"
+                             materialDesign:HintAssist.Hint="页码"
+                             VerticalAlignment="Center"
+                             HorizontalContentAlignment="Center"
+                             VerticalContentAlignment="Center"
+                             Visibility="Collapsed"
+                             KeyDown="PageNumber_KeyDown"
+                             LostFocus="PageNumber_LostFocus"
+                             PreviewTextInput="PageNumber_PreviewTextInput"/>
                     <Button Command="{Binding PaginationViewModel.NextPageCommand}" 
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="下一页"

@@ -231,7 +231,10 @@
                                      Margin="0,0,0,8"
                                      MaxLength="32"
                                      ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
-                                     PreviewTextInput="ApiKey_PreviewTextInput">
+                                     PreviewTextInput="ApiKey_PreviewTextInput"
+                                     PreviewKeyDown="ApiKey_PreviewKeyDown"
+                                     TextChanged="ApiKey_TextChanged"
+                                     DataObject.Pasting="ApiKey_Pasting">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                                         <Setter Property="materialDesign:HintAssist.Hint" Value="输入Web服务API Key"/>
@@ -254,7 +257,10 @@
                                      Margin="0,0,0,8"
                                      MaxLength="32"
                                      ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
-                                     PreviewTextInput="ApiKey_PreviewTextInput">
+                                     PreviewTextInput="ApiKey_PreviewTextInput"
+                                     PreviewKeyDown="ApiKey_PreviewKeyDown"
+                                     TextChanged="ApiKey_TextChanged"
+                                     DataObject.Pasting="ApiKey_Pasting">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                                         <Setter Property="materialDesign:HintAssist.Hint" Value="输入Web端API Key"/>
@@ -277,7 +283,10 @@
                                      Margin="0,0,0,0"
                                      MaxLength="32"
                                      ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
-                                     PreviewTextInput="ApiKey_PreviewTextInput">
+                                     PreviewTextInput="ApiKey_PreviewTextInput"
+                                     PreviewKeyDown="ApiKey_PreviewKeyDown"
+                                     TextChanged="ApiKey_TextChanged"
+                                     DataObject.Pasting="ApiKey_Pasting">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                                         <Setter Property="materialDesign:HintAssist.Hint" Value="输入安全密钥"/>

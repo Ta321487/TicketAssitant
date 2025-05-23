@@ -123,6 +123,84 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
+        /// 拦截空格键，阻止输入空格
+        /// </summary>
+        private void ApiKey_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Space)
+            {
+                e.Handled = true; // 阻止空格键输入
+            }
+        }
+
+        /// <summary>
+        /// 文本改变时删除所有空格
+        /// </summary>
+        private void ApiKey_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                int caretIndex = textBox.CaretIndex;
+                string text = textBox.Text;
+                
+                // 检查是否包含空格
+                if (text.Contains(" "))
+                {
+                    // 移除所有空格
+                    string newText = text.Replace(" ", "");
+                    textBox.Text = newText;
+                    
+                    // 调整光标位置，避免光标跳到文本末尾
+                    if (caretIndex > newText.Length)
+                    {
+                        textBox.CaretIndex = newText.Length;
+                    }
+                    else
+                    {
+                        // 计算新的光标位置，考虑到空格被删除的情况
+                        int spacesBeforeCaretInOriginal = text.Substring(0, caretIndex).Count(c => c == ' ');
+                        textBox.CaretIndex = caretIndex - spacesBeforeCaretInOriginal;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 粘贴事件处理，过滤粘贴内容中的空格
+        /// </summary>
+        private void ApiKey_Pasting(object sender, DataObjectPastingEventArgs e)
+        {
+            if (e.DataObject.GetDataPresent(typeof(string)))
+            {
+                string pastedText = e.DataObject.GetData(typeof(string)) as string;
+                if (!string.IsNullOrEmpty(pastedText))
+                {
+                    // 移除所有空格和不允许的字符
+                    string filteredText = Regex.Replace(pastedText, @"[^a-zA-Z0-9]", "");
+                    
+                    if (sender is TextBox textBox)
+                    {
+                        // 手动处理粘贴操作
+                        int caretIndex = textBox.CaretIndex;
+                        string currentText = textBox.Text;
+                        string newText = currentText.Substring(0, caretIndex) + filteredText;
+                        
+                        if (caretIndex < currentText.Length)
+                        {
+                            newText += currentText.Substring(caretIndex);
+                        }
+                        
+                        textBox.Text = newText;
+                        textBox.CaretIndex = caretIndex + filteredText.Length;
+                    }
+                    
+                    // 取消默认的粘贴操作
+                    e.CancelCommand();
+                }
+            }
+        }
+
+        /// <summary>
         /// 字体大小滑块值变化事件处理
         /// </summary>
         private void FontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

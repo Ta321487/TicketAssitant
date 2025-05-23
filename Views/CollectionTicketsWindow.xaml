@@ -264,7 +264,7 @@
         <!-- 数据显示区域 -->
         <Grid Grid.Row="1" Margin="10,0,10,10">
             <!-- 暂无数据提示 -->
-            <TextBlock Text="暂无车票数据" 
+            <TextBlock Text="暂无数据" 
                       HorizontalAlignment="Center" 
                       VerticalAlignment="Center"
                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"

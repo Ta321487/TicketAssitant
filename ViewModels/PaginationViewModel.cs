@@ -535,10 +535,24 @@ namespace TA_WPF.ViewModels
                 OnPropertyChanged(nameof(CanNavigateToPreviousPage));
                 OnPropertyChanged(nameof(CanNavigateToNextPage));
                 OnPropertyChanged(nameof(CanNavigateToLastPage));
-
-                // 再次刷新命令状态
-                CommandManager.InvalidateRequerySuggested();
             }));
+        }
+
+        /// <summary>
+        /// 手动触发当前页变更通知
+        /// </summary>
+        public void NotifyCurrentPageChanged()
+        {
+            OnPropertyChanged(nameof(CurrentPage));
+            
+            // 通知导航按钮状态可能已更改
+            OnPropertyChanged(nameof(CanNavigateToFirstPage));
+            OnPropertyChanged(nameof(CanNavigateToPreviousPage));
+            OnPropertyChanged(nameof(CanNavigateToNextPage));
+            OnPropertyChanged(nameof(CanNavigateToLastPage));
+            
+            // 通知命令状态可能已更改
+            CommandManager.InvalidateRequerySuggested();
         }
 
         /// <summary>
