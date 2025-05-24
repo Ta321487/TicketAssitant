@@ -4,6 +4,7 @@ using System.Diagnostics;
 using TA_WPF.Models;
 using TA_WPF.Utils;
 using System.IO;
+using TA_WPF.ViewModels; // 添加引用，以使用SeatPositionType枚举
 
 namespace TA_WPF.Services
 {
@@ -641,15 +642,19 @@ namespace TA_WPF.Services
             }
         }
 
+        /**
+         * 修改 GetFilteredTrainRideInfoCountAsync 方法以支持座位类型筛选
+         */
         /// <summary>
         /// 根据筛选条件获取车票总数
         /// </summary>
         /// <param name="departStation">出发车站</param>
         /// <param name="trainNo">车次号</param>
         /// <param name="year">出发年份</param>
+        /// <param name="seatPosition">座位位置类型</param>
         /// <param name="isAndCondition">是否使用AND条件</param>
         /// <returns>符合条件的车票总数</returns>
-        public async Task<int> GetFilteredTrainRideInfoCountAsync(string departStation, string trainNo, int? year, bool isAndCondition)
+        public async Task<int> GetFilteredTrainRideInfoCountAsync(string departStation, string trainNo, int? year, SeatPositionType seatPosition, bool isAndCondition)
         {
             try
             {
@@ -660,7 +665,7 @@ namespace TA_WPF.Services
                 if (isAndCondition)
                 {
                     // 如果没有任何条件，返回所有记录
-                    if (string.IsNullOrWhiteSpace(departStation) && string.IsNullOrWhiteSpace(trainNo) && !year.HasValue)
+                    if (string.IsNullOrWhiteSpace(departStation) && string.IsNullOrWhiteSpace(trainNo) && !year.HasValue && seatPosition == SeatPositionType.None)
                     {
                         return await GetTotalTrainRideInfoCountAsync();
                     }
@@ -703,6 +708,21 @@ namespace TA_WPF.Services
                         // 使用YEAR()函数对NULL值返回NULL，所以需要检测日期是否为NULL
                         conditions.Add("depart_date IS NULL");
                     }
+
+                    // 添加座位类型筛选条件
+                    if (seatPosition == SeatPositionType.Window)
+                    {
+                        conditions.Add("(seat_no LIKE '%A%' OR seat_no LIKE '%F%')");
+                    }
+                    else if (seatPosition == SeatPositionType.Aisle)
+                    {
+                        conditions.Add("(seat_no LIKE '%C%' OR seat_no LIKE '%D%')");
+                    }
+                    else
+                    {
+                        // 对于AND条件，如果座位类型为空，使用IS NULL条件
+                        conditions.Add("seat_no IS NULL");
+                    }
                 }
                 else // OR 条件
                 {
@@ -727,6 +747,16 @@ namespace TA_WPF.Services
                     {
                         conditions.Add("YEAR(depart_date) = @Year");
                         parameters.Add("@Year", year.Value);
+                    }
+
+                    // 添加座位类型筛选条件
+                    if (seatPosition == SeatPositionType.Window)
+                    {
+                        conditions.Add("(seat_no LIKE '%A%' OR seat_no LIKE '%F%')");
+                    }
+                    else if (seatPosition == SeatPositionType.Aisle)
+                    {
+                        conditions.Add("(seat_no LIKE '%C%' OR seat_no LIKE '%D%')");
                     }
                 }
 
@@ -769,6 +799,9 @@ namespace TA_WPF.Services
             }
         }
 
+        /**
+         * 修改 GetFilteredTrainRideInfosAsync 方法以支持座位类型筛选
+         */
         /// <summary>
         /// 根据筛选条件获取分页车票信息
         /// </summary>
@@ -777,9 +810,10 @@ namespace TA_WPF.Services
         /// <param name="departStation">出发车站</param>
         /// <param name="trainNo">车次号</param>
         /// <param name="year">出发年份</param>
+        /// <param name="seatPosition">座位位置类型</param>
         /// <param name="isAndCondition">是否使用AND条件</param>
         /// <returns>符合条件的车票列表</returns>
-        public async Task<List<TrainRideInfo>> GetFilteredTrainRideInfosAsync(int pageNumber, int pageSize, string departStation, string trainNo, int? year, bool isAndCondition)
+        public async Task<List<TrainRideInfo>> GetFilteredTrainRideInfosAsync(int pageNumber, int pageSize, string departStation, string trainNo, int? year, SeatPositionType seatPosition, bool isAndCondition)
         {
             try
             {
@@ -792,7 +826,7 @@ namespace TA_WPF.Services
                 if (isAndCondition)
                 {
                     // 如果没有任何条件，返回所有记录
-                    if (string.IsNullOrWhiteSpace(departStation) && string.IsNullOrWhiteSpace(trainNo) && !year.HasValue)
+                    if (string.IsNullOrWhiteSpace(departStation) && string.IsNullOrWhiteSpace(trainNo) && !year.HasValue && seatPosition == SeatPositionType.None)
                     {
                         return await GetPagedTrainRideInfosAsync(pageNumber, pageSize);
                     }
@@ -835,6 +869,21 @@ namespace TA_WPF.Services
                         // 使用YEAR()函数对NULL值返回NULL，所以需要检测日期是否为NULL
                         conditions.Add("depart_date IS NULL");
                     }
+
+                    // 添加座位类型筛选条件
+                    if (seatPosition == SeatPositionType.Window)
+                    {
+                        conditions.Add("(seat_no LIKE '%A%' OR seat_no LIKE '%F%')");
+                    }
+                    else if (seatPosition == SeatPositionType.Aisle)
+                    {
+                        conditions.Add("(seat_no LIKE '%C%' OR seat_no LIKE '%D%')");
+                    }
+                    else
+                    {
+                        // 对于AND条件，如果座位类型为空，使用IS NULL条件
+                        conditions.Add("seat_no IS NULL");
+                    }
                 }
                 else // OR 条件
                 {
@@ -859,6 +908,16 @@ namespace TA_WPF.Services
                     {
                         conditions.Add("YEAR(depart_date) = @Year");
                         parameters.Add("@Year", year.Value);
+                    }
+
+                    // 添加座位类型筛选条件
+                    if (seatPosition == SeatPositionType.Window)
+                    {
+                        conditions.Add("(seat_no LIKE '%A%' OR seat_no LIKE '%F%')");
+                    }
+                    else if (seatPosition == SeatPositionType.Aisle)
+                    {
+                        conditions.Add("(seat_no LIKE '%C%' OR seat_no LIKE '%D%')");
                     }
                 }
 

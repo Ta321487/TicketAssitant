@@ -26,7 +26,7 @@ namespace TA_WPF.Converters
             {
                 if (flags == 0)
                 {
-                    return "无";
+                    return "线下售票";
                 }
 
                 var names = new List<string>();

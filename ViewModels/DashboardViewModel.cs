@@ -71,6 +71,37 @@ namespace TA_WPF.ViewModels
         private string _expenseChartMessage = "";
         private bool _showExpenseChart = true;
 
+        private bool _showDetailedTicketTypes = false;
+        
+        /// <summary>
+        /// 是否显示详细车票类型
+        /// </summary>
+        public bool ShowDetailedTicketTypes
+        {
+            get => _showDetailedTicketTypes;
+            set
+            {
+                if (_showDetailedTicketTypes != value)
+                {
+                    _showDetailedTicketTypes = value;
+                    OnPropertyChanged(nameof(ShowDetailedTicketTypes));
+                    
+                    // 重新加载车票类型数据
+                    if (_allTickets != null)
+                    {
+                        LoadTicketTypeData(_allTickets.Where(t => t.DepartDate.HasValue && 
+                                                t.DepartDate.Value >= StartDate && 
+                                                t.DepartDate.Value <= EndDate).ToList());
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 切换车票详细类型显示命令
+        /// </summary>
+        public ICommand ToggleTicketTypeDetailCommand { get; private set; }
+
         /// <summary>
         /// 仪表盘视图模型，负责管理仪表盘数据
         /// </summary>
@@ -123,6 +154,7 @@ namespace TA_WPF.ViewModels
             ShowTicketTypeDetailsCommand = new RelayCommand<TicketTypeData>(ShowTicketTypeDetails);
             SelectTrendIndicatorCommand = new RelayCommand<string>(SetTrendIndicator);
             ToggleFullScreenCommand = new RelayCommand(ToggleFullScreen);
+            ToggleTicketTypeDetailCommand = new RelayCommand(() => ShowDetailedTicketTypes = !ShowDetailedTicketTypes);
 
             // 加载仪表盘数据
             LoadDashboardDataAsync();
@@ -1572,58 +1604,137 @@ namespace TA_WPF.ViewModels
                        trainNo.StartsWith("L") || trainNo.StartsWith("S") || char.IsDigit(trainNo[0]);
             }
 
-            // 高铁/动车数量
-            var highSpeedCount = tickets.Count(t => IsHighSpeedTrain(t.TrainNo));
-
-            // 普速车数量
-            var regularCount = tickets.Count(t => IsRegularTrain(t.TrainNo));
-
-            // 其他类型数量
-            var otherCount = tickets.Count - highSpeedCount - regularCount;
-
-            // 定义饼图颜色
+            // 定义饼图颜色 - 使用MaterialDesignXAML风格的配色，提高区分度
             var colors = new[]
             {
-                Color.FromRgb(124, 77, 255),  // 主色调紫色 #7C4DFF
-                Color.FromRgb(0, 176, 255),   // 天蓝色 #00B0FF
-                Color.FromRgb(156, 100, 255), // 浅紫色 #9C64FF
-                Color.FromRgb(94, 53, 177),   // 深紫色 #5E35B1
-                Color.FromRgb(3, 169, 244),   // 蓝色 #03A9F4
-                Color.FromRgb(179, 136, 255)  // 淡紫色 #B388FF
+                Color.FromRgb(124, 77, 255),   // 主色调紫色 #7C4DFF - "G(高铁)
+                Color.FromRgb(0, 176, 255),    // 天蓝色 #00B0FF - T(特快)
+                Color.FromRgb(233, 30, 99),    // 粉红色 #E91E63 - L(旅游)
+                Color.FromRgb(255, 152, 0),    // 橙色 #FF9800 - D(动车)
+                Color.FromRgb(76, 175, 80),    // 绿色 #4CAF50 - K(快速)
+                Color.FromRgb(3, 169, 244),    // 浅蓝色 #03A9F4 - 纯数字
+                Color.FromRgb(156, 39, 176),   // 紫色 #9C27B0 - C(城际)
+                Color.FromRgb(244, 67, 54),    // 红色 #F44336 - Z(直达)
+                Color.FromRgb(255, 235, 59),   // 黄色 #FFEB3B - S(市域)
+                Color.FromRgb(121, 85, 72)     // 棕色 #795548 - 其他类型
             };
 
-            // 添加数据
-            if (highSpeedCount > 0)
+            if (!ShowDetailedTicketTypes)
             {
-                TicketTypeData.Add(new TicketTypeData
-                {
-                    TypeName = "高铁/动车",
-                    Count = highSpeedCount,
-                    Percentage = tickets.Count > 0 ? highSpeedCount * 100.0 / tickets.Count : 0,
-                    Color = new SolidColorBrush(colors[0])
-                });
-            }
+                // 原来的逻辑：只显示高铁/动车和普速车两类
+                // 高铁/动车数量
+                var highSpeedCount = tickets.Count(t => IsHighSpeedTrain(t.TrainNo));
 
-            if (regularCount > 0)
-            {
-                TicketTypeData.Add(new TicketTypeData
-                {
-                    TypeName = "普速车",
-                    Count = regularCount,
-                    Percentage = tickets.Count > 0 ? regularCount * 100.0 / tickets.Count : 0,
-                    Color = new SolidColorBrush(colors[1])
-                });
-            }
+                // 普速车数量
+                var regularCount = tickets.Count(t => IsRegularTrain(t.TrainNo));
 
-            if (otherCount > 0)
-            {
-                TicketTypeData.Add(new TicketTypeData
+                // 其他类型数量
+                var otherCount = tickets.Count - highSpeedCount - regularCount;
+
+                // 添加数据
+                if (highSpeedCount > 0)
                 {
-                    TypeName = "其他",
-                    Count = otherCount,
-                    Percentage = tickets.Count > 0 ? otherCount * 100.0 / tickets.Count : 0,
-                    Color = new SolidColorBrush(colors[2])
-                });
+                    TicketTypeData.Add(new TicketTypeData
+                    {
+                        TypeName = "高铁/动车",
+                        Count = highSpeedCount,
+                        Percentage = tickets.Count > 0 ? highSpeedCount * 100.0 / tickets.Count : 0,
+                        Color = new SolidColorBrush(colors[0])
+                    });
+                }
+
+                if (regularCount > 0)
+                {
+                    TicketTypeData.Add(new TicketTypeData
+                    {
+                        TypeName = "普速车",
+                        Count = regularCount,
+                        Percentage = tickets.Count > 0 ? regularCount * 100.0 / tickets.Count : 0,
+                        Color = new SolidColorBrush(colors[1])
+                    });
+                }
+
+                if (otherCount > 0)
+                {
+                    TicketTypeData.Add(new TicketTypeData
+                    {
+                        TypeName = "其他",
+                        Count = otherCount,
+                        Percentage = tickets.Count > 0 ? otherCount * 100.0 / tickets.Count : 0,
+                        Color = new SolidColorBrush(colors[2])
+                    });
+                }
+            }
+            else
+            {
+                // 新逻辑：详细显示G/C/D和其他类型
+                // 统计各类车次
+                var gCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && t.TrainNo.StartsWith("G"));
+                var cCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && t.TrainNo.StartsWith("C"));
+                var dCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && t.TrainNo.StartsWith("D"));
+                var zCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && t.TrainNo.StartsWith("Z"));
+                var tCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && t.TrainNo.StartsWith("T"));
+                var kCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && t.TrainNo.StartsWith("K"));
+                var lCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && t.TrainNo.StartsWith("L"));
+                var sCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && t.TrainNo.StartsWith("S"));
+                var numericCount = tickets.Count(t => !string.IsNullOrEmpty(t.TrainNo) && char.IsDigit(t.TrainNo[0]));
+                var otherCount = tickets.Count - gCount - cCount - dCount - zCount - tCount - kCount - lCount - sCount - numericCount;
+
+                // 分组添加数据
+                // 高铁/动车组
+                var highSpeedTrains = new Dictionary<string, (int Count, int ColorIndex)>
+                {
+                    { "G(高铁)", (gCount, 0) },    // 主色调紫色
+                    { "C(城际)", (cCount, 6) },    // 紫色
+                    { "D(动车)", (dCount, 3) }     // 橙色
+                };
+
+                // 普速车组
+                var regularTrains = new Dictionary<string, (int Count, int ColorIndex)>
+                {
+                    { "Z(直达)", (zCount, 7) },    // 红色
+                    { "T(特快)", (tCount, 1) },    // 天蓝色
+                    { "K(快速)", (kCount, 4) },    // 绿色
+                    { "L(旅游)", (lCount, 2) },    // 粉红色
+                    { "S(市域)", (sCount, 8) },    // 黄色
+                    { "纯数字", (numericCount, 5) } // 浅蓝色
+                };
+
+                // 添加高铁/动车组数据
+                foreach (var item in highSpeedTrains.Where(i => i.Value.Count > 0))
+                {
+                    TicketTypeData.Add(new TicketTypeData
+                    {
+                        TypeName = item.Key,
+                        Count = item.Value.Count,
+                        Percentage = tickets.Count > 0 ? item.Value.Count * 100.0 / tickets.Count : 0,
+                        Color = new SolidColorBrush(colors[item.Value.ColorIndex])
+                    });
+                }
+
+                // 添加普速车组数据
+                foreach (var item in regularTrains.Where(i => i.Value.Count > 0))
+                {
+                    TicketTypeData.Add(new TicketTypeData
+                    {
+                        TypeName = item.Key,
+                        Count = item.Value.Count,
+                        Percentage = tickets.Count > 0 ? item.Value.Count * 100.0 / tickets.Count : 0,
+                        Color = new SolidColorBrush(colors[item.Value.ColorIndex])
+                    });
+                }
+
+                // 添加其他类型
+                if (otherCount > 0)
+                {
+                    TicketTypeData.Add(new TicketTypeData
+                    {
+                        TypeName = "其他",
+                        Count = otherCount,
+                        Percentage = tickets.Count > 0 ? otherCount * 100.0 / tickets.Count : 0,
+                        Color = new SolidColorBrush(colors[9])  // 棕色
+                    });
+                }
             }
 
             // 更新饼图数据
@@ -2188,13 +2299,13 @@ namespace TA_WPF.ViewModels
 
                 // 记录调试信息
                 Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
-
+ 
                 // 强制更新UI上的时间范围属性，确保图表使用最新的时间范围
                 OnPropertyChanged(nameof(StartDate));
                 OnPropertyChanged(nameof(EndDate));
                 OnPropertyChanged(nameof(SelectedTimeRange));
                 OnPropertyChanged(nameof(MonthlyTicketXTitle));
-
+ 
                 // 对于自定义时间范围，确保图表显示
                 if (SelectedTimeRange == "自定义")
                 {
@@ -2202,12 +2313,19 @@ namespace TA_WPF.ViewModels
                     _monthlyTicketChartMessage = "";
                     OnPropertyChanged(nameof(ShowMonthlyTicketChart));
                     OnPropertyChanged(nameof(MonthlyTicketChartMessage));
-
+ 
                     Debug.WriteLine($"自定义时间范围刷新，时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，确保图表可见");
                 }
 
-                // 调用加载仪表盘数据方法
+                // 重新加载所有数据
                 await LoadDashboardDataAsync();
+
+                // 触发属性通知，更新UI
+                OnPropertyChanged(nameof(HasTicketTypeData));
+                OnPropertyChanged(nameof(HasExpenseData));
+                OnPropertyChanged(nameof(HasTopRouteData));
+                OnPropertyChanged(nameof(HasRecentActivities));
+                OnPropertyChanged(nameof(ShowDetailedTicketTypes)); // 确保车票详细类型开关状态被保留
 
                 // 记录调试信息
                 Debug.WriteLine($"数据刷新完成，总车票数：{TotalTickets}，当前范围车票数：{CurrentRangeTickets}");

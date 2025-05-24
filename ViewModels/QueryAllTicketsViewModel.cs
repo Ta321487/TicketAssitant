@@ -118,8 +118,8 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 获取当前筛选条件
         /// </summary>
-        /// <returns>筛选条件元组 (出发车站, 车次, 年份, 是否为AND条件)</returns>
-        private (string departStation, string fullTrainNo, int? yearValue, bool isAndCondition) GetCurrentFilterConditions()
+        /// <returns>筛选条件元组 (出发车站, 车次, 年份, 座位位置类型, 是否为AND条件)</returns>
+        private (string departStation, string fullTrainNo, int? yearValue, SeatPositionType seatPosition, bool isAndCondition) GetCurrentFilterConditions()
         {
             var departStation = AdvancedQueryViewModel.SelectedDepartStation?.DepartStation;
             string fullTrainNo = null;
@@ -135,7 +135,10 @@ namespace TA_WPF.ViewModels
                 yearValue = AdvancedQueryViewModel.SelectedYearOption.Year.Value;
             }
 
-            return (departStation, fullTrainNo, yearValue, AdvancedQueryViewModel.IsAndCondition);
+            // 获取座位位置类型
+            SeatPositionType seatPosition = AdvancedQueryViewModel.SelectedSeatPosition;
+
+            return (departStation, fullTrainNo, yearValue, seatPosition, AdvancedQueryViewModel.IsAndCondition);
         }
 
         /// <summary>
@@ -146,18 +149,19 @@ namespace TA_WPF.ViewModels
             try
             {
                 // 获取筛选条件
-                var (departStation, fullTrainNo, yearValue, isAndCondition) = GetCurrentFilterConditions();
+                var (departStation, fullTrainNo, yearValue, seatPosition, isAndCondition) = GetCurrentFilterConditions();
 
                 // 获取总记录数（考虑筛选条件）
                 int totalCount;
 
                 // 根据是否有筛选条件获取总记录数
-                if (departStation != null || fullTrainNo != null || yearValue.HasValue)
+                if (departStation != null || fullTrainNo != null || yearValue.HasValue || seatPosition != SeatPositionType.None)
                 {
                     totalCount = await _databaseService.GetFilteredTrainRideInfoCountAsync(
                         departStation,
                         fullTrainNo,
                         yearValue,
+                        seatPosition,
                         isAndCondition);
                 }
                 else
@@ -222,12 +226,13 @@ namespace TA_WPF.ViewModels
                 int totalCount;
 
                 // 根据是否有筛选条件获取总记录数
-                if (e.DepartStation != null || e.FullTrainNo != null || e.Year.HasValue)
+                if (e.DepartStation != null || e.FullTrainNo != null || e.Year.HasValue || e.SeatPosition != SeatPositionType.None)
                 {
                     totalCount = await _databaseService.GetFilteredTrainRideInfoCountAsync(
                         e.DepartStation,
                         e.FullTrainNo,
                         e.Year,
+                        e.SeatPosition,
                         e.IsAndCondition);
                 }
                 else
@@ -307,7 +312,7 @@ namespace TA_WPF.ViewModels
                 }
 
                 // 获取筛选条件
-                var (departStation, fullTrainNo, yearValue, isAndCondition) = GetCurrentFilterConditions();
+                var (departStation, fullTrainNo, yearValue, seatPosition, isAndCondition) = GetCurrentFilterConditions();
 
                 // 获取当前页数据
                 var items = await _databaseService.GetFilteredTrainRideInfosAsync(
@@ -316,6 +321,7 @@ namespace TA_WPF.ViewModels
                     departStation,
                     fullTrainNo,
                     yearValue,
+                    seatPosition,
                     isAndCondition);
 
                 // 更新缓存和UI
@@ -523,10 +529,10 @@ namespace TA_WPF.ViewModels
             try
             {
                 // 获取筛选条件
-                var (departStation, fullTrainNo, yearValue, isAndCondition) = GetCurrentFilterConditions();
+                var (departStation, fullTrainNo, yearValue, seatPosition, isAndCondition) = GetCurrentFilterConditions();
 
                 // 检测是否存在筛选条件
-                bool hasFilter = departStation != null || !string.IsNullOrWhiteSpace(fullTrainNo) || yearValue.HasValue;
+                bool hasFilter = departStation != null || !string.IsNullOrWhiteSpace(fullTrainNo) || yearValue.HasValue || seatPosition != SeatPositionType.None;
 
                 // 更新活跃筛选条件标记
                 HasActiveFilters = hasFilter;
@@ -537,6 +543,7 @@ namespace TA_WPF.ViewModels
                     DepartStation = departStation,
                     FullTrainNo = fullTrainNo,
                     Year = yearValue,
+                    SeatPosition = seatPosition,
                     IsAndCondition = isAndCondition
                 };
 

@@ -6,6 +6,14 @@ using TA_WPF.Utils;
 
 namespace TA_WPF.ViewModels
 {
+    // 添加座位类型枚举
+    public enum SeatPositionType
+    {
+        None = 0,
+        Window = 1,
+        Aisle = 2
+    }
+    
     public class AdvancedQueryTicketViewModel : BaseViewModel
     {
         #region 字段
@@ -28,6 +36,8 @@ namespace TA_WPF.ViewModels
         private string _departStationSearchText = string.Empty;
         private bool _isUpdatingDepartStation = false;
         private readonly DatabaseService _databaseService;
+        // 添加座位类型字段
+        private SeatPositionType _selectedSeatPosition = SeatPositionType.None;
 
         #endregion
 
@@ -50,6 +60,8 @@ namespace TA_WPF.ViewModels
             ClearTrainNumberCommand = new RelayCommand(ClearTrainNumber);
             ClearYearCommand = new RelayCommand(ClearYear);
             SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
+            // 添加清除座位类型命令
+            ClearSeatPositionCommand = new RelayCommand(ClearSeatPosition);
 
             // 设置设计时数据
             _isQueryPanelVisible = true;
@@ -83,6 +95,8 @@ namespace TA_WPF.ViewModels
             ClearTrainNumberCommand = new RelayCommand(ClearTrainNumber);
             ClearYearCommand = new RelayCommand(ClearYear);
             SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
+            // 添加清除座位类型命令
+            ClearSeatPositionCommand = new RelayCommand(ClearSeatPosition);
 
             // 初始化年份选项
             InitializeYearOptions();
@@ -458,6 +472,63 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 选中的座位位置类型
+        /// </summary>
+        public SeatPositionType SelectedSeatPosition
+        {
+            get => _selectedSeatPosition;
+            set
+            {
+                if (_selectedSeatPosition != value)
+                {
+                    _selectedSeatPosition = value;
+                    OnPropertyChanged(nameof(SelectedSeatPosition));
+                    OnPropertyChanged(nameof(IsWindowSeatSelected));
+                    OnPropertyChanged(nameof(IsAisleSeatSelected));
+                    OnPropertyChanged(nameof(QueryButtonText));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否选中靠窗座位
+        /// </summary>
+        public bool IsWindowSeatSelected
+        {
+            get => _selectedSeatPosition == SeatPositionType.Window;
+            set
+            {
+                if (value)
+                {
+                    SelectedSeatPosition = SeatPositionType.Window;
+                }
+                else if (SelectedSeatPosition == SeatPositionType.Window)
+                {
+                    SelectedSeatPosition = SeatPositionType.None;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否选中靠过道座位
+        /// </summary>
+        public bool IsAisleSeatSelected
+        {
+            get => _selectedSeatPosition == SeatPositionType.Aisle;
+            set
+            {
+                if (value)
+                {
+                    SelectedSeatPosition = SeatPositionType.Aisle;
+                }
+                else if (SelectedSeatPosition == SeatPositionType.Aisle)
+                {
+                    SelectedSeatPosition = SeatPositionType.None;
+                }
+            }
+        }
+
+        /// <summary>
         /// 查询按钮文本
         /// </summary>
         public string QueryButtonText
@@ -508,6 +579,11 @@ namespace TA_WPF.ViewModels
         /// 选择出发车站命令
         /// </summary>
         public ICommand SelectDepartStationCommand { get; }
+
+        /// <summary>
+        /// 清空座位位置类型命令
+        /// </summary>
+        public ICommand ClearSeatPositionCommand { get; }
 
         #endregion
 
@@ -677,8 +753,9 @@ namespace TA_WPF.ViewModels
             bool hasDepartStation = _selectedDepartStation != null && !string.IsNullOrWhiteSpace(_selectedDepartStation.DepartStation);
             bool hasTrainNumber = !string.IsNullOrWhiteSpace(_trainNumberFilter);
             bool hasYear = _selectedYearOption != null && _selectedYearOption.Year.HasValue;
+            bool hasSeatPosition = _selectedSeatPosition != SeatPositionType.None;
 
-            return hasDepartStation || hasTrainNumber || hasYear;
+            return hasDepartStation || hasTrainNumber || hasYear || hasSeatPosition;
         }
 
         /// <summary>
@@ -717,6 +794,7 @@ namespace TA_WPF.ViewModels
                 System.Diagnostics.Debug.WriteLine($"  出发车站: {departStation}");
                 System.Diagnostics.Debug.WriteLine($"  车次号: {fullTrainNo}");
                 System.Diagnostics.Debug.WriteLine($"  出发年份: {yearValue}");
+                System.Diagnostics.Debug.WriteLine($"  座位位置类型: {_selectedSeatPosition}");
                 System.Diagnostics.Debug.WriteLine($"  查询条件组合方式: {(_isAndCondition ? "AND" : "OR")}");
 
                 // 触发筛选条件应用事件
@@ -725,6 +803,7 @@ namespace TA_WPF.ViewModels
                     DepartStation = departStation,
                     FullTrainNo = fullTrainNo,
                     Year = yearValue,
+                    SeatPosition = _selectedSeatPosition,
                     IsAndCondition = _isAndCondition
                 });
             }
@@ -746,6 +825,7 @@ namespace TA_WPF.ViewModels
             SelectedTrainPrefix = TrainPrefixes.FirstOrDefault() ?? "G";
             IsAndCondition = true;
             DepartStationSearchText = string.Empty;
+            SelectedSeatPosition = SeatPositionType.None;
 
             HasActiveFilters = false;
 
@@ -755,6 +835,7 @@ namespace TA_WPF.ViewModels
                 DepartStation = null,
                 FullTrainNo = null,
                 Year = null,
+                SeatPosition = SeatPositionType.None,
                 IsAndCondition = true
             });
         }
@@ -792,6 +873,14 @@ namespace TA_WPF.ViewModels
             // ApplyFilter();
         }
 
+        /// <summary>
+        /// 清空座位位置类型
+        /// </summary>
+        private void ClearSeatPosition()
+        {
+            SelectedSeatPosition = SeatPositionType.None;
+        }
+
         #endregion
     }
 
@@ -803,6 +892,7 @@ namespace TA_WPF.ViewModels
         public string DepartStation { get; set; }
         public string FullTrainNo { get; set; }
         public int? Year { get; set; }
+        public SeatPositionType SeatPosition { get; set; }
         public bool IsAndCondition { get; set; }
     }
 }

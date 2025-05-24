@@ -7,8 +7,8 @@ using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Threading.Tasks;
 using System.Diagnostics;
+
 
 namespace TA_WPF.ViewModels
 {
@@ -953,6 +953,7 @@ namespace TA_WPF.ViewModels
                     DepartStationFilter, 
                     TrainNoFilter, 
                     YearFilter, 
+                    SeatPositionType.None, // 添加座位位置参数，默认为None
                     IsAndCondition);
                 
                 // 如果需要排除已有车票，并且有需要排除的车票ID
@@ -964,6 +965,7 @@ namespace TA_WPF.ViewModels
                         DepartStationFilter,
                         TrainNoFilter,
                         YearFilter,
+                        SeatPositionType.None, // 添加座位位置参数，默认为None
                         IsAndCondition);
                     
                     // 计算排除后的数量
@@ -994,6 +996,7 @@ namespace TA_WPF.ViewModels
                     DepartStationFilter,
                     TrainNoFilter,
                     YearFilter,
+                    SeatPositionType.None, // 添加座位位置参数，默认为None
                     IsAndCondition);
                 
                 // 如果需要排除已有车票

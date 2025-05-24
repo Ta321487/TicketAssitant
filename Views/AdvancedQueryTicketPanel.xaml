@@ -121,6 +121,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- 查询条件 -->
@@ -246,8 +247,55 @@
                 </StackPanel>
             </Grid>
 
+            <!-- 座位类型选择 -->
+            <Grid Grid.Row="1" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0" Text="座位类型:" 
+                           Style="{StaticResource MaterialDesignBody1TextBlock}" 
+                           FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
+                           VerticalAlignment="Center" 
+                           Margin="0,0,16,0"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <RadioButton Content="靠窗" 
+                                 IsChecked="{Binding IsWindowSeatSelected}" 
+                                 Foreground="{DynamicResource GlobalAccentBrush}"
+                                 Background="{DynamicResource GlobalAccentBrush}"
+                                 BorderBrush="{DynamicResource GlobalAccentBrush}"
+                                 FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
+                                 GroupName="SeatPositionType" 
+                                 Margin="0,0,16,0"/>
+                    
+                    <RadioButton Content="靠过道" 
+                                 IsChecked="{Binding IsAisleSeatSelected}" 
+                                 Foreground="{DynamicResource GlobalAccentBrush}"
+                                 Background="{DynamicResource GlobalAccentBrush}"
+                                 BorderBrush="{DynamicResource GlobalAccentBrush}"
+                                 FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
+                                 GroupName="SeatPositionType"
+                                 Margin="0,0,16,0"/>
+                    
+                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                            Command="{Binding ClearSeatPositionCommand}"
+                            ToolTip="清除座位类型筛选"
+                            ToolTipService.ToolTip="清除座位类型筛选"
+                            ToolTipService.InitialShowDelay="500"
+                            Width="24" Height="24"
+                            Padding="2"
+                            Foreground="{DynamicResource GlobalAccentBrush}"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding SelectedSeatPosition, Converter={StaticResource NullToVisibilityConverter}}">
+                        <materialDesign:PackIcon Kind="Close" Width="12" Height="12"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
             <!-- 查询条件类型选择 -->
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,0">
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,16,0,0">
                 <TextBlock Text="查询条件组合方式:" 
                             Style="{StaticResource MaterialDesignBody1TextBlock}" 
                             FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
@@ -271,7 +319,7 @@
             </StackPanel>
 
             <!-- 操作按钮 -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
                 <Button Content="重置" 
                         Command="{Binding ResetFilterCommand}" 
                         Style="{StaticResource MaterialDesignOutlinedButton}" 
