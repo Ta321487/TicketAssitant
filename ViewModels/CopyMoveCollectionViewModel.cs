@@ -26,6 +26,7 @@ namespace TA_WPF.ViewModels
         private ObservableCollection<TicketCollectionInfo> _targetCollections;
         private TicketCollectionInfo _selectedTargetCollection;
         private bool _isLoading;
+        private string _searchText;
         
         /// <summary>
         /// 操作结果
@@ -52,6 +53,7 @@ namespace TA_WPF.ViewModels
             // 初始化命令
             ConfirmCommand = new RelayCommand(ConfirmAction, () => CanConfirm);
             CancelCommand = new RelayCommand(CancelAction);
+            SearchCommand = new RelayCommand(SearchCollections);
             
             // 初始化结果
             Result = new CopyMoveCollectionWindow.CopyMoveCollectionResult
@@ -81,6 +83,23 @@ namespace TA_WPF.ViewModels
         /// 窗口标题
         /// </summary>
         public string WindowTitle => _isMove ? "移动收藏夹" : "复制收藏夹";
+        
+        /// <summary>
+        /// 搜索文本
+        /// </summary>
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                if (_searchText != value)
+                {
+                    _searchText = value;
+                    OnPropertyChanged(nameof(SearchText));
+                    SearchCollections();
+                }
+            }
+        }
         
         /// <summary>
         /// 目标收藏夹列表
@@ -170,6 +189,11 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public ICommand CancelCommand { get; }
         
+        /// <summary>
+        /// 搜索命令
+        /// </summary>
+        public ICommand SearchCommand { get; }
+        
         #endregion
         
         #region 方法
@@ -179,12 +203,31 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public async void LoadTargetCollections()
         {
+            await LoadTargetCollectionsInternalAsync(null);
+        }
+        
+        /// <summary>
+        /// 加载目标收藏夹列表（内部方法）
+        /// </summary>
+        private async Task LoadTargetCollectionsInternalAsync(string searchText)
+        {
             IsLoading = true;
             
             try
             {
-                // 从数据库加载所有收藏夹
-                var allCollections = await _databaseService.GetAllCollectionsAsync();
+                List<TicketCollectionInfo> allCollections;
+                
+                // 根据是否有搜索文本，选择不同的数据获取方式
+                if (string.IsNullOrWhiteSpace(searchText))
+                {
+                    // 无搜索文本，获取所有收藏夹
+                    allCollections = await _databaseService.GetAllCollectionsAsync();
+                }
+                else
+                {
+                    // 有搜索文本，按名称搜索收藏夹
+                    allCollections = await _databaseService.SearchCollectionsByNameAsync(searchText);
+                }
                 
                 // 过滤掉源收藏夹
                 var filtered = allCollections.Where(c => c.Id != _sourceCollection.Id).ToList();
@@ -197,7 +240,7 @@ namespace TA_WPF.ViewModels
                 {
                     SelectedTargetCollection = TargetCollections[0];
                 }
-                else
+                else if (string.IsNullOrWhiteSpace(searchText))
                 {
                     // 如果没有其它收藏夹，显示没有收藏夹的提示
                     MessageBoxHelper.ShowInfo("没有其他收藏夹可供选择");
@@ -212,6 +255,14 @@ namespace TA_WPF.ViewModels
             {
                 IsLoading = false;
             }
+        }
+        
+        /// <summary>
+        /// 搜索收藏夹
+        /// </summary>
+        private async void SearchCollections()
+        {
+            await LoadTargetCollectionsInternalAsync(_searchText);
         }
         
         /// <summary>

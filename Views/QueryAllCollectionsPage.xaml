@@ -194,7 +194,7 @@
 
                 <Button Command="{Binding EditCollectionCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="修改收藏夹"
+                        ToolTip="修改收藏夹基本信息"
                         Margin="0,0,8,0"
                         IsEnabled="{Binding CanEditSelectedCollection}"
                         Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -208,7 +208,7 @@
 
                 <Button Command="{Binding CopyCollectionCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="复制收藏夹"
+                        ToolTip="将选中收藏夹中的车票复制到另一个收藏夹中"
                         Margin="0,0,8,0"
                         IsEnabled="{Binding CanEditSelectedCollection}"
                         Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -222,7 +222,7 @@
 
                 <Button Command="{Binding MoveCollectionCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="移动收藏夹"
+                        ToolTip="将选中收藏夹中的车票移动到另一个收藏夹中"
                         Margin="0,0,8,0"
                         IsEnabled="{Binding HasSelection}"
                         Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -373,7 +373,7 @@
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Command="{Binding ToggleViewCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="列表视图"
+                        ToolTip="以列表视图展示收藏夹"
                         Margin="0,0,8,0"
                         Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36"
@@ -386,7 +386,7 @@
 
                 <Button Command="{Binding ToggleViewCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="网格视图"
+                        ToolTip="以网格视图展示收藏夹"
                         Margin="0,0,8,0"
                         Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36"

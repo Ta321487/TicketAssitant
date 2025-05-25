@@ -77,7 +77,7 @@
                     <TextBlock Text="车票标记时光：旅程归档" 
                             VerticalAlignment="Center" 
                             HorizontalAlignment="Center" 
-                            FontSize="22" 
+                            FontSize="20" 
                             FontWeight="Bold"/>
                 </DockPanel>
             </materialDesign:ColorZone>

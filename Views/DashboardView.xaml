@@ -932,7 +932,7 @@
                 <Grid.Background>
                     <SolidColorBrush Color="#000000" Opacity="0.3"/>
                 </Grid.Background>
-                <Border Background="{DynamicResource MaterialDesignPaper}" 
+                <Border Background="Transparent" 
                         CornerRadius="8" 
                         Width="200" 
                         Height="120"

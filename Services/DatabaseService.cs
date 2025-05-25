@@ -2559,5 +2559,47 @@ namespace TA_WPF.Services
                 return new List<TicketCollectionInfo>();
             }
         }
+        
+        /// <summary>
+        /// 根据名称模糊查询收藏夹
+        /// </summary>
+        /// <param name="searchText">搜索关键词</param>
+        /// <returns>匹配的收藏夹列表</returns>
+        public async Task<List<TicketCollectionInfo>> SearchCollectionsByNameAsync(string searchText)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"SELECT tci.*, 
+                                      (SELECT COUNT(*) FROM collection_mapped_tickets_info cmti WHERE cmti.collection_id = tci.id) AS ticket_count
+                                    FROM ticket_collections_info tci
+                                    WHERE tci.collection_name LIKE @SearchText
+                                    ORDER BY tci.sort_order ASC, tci.update_time DESC";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@SearchText", $"%{searchText}%");
+                        
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            var collections = new List<TicketCollectionInfo>();
+                            
+                            while (await reader.ReadAsync())
+                            {
+                                collections.Add(MapCollectionInfo(reader));
+                            }
+                            
+                            return collections;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"搜索收藏夹失败: {ex.Message}", ex);
+                return new List<TicketCollectionInfo>();
+            }
+        }
     }
 }

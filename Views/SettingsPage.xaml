@@ -31,7 +31,7 @@
                 <materialDesign:Card Margin="0,0,0,16" Padding="16">
                     <StackPanel>
                         <TextBlock Text="外观设置" 
-                                   FontSize="18" 
+                                   FontSize="{Binding MainViewModel.FontSize}" 
                                    FontWeight="Bold" 
                                    Margin="0,0,0,16"/>
                         

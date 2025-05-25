@@ -1967,6 +1967,9 @@ namespace TA_WPF.ViewModels
             {
                 // 保存当前选择的位置
                 string currentPosition = SelectedSeatPosition;
+                
+                // 重要：保存当前的锁定状态，防止更新时改变锁定状态
+                bool lockState = !IsSeatPositionEnabled;
 
                 SeatPositions.Clear();
 
@@ -2021,6 +2024,13 @@ namespace TA_WPF.ViewModels
                 else if (SeatPositions.Count == 0)
                 {
                     SelectedSeatPosition = string.Empty;
+                }
+
+                // 重要：如果之前是锁定状态，确保更新后仍然是锁定状态
+                if (lockState && IsSeatPositionEnabled)
+                {
+                    IsSeatPositionEnabled = false;
+                    LogHelper.LogInfo("座位位置更新后保持锁定状态");
                 }
 
                 // 更新UI
@@ -3177,13 +3187,6 @@ namespace TA_WPF.ViewModels
                         else
                         {
                             SelectedSeatType = text;
-
-                            // 除了新空调硬座外，其余座位类型都解除位置下拉框锁定
-                            if (SelectedSeatType != "新空调硬座")
-                            {
-                                IsSeatPositionEnabled = true;
-                                LogHelper.LogInfo($"解除座位位置下拉框锁定，座位类型: {SelectedSeatType}");
-                            }
                         }
 
                         // 更新座位位置选项
@@ -3232,17 +3235,10 @@ namespace TA_WPF.ViewModels
                         // 设置座位位置
                         SelectedSeatPosition = position;
 
-                        // 解除座位位置下拉框锁定
-                        IsSeatPositionEnabled = true;
-
-                        // 确保UI更新
-                        OnPropertyChanged(nameof(SelectedSeatPosition));
-                        OnPropertyChanged(nameof(IsSeatPositionEnabled));
-
                         // 更新座位位置选项
                         UpdateSeatPositions();
 
-                        LogHelper.LogInfo($"识别到座位号：{SeatNo}，位置：{position}，类型：{SelectedSeatType}，解除位置下拉框锁定");
+                        LogHelper.LogInfo($"识别到座位号：{SeatNo}，位置：{position}，类型：{SelectedSeatType}");
                         break;
                     }
 
@@ -3275,17 +3271,10 @@ namespace TA_WPF.ViewModels
                         // 设置座位位置
                         SelectedSeatPosition = position;
 
-                        // 解除座位位置下拉框锁定
-                        IsSeatPositionEnabled = true;
-
-                        // 确保UI更新
-                        OnPropertyChanged(nameof(SelectedSeatPosition));
-                        OnPropertyChanged(nameof(IsSeatPositionEnabled));
-
                         // 更新座位位置选项
                         UpdateSeatPositions();
 
-                        LogHelper.LogInfo($"识别到座位号：{SeatNo}，位置：{position}，类型：{SelectedSeatType}，解除位置下拉框锁定");
+                        LogHelper.LogInfo($"识别到座位号：{SeatNo}，位置：{position}，类型：{SelectedSeatType}");
                         break;
                     }
                 }
@@ -3402,14 +3391,10 @@ namespace TA_WPF.ViewModels
                             // 设置座位位置
                             SelectedSeatPosition = position;
 
-                            // 解除座位位置下拉框锁定
-                            IsSeatPositionEnabled = true;
+                            // 更新座位位置选项，但保留当前位置
+                            UpdateSeatPositions();
 
-                            // 确保UI更新
-                            OnPropertyChanged(nameof(SelectedSeatPosition));
-                            OnPropertyChanged(nameof(IsSeatPositionEnabled));
-
-                            LogHelper.LogInfo($"识别到数字+字母格式座位号: {SeatNo}{SelectedSeatPosition}，解除位置下拉框锁定");
+                            LogHelper.LogInfo($"识别到数字+字母格式座位号: {SeatNo}{SelectedSeatPosition}");
                             break;
                         }
 
@@ -3429,17 +3414,10 @@ namespace TA_WPF.ViewModels
                             // 设置座位位置
                             SelectedSeatPosition = position;
 
-                            // 解除座位位置下拉框锁定
-                            IsSeatPositionEnabled = true;
-
-                            // 确保UI更新
-                            OnPropertyChanged(nameof(SelectedSeatPosition));
-                            OnPropertyChanged(nameof(IsSeatPositionEnabled));
-
                             // 更新座位位置选项，但保留当前位置
                             UpdateSeatPositions();
 
-                            LogHelper.LogInfo($"识别到数字+上/中/下格式座位号: {SeatNo}{position}，解除位置下拉框锁定");
+                            LogHelper.LogInfo($"识别到数字+上/中/下格式座位号: {SeatNo}{position}");
                             break;
                         }
 

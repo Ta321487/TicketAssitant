@@ -11,6 +11,7 @@ using TA_WPF.Models;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using MaterialDesignThemes.Wpf;
 
 namespace TA_WPF.ViewModels
 {
@@ -30,6 +31,7 @@ namespace TA_WPF.ViewModels
         private bool _isPaymentMethodEnabled;
         private bool _isExpandPanelEnabled;
         private string _noDataText = "暂无数据";
+        private bool _isValidPdf = false; // 新增属性：标记PDF内容是否有效
 
         // 表单相关私有字段
         // 基本信息
@@ -151,6 +153,7 @@ namespace TA_WPF.ViewModels
             ToggleFieldCommand = new RelayCommand<string>(ToggleField);
             SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
             SelectArriveStationCommand = new RelayCommand<StationInfo>(SelectArriveStation);
+            ShowHelpCommand = new RelayCommand(ShowHelpInfo);
             
             // 初始化表单相关集合
             TrainTypes = new ObservableCollection<string> { "G", "C", "D", "Z", "T", "K", "L", "S", "纯数字" };
@@ -332,6 +335,24 @@ namespace TA_WPF.ViewModels
         public bool HasSelectedPdf => !string.IsNullOrEmpty(SelectedPdfPath);
 
         /// <summary>
+        /// PDF内容是否有效
+        /// </summary>
+        public bool IsValidPdf
+        {
+            get => _isValidPdf;
+            set
+            {
+                if (_isValidPdf != value)
+                {
+                    _isValidPdf = value;
+                    OnPropertyChanged(nameof(IsValidPdf));
+                    // 触发ImportTicketCommand的CanExecute重新评估
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
+        }
+
+        /// <summary>
         /// 选择PDF文件命令
         /// </summary>
         public ICommand SelectPdfCommand { get; }
@@ -345,6 +366,11 @@ namespace TA_WPF.ViewModels
         /// 取消命令
         /// </summary>
         public ICommand CancelCommand { get; }
+
+        /// <summary>
+        /// 显示帮助信息命令
+        /// </summary>
+        public ICommand ShowHelpCommand { get; }
 
         /// <summary>
         /// 切换字段编辑状态命令
@@ -1467,6 +1493,8 @@ namespace TA_WPF.ViewModels
                     SelectedPdfPath = openFileDialog.FileName;
                     PdfContent = string.Empty; // 清空旧内容
                     ResetFormFieldsState(); // 重置字段状态
+                    IsValidPdf = false; // 重置PDF有效性状态
+                    NoDataText = "暂无数据"; // 重置为默认提示文本
 
                     // 使用服务读取PDF内容
                     PdfContent = await _pdfImportService.LoadPdfContentAsync(SelectedPdfPath);
@@ -1480,6 +1508,7 @@ namespace TA_WPF.ViewModels
                     LogHelper.LogError($"处理PDF文件时出错: {ex.Message}");
                     ResetFormFieldsState(); // 出错时也重置
                     IsQuestionButtonEnabled = false; // 出错时禁用问号按钮
+                    IsValidPdf = false; // 出错时PDF无效
                 }
                 finally
                 {
@@ -1497,6 +1526,7 @@ namespace TA_WPF.ViewModels
             if (string.IsNullOrEmpty(content))
             {
                 IsQuestionButtonEnabled = false; // 无内容时禁用问号按钮
+                IsValidPdf = false; // 无内容时PDF无效
                 return;
             }
 
@@ -1507,14 +1537,15 @@ namespace TA_WPF.ViewModels
                 // 将解析结果填充到表单
                 FillFormWithTicketInfo(ticket);
                 IsQuestionButtonEnabled = true; // 填充成功后启用问号按钮
+                IsValidPdf = true; // 解析成功表示PDF有效
             }
             else
             {
                 // 解析失败，可能是格式不支持等
-                MessageBoxHelper.ShowWarning("无法从此PDF中解析出车票信息，请检查文件内容或手动输入。");
                 LogHelper.LogWarning("无法从PDF中解析出车票信息。");
                 ResetFormFieldsState(); // 重置字段状态
                 IsQuestionButtonEnabled = false; // 解析失败时禁用问号按钮
+                IsValidPdf = false; // 解析失败时PDF无效
             }
         }
 
@@ -1904,7 +1935,7 @@ namespace TA_WPF.ViewModels
         /// <returns>是否可以导入车票</returns>
         private bool CanImportTicket()
         {
-            return HasSelectedPdf && !IsLoading;
+            return HasSelectedPdf && !IsLoading && IsValidPdf;
         }
 
         /// <summary>
@@ -2087,6 +2118,7 @@ namespace TA_WPF.ViewModels
         {
             IsQuestionButtonEnabled = false; // 初始禁用问号按钮
             IsExpandPanelEnabled = false; // 重置时折叠面板
+            IsValidPdf = false; // 重置PDF有效性状态
 
             IsTicketNumberEnabled = false;
             IsCheckInLocationEnabled = false;
@@ -2337,6 +2369,22 @@ namespace TA_WPF.ViewModels
             {
                 SelectArriveStation(SelectedArriveStation);
             }
+        }
+
+        /// <summary>
+        /// 显示帮助信息
+        /// </summary>
+        private void ShowHelpInfo()
+        {
+            MessageBoxHelper.ShowInfo(
+                "查看方式：\n\n" +
+                "1. 登录12306官网\n" +
+                "2. 点击“火车票订单”\n" +
+                "3. 根据实际情况选择“未出行订单”或“历史订单”\n" +
+                "4. 点击姓名旁的“打印信息单”\n" +
+                "5. 在新窗口中选择“下载”\n" +
+                "6. 在本程序中导入下载的PDF文件进行识别",
+                "如何获取12306电子客票");
         }
     }
 } 

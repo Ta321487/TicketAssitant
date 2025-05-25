@@ -77,6 +77,25 @@ namespace TA_WPF.Services
                 var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 Debug.WriteLine($"[PdfImportService] 共找到{lines.Length}行内容");
 
+                // 验证是否是12306电子客票
+                bool is12306Ticket = false;
+                foreach (var line in lines)
+                {
+                    if (line.Contains("12306") || line.Contains("铁路") || line.Contains("电子客票"))
+                    {
+                        is12306Ticket = true;
+                        break;
+                    }
+                }
+
+                // 如果未找到12306相关关键词，可能不是车票PDF
+                if (!is12306Ticket)
+                {
+                    MessageBoxHelper.ShowError("不是有效的12306车票PDF，请重新选择","错误");
+                    Debug.WriteLine("[PdfImportService] 未找到12306相关关键词，可能不是车票PDF。");
+                    return null;
+                }
+
                 // --- 提取订单号 (填充到取票号字段) ---
                 var orderNumberRegex = new Regex(@"订\s*单\s*号[：:]\s*(\S+)");
                 var orderLine = lines.FirstOrDefault(line => orderNumberRegex.IsMatch(line));
@@ -108,9 +127,22 @@ namespace TA_WPF.Services
                         // **移除/注释掉 Pinyin 自动填充**
                         // EnrichStationInfo(ticket); 
                     }
-                    else { Debug.WriteLine($"[PdfImportService] 站点行(索引 {stationLineIndex})部分数量: {parts.Length}, 预期 >= 3。"); }
+                    else 
+                    { 
+                        Debug.WriteLine($"[PdfImportService] 站点行(索引 {stationLineIndex})部分数量: {parts.Length}, 预期 >= 3。"); 
+                        // 添加关键信息缺失检查
+                        if (string.IsNullOrEmpty(ticket.TrainNo) || string.IsNullOrEmpty(ticket.DepartStation) || string.IsNullOrEmpty(ticket.ArriveStation))
+                        {
+                            Debug.WriteLine("[PdfImportService] 缺少关键信息(车次/出发站/到达站)，PDF格式可能不符合预期。");
+                            return null;
+                        }
+                    }
                 }
-                else { Debug.WriteLine($"[PdfImportService] 没有足够的行来处理站点信息(索引 {stationLineIndex})。总行数: {lines.Length}。"); }
+                else 
+                { 
+                    Debug.WriteLine($"[PdfImportService] 没有足够的行来处理站点信息(索引 {stationLineIndex})。总行数: {lines.Length}。");
+                    return null; // 行数不足，返回null
+                }
 
                 // --- 提取出发车站和到达车站拼音 (从第8行) ---
                 int pinyinLineIndex = 7; // 第8行索引
@@ -231,6 +263,16 @@ namespace TA_WPF.Services
                 else { Debug.WriteLine($"[PdfImportService] 没有足够的行来处理座位信息(索引 {seatLineIndex})。总行数: {lines.Length}。"); }
 
                 Debug.WriteLine("[PdfImportService] 完成解析尝试。");
+                
+                // 最终验证：确保至少有车次、出发站和到达站信息
+                if (string.IsNullOrEmpty(ticket.TrainNo) || 
+                    string.IsNullOrEmpty(ticket.DepartStation) || 
+                    string.IsNullOrEmpty(ticket.ArriveStation))
+                {
+                    Debug.WriteLine("[PdfImportService] 最终验证失败：缺少关键信息。");
+                    return null;
+                }
+                
                 return ticket;
             }
             catch (Exception ex)
@@ -263,7 +305,9 @@ namespace TA_WPF.Services
                     return "二等座";
                 case "商务座":
                     return "商务座";
-                // Add other mappings (e.g., for 无座, 动卧, 高级软卧, etc.)
+                case "无座":
+                    return "无座";
+                // Add other mappings (e.g., for 动卧, 高级软卧, etc.)
                 default:
                     return extractedType; // Return original if no map found
             }

@@ -909,12 +909,46 @@ namespace TA_WPF.ViewModels
                 
                 // 确保CanSelectAllProperty也被更新
                 CanSelectAllProperty = CanSelectAll();
+
+                // 记录关键调试信息
+                Debug.WriteLine($"[AddTicketsToCollection] 当前页:{_paginationViewModel.CurrentPage}, 总页数:{_paginationViewModel.TotalPages}, 总记录数:{_paginationViewModel.TotalItems}, 本页记录数:{Tickets.Count}, 排除已有车票:{ExcludeExistingTickets}");
+
+                // 当前页无数据处理
+                if (Tickets.Count == 0 && _paginationViewModel.TotalPages > 0 && _paginationViewModel.TotalItems > 0)
+                {
+                    Debug.WriteLine($"[AddTicketsToCollection] 当前页{_paginationViewModel.CurrentPage}无数据，开始查找有数据的页面");
+                    
+                    // 记录当前页码，防止循环
+                    int currentPage = _paginationViewModel.CurrentPage;
+                    int checkedCount = 0;
+                    
+                    // 从当前页开始向后查找
+                    for (int page = currentPage + 1; page <= _paginationViewModel.TotalPages && checkedCount < _paginationViewModel.TotalPages; page++, checkedCount++)
+                    {
+                        Debug.WriteLine($"[AddTicketsToCollection] 尝试跳转到第{page}页");
+                        _paginationViewModel.CurrentPage = page;
+                        LoadTickets();
+                        return;
+                    }
+                    
+                    // 如果向后查找不到，从第一页开始向前查找，直到当前页
+                    for (int page = 1; page < currentPage && checkedCount < _paginationViewModel.TotalPages; page++, checkedCount++)
+                    {
+                        Debug.WriteLine($"[AddTicketsToCollection] 尝试跳转到第{page}页");
+                        _paginationViewModel.CurrentPage = page;
+                        LoadTickets();
+                        return;
+                    }
+                    
+                    // 如果所有页面都没有数据，但总记录数不为0，说明分页计算可能有问题
+                    Debug.WriteLine($"[AddTicketsToCollection] 警告：所有页面都无数据，但总记录数为{_paginationViewModel.TotalItems}");
+                }
             }
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"加载车票数据失败: {ex.Message}", "错误");
                 LogHelper.LogError($"加载车票数据失败: {ex.Message}", ex);
-                }
+            }
             finally
             {
                 IsLoading = false;
@@ -1003,7 +1037,55 @@ namespace TA_WPF.ViewModels
                 if (ExcludeExistingTickets && excludeTicketIds != null && excludeTicketIds.Count > 0)
                 {
                     // 过滤掉已有的车票
-                    tickets = tickets.Where(t => !excludeTicketIds.Contains(t.Id)).ToList();
+                    var filteredTickets = tickets.Where(t => !excludeTicketIds.Contains(t.Id)).ToList();
+                    
+                    // 关键修复：如果当前页过滤后无数据，但总记录数不为0，重新获取所有未添加的车票并分页
+                    if (filteredTickets.Count == 0 && _paginationViewModel.TotalItems > 0)
+                    {
+                        Debug.WriteLine($"[AddTicketsToCollection] 当前页过滤后无数据，正在获取所有未添加的车票");
+                        
+                        // 获取所有符合条件的车票
+                        var allTickets = await _databaseService.GetFilteredTrainRideInfosAsync(
+                            1, 
+                            int.MaxValue,
+                            DepartStationFilter,
+                            TrainNoFilter,
+                            YearFilter,
+                            SeatPositionType.None,
+                            IsAndCondition);
+                        
+                        // 过滤掉已添加的车票
+                        var allFilteredTickets = allTickets.Where(t => !excludeTicketIds.Contains(t.Id)).ToList();
+                        
+                        // 获取正确的总条目数
+                        int actualTotal = allFilteredTickets.Count;
+                        _paginationViewModel.TotalItems = actualTotal;
+                        
+                        Debug.WriteLine($"[AddTicketsToCollection] 过滤后实际总记录数: {actualTotal}");
+                        
+                        // 重新计算总页数
+                        int pageSize = _paginationViewModel.PageSize;
+                        int totalPages = (actualTotal + pageSize - 1) / pageSize;
+                        
+                        // 调整当前页码，确保不超过总页数
+                        int currentPage = Math.Min(_paginationViewModel.CurrentPage, Math.Max(1, totalPages));
+                        _paginationViewModel.CurrentPage = currentPage;
+                        
+                        Debug.WriteLine($"[AddTicketsToCollection] 调整后 - 当前页:{currentPage}, 总页数:{totalPages}, 页大小:{pageSize}");
+                        
+                        // 如果没有数据，直接返回空列表
+                        if (actualTotal == 0)
+                        {
+                            Debug.WriteLine("[AddTicketsToCollection] 过滤后无数据可显示");
+                            return new List<TrainRideInfo>();
+                        }
+                        
+                        // 手动分页获取当前页数据
+                        int skipCount = (currentPage - 1) * pageSize;
+                        return allFilteredTickets.Skip(skipCount).Take(pageSize).ToList();
+                    }
+                    
+                    return filteredTickets;
                 }
                 
                 return tickets;

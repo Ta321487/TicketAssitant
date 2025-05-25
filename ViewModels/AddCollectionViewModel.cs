@@ -10,6 +10,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Windows.Media.Imaging;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace TA_WPF.ViewModels
 {
@@ -327,7 +328,7 @@ namespace TA_WPF.ViewModels
                 foreach (var name in similarNames)
                 {
                     // 使用正则表达式提取括号中的数字（如"11(3)"中的3）
-                    var match = System.Text.RegularExpressions.Regex.Match(name, @"\((\d+)\)$");
+                    var match = Regex.Match(name, @"\((\d+)\)$");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int suffix))
                     {
                         maxSuffix = Math.Max(maxSuffix, suffix);
