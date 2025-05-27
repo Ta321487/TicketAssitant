@@ -247,7 +247,7 @@ namespace TA_WPF
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"应用程序启动时出错: {ex.Message}\n\n{ex.StackTrace}", "应用程序错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxHelper.ShowError($"应用程序启动时出错: {ex.Message}\n\n{ex.StackTrace}", "应用程序错误");
                 LogHelper.LogSystemError("应用程序", "应用程序启动时出错", ex);
                 Current.Shutdown(-1);
             }
@@ -457,7 +457,7 @@ namespace TA_WPF
         {
             var exception = e.ExceptionObject as Exception;
             LogHelper.LogSystemError("异常处理", "未处理的AppDomain异常", exception);
-            MessageBox.Show($"程序发生严重错误: {exception?.Message}\n\n请联系开发人员并提供日志文件。", "严重错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBoxHelper.ShowError($"程序发生严重错误: {exception?.Message}\n\n请联系开发人员并提供日志文件。", "严重错误");
         }
 
         // 处理UI线程未处理的异常
@@ -472,7 +472,7 @@ namespace TA_WPF
             }
 
             LogHelper.LogSystemError("异常处理", "未处理的UI线程异常", e.Exception);
-            MessageBox.Show($"程序发生错误: {e.Exception.Message}\n\n请联系开发人员并提供日志文件。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBoxHelper.ShowError($"程序发生错误: {e.Exception.Message}\n\n请联系开发人员并提供日志文件。", "错误");
             e.Handled = true; // 标记为已处理，防止应用程序崩溃
         }
 

@@ -930,8 +930,8 @@ namespace TA_WPF.ViewModels
                 }
                 else
                 {
-                    // 如果API信息不为空，显示成功消息
-                    MessageBoxHelper.ShowInfo("高德地图API设置已保存");
+                    // 如果API信息不为空，显示成功消息并提示即时生效
+                    MessageBoxHelper.ShowInfo("高德地图API设置已保存，更改将立即生效");
                 }
                 
                 // 记录日志

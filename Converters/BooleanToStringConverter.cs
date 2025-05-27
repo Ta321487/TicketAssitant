@@ -14,6 +14,7 @@ namespace TA_WPF.Converters
         /// </summary>
         public string TrueValue { get; set; }
         
+        
         /// <summary>
         /// 当布尔值为false时返回的字符串
         /// </summary>

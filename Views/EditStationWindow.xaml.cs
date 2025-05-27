@@ -191,7 +191,7 @@ namespace TA_WPF.Views
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"[调试] 异常: {ex.Message}");
-                    MessageBox.Show($"选择铁路局发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxHelper.ShowError($"选择铁路局发生错误: {ex.Message}", "错误");
                 }
             }
         }
@@ -265,7 +265,7 @@ namespace TA_WPF.Views
                 {
                     Debug.WriteLine($"[调试] 发生异常: {ex.Message}");
                     Debug.WriteLine($"[调试] 异常详情: {ex}");
-                    MessageBox.Show($"选择铁路局时发生错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxHelper.ShowError($"选择铁路局时发生错误: {ex.Message}", "错误");
                 }
                 
                 e.Handled = true;

@@ -6,10 +6,52 @@ using TA_WPF.Utils;
 namespace TA_WPF.Services
 {
     /// <summary>
+    /// API密钥更新事件参数
+    /// </summary>
+    public class ApiKeyEventArgs : EventArgs
+    {
+        /// <summary>
+        /// API密钥名称
+        /// </summary>
+        public string KeyName { get; }
+        
+        /// <summary>
+        /// API密钥值
+        /// </summary>
+        public string Value { get; }
+        
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="keyName">API密钥名称</param>
+        /// <param name="value">API密钥值</param>
+        public ApiKeyEventArgs(string keyName, string value)
+        {
+            KeyName = keyName;
+            Value = value;
+        }
+    }
+
+    /// <summary>
     /// 配置服务，负责管理应用程序的配置设置
     /// </summary>
     public class ConfigurationService
     {
+        /// <summary>
+        /// API密钥更新事件
+        /// </summary>
+        public static event EventHandler<ApiKeyEventArgs> ApiKeyUpdated;
+        
+        /// <summary>
+        /// 触发API密钥更新事件
+        /// </summary>
+        /// <param name="keyName">API密钥名称</param>
+        /// <param name="value">API密钥值</param>
+        private static void OnApiKeyUpdated(string keyName, string value)
+        {
+            ApiKeyUpdated?.Invoke(null, new ApiKeyEventArgs(keyName, value));
+        }
+
         /// <summary>
         /// 保存字体大小到配置文件
         /// </summary>
@@ -445,6 +487,13 @@ namespace TA_WPF.Services
                 ConfigurationManager.RefreshSection("appSettings");
                 
                 LogHelper.LogInfo($"已保存设置{key}");
+                
+                // 检查是否为API密钥相关设置，如果是则触发事件
+                if (key == "AmapWebKey" || key == "AmapWebServiceKey" || key == "AmapSecurityKey")
+                {
+                    Debug.WriteLine($"触发API密钥更新事件: {key}");
+                    OnApiKeyUpdated(key, value);
+                }
             }
             catch (Exception ex)
             {

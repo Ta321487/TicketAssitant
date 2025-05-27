@@ -73,6 +73,11 @@ namespace TA_WPF.ViewModels
 
         private bool _showDetailedTicketTypes = false;
         
+        // 添加在类的字段声明区域
+        private RouteMapViewModel _routeMapViewModel;
+        private bool _isMapViewVisible = false;
+        private ICommand _toggleViewCommand;
+
         /// <summary>
         /// 是否显示详细车票类型
         /// </summary>
@@ -155,6 +160,10 @@ namespace TA_WPF.ViewModels
             SelectTrendIndicatorCommand = new RelayCommand<string>(SetTrendIndicator);
             ToggleFullScreenCommand = new RelayCommand(ToggleFullScreen);
             ToggleTicketTypeDetailCommand = new RelayCommand(() => ShowDetailedTicketTypes = !ShowDetailedTicketTypes);
+
+            // 添加在构造函数中，在现有初始化代码之后
+            _routeMapViewModel = new RouteMapViewModel(_databaseService, _configurationService);
+            _toggleViewCommand = new RelayCommand<string>(ToggleView);
 
             // 加载仪表盘数据
             LoadDashboardDataAsync();
@@ -847,6 +856,39 @@ namespace TA_WPF.ViewModels
         /// 最近活动图表消息
         /// </summary>
         public string RecentActivitiesMessage => _recentActivitiesMessage;
+
+        /// <summary>
+        /// 路线地图视图模型
+        /// </summary>
+        public RouteMapViewModel RouteMapViewModel => _routeMapViewModel;
+
+        /// <summary>
+        /// 是否显示地图视图
+        /// </summary>
+        public bool IsMapViewVisible
+        {
+            get => _isMapViewVisible;
+            private set
+            {
+                if (_isMapViewVisible != value)
+                {
+                    _isMapViewVisible = value;
+                    OnPropertyChanged(nameof(IsMapViewVisible));
+                    // 反向属性 - 数据统计视图的可见性
+                    OnPropertyChanged(nameof(IsDataViewVisible));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否显示数据统计视图
+        /// </summary>
+        public bool IsDataViewVisible => !_isMapViewVisible;
+
+        /// <summary>
+        /// 切换视图命令
+        /// </summary>
+        public ICommand ToggleViewCommand => _toggleViewCommand;
 
         private async void SafeFireAndForget(Func<Task> taskFunc, Action<Exception> errorHandler = null)
         {
@@ -2498,6 +2540,26 @@ namespace TA_WPF.ViewModels
                     // 通知视图更新车票类型图表
                     OnPropertyChanged(nameof(TicketTypeSeries));
                 }
+            }
+        }
+
+        /// <summary>
+        /// 切换视图
+        /// </summary>
+        /// <param name="viewName">视图名称："map"或"data"</param>
+        private void ToggleView(string viewName)
+        {
+            if (string.IsNullOrEmpty(viewName))
+                return;
+
+            switch (viewName.ToLower())
+            {
+                case "map":
+                    IsMapViewVisible = true;
+                    break;
+                case "data":
+                    IsMapViewVisible = false;
+                    break;
             }
         }
     }

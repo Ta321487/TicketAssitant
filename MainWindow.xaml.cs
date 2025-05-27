@@ -75,7 +75,7 @@ namespace TA_WPF
             {
                 Debug.WriteLine($"MainWindow构造函数异常: {ex.Message}");
                 Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
-                MessageBox.Show($"初始化窗口时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxHelper.ShowError($"初始化窗口时出错: {ex.Message}", "错误");
             }
         }
 
@@ -130,8 +130,8 @@ namespace TA_WPF
                                 }
                                 
                                 // 显示通用错误消息
-                                MessageBox.Show($"发生了未处理的异常: {ex.Message}", 
-                                    "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                                MessageBoxHelper.ShowError($"发生了未处理的异常: {ex.Message}", 
+                                    "错误");
                             }
                         }
                         catch (Exception msgEx)

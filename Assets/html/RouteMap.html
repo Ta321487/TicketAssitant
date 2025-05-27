@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行程路线地图</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        #container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .amap-logo, .amap-copyright {
+            display: none !important;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            font-size: 12px;
+            z-index: 100;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 6px;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-text {
+            font-size: 16px;
+            color: #333;
+            margin-left: 10px;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 添加未设置API的提示样式 */
+        .api-missing-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(245, 245, 245, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1500;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .api-missing-icon {
+            font-size: 48px;
+            color: #f44336;
+            margin-bottom: 20px;
+        }
+        
+        .api-missing-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .api-missing-desc {
+            font-size: 16px;
+            color: #666;
+            max-width: 80%;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div class="legend">
+        <div class="legend-item">
+            <span class="legend-color" style="background: linear-gradient(90deg, rgba(0, 97, 255, 0.8), rgba(0, 200, 255, 0.8));"></span>
+            <span>行程路线</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background: #f00;"></span>
+            <span>出发站</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background: #0f0;"></span>
+            <span>到达站</span>
+        </div>
+    </div>
+    <div id="loading" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">地图加载中...</div>
+    </div>
+    
+    <!-- 添加未设置API密钥时的提示信息 -->
+    <div id="apiMissingOverlay" class="api-missing-overlay" style="display: none;">
+        <div class="api-missing-icon">⚠️</div>
+        <div class="api-missing-title">未设置地图API密钥</div>
+        <div class="api-missing-desc">
+            您尚未设置高德地图API密钥，无法显示地图内容。<br>
+            请前往【设置 → 高德地图API设置】页面配置相关信息。
+        </div>
+    </div>
+
+    <!-- 引入高德地图API和Loca组件 -->
+    <script src="https://webapi.amap.com/maps?v=2.0&key="></script>
+    <script src="https://webapi.amap.com/loca?v=2.0.0&key="></script>
+    <script>
+        // 全局变量
+        let map;
+        let loca;
+        let pulseLink;
+        let pulseLineLayer;
+        let geoData = [];
+        let amapWebKey = '';
+        let amapSecurityKey = '';
+        let isMapInitialized = false;
+        
+        // 初始化函数
+        function initMap() {
+            hideLoading();
+            
+            // 检查API密钥是否设置
+            if (!amapWebKey || amapWebKey.trim() === '') {
+                showApiMissingMessage();
+                return;
+            } else {
+                hideApiMissingMessage();
+            }
+            
+            // 创建地图实例
+            map = new AMap.Map('container', {
+                zoom: 5,
+                center: [116.397428, 39.90923], // 北京
+                viewMode: '3D',
+                mapStyle: 'amap://styles/dark',
+                showLabel: false,
+                pitch: 40,
+                rotation: 0
+            });
+            
+            // 创建Loca图层
+            loca = new Loca.Container({
+                map: map
+            });
+
+            // 创建PulseLineLayer图层
+            pulseLineLayer = new Loca.PulseLineLayer({
+                zIndex: 10,
+                opacity: 0.8,
+                visible: true,
+                zooms: [2, 22]
+            });
+
+            // 配置图层
+            pulseLineLayer.setSource(new Loca.GeoJSONSource({
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            }));
+
+            // 设置图层样式
+            pulseLineLayer.setStyle({
+                altitude: 0,
+                lineWidth: function(index, feature) {
+                    return 2;
+                },
+                height: function(index, feature) {
+                    // 根据路线距离调整高度
+                    return feature.distance * 0.5;
+                },
+                // 渐变色
+                color: function(index, feature) {
+                    return [
+                        'rgba(0, 97, 255, 0.8)', 
+                        'rgba(0, 200, 255, 0.8)'
+                    ]
+                },
+                // 材质贴图
+                texture: 'pulse',
+                textureSize: 256,
+                textureGap: 2,
+                textureBlend: 'lighter',
+                // 脉冲速度
+                speed: function(index, feature) {
+                    return 0.5;
+                }
+            });
+
+            // 添加图层到Loca容器
+            loca.add(pulseLineLayer);
+            
+            isMapInitialized = true;
+        }
+        
+        // 设置高德地图API密钥
+        function setAmapKeys(webKey, securityKey) {
+            amapWebKey = webKey;
+            amapSecurityKey = securityKey;
+            
+            // 检查API密钥是否有效
+            if (!amapWebKey || amapWebKey.trim() === '') {
+                showApiMissingMessage();
+                hideLoading();
+                return;
+            } else {
+                hideApiMissingMessage();
+            }
+            
+            // 重新加载API
+            if (amapWebKey) {
+                reloadAmapApi();
+            }
+        }
+        
+        // 显示未设置API密钥的提示信息
+        function showApiMissingMessage() {
+            document.getElementById('apiMissingOverlay').style.display = 'flex';
+            console.log('API密钥未设置，显示提示信息');
+        }
+        
+        // 隐藏未设置API密钥的提示信息
+        function hideApiMissingMessage() {
+            document.getElementById('apiMissingOverlay').style.display = 'none';
+        }
+        
+        // 重新加载高德地图API
+        function reloadAmapApi() {
+            try {
+                // 移除现有的脚本
+                const scripts = document.getElementsByTagName('script');
+                for (let i = scripts.length - 1; i >= 0; i--) {
+                    const script = scripts[i];
+                    if (script.src.includes('webapi.amap.com')) {
+                        script.parentNode.removeChild(script);
+                    }
+                }
+                
+                // 添加新的脚本
+                const mapScript = document.createElement('script');
+                mapScript.src = `https://webapi.amap.com/maps?v=2.0&key=${amapWebKey}&securityJsCode=${amapSecurityKey}`;
+                mapScript.onload = function() {
+                    // 加载Loca API
+                    const locaScript = document.createElement('script');
+                    locaScript.src = `https://webapi.amap.com/loca?v=2.0.0&key=${amapWebKey}`;
+                    locaScript.onload = function() {
+                        // 初始化地图
+                        initMap();
+                    };
+                    document.head.appendChild(locaScript);
+                };
+                document.head.appendChild(mapScript);
+            } catch (error) {
+                console.error('重新加载高德地图API时出错:', error);
+                hideLoading();
+            }
+        }
+        
+        // 加载路线数据
+        function loadRouteData(routeData) {
+            console.log('加载路线数据，数据条数:', routeData ? routeData.length : 0);
+            
+            // 清除之前的提示信息
+            hideNoDataMessage();
+            
+            // 检查地图是否初始化
+            if (!map || !loca || !pulseLineLayer) {
+                console.log('地图组件未初始化，尝试重新初始化地图');
+                
+                // 如果API密钥有效但地图未初始化，尝试初始化地图
+                if (amapWebKey && amapWebKey.trim() !== '') {
+                    // 先隐藏API缺失提示
+                    hideApiMissingMessage();
+                    
+                    // 使用延时确保DOM已经准备好
+                    setTimeout(() => {
+                        // 重新加载API并初始化地图
+                        reloadAmapApi();
+                        
+                        // 使用延时等待地图初始化完成后再次尝试加载数据
+                        setTimeout(() => {
+                            if (routeData && routeData.length > 0 && isMapInitialized) {
+                                // 递归调用自身加载数据
+                                loadRouteData(routeData);
+                            }
+                        }, 1000);
+                    }, 500);
+                    return;
+                }
+                
+                console.log('未初始化地图或无路线数据');
+                hideLoading();
+                return;
+            }
+            
+            // 检查路线数据
+            if (!routeData || routeData.length === 0) {
+                console.log('路线数据为空');
+                hideLoading();
+                
+                // 显示没有路线数据的提示
+                showNoDataMessage("没有可显示的路线数据");
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                // 清空现有数据
+                geoData = [];
+                
+                // 创建点标记数组
+                const markers = [];
+                
+                // 添加路线数据
+                for (const route of routeData) {
+                    // 构建GeoJSON特性
+                    const feature = {
+                        type: 'Feature',
+                        distance: calculateDistance(
+                            route.departLatitude, route.departLongitude, 
+                            route.arriveLatitude, route.arriveLongitude
+                        ),
+                        properties: {
+                            departStation: route.departStation,
+                            arriveStation: route.arriveStation,
+                            trainNo: route.trainNo,
+                            departDate: route.departDate,
+                            money: route.money
+                        },
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [
+                                [route.departLongitude, route.departLatitude],
+                                [route.arriveLongitude, route.arriveLatitude]
+                            ]
+                        }
+                    };
+                    
+                    geoData.push(feature);
+                    
+                    // 添加出发站和到达站点标记
+                    const departMarker = new AMap.Marker({
+                        position: [route.departLongitude, route.departLatitude],
+                        title: route.departStation,
+                        content: createDotMarker('#f00'),
+                        offset: new AMap.Pixel(-8, -8)
+                    });
+                    
+                    const arriveMarker = new AMap.Marker({
+                        position: [route.arriveLongitude, route.arriveLatitude],
+                        title: route.arriveStation,
+                        content: createDotMarker('#0f0'),
+                        offset: new AMap.Pixel(-8, -8)
+                    });
+                    
+                    markers.push(departMarker);
+                    markers.push(arriveMarker);
+                }
+                
+                // 更新数据源
+                pulseLineLayer.setSource(new Loca.GeoJSONSource({
+                    data: {
+                        type: 'FeatureCollection',
+                        features: geoData
+                    }
+                }));
+                
+                // 添加站点标记
+                if (markers.length > 0) {
+                    map.add(markers);
+                }
+                
+                // 更新地图视野
+                if (geoData.length > 0) {
+                    // 提取所有坐标点
+                    const positions = [];
+                    for (const feature of geoData) {
+                        for (const coord of feature.geometry.coordinates) {
+                            positions.push(new AMap.LngLat(coord[0], coord[1]));
+                        }
+                    }
+                    
+                    // 调整地图视野
+                    map.setBounds(new AMap.Bounds(positions[0], positions[1]));
+                }
+                
+                // 渲染图层
+                loca.animate.start();
+            } catch (error) {
+                console.error('加载路线数据时出错:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 计算两点之间的距离（km）
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // 地球半径（km）
+            const dLat = deg2rad(lat2 - lat1);
+            const dLon = deg2rad(lon2 - lon1);
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2); 
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            const distance = R * c; // 距离（km）
+            return distance;
+        }
+        
+        // 角度转弧度
+        function deg2rad(deg) {
+            return deg * (Math.PI/180);
+        }
+        
+        // 创建点标记的HTML
+        function createDotMarker(color) {
+            return `<div style="width: 16px; height: 16px; border-radius: 50%; background-color: ${color}; box-shadow: 0 0 10px ${color}; opacity: 0.8;"></div>`;
+        }
+        
+        // 显示加载中提示
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+        
+        // 隐藏加载中提示
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // 新增：显示没有数据的提示信息
+        function showNoDataMessage(message) {
+            // 如果已存在提示，先移除
+            const existingMsg = document.getElementById('noDataMessage');
+            if (existingMsg) {
+                existingMsg.parentNode.removeChild(existingMsg);
+            }
+            
+            // 创建新的提示元素
+            const noDataDiv = document.createElement('div');
+            noDataDiv.id = 'noDataMessage';
+            noDataDiv.style.position = 'absolute';
+            noDataDiv.style.top = '50%';
+            noDataDiv.style.left = '50%';
+            noDataDiv.style.transform = 'translate(-50%, -50%)';
+            noDataDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            noDataDiv.style.padding = '20px';
+            noDataDiv.style.borderRadius = '8px';
+            noDataDiv.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+            noDataDiv.style.textAlign = 'center';
+            noDataDiv.style.zIndex = '100';
+            
+            const icon = document.createElement('div');
+            icon.innerHTML = '⚠️';
+            icon.style.fontSize = '32px';
+            icon.style.marginBottom = '10px';
+            
+            const text = document.createElement('div');
+            text.textContent = message || '没有可显示的数据';
+            text.style.fontSize = '16px';
+            text.style.color = '#333';
+            
+            const subText = document.createElement('div');
+            subText.textContent = '请检查车票信息或数据库中的车站经纬度信息';
+            subText.style.fontSize = '12px';
+            subText.style.color = '#666';
+            subText.style.marginTop = '5px';
+            
+            noDataDiv.appendChild(icon);
+            noDataDiv.appendChild(text);
+            noDataDiv.appendChild(subText);
+            
+            document.getElementById('container').appendChild(noDataDiv);
+        }
+        
+        // 隐藏没有数据的提示信息
+        function hideNoDataMessage() {
+            const noDataMsg = document.getElementById('noDataMessage');
+            if (noDataMsg) {
+                noDataMsg.style.display = 'none';
+            }
+        }
+        
+        // 页面加载完成后初始化
+        window.onload = function() {
+            // 检查API密钥是否设置
+            if (!amapWebKey || amapWebKey.trim() === '') {
+                showApiMissingMessage();
+                hideLoading();
+            } else {
+                hideApiMissingMessage();
+            }
+        };
+    </script>
+</body>
+</html> 

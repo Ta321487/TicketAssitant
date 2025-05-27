@@ -156,6 +156,10 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
             <!-- 标题和时间区域 -->
@@ -296,8 +300,54 @@
                 </Grid>
             </materialDesign:Card>
             
+            <!-- 视图切换按钮 -->
+            <materialDesign:Card Grid.Row="2" Margin="0,0,0,16" Padding="16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ViewGrid" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="视图选择" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" VerticalAlignment="Center" FontSize="{DynamicResource MaterialDesignFontSize}"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <RadioButton x:Name="DataViewButton"
+                                   Content="数据统计"
+                                   IsChecked="{Binding IsDataViewVisible, Mode=OneWay}"
+                                   Command="{Binding ToggleViewCommand}"
+                                   CommandParameter="data"
+                                   Margin="0,0,12,0"
+                                   Style="{StaticResource MaterialDesignTabRadioButton}"
+                                   BorderBrush="{DynamicResource PrimaryHueMidBrush}"
+                                   FontSize="{DynamicResource MaterialDesignFontSize}"/>
+                        
+                        <RadioButton x:Name="MapViewButton"
+                                   Content="路线地图" 
+                                   IsChecked="{Binding IsMapViewVisible, Mode=OneWay}"
+                                   Command="{Binding ToggleViewCommand}"
+                                   CommandParameter="map"
+                                   Style="{StaticResource MaterialDesignTabRadioButton}"
+                                   BorderBrush="{DynamicResource PrimaryHueMidBrush}"
+                                   FontSize="{DynamicResource MaterialDesignFontSize}"/>
+                    </StackPanel>
+                </Grid>
+            </materialDesign:Card>
+            
+            <!-- 地图视图容器 -->
+            <Grid Grid.Row="3" Grid.RowSpan="3" Margin="0,0,0,16" 
+                 Visibility="{Binding IsMapViewVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <materialDesign:Card Padding="0">
+                    <local:RouteMapView DataContext="{Binding RouteMapViewModel}" Height="600"/>
+                </materialDesign:Card>
+            </Grid>
+            
             <!-- 数据概览区域 -->
-            <Grid Grid.Row="2" Margin="0,0,0,16">
+            <Grid Grid.Row="3" Margin="0,0,0,16"
+                 Visibility="{Binding IsDataViewVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
@@ -492,7 +542,8 @@
             </Grid>
             
             <!-- 常用线路TOP5和最近活动 -->
-            <Grid Grid.Row="3" Margin="0,0,0,16">
+            <Grid Grid.Row="4" Margin="0,0,0,16"
+                 Visibility="{Binding IsDataViewVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -591,7 +642,8 @@
             </Grid>
             
             <!-- 图表分析区域 -->
-            <Grid Grid.Row="4" Margin="0,0,0,16">
+            <Grid Grid.Row="5" Margin="0,0,0,16"
+                 Visibility="{Binding IsDataViewVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
