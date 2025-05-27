@@ -2362,6 +2362,13 @@ namespace TA_WPF.ViewModels
                 // 重新加载所有数据
                 await LoadDashboardDataAsync();
 
+                // 刷新地图数据（如果地图视图已初始化）
+                if (_routeMapViewModel != null)
+                {
+                    Debug.WriteLine("刷新地图数据");
+                    await _routeMapViewModel.RefreshMapDataAsync();
+                }
+
                 // 触发属性通知，更新UI
                 OnPropertyChanged(nameof(HasTicketTypeData));
                 OnPropertyChanged(nameof(HasExpenseData));

@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Microsoft.Web.WebView2.Core;
 using TA_WPF.Models;
 using TA_WPF.Services;
@@ -20,6 +23,7 @@ namespace TA_WPF.ViewModels
         private string _amapWebKey;
         private string _amapSecurityKey;
         private CoreWebView2 _currentWebView;
+        private bool _isRefreshing;
 
         public RouteMapViewModel(DatabaseService databaseService, ConfigurationService configurationService)
         {
@@ -174,28 +178,37 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public async Task RefreshMapDataAsync()
         {
+            if (_isRefreshing)
+            {
+                Debug.WriteLine("地图数据刷新正在进行中，跳过本次刷新请求");
+                return;
+            }
+
             try
             {
+                _isRefreshing = true;
                 IsLoading = true;
                 
                 // 如果WebView2引用可用，则刷新地图数据
                 if (_currentWebView != null)
                 {
-                    await RefreshMapDataAsync(_currentWebView);
+                    await RefreshMapDataAsync(_currentWebView).ConfigureAwait(false);
                 }
                 else
                 {
                     // 需要在UI线程执行WebView相关操作
-                    await Task.Delay(100); // 确保UI更新
+                    await Task.Delay(100).ConfigureAwait(false); // 确保UI更新
                 }
-                
-                IsLoading = false;
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"刷新地图数据时出错: {ex.Message}", ex);
                 Debug.WriteLine($"刷新地图数据时出错: {ex.Message}");
+            }
+            finally
+            {
                 IsLoading = false;
+                _isRefreshing = false;
             }
         }
         
@@ -204,14 +217,28 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public async Task RefreshMapDataAsync(CoreWebView2 webView)
         {
+            if (webView == null)
+            {
+                Debug.WriteLine("WebView为空，无法刷新地图数据");
+                return;
+            }
+
+            // 防止重复刷新
+            if (_isRefreshing && IsLoading)
+            {
+                Debug.WriteLine("地图数据刷新正在进行中，跳过本次刷新请求");
+                return;
+            }
+
             try
             {
+                _isRefreshing = true;
                 IsLoading = true;
                 LogHelper.LogInfo("开始刷新地图数据");
                 Debug.WriteLine("开始刷新地图数据");
 
-                // 1. 从数据库获取行程数据
-                var routeData = await GetRouteDataAsync();
+                // 1. 从数据库获取行程数据 (可以在后台线程执行)
+                var routeData = await GetRouteDataAsync().ConfigureAwait(false);
                 
                 // 记录获取到的数据
                 Debug.WriteLine($"获取到{routeData.Count}条路线数据");
@@ -224,47 +251,58 @@ namespace TA_WPF.ViewModels
                     LogHelper.LogWarning($"路线数据数量较少({routeData.Count}条)，请检查车站经纬度信息完整性");
                 }
                 
-                // 2. 将数据转换为前端可使用的JSON格式
+                // 2. 将数据转换为前端可使用的JSON格式 (可以在后台线程执行)
                 string jsonData = ConvertToJson(routeData);
                 
-                // 3. 调用地图JavaScript方法加载数据
-                if (webView != null)
+                // 记录没有数据的情况
+                if (routeData.Count == 0)
                 {
-                    // 先检查地图是否初始化
-                    string checkScript = "typeof map !== 'undefined' && map !== null";
-                    string result = await webView.ExecuteScriptAsync(checkScript);
-                    bool isMapInitialized = result.Trim().ToLower() == "true";
-                    
-                    if (!isMapInitialized && !string.IsNullOrEmpty(_amapWebKey))
-                    {
-                        // 如果地图未初始化但有API密钥，先重新设置API密钥
-                        Debug.WriteLine("地图未初始化，重新设置API密钥");
-                        await webView.ExecuteScriptAsync($"setAmapKeys('{_amapWebKey}', '{_amapSecurityKey}');");
-                        
-                        // 等待地图初始化
-                        await Task.Delay(1000);
-                    }
-                    
-                    // 如果没有路线数据，在日志中记录更多信息
-                    if (routeData.Count == 0)
-                    {
-                        Debug.WriteLine("没有可用的路线数据，地图将不显示任何路线");
-                        LogHelper.LogWarning("没有可用的路线数据，请检查数据库中车站经纬度信息的完整性");
-                    }
-                    
-                    // 加载路线数据
-                    await webView.ExecuteScriptAsync($"loadRouteData({jsonData});");
-                    LogHelper.LogInfo($"地图数据已刷新，加载了{routeData.Count}条路线");
-                    Debug.WriteLine($"地图数据已刷新，加载了{routeData.Count}条路线");
+                    Debug.WriteLine("没有可用的路线数据，地图将不显示任何路线");
+                    LogHelper.LogWarning("没有可用的路线数据，请检查数据库中车站经纬度信息的完整性");
                 }
                 
-                IsLoading = false;
+                // 3. 所有WebView2操作必须回到UI线程执行
+                // 使用Application.Current.Dispatcher确保在UI线程上执行WebView操作
+                await Application.Current.Dispatcher.InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        // 检查地图是否初始化
+                        string checkScript = "typeof map !== 'undefined' && map !== null";
+                        string result = await webView.ExecuteScriptAsync(checkScript);
+                        bool isMapInitialized = result.Trim().ToLower() == "true";
+                        
+                        if (!isMapInitialized && !string.IsNullOrEmpty(_amapWebKey))
+                        {
+                            // 如果地图未初始化但有API密钥，先重新设置API密钥
+                            Debug.WriteLine("地图未初始化，重新设置API密钥");
+                            await webView.ExecuteScriptAsync($"setAmapKeys('{_amapWebKey}', '{_amapSecurityKey}');");
+                            
+                            // 等待地图初始化
+                            await Task.Delay(1000);
+                        }
+                        
+                        // 加载路线数据
+                        await webView.ExecuteScriptAsync($"loadRouteData({jsonData});");
+                        LogHelper.LogInfo($"地图数据已刷新，加载了{routeData.Count}条路线");
+                        Debug.WriteLine($"地图数据已刷新，加载了{routeData.Count}条路线");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogHelper.LogError($"在UI线程执行WebView操作时出错: {ex.Message}", ex);
+                        Debug.WriteLine($"在UI线程执行WebView操作时出错: {ex.Message}");
+                    }
+                });
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"刷新地图数据时出错: {ex.Message}", ex);
                 Debug.WriteLine($"刷新地图数据时出错: {ex.Message}");
+            }
+            finally
+            {
                 IsLoading = false;
+                _isRefreshing = false;
             }
         }
 
@@ -275,12 +313,70 @@ namespace TA_WPF.ViewModels
         {
             try
             {
+                var stopwatch = new System.Diagnostics.Stopwatch();
+                stopwatch.Start();
+                
                 var result = new List<RouteMapData>();
                 
                 // 获取所有车票
-                var tickets = await _databaseService.GetAllTrainRideInfosAsync();
+                var tickets = await _databaseService.GetAllTrainRideInfosAsync().ConfigureAwait(false);
                 LogHelper.LogInfo($"从数据库获取到{tickets.Count}条车票记录");
-                Debug.WriteLine($"从数据库获取到{tickets.Count}条车票记录");
+                Debug.WriteLine($"从数据库获取到{tickets.Count}条车票记录，耗时: {stopwatch.ElapsedMilliseconds}ms");
+                
+                if (tickets.Count == 0)
+                {
+                    return result;
+                }
+                
+                // 收集所有出发站和到达站的名称
+                var allStationNames = new HashSet<string>();
+                foreach (var ticket in tickets)
+                {
+                    if (!string.IsNullOrWhiteSpace(ticket.DepartStation))
+                    {
+                        allStationNames.Add(ticket.DepartStation);
+                    }
+                    if (!string.IsNullOrWhiteSpace(ticket.ArriveStation))
+                    {
+                        allStationNames.Add(ticket.ArriveStation);
+                    }
+                }
+                
+                // 创建站点信息查询任务字典
+                var stationQueryTasks = new Dictionary<string, Task<StationInfo>>();
+                
+                // 创建站名和站点信息的映射字典
+                var stationCache = new Dictionary<string, StationInfo>();
+                
+                Debug.WriteLine($"需要查询{allStationNames.Count}个站点信息");
+                
+                // 创建所有站点的查询任务
+                foreach (var stationName in allStationNames)
+                {
+                    // 避免重复查询相同站名
+                    if (!stationQueryTasks.ContainsKey(stationName))
+                    {
+                        stationQueryTasks[stationName] = _databaseService.GetStationByNameAsync(stationName);
+                    }
+                }
+                
+                // 等待所有查询任务完成
+                await Task.WhenAll(stationQueryTasks.Values).ConfigureAwait(false);
+                
+                // 将查询结果填充到缓存
+                foreach (var kvp in stationQueryTasks)
+                {
+                    var stationName = kvp.Key;
+                    var stationTask = kvp.Value;
+                    
+                    var station = await stationTask;
+                    if (station != null)
+                    {
+                        stationCache[stationName] = station;
+                    }
+                }
+                
+                Debug.WriteLine($"站点信息查询完成，成功获取{stationCache.Count}/{allStationNames.Count}个站点，耗时: {stopwatch.ElapsedMilliseconds}ms");
                 
                 int missingDepartStationCount = 0;
                 int missingArriveStationCount = 0;
@@ -290,11 +386,19 @@ namespace TA_WPF.ViewModels
                 // 处理车票数据，获取起始站和终点站的经纬度信息
                 foreach (var ticket in tickets)
                 {
-                    // 获取起始站信息
-                    var departStation = await _databaseService.GetStationByNameAsync(ticket.DepartStation);
+                    // 从缓存中获取站点信息
+                    StationInfo departStation = null;
+                    StationInfo arriveStation = null;
                     
-                    // 获取终点站信息
-                    var arriveStation = await _databaseService.GetStationByNameAsync(ticket.ArriveStation);
+                    if (!string.IsNullOrWhiteSpace(ticket.DepartStation))
+                    {
+                        stationCache.TryGetValue(ticket.DepartStation, out departStation);
+                    }
+                    
+                    if (!string.IsNullOrWhiteSpace(ticket.ArriveStation))
+                    {
+                        stationCache.TryGetValue(ticket.ArriveStation, out arriveStation);
+                    }
                     
                     // 检查站点信息是否存在
                     if (departStation == null)
@@ -353,11 +457,13 @@ namespace TA_WPF.ViewModels
                 int totalCount = tickets.Count;
                 int filteredCount = totalCount - validCount;
                 
+                stopwatch.Stop();
+                Debug.WriteLine($"路线数据获取总耗时: {stopwatch.ElapsedMilliseconds}ms");
                 Debug.WriteLine($"路线数据过滤统计: 总车票数={totalCount}, 有效数据={validCount}, 被过滤={filteredCount}");
                 Debug.WriteLine($"过滤原因: 出发站不存在={missingDepartStationCount}, 到达站不存在={missingArriveStationCount}");
                 Debug.WriteLine($"过滤原因: 出发站缺少经纬度={missingDepartCoordinatesCount}, 到达站缺少经纬度={missingArriveCoordinatesCount}");
                 
-                LogHelper.LogInfo($"路线数据过滤统计: 总车票数={totalCount}, 有效数据={validCount}, 被过滤={filteredCount}");
+                LogHelper.LogInfo($"路线数据过滤统计: 总车票数={totalCount}, 有效数据={validCount}, 被过滤={filteredCount}, 总耗时: {stopwatch.ElapsedMilliseconds}ms");
                 
                 return result;
             }

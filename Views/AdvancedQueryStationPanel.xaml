@@ -260,13 +260,13 @@
 
             <!-- 第三行：我出发的车站 -->
             <StackPanel Grid.Row="2" Margin="0,16,0,0">
-                <CheckBox Content="使用我出发的车站" 
+                <CheckBox Content="使用我的常用车站" 
                           IsChecked="{Binding UseMyDepartStations}"
                           Foreground="{DynamicResource GlobalAccentBrush}"
                           Background="{DynamicResource GlobalAccentBrush}"
                           BorderBrush="{DynamicResource GlobalAccentBrush}"
                           FontSize="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
-                <TextBlock Text="注：此选项勾选后，会在车站中心仅显示您曾经出发过的车站"
+                <TextBlock Text="注：此选项勾选后，会在车站中心仅显示您曾经出发或到达过的车站"
                            Style="{StaticResource MaterialDesignCaptionTextBlock}"
                            Margin="24,4,0,0"
                            Foreground="{DynamicResource MaterialDesignBodyLight}"/>

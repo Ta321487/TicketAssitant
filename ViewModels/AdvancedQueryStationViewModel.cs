@@ -203,21 +203,34 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 加载我的出发车站
+        /// 加载我的常用车站
         /// </summary>
         private async void LoadMyDepartStationsAsync()
         {
             try
             {
+                // 获取出发车站
                 var departStations = await _databaseService.GetDistinctDepartStationsAsync();
-                MyDepartStations = departStations
+                
+                // 获取到达车站
+                var arriveStations = await _databaseService.GetDistinctArriveStationsAsync();
+                
+                // 合并两个列表并去重
+                var allStations = new HashSet<string>(departStations);
+                foreach (var station in arriveStations)
+                {
+                    allStations.Add(station);
+                }
+                
+                // 转换为列表并排序
+                MyDepartStations = allStations
                     .Where(s => !string.IsNullOrEmpty(s))
                     .OrderBy(s => s)
                     .ToList();
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"加载我的出发车站列表时出错: {ex.Message}", ex);
+                LogHelper.LogError($"加载我的常用车站列表时出错: {ex.Message}", ex);
             }
         }
 
@@ -351,7 +364,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 是否使用我的出发车站
+        /// 是否使用我的常用车站
         /// </summary>
         public bool UseMyDepartStations
         {
@@ -368,7 +381,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 我的出发车站列表
+        /// 我的常用车站列表
         /// </summary>
         public List<string> MyDepartStations
         {
@@ -703,6 +716,9 @@ namespace TA_WPF.ViewModels
         public string City { get; set; }
         public string District { get; set; }
         public bool UseMyDepartStations { get; set; }
+        /// <summary>
+        /// 我的常用车站列表（包含出发站和到达站）
+        /// </summary>
         public List<string> MyDepartStations { get; set; }
     }
 } 

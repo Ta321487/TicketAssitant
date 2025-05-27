@@ -1502,7 +1502,7 @@ namespace TA_WPF.Services
         /// <param name="province">省份</param>
         /// <param name="city">城市</param>
         /// <param name="district">区/县</param>
-        /// <param name="myDepartStations">我的出发车站列表</param>
+        /// <param name="myDepartStations">我的常用车站列表（包含出发站和到达站）</param>
         /// <returns>符合条件的车站列表</returns>
         public async Task<List<StationInfo>> QueryStationsAdvancedAsync(
             int pageNumber, 
@@ -1615,7 +1615,7 @@ namespace TA_WPF.Services
         /// <param name="province">省份</param>
         /// <param name="city">城市</param>
         /// <param name="district">区/县</param>
-        /// <param name="myDepartStations">我的出发车站列表</param>
+        /// <param name="myDepartStations">我的常用车站列表（包含出发站和到达站）</param>
         /// <returns>符合条件的车站总数</returns>
         public async Task<int> GetStationCountAdvancedAsync(
             string stationName = null, 
