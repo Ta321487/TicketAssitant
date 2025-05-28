@@ -108,6 +108,18 @@ namespace TA_WPF.Services
                         case "10005":
                             errorMessage = "IP白名单出错，请在高德开放平台检查您的IP白名单设置。";
                             break;
+                        case "10006":
+                            errorMessage = "绑定域名无效，请在高德开放平台检查您的域名设置。";
+                            break;
+                        case "10008":
+                            errorMessage = "IP访问超限，请在高德开放平台检查您的IP访问限制。";
+                            break;
+                        case "10009":
+                            errorMessage = "API密钥类型错误：您可能在Web服务中使用了Web端的密钥，或在Web端使用了Web服务的密钥。请在系统设置中检查并正确填写不同类型的API密钥。";
+                            break;
+                        case "10010":
+                            errorMessage = "应用未开通Web服务API，请登录开放平台开通相应的Web服务API。";
+                            break;
                         case "20000":
                             errorMessage = "请求参数非法，请检查地址信息是否正确。";
                             break;

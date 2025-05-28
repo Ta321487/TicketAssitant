@@ -918,19 +918,66 @@ namespace TA_WPF.ViewModels
                 bool isSecurityKeyEmpty = string.IsNullOrWhiteSpace(AmapSecurityKey);
                 bool isMapApiIncomplete = (isWebKeyEmpty != isSecurityKeyEmpty); // 检查是否只填写了一个，没有成对出现
                 
+                // 验证API密钥格式是否正确
+                bool hasInvalidKeyFormat = false;
+                string warningMessage = "";
+                
+                // 检查Web服务API密钥格式
+                if (!isWebServiceKeyEmpty && AmapWebServiceKey.Length > 0)
+                {
+                    // Web服务API密钥通常是32位字母数字
+                    if (AmapWebServiceKey.Length != 32)
+                    {
+                        warningMessage += "您输入的Web服务API Key长度不正确，请检查是否完整复制\n";
+                        hasInvalidKeyFormat = true;
+                        LogHelper.LogSystemWarning("设置 - 高德地图API", "Web服务API Key长度不正确");
+                    }
+                }
+                
+                // 检查Web端Key格式
+                if (!isWebKeyEmpty && AmapWebKey.Length > 0)
+                {
+                    // Web端Key通常是32位字母数字，但可能有特殊格式
+                    if (AmapWebKey.Length != 32)
+                    {
+                        warningMessage += "您输入的Web端API Key长度不正确，请检查是否完整复制\n";
+                        hasInvalidKeyFormat = true;
+                        LogHelper.LogSystemWarning("设置 - 高德地图API", "Web端API Key长度不正确");
+                    }
+                }
+                
+                // 检查安全密钥格式
+                if (!isSecurityKeyEmpty && AmapSecurityKey.Length > 0)
+                {
+                    // 安全密钥通常是32位字母数字
+                    if (AmapSecurityKey.Length != 32)
+                    {
+                        warningMessage += "您输入的安全密钥长度不正确，请检查是否完整复制\n";
+                        hasInvalidKeyFormat = true;
+                        LogHelper.LogSystemWarning("设置 - 高德地图API", "安全密钥长度不正确");
+                    }
+                }
+                
+                // 检查密钥是否可能放错位置
+                if (!isWebServiceKeyEmpty && !isWebKeyEmpty && 
+                    AmapWebServiceKey.Length == 32 && AmapWebKey.Length == 32 && 
+                    IsLikelyKeyTypeMismatch(AmapWebServiceKey, AmapWebKey))
+                {
+                    warningMessage += "您可能将Web服务API Key与Web端Key填写位置混淆了，请检查并确保正确填写\n";
+                    LogHelper.LogSystemWarning("设置 - 高德地图API", "可能存在API密钥类型混淆");
+                }
+                
                 // 无论是否为空，都保存到配置服务
                 _configurationService.SaveSettingValue("AmapWebServiceKey", AmapWebServiceKey);
                 _configurationService.SaveSettingValue("AmapWebKey", AmapWebKey);
                 _configurationService.SaveSettingValue("AmapSecurityKey", AmapSecurityKey);
 
-                if (isWebServiceKeyEmpty || isMapApiIncomplete || (isWebKeyEmpty && isSecurityKeyEmpty))
+                // 构建警告信息
+                if (isWebServiceKeyEmpty || isMapApiIncomplete || (isWebKeyEmpty && isSecurityKeyEmpty) || hasInvalidKeyFormat)
                 {
-                    string warningMessage = "";
-                    
-                    // 根据不同情况构建警告信息
                     if (isWebServiceKeyEmpty)
                     {
-                        warningMessage += "• 未设置Web服务API，车站信息功能将无法使用\n";
+                        warningMessage += "未设置Web服务API，车站信息功能将无法使用\n";
                     }
                     
                     if (isMapApiIncomplete)
@@ -959,6 +1006,43 @@ namespace TA_WPF.ViewModels
             {
                 MessageBoxHelper.ShowError($"保存高德地图API配置信息时出错: {ex.Message}");
                 LogHelper.LogError($"保存高德地图API配置信息时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 判断两个密钥是否可能填写错位置
+        /// </summary>
+        /// <param name="webServiceKey">Web服务API Key</param>
+        /// <param name="webKey">Web端API Key</param>
+        /// <returns>是否可能填写错位置</returns>
+        private bool IsLikelyKeyTypeMismatch(string webServiceKey, string webKey)
+        {
+            // 这里使用简单的启发式方法检测可能的密钥类型混淆
+            // Web服务Key和Web端Key可能有一些特征模式
+            try
+            {
+                if (string.IsNullOrEmpty(webServiceKey) || string.IsNullOrEmpty(webKey))
+                {
+                    return false;
+                }
+                
+                // 检查是否都是32位字母数字
+                if (webServiceKey.Length != 32 || webKey.Length != 32)
+                {
+                    return false;
+                }
+                
+                // 计算两个密钥的差异特征
+                // 例如Web服务密钥可能以特定字母开头，或者包含特定模式
+                bool webServiceKeyPattern = webServiceKey.StartsWith("5") || webServiceKey.StartsWith("6");
+                bool webKeyPattern = webKey.StartsWith("4") || webKey.StartsWith("8");
+                
+                // 如果两个密钥的特征与预期相反，可能是填错了
+                return (webKeyPattern && !webServiceKeyPattern) || (!webKeyPattern && webServiceKeyPattern);
+            }
+            catch
+            {
+                return false;
             }
         }
 

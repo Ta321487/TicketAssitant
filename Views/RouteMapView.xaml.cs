@@ -13,10 +13,11 @@ namespace TA_WPF.Views
     /// <summary>
     /// RouteMapView.xaml 的交互逻辑
     /// </summary>
-    public partial class RouteMapView : UserControl
+    public partial class RouteMapView : UserControl, IDisposable
     {
         private RouteMapViewModel _viewModel;
         private bool _isWebViewInitialized = false;
+        private bool _isDisposed = false;
 
         public RouteMapView()
         {
@@ -24,12 +25,147 @@ namespace TA_WPF.Views
             
             // 注册加载事件
             this.Loaded += RouteMapView_Loaded;
+            this.Unloaded += RouteMapView_Unloaded;
             this.DataContextChanged += RouteMapView_DataContextChanged;
             
             // 注册键盘事件，用于开发阶段的F12调试
             this.KeyDown += RouteMapView_KeyDown;
             this.Focusable = true;
             this.Focus();
+            
+            // 注册视图可见性变化事件
+            this.IsVisibleChanged += RouteMapView_IsVisibleChanged;
+        }
+        
+        /// <summary>
+        /// 处理视图可见性变化事件
+        /// </summary>
+        private void RouteMapView_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.NewValue is bool isVisible)
+            {
+                if (isVisible)
+                {
+                    // 视图变为可见时，重新初始化WebView
+                    Debug.WriteLine("路线地图视图变为可见，准备初始化WebView");
+                    
+                    // 在视图变为可见时，如果WebView未初始化或已被清理，则重新初始化
+                    if (!_isWebViewInitialized || MapWebView.Source?.AbsoluteUri == "about:blank")
+                    {
+                        Debug.WriteLine("WebView需要重新初始化");
+                        _isWebViewInitialized = false; // 重置初始化标记，确保完全重新初始化
+                        InitializeWebView();
+                    }
+                    else if (_isWebViewInitialized && MapWebView?.CoreWebView2 != null && _viewModel != null)
+                    {
+                        // 如果WebView已初始化但可能需要刷新数据
+                        Debug.WriteLine("WebView已初始化，尝试刷新地图数据");
+                        Dispatcher.BeginInvoke(new Action(async () => 
+                        {
+                            try 
+                            {
+                                // 确保应用了正确的主题
+                                await MapWebView.CoreWebView2.ExecuteScriptAsync($"setMapTheme({(_viewModel.IsDarkMode ? "true" : "false")});");
+                                Debug.WriteLine($"重新应用地图主题: {(_viewModel.IsDarkMode ? "深色" : "浅色")}");
+                                
+                                // 刷新地图数据
+                                await _viewModel.RefreshMapDataAsync(MapWebView.CoreWebView2);
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"尝试刷新地图数据时出错: {ex.Message}");
+                            }
+                        }));
+                    }
+                }
+                else
+                {
+                    // 视图变为不可见时，只执行轻量级的资源释放
+                    Debug.WriteLine("路线地图视图变为不可见，执行轻量级资源释放");
+                    LightReleaseWebViewResources();
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 处理视图卸载事件
+        /// </summary>
+        private void RouteMapView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("路线地图视图被卸载，释放WebView资源");
+            ReleaseWebViewResources();
+            
+            // 注销事件处理器，防止内存泄漏
+            this.Loaded -= RouteMapView_Loaded;
+            this.Unloaded -= RouteMapView_Unloaded;
+            this.DataContextChanged -= RouteMapView_DataContextChanged;
+            this.KeyDown -= RouteMapView_KeyDown;
+            this.IsVisibleChanged -= RouteMapView_IsVisibleChanged;
+        }
+        
+        /// <summary>
+        /// 轻量级释放WebView资源，只做必要的清理以便于后续重新使用
+        /// </summary>
+        private void LightReleaseWebViewResources()
+        {
+            try
+            {
+                if (_isWebViewInitialized && MapWebView?.CoreWebView2 != null)
+                {
+                    // 暂停地图动画和渲染，但不完全清空页面
+                    MapWebView.CoreWebView2.ExecuteScriptAsync("if(loca && loca.animate) { loca.animate.pause(); }");
+                    
+                    Debug.WriteLine("已暂停地图渲染，执行轻量级资源释放");
+                    LogHelper.LogInfo("执行轻量级WebView资源释放以节省内存");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"轻量级释放WebView资源时出错: {ex.Message}");
+                LogHelper.LogError("轻量级释放WebView资源时出错", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 释放WebView资源
+        /// </summary>
+        private void ReleaseWebViewResources()
+        {
+            try
+            {
+                if (_isWebViewInitialized && MapWebView != null && MapWebView.CoreWebView2 != null)
+                {
+                    // 移除WebMessage事件处理器
+                    if (MapWebView.CoreWebView2 != null)
+                    {
+                        MapWebView.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
+                    }
+                    
+                    // 只有在完全卸载视图时才导航到空白页面
+                    MapWebView.NavigateToString("about:blank");
+                    
+                    // 通知ViewModel完全清理资源
+                    if (_viewModel != null)
+                    {
+                        _viewModel.CompleteCleanupWebViewResources();
+                    }
+                    
+                    // 标记为未初始化，以便下次重新初始化
+                    _isWebViewInitialized = false;
+                    
+                    // 强制垃圾回收
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    
+                    Debug.WriteLine("WebView资源已完全释放");
+                    LogHelper.LogInfo("WebView资源已完全释放以节省内存");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"释放WebView资源时出错: {ex.Message}");
+                LogHelper.LogError("释放WebView资源时出错", ex);
+            }
         }
         
         /// <summary>
@@ -95,7 +231,7 @@ namespace TA_WPF.Views
         {
             try
             {
-                if (_isWebViewInitialized)
+                if (_isWebViewInitialized || _isDisposed)
                 {
                     return;
                 }
@@ -374,6 +510,49 @@ namespace TA_WPF.Views
             {
                 Debug.WriteLine($"刷新地图数据时出错: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// IDisposable接口实现，释放资源
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        /// <summary>
+        /// 释放资源的实现
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed)
+                return;
+            
+            if (disposing)
+            {
+                // 释放托管资源
+                ReleaseWebViewResources();
+                
+                // 注销所有事件处理器
+                this.Loaded -= RouteMapView_Loaded;
+                this.Unloaded -= RouteMapView_Unloaded;
+                this.DataContextChanged -= RouteMapView_DataContextChanged;
+                this.KeyDown -= RouteMapView_KeyDown;
+                this.IsVisibleChanged -= RouteMapView_IsVisibleChanged;
+            }
+            
+            // 释放非托管资源
+            
+            _isDisposed = true;
+        }
+        
+        /// <summary>
+        /// 析构函数
+        /// </summary>
+        ~RouteMapView()
+        {
+            Dispose(false);
         }
     }
 

@@ -520,7 +520,7 @@ namespace TA_WPF.ViewModels
                 string apiKey = _configurationService.GetSettingValue("AmapWebServiceKey");
                 if (string.IsNullOrWhiteSpace(apiKey))
                 {
-                    MessageBoxHelper.ShowWarning("尚未配置高德地图API密钥，请先到系统设置中添加相关信息。\n\n路径：设置 → 服务设置 → Web服务【获取车站信息功能】");
+                    MessageBoxHelper.ShowWarning("尚未配置高德地图API密钥，请先到系统设置中添加相关信息。\n\n路径：设置 → 服务设置 → Web服务Key");
                     IsEditing = false;
                     return;
                 }
@@ -576,7 +576,7 @@ namespace TA_WPF.ViewModels
                 // 针对常见错误给出更明确的提示
                 if (ex.Message.Contains("API密钥不正确") || ex.Message.Contains("INVALID_USER_KEY"))
                 {
-                    MessageBoxHelper.ShowError("高德地图API密钥无效，请在系统设置中更新正确的API密钥。\n\n路径：设置 → 服务设置 → Web服务【获取车站信息功能】");
+                    MessageBoxHelper.ShowError("高德地图API密钥无效，请在系统设置中更新正确的API密钥。\n\n路径：设置 → 服务设置 → Web服务Key");
                 }
                 else if (ex.Message.Contains("超出") || ex.Message.Contains("限制"))
                 {

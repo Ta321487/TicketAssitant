@@ -295,6 +295,11 @@ namespace TA_WPF.ViewModels
                     {
                         try
                         {
+                            // 先确保应用了正确的主题
+                            await _currentWebView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
+                            Debug.WriteLine($"在显示时间范围提示前设置地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
+                            
+                            // 然后显示时间范围提示
                             await _currentWebView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
                             Debug.WriteLine("显示时间范围提示信息：" + TimeRangeMessage);
                         }
@@ -311,8 +316,13 @@ namespace TA_WPF.ViewModels
                     {
                         try
                         {
+                            // 隐藏提示信息
                             await _currentWebView.ExecuteScriptAsync("hideTimeRangeMessage();");
                             Debug.WriteLine("隐藏时间范围提示信息，准备刷新地图数据");
+                            
+                            // 确保应用了正确的主题
+                            await _currentWebView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
+                            Debug.WriteLine($"切换时间范围后重新设置地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
                             
                             // 刷新地图数据 - 不使用ConfigureAwait(false)，确保在同一个上下文中继续执行
                             await RefreshMapDataAsync();
@@ -523,6 +533,10 @@ namespace TA_WPF.ViewModels
                     {
                         try
                         {
+                            // 确保应用了正确的主题
+                            await webView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
+                            Debug.WriteLine($"在显示今日视图提示前设置地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
+                            
                             await webView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
                             Debug.WriteLine("显示今日视图提示信息，不加载路线数据");
                         }
@@ -600,6 +614,10 @@ namespace TA_WPF.ViewModels
                         await webView.ExecuteScriptAsync($"loadRouteData({jsonData});");
                         LogHelper.LogInfo($"地图数据已刷新，加载了{routeData.Count}条路线，时间范围：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
                         Debug.WriteLine($"地图数据已刷新，加载了{routeData.Count}条路线，时间范围：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
+                        
+                        // 确保在数据加载后应用正确的主题
+                        await webView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
+                        Debug.WriteLine($"刷新数据后重新应用地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
                     }
                     catch (Exception ex)
                     {
@@ -919,6 +937,62 @@ namespace TA_WPF.ViewModels
                 LogHelper.LogError($"获取地图HTML文件路径时出错: {ex.Message}", ex);
                 Debug.WriteLine($"获取地图HTML文件路径时出错: {ex.Message}");
                 return string.Empty;
+            }
+        }
+        
+        /// <summary>
+        /// 清理WebView相关资源，当视图不可见或卸载时调用
+        /// </summary>
+        public void CleanupWebViewResources()
+        {
+            try
+            {
+                // 不完全清除WebView引用，只重置部分状态
+                // _currentWebView = null; // 注释掉，不再清除引用
+                
+                // 不完全重置地图初始化状态
+                // IsMapInitialized = false; // 注释掉，维持初始化状态
+                
+                // 执行一些清理工作
+                _isRefreshing = false;
+                IsLoading = false;
+                
+                // 记录日志
+                LogHelper.LogInfo("已轻量级清理WebView资源，保持地图初始化状态");
+                Debug.WriteLine("RouteMapViewModel: 已轻量级清理WebView资源");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"清理WebView资源时出错: {ex.Message}", ex);
+                Debug.WriteLine($"清理WebView资源时出错: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 完全清理WebView资源，在视图被彻底卸载时调用
+        /// </summary>
+        public void CompleteCleanupWebViewResources()
+        {
+            try
+            {
+                // 将WebView引用置为null
+                _currentWebView = null;
+                
+                // 标记地图为未初始化状态
+                IsMapInitialized = false;
+                
+                // 执行一些清理工作
+                _isRefreshing = false;
+                IsLoading = false;
+                
+                // 记录日志
+                LogHelper.LogInfo("已完全清理WebView资源以节省内存");
+                Debug.WriteLine("RouteMapViewModel: 已完全清理WebView资源");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"完全清理WebView资源时出错: {ex.Message}", ex);
+                Debug.WriteLine($"完全清理WebView资源时出错: {ex.Message}");
             }
         }
         

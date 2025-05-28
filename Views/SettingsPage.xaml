@@ -209,6 +209,24 @@
                             </StackPanel>
                         </Button>
                         
+                        <!-- API类型说明 -->
+                        <materialDesign:Card Background="{DynamicResource MaterialDesignBackground}" Margin="0,0,0,16" Padding="12">
+                            <StackPanel>
+                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,8">
+                                    <Run FontWeight="Bold">请注意：</Run>高德地图提供了不同类型的API密钥，用于不同的服务，请确保在正确的位置填写正确类型的密钥
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                                    • <Run FontWeight="Medium">Web服务API Key</Run>：用于通过HTTP请求获取车站、地理位置等数据
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                                    • <Run FontWeight="Medium">Web端API Key</Run>：用于网页地图展示，应用类型选择"Web端(JS API)"
+                                </TextBlock>
+                                <TextBlock TextWrapping="Wrap">
+                                    • <Run FontWeight="Medium">安全密钥</Run>：与Web端API Key配对使用，在高德开放平台生成
+                                </TextBlock>
+                            </StackPanel>
+                        </materialDesign:Card>
+                        
                         <!-- API设置 -->
                         <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
@@ -222,7 +240,7 @@
                             </Grid.RowDefinitions>
                             
                             <TextBlock Grid.Row="0" Grid.Column="0" 
-                                       Text="Web服务【获取车站信息功能】:" 
+                                       Text="Web服务Key:" 
                                        FontWeight="Medium"
                                        VerticalAlignment="Center"
                                        Margin="0,0,16,16"/>
@@ -230,14 +248,14 @@
                                      Text="{Binding AmapWebServiceKey}"
                                      Margin="0,0,0,8"
                                      MaxLength="32"
-                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
+                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。应用类型选择'Web服务'。"
                                      PreviewTextInput="ApiKey_PreviewTextInput"
                                      PreviewKeyDown="ApiKey_PreviewKeyDown"
                                      TextChanged="ApiKey_TextChanged"
                                      DataObject.Pasting="ApiKey_Pasting">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入Web服务API Key"/>
+                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入Web服务API Key (应用类型选择'Web服务')"/>
                                         <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,1"/>
                                         <Setter Property="Padding" Value="0,4,0,4"/>
@@ -248,7 +266,7 @@
                             </TextBox>
                             
                             <TextBlock Grid.Row="1" Grid.Column="0" 
-                                       Text="Web端【车站地图功能】:" 
+                                       Text="Web端Key:" 
                                        FontWeight="Medium"
                                        VerticalAlignment="Center"
                                        Margin="0,0,16,16"/>
@@ -256,14 +274,14 @@
                                      Text="{Binding AmapWebKey}"
                                      Margin="0,0,0,8"
                                      MaxLength="32"
-                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
+                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。应用类型选择'Web端(JS API)'。"
                                      PreviewTextInput="ApiKey_PreviewTextInput"
                                      PreviewKeyDown="ApiKey_PreviewKeyDown"
                                      TextChanged="ApiKey_TextChanged"
                                      DataObject.Pasting="ApiKey_Pasting">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入Web端API Key"/>
+                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入Web端API Key (应用类型选择'Web端(JS API)')"/>
                                         <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,1"/>
                                         <Setter Property="Padding" Value="0,4,0,4"/>
@@ -274,7 +292,7 @@
                             </TextBox>
                             
                             <TextBlock Grid.Row="2" Grid.Column="0" 
-                                       Text="安全密钥（Web端所生成的）:" 
+                                       Text="安全密钥:" 
                                        FontWeight="Medium"
                                        VerticalAlignment="Center"
                                        Margin="0,0,16,0"/>
@@ -282,14 +300,14 @@
                                      Text="{Binding AmapSecurityKey}"
                                      Margin="0,0,0,0"
                                      MaxLength="32"
-                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。"
+                                     ToolTip="为了确保准确无误，建议您粘贴并非输入内容。仅支持数字和字母，最多32个字符。在'Web端(JS API)'应用下生成的安全密钥。"
                                      PreviewTextInput="ApiKey_PreviewTextInput"
                                      PreviewKeyDown="ApiKey_PreviewKeyDown"
                                      TextChanged="ApiKey_TextChanged"
                                      DataObject.Pasting="ApiKey_Pasting">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入安全密钥"/>
+                                        <Setter Property="materialDesign:HintAssist.Hint" Value="输入安全密钥 (Web端JS API应用下生成)"/>
                                         <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}"/>
                                         <Setter Property="BorderThickness" Value="0,0,0,1"/>
                                         <Setter Property="Padding" Value="0,4,0,4"/>

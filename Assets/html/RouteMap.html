@@ -158,6 +158,12 @@
             z-index: 1400;
             text-align: center;
             padding: 20px;
+            transition: background-color 0.3s ease;
+        }
+        
+        /* 深色模式下的时间范围提示 */
+        .time-range-message.dark-mode {
+            background-color: rgba(30, 30, 30, 0.9);
         }
         
         .time-range-icon {
@@ -171,6 +177,11 @@
             font-weight: bold;
             color: #333;
             margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+        
+        .time-range-message.dark-mode .time-range-title {
+            color: #f0f0f0;
         }
         
         .time-range-desc {
@@ -179,6 +190,11 @@
             max-width: 80%;
             margin-bottom: 20px;
             line-height: 1.5;
+            transition: color 0.3s ease;
+        }
+        
+        .time-range-message.dark-mode .time-range-desc {
+            color: #aaa;
         }
     </style>
 </head>
@@ -398,7 +414,13 @@
             map.setLimitBounds(bounds);
             
             // 确保地图初始视图在中国范围内
+            let isAdjustingBounds = false; // 添加边界调整标志，防止循环调整
             const checkAndFixBounds = function() {
+                // 如果已经在调整边界，或者地图处于最小缩放级别且在调整后会导致循环，则跳过
+                if (isAdjustingBounds || map.getZoom() <= 4) {
+                    return;
+                }
+                
                 // 获取当前地图视图范围
                 const mapBounds = map.getBounds();
                 const sw = mapBounds.getSouthWest();
@@ -430,9 +452,15 @@
                 
                 // 如果需要调整，设置回正确的范围
                 if (needsAdjustment) {
+                    isAdjustingBounds = true; // 标记正在调整边界
                     const fixedBounds = new AMap.Bounds(fixedSW, fixedNE);
                     map.setBounds(fixedBounds);
                     console.log('已自动修正地图视图范围');
+                    
+                    // 设置一个延时，确保在调整完成后才允许再次调整
+                    setTimeout(() => {
+                        isAdjustingBounds = false;
+                    }, 300);
                 }
             };
             
@@ -499,7 +527,22 @@
             if (msgElement) {
                 msgElement.innerText = message || '当前时间维度无法反映路线地图，请选择"本周"、"本月"、"本年"或"自定义时间"查看路线地图。';
             }
-            document.getElementById('timeRangeMessage').style.display = 'flex';
+            
+            // 获取提示信息元素并显示
+            const timeRangeMessage = document.getElementById('timeRangeMessage');
+            timeRangeMessage.style.display = 'flex';
+            
+            // 检查当前地图主题，应用对应的深色或浅色样式
+            if (map && map.getMapStyle && map.getMapStyle().includes('dark')) {
+                // 应用深色模式样式
+                timeRangeMessage.classList.add('dark-mode');
+                console.log('在时间范围提示中应用深色模式');
+            } else {
+                // 移除深色模式样式
+                timeRangeMessage.classList.remove('dark-mode');
+                console.log('在时间范围提示中应用浅色模式');
+            }
+            
             console.log('显示时间范围提示信息: ' + message);
             
             // 清除地图上的所有数据

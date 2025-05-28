@@ -180,18 +180,79 @@ namespace TA_WPF.Views
                     
                     if (sender is TextBox textBox)
                     {
-                        // 手动处理粘贴操作
+                        // 处理选中的文本情况
                         int caretIndex = textBox.CaretIndex;
+                        int selectionStart = textBox.SelectionStart;
+                        int selectionLength = textBox.SelectionLength;
                         string currentText = textBox.Text;
-                        string newText = currentText.Substring(0, caretIndex) + filteredText;
-                        
-                        if (caretIndex < currentText.Length)
+                        string newText;
+
+                        // 如果有选中的文本，替换它
+                        if (selectionLength > 0)
                         {
-                            newText += currentText.Substring(caretIndex);
+                            // 替换选中文本
+                            newText = currentText.Substring(0, selectionStart) + filteredText;
+                            
+                            if (selectionStart + selectionLength < currentText.Length)
+                            {
+                                newText += currentText.Substring(selectionStart + selectionLength);
+                            }
+                            
+                            // 检查最大长度
+                            if (newText.Length > textBox.MaxLength)
+                            {
+                                // 截断粘贴内容以符合最大长度
+                                int allowedLength = textBox.MaxLength - (currentText.Length - selectionLength);
+                                if (allowedLength > 0)
+                                {
+                                    filteredText = filteredText.Substring(0, Math.Min(filteredText.Length, allowedLength));
+                                    newText = currentText.Substring(0, selectionStart) + filteredText;
+                                    if (selectionStart + selectionLength < currentText.Length)
+                                    {
+                                        newText += currentText.Substring(selectionStart + selectionLength);
+                                    }
+                                }
+                                else
+                                {
+                                    // 无法粘贴任何内容
+                                    e.CancelCommand();
+                                    return;
+                                }
+                            }
+                            
+                            textBox.Text = newText;
+                            textBox.CaretIndex = selectionStart + filteredText.Length;
                         }
-                        
-                        textBox.Text = newText;
-                        textBox.CaretIndex = caretIndex + filteredText.Length;
+                        else
+                        {
+                            // 在光标位置插入
+                            // 检查最大长度
+                            if (currentText.Length + filteredText.Length > textBox.MaxLength)
+                            {
+                                // 截断粘贴内容以符合最大长度
+                                int remainingLength = textBox.MaxLength - currentText.Length;
+                                if (remainingLength > 0)
+                                {
+                                    filteredText = filteredText.Substring(0, Math.Min(filteredText.Length, remainingLength));
+                                }
+                                else
+                                {
+                                    // 已达到最大长度，无法粘贴
+                                    e.CancelCommand();
+                                    return;
+                                }
+                            }
+                            
+                            newText = currentText.Substring(0, caretIndex) + filteredText;
+                            
+                            if (caretIndex < currentText.Length)
+                            {
+                                newText += currentText.Substring(caretIndex);
+                            }
+                            
+                            textBox.Text = newText;
+                            textBox.CaretIndex = caretIndex + filteredText.Length;
+                        }
                     }
                     
                     // 取消默认的粘贴操作
