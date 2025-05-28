@@ -15,6 +15,9 @@ namespace TA_WPF.Services
         private static ThemeService _instance;
         private static readonly object _lock = new object();
 
+        // 添加静态标志，跟踪是否已经重写过Window的元数据
+        private static bool _hasOverriddenWindowMetadata = false;
+
         /// <summary>
         /// 获取 ThemeService 的单例实例
         /// </summary>
@@ -226,10 +229,27 @@ namespace TA_WPF.Services
                         }
                     }
 
-                    // 触发全局主题更新
-                    FrameworkElement.StyleProperty.OverrideMetadata(
-                        typeof(Window),
-                        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+                    // 触发全局主题更新 - 仅在第一次调用时执行
+                    if (!_hasOverriddenWindowMetadata)
+                    {
+                        try
+                        {
+                            FrameworkElement.StyleProperty.OverrideMetadata(
+                                typeof(Window),
+                                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+                            
+                            // 设置标志为true，避免重复重写
+                            _hasOverriddenWindowMetadata = true;
+                            
+                            Debug.WriteLine("已重写Window样式元数据");
+                        }
+                        catch (Exception ex)
+                        {
+                            // 如果重写元数据失败，记录日志但不中断程序
+                            Debug.WriteLine($"重写Window样式元数据时出错: {ex.Message}");
+                            LogHelper.LogSystemWarning("主题", $"重写Window样式元数据时出错: {ex.Message}");
+                        }
+                    }
                 }
 
 

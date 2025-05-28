@@ -366,7 +366,8 @@ namespace TA_WPF.Views
             {
                 if (_viewModel != null && _isWebViewInitialized && MapWebView.CoreWebView2 != null)
                 {
-                    await _viewModel.RefreshMapDataAsync(MapWebView.CoreWebView2);
+                    // 将useJavaScriptRefresh设置为true，表示由JavaScript端负责处理加载指示器
+                    await _viewModel.RefreshMapDataAsync(MapWebView.CoreWebView2, true);
                 }
             }
             catch (Exception ex)

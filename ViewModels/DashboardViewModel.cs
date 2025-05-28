@@ -2386,7 +2386,28 @@ namespace TA_WPF.ViewModels
                     Debug.WriteLine("刷新地图数据");
                     // 确保地图视图模型使用当前的时间范围
                     _routeMapViewModel.SetTimeRange(SelectedTimeRange, StartDate, EndDate);
-                    await _routeMapViewModel.RefreshMapDataAsync();
+                    
+                    // 检查WebView是否可用
+                    if (_routeMapViewModel.IsMapInitialized && _routeMapViewModel.CurrentWebView != null)
+                    {
+                        try {
+                            // 使用JavaScript接口调用前端刷新函数，避免重复的加载指示器逻辑
+                            await Application.Current.Dispatcher.InvokeAsync(async () => {
+                                await _routeMapViewModel.CurrentWebView.ExecuteScriptAsync("refreshMapData();");
+                                Debug.WriteLine("已通过JavaScript接口请求刷新地图数据");
+                            });
+                        }
+                        catch (Exception ex) {
+                            Debug.WriteLine($"通过JavaScript接口刷新地图数据时出错: {ex.Message}");
+                            // 如果JavaScript调用失败，回退到原来的方法
+                            await _routeMapViewModel.RefreshMapDataAsync();
+                        }
+                    }
+                    else
+                    {
+                        // WebView未初始化，使用原始方法
+                        await _routeMapViewModel.RefreshMapDataAsync();
+                    }
                 }
 
                 // 触发属性通知，更新UI

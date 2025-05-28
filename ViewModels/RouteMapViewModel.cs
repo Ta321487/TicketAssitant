@@ -238,6 +238,11 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 当前WebView引用
+        /// </summary>
+        public CoreWebView2 CurrentWebView => _currentWebView;
+
+        /// <summary>
         /// 刷新地图数据命令
         /// </summary>
         public ICommand RefreshMapCommand { get; }
@@ -347,6 +352,10 @@ namespace TA_WPF.ViewModels
                         // 加载地图数据
                         await RefreshMapDataAsync(webView);
                     }
+                    
+                    // 根据当前模式设置地图主题
+                    await webView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
+                    Debug.WriteLine($"初始化时设置地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
                 }
             }
             catch (Exception ex)
@@ -422,13 +431,21 @@ namespace TA_WPF.ViewModels
                             {
                                 await _currentWebView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
                                 Debug.WriteLine("显示今日视图提示信息，不加载路线数据");
+                                
+                                // 在显示提示信息后隐藏加载指示器
+                                await _currentWebView.ExecuteScriptAsync("hideLoading();");
+                                Debug.WriteLine("今日视图：地图加载指示器已隐藏");
                             }
                             catch (Exception ex)
                             {
                                 LogHelper.LogError($"显示今日视图提示信息时出错: {ex.Message}", ex);
                                 Debug.WriteLine($"显示今日视图提示信息时出错: {ex.Message}");
                             }
-                        });  // 移除ConfigureAwait(true)
+                        });
+                        
+                        // 设置加载状态为false
+                        IsLoading = false;
+                        return;
                     }
                     else
                     {
@@ -467,7 +484,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 刷新地图数据（直接传入WebView）
         /// </summary>
-        public async Task RefreshMapDataAsync(CoreWebView2 webView)
+        public async Task RefreshMapDataAsync(CoreWebView2 webView, bool useJavaScriptRefresh = false)
         {
             if (webView == null)
             {
@@ -475,20 +492,29 @@ namespace TA_WPF.ViewModels
                 return;
             }
 
-            // 防止重复刷新 - 移除这个检查，因为已经在外层方法中处理
-            // if (_isRefreshing && IsLoading)
-            // {
-            //     Debug.WriteLine("地图数据刷新正在进行中，跳过本次刷新请求");
-            //     return;
-            // }
-
             try
             {
-                // 不需要再次设置_isRefreshing = true，外层方法已经设置
-                // _isRefreshing = true;
                 IsLoading = true;
                 LogHelper.LogInfo("开始刷新地图数据");
                 Debug.WriteLine($"开始刷新地图数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+
+                // 显示加载指示器 - 只在非JavaScript刷新模式下执行
+                if (!useJavaScriptRefresh)
+                {
+                    await Application.Current.Dispatcher.InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            await webView.ExecuteScriptAsync("showLoading();");
+                            Debug.WriteLine("地图加载指示器已显示");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.LogError($"显示地图加载指示器时出错: {ex.Message}", ex);
+                            Debug.WriteLine($"显示地图加载指示器时出错: {ex.Message}");
+                        }
+                    });
+                }
 
                 // 如果是今日视图，显示提示信息，不加载数据
                 if (SelectedTimeRange == "今日")
@@ -589,9 +615,25 @@ namespace TA_WPF.ViewModels
             }
             finally
             {
+                // 隐藏加载指示器 - 只在非JavaScript刷新模式下执行
+                if (!useJavaScriptRefresh && webView != null)
+                {
+                    await Application.Current.Dispatcher.InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            await webView.ExecuteScriptAsync("hideLoading();");
+                            Debug.WriteLine("地图加载指示器已隐藏");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.LogError($"隐藏地图加载指示器时出错: {ex.Message}", ex);
+                            Debug.WriteLine($"隐藏地图加载指示器时出错: {ex.Message}");
+                        }
+                    });
+                }
+                
                 IsLoading = false;
-                // 不需要在这里重置_isRefreshing，因为外层方法会处理
-                // _isRefreshing = false;
             }
         }
 
@@ -887,6 +929,92 @@ namespace TA_WPF.ViewModels
         {
             // 取消订阅事件，避免内存泄漏
             ConfigurationService.ApiKeyUpdated -= OnApiKeyUpdated;
+        }
+        
+        /// <summary>
+        /// 重写OnPropertyChanged方法，监听IsDarkMode的变化
+        /// </summary>
+        /// <param name="propertyName">属性名</param>
+        protected override void OnPropertyChanged(string propertyName)
+        {
+            base.OnPropertyChanged(propertyName);
+            
+            // 当深色模式发生变化时，更新地图主题
+            if (propertyName == nameof(IsDarkMode) && _isMapInitialized && _currentWebView != null)
+            {
+                // 在UI线程上执行WebView操作
+                Application.Current.Dispatcher.InvokeAsync(async () => {
+                    try
+                    {
+                        // 记录当前模式
+                        string currentMode = IsDarkMode ? "深色" : "浅色";
+                        Debug.WriteLine($"正在切换地图主题为{currentMode}模式，IsDarkMode={IsDarkMode}");
+                        
+                        // 调用JavaScript函数设置地图主题
+                        await _currentWebView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
+                        
+                        // 验证切换结果
+                        string result = await _currentWebView.ExecuteScriptAsync("map && map.getMapStyle ? map.getMapStyle() : 'unknown'");
+                        Debug.WriteLine($"地图主题已更新为{currentMode}模式，当前地图样式={result}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"更新地图主题时出错: {ex.Message}");
+                        LogHelper.LogError($"更新地图主题时出错: {ex.Message}", ex);
+                        
+                        // 尝试重新初始化地图主题
+                        try
+                        {
+                            await Task.Delay(500); // 短暂延迟
+                            await _currentWebView.ExecuteScriptAsync($"if(map) {{ map.setMapStyle('{(IsDarkMode ? "amap://styles/dark" : "amap://styles/whitesmoke")}'); }}");
+                            Debug.WriteLine("尝试通过直接调用地图API修复主题");
+                        }
+                        catch (Exception retryEx)
+                        {
+                            Debug.WriteLine($"重试更新地图主题时出错: {retryEx.Message}");
+                        }
+                    }
+                });
+            }
+        }
+
+        /// <summary>
+        /// 重写IsDarkMode属性，确保深色模式切换时能更新地图
+        /// </summary>
+        public override bool IsDarkMode
+        {
+            get => base.IsDarkMode;
+            set
+            {
+                if (base.IsDarkMode != value)
+                {
+                    base.IsDarkMode = value;
+                    Debug.WriteLine($"RouteMapViewModel.IsDarkMode 已变更为 {value}");
+                    
+                    // 如果地图已初始化，则立即应用主题更改
+                    if (_isMapInitialized && _currentWebView != null)
+                    {
+                        try
+                        {
+                            Application.Current.Dispatcher.InvokeAsync(async () => {
+                                try 
+                                {
+                                    Debug.WriteLine($"通过IsDarkMode属性直接更新地图主题为{(value ? "深色" : "浅色")}模式");
+                                    await _currentWebView.ExecuteScriptAsync($"setMapTheme({(value ? "true" : "false")});");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Debug.WriteLine($"在IsDarkMode属性中更新地图主题时出错: {ex.Message}");
+                                }
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"在IsDarkMode属性中调度更新地图主题时出错: {ex.Message}");
+                        }
+                    }
+                }
+            }
         }
     }
 

@@ -153,9 +153,9 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -338,10 +338,10 @@
             </materialDesign:Card>
             
             <!-- 地图视图容器 -->
-            <Grid Grid.Row="3" Grid.RowSpan="3" Margin="0,0,0,16" 
+            <Grid Grid.Row="3" Grid.RowSpan="3" Margin="0,0,0,16" Height="800" MinHeight="800"
                  Visibility="{Binding IsMapViewVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <materialDesign:Card Padding="0">
-                    <local:RouteMapView DataContext="{Binding RouteMapViewModel}" Height="600"/>
+                <materialDesign:Card Padding="0" VerticalAlignment="Stretch">
+                    <local:RouteMapView DataContext="{Binding RouteMapViewModel}"/>
                 </materialDesign:Card>
             </Grid>
             
@@ -979,7 +979,7 @@
             </Grid>
             
             <!-- 加载指示器 -->
-            <Grid Grid.Row="0" Grid.RowSpan="6" 
+            <Grid Grid.Row="0" Grid.RowSpan="10" 
                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.Background>
                     <SolidColorBrush Color="#000000" Opacity="0.3"/>

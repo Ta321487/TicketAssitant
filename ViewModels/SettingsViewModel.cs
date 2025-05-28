@@ -912,26 +912,44 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 检查API信息是否为空
-                bool isApiInfoEmpty = string.IsNullOrWhiteSpace(AmapWebServiceKey) && 
-                                     string.IsNullOrWhiteSpace(AmapWebKey) && 
-                                     string.IsNullOrWhiteSpace(AmapSecurityKey);
+                // 检查各API信息是否为空
+                bool isWebServiceKeyEmpty = string.IsNullOrWhiteSpace(AmapWebServiceKey);
+                bool isWebKeyEmpty = string.IsNullOrWhiteSpace(AmapWebKey);
+                bool isSecurityKeyEmpty = string.IsNullOrWhiteSpace(AmapSecurityKey);
+                bool isMapApiIncomplete = (isWebKeyEmpty != isSecurityKeyEmpty); // 检查是否只填写了一个，没有成对出现
                 
                 // 无论是否为空，都保存到配置服务
                 _configurationService.SaveSettingValue("AmapWebServiceKey", AmapWebServiceKey);
                 _configurationService.SaveSettingValue("AmapWebKey", AmapWebKey);
                 _configurationService.SaveSettingValue("AmapSecurityKey", AmapSecurityKey);
 
-                if (isApiInfoEmpty)
+                if (isWebServiceKeyEmpty || isMapApiIncomplete || (isWebKeyEmpty && isSecurityKeyEmpty))
                 {
-                    // 如果API信息为空，只显示警告信息
-                    MessageBoxHelper.ShowWarning("没检测到有效的API信息，车站相关功能会受到影响。");
-                    LogHelper.LogSystemWarning("设置 - 高德地图API", "没检测到有效的API信息，车站相关功能会受到影响。");
+                    string warningMessage = "";
+                    
+                    // 根据不同情况构建警告信息
+                    if (isWebServiceKeyEmpty)
+                    {
+                        warningMessage += "• 未设置Web服务API，车站信息功能将无法使用\n";
+                    }
+                    
+                    if (isMapApiIncomplete)
+                    {
+                        warningMessage += "Web端Key与安全密钥必须同时设置，路线地图功能将无法正常使用\n";
+                    }
+                    else if (isWebKeyEmpty && isSecurityKeyEmpty)
+                    {
+                        warningMessage += "未设置Web端Key和安全密钥，路线地图功能将无法使用\n";
+                    }
+                    
+                    // 显示警告信息
+                    MessageBoxHelper.ShowWarning(warningMessage.TrimEnd('\n'));
+                    LogHelper.LogSystemWarning("设置 - 高德地图API", warningMessage.TrimEnd('\n'));
                 }
                 else
                 {
-                    // 如果API信息不为空，显示成功消息并提示即时生效
-                    MessageBoxHelper.ShowInfo("高德地图API设置已保存，更改将立即生效");
+                    // 如果所有API信息都已填写，显示成功消息
+                    MessageBoxHelper.ShowInfo("高德地图API设置已保存");
                 }
                 
                 // 记录日志

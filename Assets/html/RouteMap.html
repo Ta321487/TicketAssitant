@@ -27,55 +27,84 @@
             position: absolute;
             bottom: 20px;
             left: 20px;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 4px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            font-size: 12px;
+            padding: 12px 16px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            font-family: 'Roboto', 'Microsoft YaHei', sans-serif;
             z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        .legend:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .legend-item:last-child {
+            margin-bottom: 0;
         }
         
         .legend-color {
-            width: 20px;
+            width: 24px;
             height: 6px;
-            margin-right: 8px;
+            margin-right: 12px;
             display: inline-block;
+            border-radius: 3px;
         }
         
+        /* 加载指示器样式 */
         .loading-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
         }
         
-        .loading-text {
-            font-size: 16px;
-            color: #333;
-            margin-left: 10px;
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
+            border-radius: 8px;
+            padding: 16px;
+            width: 200px;
         }
         
         .loading-spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #3498db;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
+            border-top-color: #7C4DFF; /* MaterialDesign主题紫色 */
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 16px;
         }
-
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: white;
+            font-size: 16px;
+            font-weight: normal;
+            font-family: Roboto, "Microsoft YaHei", sans-serif;
+        }
+        
         /* 添加未设置API的提示样式 */
         .api-missing-overlay {
             position: absolute;
@@ -95,7 +124,7 @@
         
         .api-missing-icon {
             font-size: 48px;
-            color: #f44336;
+            color: #F44336; /* Red 500 */
             margin-bottom: 20px;
         }
         
@@ -133,7 +162,7 @@
         
         .time-range-icon {
             font-size: 48px;
-            color: #ff9800;
+            color: #FF9800; /* Orange 500 */
             margin-bottom: 20px;
         }
         
@@ -151,32 +180,29 @@
             margin-bottom: 20px;
             line-height: 1.5;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
     <div id="container"></div>
     <div class="legend">
         <div class="legend-item">
-            <span class="legend-color" style="background: linear-gradient(90deg, rgba(0, 97, 255, 0.8), rgba(0, 200, 255, 0.8));"></span>
+            <span class="legend-color" style="background: #2196F3; height: 3px;"></span>
             <span>行程路线</span>
         </div>
         <div class="legend-item">
-            <span class="legend-color" style="background: #f00;"></span>
+            <span class="legend-color" style="background: #E91E63;"></span>
             <span>出发站</span>
         </div>
         <div class="legend-item">
-            <span class="legend-color" style="background: #0f0;"></span>
+            <span class="legend-color" style="background: #4CAF50;"></span>
             <span>到达站</span>
         </div>
     </div>
     <div id="loading" class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">地图加载中...</div>
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">正在刷新数据...</div>
+        </div>
     </div>
     
     <!-- 添加未设置API密钥时的提示信息 -->
@@ -205,7 +231,6 @@
         // 全局变量
         let map;
         let loca;
-        let pulseLink;
         let pulseLineLayer;
         let geoData = [];
         let amapWebKey = '';
@@ -213,8 +238,64 @@
         let isMapInitialized = false;
         let markers = []; // 存储所有标记点，便于清除
         
+        // 新增：根据主题设置地图样式
+        function setMapTheme(isDarkMode) {
+            console.log('调用setMapTheme函数，isDarkMode=' + isDarkMode);
+            
+            try {
+                // 检查地图实例是否已初始化
+                if (!map) {
+                    console.error('地图实例未初始化，无法设置样式');
+                    return;
+                }
+                
+                // 根据深色模式设置地图样式
+                const mapStyle = isDarkMode ? 'amap://styles/dark' : 'amap://styles/whitesmoke';
+                console.log('正在设置地图样式为: ' + mapStyle);
+                
+                // 保存当前地图中心点和缩放级别
+                const center = map.getCenter();
+                const zoom = map.getZoom();
+                
+                // 设置地图样式
+                map.setMapStyle(mapStyle);
+                
+                // 确保样式设置成功
+                setTimeout(() => {
+                    // 验证样式是否设置成功
+                    const currentStyle = map.getMapStyle();
+                    console.log('地图样式设置已完成，当前样式: ' + currentStyle);
+                    
+                    // 恢复地图视图
+                    map.setCenter(center);
+                    map.setZoom(zoom);
+                    
+                    // 重新渲染地图
+                    if (loca) {
+                        loca.animate.start();
+                    }
+                    
+                    console.log('地图主题已成功更新为: ' + (isDarkMode ? '深色模式' : '浅色模式'));
+                }, 100);
+            } catch (error) {
+                console.error('设置地图主题时出错: ' + error);
+                
+                // 尝试使用直接方式设置样式
+                try {
+                    const mapStyle = isDarkMode ? 'amap://styles/dark' : 'amap://styles/whitesmoke';
+                    if (map && typeof map.setMapStyle === 'function') {
+                        map.setMapStyle(mapStyle);
+                        console.log('通过备用方法设置地图样式: ' + mapStyle);
+                    }
+                } catch (fallbackError) {
+                    console.error('备用方法设置主题失败: ' + fallbackError);
+                }
+            }
+        }
+        
         // 初始化函数
         function initMap() {
+            // 加载完成后隐藏加载指示器
             hideLoading();
             
             // 检查API密钥是否设置
@@ -225,15 +306,47 @@
                 hideApiMissingMessage();
             }
             
+            // 初始地图样式 - 默认使用浅色主题
+            const initialMapStyle = 'amap://styles/whitesmoke';
+            console.log('初始化地图，默认样式: ' + initialMapStyle);
+            
             // 创建地图实例
             map = new AMap.Map('container', {
-                zoom: 5,
-                center: [116.397428, 39.90923], // 北京
-                viewMode: '3D',
-                mapStyle: 'amap://styles/dark',
-                showLabel: false,
-                pitch: 40,
-                rotation: 0
+                zoom: 4,  // 调整初始缩放级别以显示中国全境
+                center: [105.0, 35.0], // 中国中心位置坐标
+                viewMode: '2D', // 使用2D视图
+                mapStyle: initialMapStyle, // 初始使用浅色地图风格
+                showLabel: true, // 显示标签，提高可读性
+                // 限制地图缩放级别，最小4级（全国视图），最大10级（显示城市名称）
+                zooms: [4, 10],
+                // 禁用右键旋转和倾斜功能
+                rotateEnable: false,
+                pitchEnable: false,
+                dragEnable: true,  // 允许拖动
+                zoomEnable: true,  // 允许缩放
+                doubleClickZoom: true, // 允许双击放大
+                keyboardEnable: false, // 禁用键盘操作
+                // 添加额外的设置以确保线条渲染正确
+                features: ['bg', 'road', 'building', 'point'],
+                defaultCursor: 'default',
+                WebGLParams: {
+                    preserveDrawingBuffer: true
+                },
+                // 禁用默认右键菜单
+                rightClick: false,
+                // 设置地图显示的最大范围
+                limitBounds: new AMap.Bounds([73.66, 3.86], [135.05, 53.55]), // 中国经纬度范围
+                // 设置地图不可超出中国范围
+                boundsLook: true, // 开启视野范围限制
+                showBuildingBlock: false, // 不显示3D建筑
+                isHotspot: false // 禁用热点和标注的hover和点击
+            });
+            
+            // 添加自定义右键菜单（为空，实际上是禁用右键菜单）
+            map.on('rightclick', function(e) {
+                // 阻止默认右键行为
+                e.originalEvent.preventDefault();
+                return false;
             });
             
             // 创建Loca图层
@@ -241,12 +354,12 @@
                 map: map
             });
 
-            // 创建PulseLineLayer图层
-            pulseLineLayer = new Loca.PulseLineLayer({
+            // 创建LineLayer图层代替PulseLineLayer
+            pulseLineLayer = new Loca.LineLayer({
                 zIndex: 10,
-                opacity: 0.8,
+                opacity: 1.0,
                 visible: true,
-                zooms: [2, 22]
+                zooms: [4, 10]  // 与地图zooms保持一致
             });
 
             // 配置图层
@@ -257,36 +370,94 @@
                 }
             }));
 
-            // 设置图层样式
+            // 设置图层样式 - 使用简单的线条样式
             pulseLineLayer.setStyle({
                 altitude: 0,
-                lineWidth: function(index, feature) {
-                    return 2;
-                },
-                height: function(index, feature) {
-                    // 根据路线距离调整高度
-                    return feature.distance * 0.5;
-                },
-                // 渐变色
-                color: function(index, feature) {
-                    return [
-                        'rgba(0, 97, 255, 0.8)', 
-                        'rgba(0, 200, 255, 0.8)'
-                    ]
-                },
-                // 材质贴图
-                texture: 'pulse',
-                textureSize: 256,
-                textureGap: 2,
-                textureBlend: 'lighter',
-                // 脉冲速度
-                speed: function(index, feature) {
-                    return 0.5;
-                }
+                lineWidth: 3,
+                color: '#2196F3', // Material Blue
+                // 2D模式下不需要拱形高度
+                height: 0
             });
 
             // 添加图层到Loca容器
             loca.add(pulseLineLayer);
+            
+            // 输出调试信息
+            console.log('初始化线图层，颜色设置为: #2196F3');
+            
+            // 添加地图事件监听，限制地图缩放和移动范围
+            map.on('zoomend', function() {
+                // 确保不会缩小到中国以外的范围
+                if (map.getZoom() < 4) {
+                    map.setZoom(4);
+                }
+            });
+            
+            // 限制地图拖动范围在中国区域内
+            const bounds = new AMap.Bounds([73.66, 3.86], [135.05, 53.55]); // 中国经纬度范围
+            map.setLimitBounds(bounds);
+            
+            // 确保地图初始视图在中国范围内
+            const checkAndFixBounds = function() {
+                // 获取当前地图视图范围
+                const mapBounds = map.getBounds();
+                const sw = mapBounds.getSouthWest();
+                const ne = mapBounds.getNorthEast();
+                
+                // 获取限制范围
+                const limitSW = bounds.getSouthWest();
+                const limitNE = bounds.getNorthEast();
+                
+                // 检查是否超出边界
+                let needsAdjustment = false;
+                
+                // 创建调整后的视图边界
+                const fixedSW = new AMap.LngLat(
+                    Math.max(limitSW.lng, sw.lng),
+                    Math.max(limitSW.lat, sw.lat)
+                );
+                
+                const fixedNE = new AMap.LngLat(
+                    Math.min(limitNE.lng, ne.lng),
+                    Math.min(limitNE.lat, ne.lat)
+                );
+                
+                // 判断是否需要调整
+                if (sw.lng < limitSW.lng || sw.lat < limitSW.lat || 
+                    ne.lng > limitNE.lng || ne.lat > limitNE.lat) {
+                    needsAdjustment = true;
+                }
+                
+                // 如果需要调整，设置回正确的范围
+                if (needsAdjustment) {
+                    const fixedBounds = new AMap.Bounds(fixedSW, fixedNE);
+                    map.setBounds(fixedBounds);
+                    console.log('已自动修正地图视图范围');
+                }
+            };
+            
+            // 地图加载完成后检查边界
+            map.on('complete', checkAndFixBounds);
+            
+            // 每次地图缩放或移动后都检查边界
+            map.on('moveend', checkAndFixBounds);
+            
+            // 额外设置地图边界限制选项
+            map.setStatus({
+                dragEnable: true,
+                zoomEnable: true,
+                rotateEnable: false,
+                pitchEnable: false,
+                doubleClickZoom: true,
+                keyboardEnable: false,
+                jogEnable: true, // 启用地图缓动平移效果
+                scrollWheel: true, // 允许鼠标滚轮缩放
+                animateEnable: true, // 允许动画效果
+                touchZoom: true // 允许手机触摸缩放
+            });
+            
+            // 额外限制地图可拖动区域
+            map.setLimitBounds(bounds);
             
             isMapInitialized = true;
         }
@@ -346,12 +517,16 @@
             console.log('清除地图上的所有数据');
             // 清除所有路线
             if (pulseLineLayer) {
+                // 重置数据源为空
                 pulseLineLayer.setSource(new Loca.GeoJSONSource({
                     data: {
                         type: 'FeatureCollection',
                         features: []
                     }
                 }));
+                
+                // 确保渲染更新
+                loca.animate.start();
             }
             
             // 清除所有标记点
@@ -481,14 +656,14 @@
                     const departMarker = new AMap.Marker({
                         position: [route.departLongitude, route.departLatitude],
                         title: route.departStation,
-                        content: createDotMarker('#f00'),
+                        content: createDotMarker('#E91E63'), // MaterialDesign Red 500
                         offset: new AMap.Pixel(-8, -8)
                     });
                     
                     const arriveMarker = new AMap.Marker({
                         position: [route.arriveLongitude, route.arriveLatitude],
                         title: route.arriveStation,
-                        content: createDotMarker('#0f0'),
+                        content: createDotMarker('#4CAF50'), // MaterialDesign Green 500
                         offset: new AMap.Pixel(-8, -8)
                     });
                     
@@ -503,6 +678,24 @@
                         features: geoData
                     }
                 }));
+                
+                // 添加调试日志
+                console.log('加载了' + geoData.length + '条路线数据');
+                console.log('线图层:', pulseLineLayer);
+                
+                // 重新设置线图层样式
+                pulseLineLayer.setStyle({
+                    altitude: 0,
+                    lineWidth: 4, // 稍微粗一点
+                    color: '#2196F3', // Material Blue
+                    // 2D模式下不需要高度
+                    height: 0
+                });
+                
+                console.log('重新设置线图层颜色为:#2196F3');
+                
+                // 强制刷新渲染
+                loca.animate.start();
                 
                 // 添加站点标记
                 if (markers.length > 0) {
@@ -519,12 +712,28 @@
                         }
                     }
                     
-                    // 调整地图视野
-                    map.setBounds(new AMap.Bounds(positions[0], positions[1]));
+                    // 计算合适的视野范围
+                    const bounds = new AMap.Bounds(positions[0], positions[1]);
+                    
+                    // 确保视野不会超出中国范围
+                    const chinaLimitBounds = new AMap.Bounds([73, 18], [135, 53]); // 中国大致经纬度范围
+                    
+                    // 判断是否需要调整视野
+                    if (positions.length > 1) {
+                        // 使用fitBounds方法调整视野，增加边距使显示更合理
+                        map.setBounds(bounds, {
+                            padding: [50, 50, 50, 50] // 上、右、下、左
+                        });
+                        
+                        // 确保缩放级别在限制范围内
+                        const currentZoom = map.getZoom();
+                        if (currentZoom < 4) {
+                            map.setZoom(4);
+                        } else if (currentZoom > 10) {
+                            map.setZoom(10);
+                        }
+                    }
                 }
-                
-                // 渲染图层
-                loca.animate.start();
             } catch (error) {
                 console.error('加载路线数据时出错: ' + error);
             } finally {
@@ -553,7 +762,7 @@
         
         // 创建点标记的HTML
         function createDotMarker(color) {
-            return `<div style="width: 16px; height: 16px; border-radius: 50%; background-color: ${color}; box-shadow: 0 0 10px ${color}; opacity: 0.8;"></div>`;
+            return `<div style="width: 18px; height: 18px; border-radius: 50%; background-color: ${color}; box-shadow: 0 0 12px ${color}, 0 0 5px rgba(0,0,0,0.3); opacity: 0.9; transition: all 0.3s ease;"></div>`;
         }
         
         // 显示加载中提示
@@ -592,16 +801,17 @@
             icon.innerHTML = '⚠️';
             icon.style.fontSize = '32px';
             icon.style.marginBottom = '10px';
+            icon.style.color = '#FF9800'; // Orange 500
             
             const text = document.createElement('div');
             text.textContent = message || '没有可显示的数据';
             text.style.fontSize = '16px';
-            text.style.color = '#333';
+            text.style.color = '#212121'; // Grey 900 - MaterialDesign主文本颜色
             
             const subText = document.createElement('div');
             subText.textContent = '请检查车票信息或数据库中的车站经纬度信息';
             subText.style.fontSize = '12px';
-            subText.style.color = '#666';
+            subText.style.color = '#757575'; // Grey 600 - MaterialDesign次要文本颜色
             subText.style.marginTop = '5px';
             
             noDataDiv.appendChild(icon);
@@ -619,8 +829,29 @@
             }
         }
         
+        // 新增：接收C#代码调用的刷新函数
+        function refreshMapData() {
+            try {
+                // 通知C#端执行数据刷新
+                if (window.chrome && window.chrome.webview) {
+                    // 调用宿主对象的刷新方法
+                    chrome.webview.hostObjects.hostObject.refreshMap();
+                    console.log('已请求后端刷新地图数据');
+                } else {
+                    console.error('无法访问WebView2宿主对象');
+                }
+            } catch (error) {
+                console.error('请求刷新地图数据时出错: ' + error);
+                // 即使出错也隐藏加载指示器
+                hideLoading();
+            }
+        }
+        
         // 页面加载完成后初始化
         window.onload = function() {
+            // 显示加载指示器
+            showLoading();
+            
             // 检查API密钥是否设置
             if (!amapWebKey || amapWebKey.trim() === '') {
                 showApiMissingMessage();
