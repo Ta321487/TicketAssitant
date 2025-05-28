@@ -114,6 +114,44 @@
             line-height: 1.5;
         }
         
+        /* 添加时间范围提示信息样式 */
+        .time-range-message {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(245, 245, 245, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1400;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .time-range-icon {
+            font-size: 48px;
+            color: #ff9800;
+            margin-bottom: 20px;
+        }
+        
+        .time-range-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .time-range-desc {
+            font-size: 16px;
+            color: #666;
+            max-width: 80%;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -150,6 +188,15 @@
             请前往【设置 → 高德地图API设置】页面配置相关信息。
         </div>
     </div>
+    
+    <!-- 添加时间范围提示信息 -->
+    <div id="timeRangeMessage" class="time-range-message" style="display: none;">
+        <div class="time-range-icon">⏰</div>
+        <div class="time-range-title">时间范围提示</div>
+        <div id="timeRangeDesc" class="time-range-desc">
+            当前时间维度无法反映路线地图，请选择"本周"、"本月"、"本年"或"自定义时间"查看路线地图。
+        </div>
+    </div>
 
     <!-- 引入高德地图API和Loca组件 -->
     <script src="https://webapi.amap.com/maps?v=2.0&key="></script>
@@ -164,6 +211,7 @@
         let amapWebKey = '';
         let amapSecurityKey = '';
         let isMapInitialized = false;
+        let markers = []; // 存储所有标记点，便于清除
         
         // 初始化函数
         function initMap() {
@@ -274,6 +322,48 @@
             document.getElementById('apiMissingOverlay').style.display = 'none';
         }
         
+        // 显示时间范围提示信息
+        function showTimeRangeMessage(message) {
+            const msgElement = document.getElementById('timeRangeDesc');
+            if (msgElement) {
+                msgElement.innerText = message || '当前时间维度无法反映路线地图，请选择"本周"、"本月"、"本年"或"自定义时间"查看路线地图。';
+            }
+            document.getElementById('timeRangeMessage').style.display = 'flex';
+            console.log('显示时间范围提示信息: ' + message);
+            
+            // 清除地图上的所有数据
+            clearMapData();
+        }
+        
+        // 隐藏时间范围提示信息
+        function hideTimeRangeMessage() {
+            document.getElementById('timeRangeMessage').style.display = 'none';
+            console.log('隐藏时间范围提示信息');
+        }
+        
+        // 清除地图上的所有数据
+        function clearMapData() {
+            console.log('清除地图上的所有数据');
+            // 清除所有路线
+            if (pulseLineLayer) {
+                pulseLineLayer.setSource(new Loca.GeoJSONSource({
+                    data: {
+                        type: 'FeatureCollection',
+                        features: []
+                    }
+                }));
+            }
+            
+            // 清除所有标记点
+            if (map && markers.length > 0) {
+                map.remove(markers);
+                markers = [];
+            }
+            
+            // 清空数据缓存
+            geoData = [];
+        }
+        
         // 重新加载高德地图API
         function reloadAmapApi() {
             try {
@@ -301,17 +391,18 @@
                 };
                 document.head.appendChild(mapScript);
             } catch (error) {
-                console.error('重新加载高德地图API时出错:', error);
+                console.error('重新加载高德地图API时出错: ' + error);
                 hideLoading();
             }
         }
         
         // 加载路线数据
         function loadRouteData(routeData) {
-            console.log('加载路线数据，数据条数:', routeData ? routeData.length : 0);
+            console.log('加载路线数据，数据条数: ' + (routeData ? routeData.length : 0));
             
             // 清除之前的提示信息
             hideNoDataMessage();
+            hideTimeRangeMessage();
             
             // 检查地图是否初始化
             if (!map || !loca || !pulseLineLayer) {
@@ -357,10 +448,7 @@
             
             try {
                 // 清空现有数据
-                geoData = [];
-                
-                // 创建点标记数组
-                const markers = [];
+                clearMapData();
                 
                 // 添加路线数据
                 for (const route of routeData) {
@@ -438,7 +526,7 @@
                 // 渲染图层
                 loca.animate.start();
             } catch (error) {
-                console.error('加载路线数据时出错:', error);
+                console.error('加载路线数据时出错: ' + error);
             } finally {
                 hideLoading();
             }

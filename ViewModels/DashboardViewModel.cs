@@ -302,6 +302,12 @@ namespace TA_WPF.ViewModels
                             OnPropertyChanged(nameof(StartDate)); 
                         }
                         Debug.WriteLine($"手动更改StartDate: {_startDate:yyyy-MM-dd}，将刷新数据...");
+                        
+                        // 将时间范围传递给地图视图模型
+                        if (_routeMapViewModel != null)
+                        {
+                            _routeMapViewModel.SetTimeRange("自定义", _startDate, _endDate);
+                        }
                     }
                     SafeFireAndForget(RefreshDataAsync, ex => Debug.WriteLine($"[ERROR] 刷新 StartDate 设置器的数据时出错： {ex}"));
                 }
@@ -343,6 +349,12 @@ namespace TA_WPF.ViewModels
                             OnPropertyChanged(nameof(EndDate)); 
                         }
                         Debug.WriteLine($"手动更改EndDate: {_endDate:yyyy-MM-dd}，将刷新数据...");
+                        
+                        // 将时间范围传递给地图视图模型
+                        if (_routeMapViewModel != null)
+                        {
+                            _routeMapViewModel.SetTimeRange("自定义", _startDate, _endDate);
+                        }
                     }
                     SafeFireAndForget(RefreshDataAsync, ex => Debug.WriteLine($"[ERROR] 刷新 EndDate Set中的数据时出错：{ex}"));
                 }
@@ -1007,6 +1019,12 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(CurrentRangeText));
             OnPropertyChanged(nameof(ExpenseXTitle));
             OnPropertyChanged(nameof(MonthlyTicketXTitle));
+
+            // 将时间范围传递给地图视图模型
+            if (_routeMapViewModel != null)
+            {
+                _routeMapViewModel.SetTimeRange(range, StartDate, EndDate);
+            }
 
             // 确保在时间范围变更后刷新数据
             RefreshDataAsync();
@@ -2366,6 +2384,8 @@ namespace TA_WPF.ViewModels
                 if (_routeMapViewModel != null)
                 {
                     Debug.WriteLine("刷新地图数据");
+                    // 确保地图视图模型使用当前的时间范围
+                    _routeMapViewModel.SetTimeRange(SelectedTimeRange, StartDate, EndDate);
                     await _routeMapViewModel.RefreshMapDataAsync();
                 }
 

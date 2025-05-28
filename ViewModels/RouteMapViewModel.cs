@@ -24,6 +24,12 @@ namespace TA_WPF.ViewModels
         private string _amapSecurityKey;
         private CoreWebView2 _currentWebView;
         private bool _isRefreshing;
+        // 添加时间范围相关属性
+        private DateTime _startDate;
+        private DateTime _endDate;
+        private string _selectedTimeRange = "今日";
+        private string _timeRangeMessage = "";
+        private bool _showTimeRangeMessage = false;
 
         public RouteMapViewModel(DatabaseService databaseService, ConfigurationService configurationService)
         {
@@ -33,6 +39,13 @@ namespace TA_WPF.ViewModels
             // 从配置中加载高德地图API密钥
             _amapWebKey = _configurationService.GetSettingValue("AmapWebKey") ?? "";
             _amapSecurityKey = _configurationService.GetSettingValue("AmapSecurityKey") ?? "";
+
+            // 初始化时间范围为今日
+            _startDate = DateTime.Today;
+            _endDate = DateTime.Today.AddDays(1).AddSeconds(-1);
+            
+            // 设置提示信息
+            UpdateTimeRangeMessage();
 
             RefreshMapCommand = new RelayCommand(async () => await RefreshMapDataAsync());
             
@@ -142,9 +155,171 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 开始日期
+        /// </summary>
+        public DateTime StartDate
+        {
+            get => _startDate;
+            set
+            {
+                if (_startDate != value)
+                {
+                    _startDate = value;
+                    OnPropertyChanged(nameof(StartDate));
+                    UpdateTimeRangeMessage();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 结束日期
+        /// </summary>
+        public DateTime EndDate
+        {
+            get => _endDate;
+            set
+            {
+                if (_endDate != value)
+                {
+                    _endDate = value;
+                    OnPropertyChanged(nameof(EndDate));
+                    UpdateTimeRangeMessage();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 选中的时间范围
+        /// </summary>
+        public string SelectedTimeRange
+        {
+            get => _selectedTimeRange;
+            set
+            {
+                if (_selectedTimeRange != value)
+                {
+                    _selectedTimeRange = value;
+                    OnPropertyChanged(nameof(SelectedTimeRange));
+                    UpdateTimeRangeMessage();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 时间范围提示信息
+        /// </summary>
+        public string TimeRangeMessage
+        {
+            get => _timeRangeMessage;
+            private set
+            {
+                if (_timeRangeMessage != value)
+                {
+                    _timeRangeMessage = value;
+                    OnPropertyChanged(nameof(TimeRangeMessage));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否显示时间范围提示信息
+        /// </summary>
+        public bool ShowTimeRangeMessage
+        {
+            get => _showTimeRangeMessage;
+            private set
+            {
+                if (_showTimeRangeMessage != value)
+                {
+                    _showTimeRangeMessage = value;
+                    OnPropertyChanged(nameof(ShowTimeRangeMessage));
+                }
+            }
+        }
+
+        /// <summary>
         /// 刷新地图数据命令
         /// </summary>
         public ICommand RefreshMapCommand { get; }
+
+        /// <summary>
+        /// 更新时间范围提示信息
+        /// </summary>
+        private void UpdateTimeRangeMessage()
+        {
+            if (SelectedTimeRange == "今日")
+            {
+                TimeRangeMessage = "当前时间维度无法反映路线地图，请选择\"本周\"、\"本月\"、\"本年\"或\"自定义时间\"查看路线地图。";
+                ShowTimeRangeMessage = true;
+            }
+            else
+            {
+                TimeRangeMessage = "";
+                ShowTimeRangeMessage = false;
+            }
+        }
+
+        /// <summary>
+        /// 设置时间范围
+        /// </summary>
+        public void SetTimeRange(string range, DateTime startDate, DateTime endDate)
+        {
+            Debug.WriteLine($"设置地图时间范围: {range}, 开始日期: {startDate:yyyy-MM-dd}, 结束日期: {endDate:yyyy-MM-dd}");
+            
+            // 更新属性值
+            _selectedTimeRange = range;
+            _startDate = startDate;
+            _endDate = endDate;
+            
+            // 触发属性变更通知
+            OnPropertyChanged(nameof(SelectedTimeRange));
+            OnPropertyChanged(nameof(StartDate));
+            OnPropertyChanged(nameof(EndDate));
+            
+            // 更新提示信息
+            UpdateTimeRangeMessage();
+            
+            // 如果WebView已初始化，刷新地图数据
+            if (_isMapInitialized && _currentWebView != null)
+            {
+                // 如果是今日视图，显示提示信息
+                if (ShowTimeRangeMessage)
+                {
+                    // 使用UI线程执行WebView操作
+                    Application.Current.Dispatcher.InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            await _currentWebView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
+                            Debug.WriteLine("显示时间范围提示信息：" + TimeRangeMessage);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"显示时间范围提示信息时出错: {ex.Message}");
+                        }
+                    });
+                }
+                else
+                {
+                    // 如果不是今日视图，隐藏提示并刷新数据
+                    Application.Current.Dispatcher.InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            await _currentWebView.ExecuteScriptAsync("hideTimeRangeMessage();");
+                            Debug.WriteLine("隐藏时间范围提示信息，准备刷新地图数据");
+                            
+                            // 刷新地图数据 - 不使用ConfigureAwait(false)，确保在同一个上下文中继续执行
+                            await RefreshMapDataAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"隐藏时间范围提示信息时出错: {ex.Message}");
+                        }
+                    });
+                }
+            }
+        }
 
         /// <summary>
         /// 初始化地图
@@ -162,8 +337,16 @@ namespace TA_WPF.ViewModels
                     await webView.ExecuteScriptAsync($"setAmapKeys('{_amapWebKey}', '{_amapSecurityKey}');");
                     IsMapInitialized = true;
                     
-                    // 加载地图数据
-                    await RefreshMapDataAsync(webView);
+                    // 如果是今日视图，显示提示信息
+                    if (SelectedTimeRange == "今日")
+                    {
+                        await webView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
+                    }
+                    else
+                    {
+                        // 加载地图数据
+                        await RefreshMapDataAsync(webView);
+                    }
                 }
             }
             catch (Exception ex)
@@ -178,26 +361,94 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public async Task RefreshMapDataAsync()
         {
-            if (_isRefreshing)
-            {
-                Debug.WriteLine("地图数据刷新正在进行中，跳过本次刷新请求");
-                return;
-            }
-
             try
             {
+                // 防止重复刷新，只在_isRefreshing为true时跳过请求，而不需要检查IsLoading
+                if (_isRefreshing)
+                {
+                    Debug.WriteLine("地图数据刷新正在进行中，跳过本次刷新请求");
+                    return;
+                }
+
                 _isRefreshing = true;
                 IsLoading = true;
+                
+                // 从配置服务重新获取最新的API密钥
+                bool apiKeyChanged = false;
+                var newWebKey = _configurationService.GetSettingValue("AmapWebKey") ?? "";
+                var newSecurityKey = _configurationService.GetSettingValue("AmapSecurityKey") ?? "";
+                
+                // 检查API密钥是否有变化
+                if (_amapWebKey != newWebKey || _amapSecurityKey != newSecurityKey)
+                {
+                    Debug.WriteLine("检测到API密钥有更新，将重新应用到地图");
+                    _amapWebKey = newWebKey;
+                    _amapSecurityKey = newSecurityKey;
+                    apiKeyChanged = true;
+                }
                 
                 // 如果WebView2引用可用，则刷新地图数据
                 if (_currentWebView != null)
                 {
-                    await RefreshMapDataAsync(_currentWebView).ConfigureAwait(false);
+                    // 如果API密钥有变化，需要先更新API密钥
+                    if (apiKeyChanged)
+                    {
+                        await Application.Current.Dispatcher.InvokeAsync(async () =>
+                        {
+                            try
+                            {
+                                // 设置高德地图API密钥
+                                await _currentWebView.ExecuteScriptAsync($"setAmapKeys('{_amapWebKey}', '{_amapSecurityKey}');");
+                                Debug.WriteLine("地图API密钥已在刷新时更新");
+                                
+                                // 等待地图初始化完成
+                                await Task.Delay(1000);
+                            }
+                            catch (Exception ex)
+                            {
+                                LogHelper.LogError($"刷新时更新API密钥出错: {ex.Message}", ex);
+                                Debug.WriteLine($"刷新时更新API密钥出错: {ex.Message}");
+                            }
+                        });  // 移除ConfigureAwait(true)
+                    }
+                    
+                    // 检查是否是今日视图
+                    if (SelectedTimeRange == "今日")
+                    {
+                        // 显示提示信息，不加载数据
+                        await Application.Current.Dispatcher.InvokeAsync(async () =>
+                        {
+                            try
+                            {
+                                await _currentWebView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
+                                Debug.WriteLine("显示今日视图提示信息，不加载路线数据");
+                            }
+                            catch (Exception ex)
+                            {
+                                LogHelper.LogError($"显示今日视图提示信息时出错: {ex.Message}", ex);
+                                Debug.WriteLine($"显示今日视图提示信息时出错: {ex.Message}");
+                            }
+                        });  // 移除ConfigureAwait(true)
+                    }
+                    else
+                    {
+                        // 刷新地图数据
+                        try {
+                            // 直接调用，不使用ConfigureAwait
+                            await RefreshMapDataAsync(_currentWebView);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.LogError($"调用RefreshMapDataAsync出错: {ex.Message}", ex);
+                            Debug.WriteLine($"调用RefreshMapDataAsync出错: {ex.Message}");
+                        }
+                    }
                 }
                 else
                 {
-                    // 需要在UI线程执行WebView相关操作
-                    await Task.Delay(100).ConfigureAwait(false); // 确保UI更新
+                    // WebView不可用，记录错误
+                    Debug.WriteLine("WebView不可用，无法刷新地图数据");
+                    LogHelper.LogWarning("WebView不可用，无法刷新地图数据");
                 }
             }
             catch (Exception ex)
@@ -209,6 +460,7 @@ namespace TA_WPF.ViewModels
             {
                 IsLoading = false;
                 _isRefreshing = false;
+                Debug.WriteLine("地图数据刷新完成，已重置刷新状态");
             }
         }
         
@@ -223,19 +475,55 @@ namespace TA_WPF.ViewModels
                 return;
             }
 
-            // 防止重复刷新
-            if (_isRefreshing && IsLoading)
-            {
-                Debug.WriteLine("地图数据刷新正在进行中，跳过本次刷新请求");
-                return;
-            }
+            // 防止重复刷新 - 移除这个检查，因为已经在外层方法中处理
+            // if (_isRefreshing && IsLoading)
+            // {
+            //     Debug.WriteLine("地图数据刷新正在进行中，跳过本次刷新请求");
+            //     return;
+            // }
 
             try
             {
-                _isRefreshing = true;
+                // 不需要再次设置_isRefreshing = true，外层方法已经设置
+                // _isRefreshing = true;
                 IsLoading = true;
                 LogHelper.LogInfo("开始刷新地图数据");
-                Debug.WriteLine("开始刷新地图数据");
+                Debug.WriteLine($"开始刷新地图数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
+
+                // 如果是今日视图，显示提示信息，不加载数据
+                if (SelectedTimeRange == "今日")
+                {
+                    await Application.Current.Dispatcher.InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            await webView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
+                            Debug.WriteLine("显示今日视图提示信息，不加载路线数据");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.LogError($"显示今日视图提示信息时出错: {ex.Message}", ex);
+                            Debug.WriteLine($"显示今日视图提示信息时出错: {ex.Message}");
+                        }
+                    });
+                    return;
+                }
+                else
+                {
+                    // 隐藏提示信息
+                    await Application.Current.Dispatcher.InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            await webView.ExecuteScriptAsync("hideTimeRangeMessage();");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.LogError($"隐藏时间范围提示信息时出错: {ex.Message}", ex);
+                            Debug.WriteLine($"隐藏时间范围提示信息时出错: {ex.Message}");
+                        }
+                    });
+                }
 
                 // 1. 从数据库获取行程数据 (可以在后台线程执行)
                 var routeData = await GetRouteDataAsync().ConfigureAwait(false);
@@ -284,8 +572,8 @@ namespace TA_WPF.ViewModels
                         
                         // 加载路线数据
                         await webView.ExecuteScriptAsync($"loadRouteData({jsonData});");
-                        LogHelper.LogInfo($"地图数据已刷新，加载了{routeData.Count}条路线");
-                        Debug.WriteLine($"地图数据已刷新，加载了{routeData.Count}条路线");
+                        LogHelper.LogInfo($"地图数据已刷新，加载了{routeData.Count}条路线，时间范围：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
+                        Debug.WriteLine($"地图数据已刷新，加载了{routeData.Count}条路线，时间范围：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
                     }
                     catch (Exception ex)
                     {
@@ -302,7 +590,8 @@ namespace TA_WPF.ViewModels
             finally
             {
                 IsLoading = false;
-                _isRefreshing = false;
+                // 不需要在这里重置_isRefreshing，因为外层方法会处理
+                // _isRefreshing = false;
             }
         }
 
@@ -328,9 +617,22 @@ namespace TA_WPF.ViewModels
                     return result;
                 }
                 
+                // 根据时间范围筛选车票
+                var filteredTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                                      t.DepartDate.Value >= StartDate && 
+                                                      t.DepartDate.Value <= EndDate).ToList();
+                
+                Debug.WriteLine($"根据时间范围筛选后剩余{filteredTickets.Count}条车票记录，时间范围：{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
+                
+                if (filteredTickets.Count == 0)
+                {
+                    Debug.WriteLine($"当前时间范围内没有车票数据：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
+                    return result;
+                }
+                
                 // 收集所有出发站和到达站的名称
                 var allStationNames = new HashSet<string>();
-                foreach (var ticket in tickets)
+                foreach (var ticket in filteredTickets)
                 {
                     if (!string.IsNullOrWhiteSpace(ticket.DepartStation))
                     {
@@ -384,7 +686,7 @@ namespace TA_WPF.ViewModels
                 int missingArriveCoordinatesCount = 0;
                 
                 // 处理车票数据，获取起始站和终点站的经纬度信息
-                foreach (var ticket in tickets)
+                foreach (var ticket in filteredTickets)
                 {
                     // 从缓存中获取站点信息
                     StationInfo departStation = null;
@@ -454,7 +756,7 @@ namespace TA_WPF.ViewModels
                 
                 // 记录过滤信息
                 int validCount = result.Count;
-                int totalCount = tickets.Count;
+                int totalCount = filteredTickets.Count;
                 int filteredCount = totalCount - validCount;
                 
                 stopwatch.Stop();

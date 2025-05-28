@@ -234,6 +234,38 @@ namespace TA_WPF.ViewModels
             }
         }
 
+        /// <summary>
+        /// 加载我的常用车站，返回Task以便等待
+        /// </summary>
+        private async Task LoadMyDepartStationsTaskAsync()
+        {
+            try
+            {
+                // 获取出发车站
+                var departStations = await _databaseService.GetDistinctDepartStationsAsync();
+                
+                // 获取到达车站
+                var arriveStations = await _databaseService.GetDistinctArriveStationsAsync();
+                
+                // 合并两个列表并去重
+                var allStations = new HashSet<string>(departStations);
+                foreach (var station in arriveStations)
+                {
+                    allStations.Add(station);
+                }
+                
+                // 转换为列表并排序
+                MyDepartStations = allStations
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .OrderBy(s => s)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"加载我的常用车站列表时出错: {ex.Message}", ex);
+            }
+        }
+
         #endregion
 
         #region 属性
@@ -646,8 +678,14 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 应用筛选条件
         /// </summary>
-        private void ApplyFilter()
+        private async void ApplyFilter()
         {
+            // 如果选择了使用我的常用车站，先重新加载最新的车站列表
+            if (UseMyDepartStations)
+            {
+                await LoadMyDepartStationsTaskAsync();
+            }
+            
             // 更新是否有活动筛选条件
             HasActiveFilters = HasAnyActiveFilter();
             
