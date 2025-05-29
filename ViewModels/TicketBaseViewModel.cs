@@ -807,13 +807,11 @@ namespace TA_WPF.ViewModels
                 : $"确定要删除选中的 {SelectedItemsCount} 张车票吗？此操作不可撤销。";
 
             // 显示确认对话框
-            var result = MessageDialog.Show(
+            var result = MessageBoxHelper.ShowConfirmation(
                 confirmMessage,
-                "删除确认",
-                MessageType.Warning,
-                MessageButtons.YesNo);
+                "删除确认");
 
-            if (result != true)
+            if (result != MessageBoxResult.Yes)
                 return;
 
             try
@@ -838,11 +836,9 @@ namespace TA_WPF.ViewModels
                         ? "已成功删除1张车票。"
                         : $"已成功删除{deletedCount}张车票。";
 
-                    MessageDialog.Show(
+                    MessageBoxHelper.ShowInfo(
                         resultMessage,
-                        "删除成功",
-                        MessageType.Information,
-                        MessageButtons.Ok);
+                        "删除成功");
 
                     // 清除所有缓存数据
                     _paginationViewModel.ClearCache();

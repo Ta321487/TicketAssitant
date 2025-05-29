@@ -32,6 +32,7 @@
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
             <converters:IntEqualityToVisibilityConverter x:Key="IntEqualityToVisibilityConverter" />
+            <converters:BoolToStarConverter x:Key="BoolToStarConverter" />
             
             <!-- 自定义资源 -->
             <SolidColorBrush x:Key="SelectedRowBrushLight" Color="#E3F2FD" />
@@ -203,6 +204,21 @@
                         <TextBlock Text="添加路线" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                
+                <!-- 添加路线详情按钮 -->
+                <Button Command="{Binding ShowRouteDetailsCommand}" 
+                        CommandParameter="{Binding SelectedRoute}"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="路线详情"
+                        Margin="0,0,8,0"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
+                        Height="36"
+                        Visibility="{Binding CanShowRouteDetails, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="InformationOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="路线详情" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             
                 <!-- 选择相关的按钮 -->
                 <Button Command="{Binding SelectAllCommand}" 
@@ -306,6 +322,7 @@
                       CanUserReorderColumns="False"
                       IsManipulationEnabled="True"
                       PreviewKeyDown="RoutesDataGrid_PreviewKeyDown"
+                      KeyDown="RoutesDataGrid_KeyDown"
                       FontSize="{Binding MainViewModel.FontSize}"
                       RowHeight="{Binding DataGridRowHeight}"
                       RowStyle="{StaticResource DataGridRowStyle}"
@@ -328,6 +345,8 @@
                       materialDesign:DataGridAssist.EnableEditBoxAssist="True"
                       SelectionChanged="DataGrid_SelectionChanged"
                       PreviewMouseDown="RoutesDataGrid_PreviewMouseDown"
+                      Focusable="True"
+                      TabIndex="0"
                       x:Name="RoutesDataGrid"
                       Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
 
@@ -336,6 +355,36 @@
                                   Command="{Binding DoubleClickEditCommand}" 
                                   CommandParameter="{Binding SelectedRoute}" />
                 </DataGrid.InputBindings>
+
+                <!-- 添加右键菜单 -->
+                <DataGrid.ContextMenu>
+                    <ContextMenu DataContext="{Binding Path=PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="路线详情" 
+                                  Command="{Binding ShowRouteDetailsCommand}" 
+                                  CommandParameter="{Binding SelectedRoute}"
+                                  IsEnabled="{Binding CanShowRouteDetails}">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="InformationOutline" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="编辑路线" 
+                                  Command="{Binding EditRouteCommand}" 
+                                  CommandParameter="{Binding SelectedRoute}"
+                                  IsEnabled="{Binding CanEditSelectedRoute}">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="Edit" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Header="删除选中路线" 
+                                  Command="{Binding DeleteRoutesCommand}"
+                                  IsEnabled="{Binding HasSelection}">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="Delete" Foreground="#F44336" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
 
                 <DataGrid.Columns>
                     <!-- ID Column - 隐藏 -->
@@ -374,11 +423,13 @@
                     <DataGridTemplateColumn Header="收藏状态" Width="0.8*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <materialDesign:PackIcon Kind="Star" 
-                                                         Foreground="{DynamicResource PrimaryHueMidBrush}"
-                                                         HorizontalAlignment="Center"
-                                                         VerticalAlignment="Center"
-                                                         Visibility="{Binding IsFavorite, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <TextBlock Text="{Binding IsFavorite, Converter={StaticResource BoolToStarConverter}}" 
+                                           FontFamily="Segoe UI Symbol"
+                                           FontSize="20"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

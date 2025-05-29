@@ -32,6 +32,8 @@ namespace TA_WPF.Views
             
             // 初始化页码相关控件
             InitializePageComponents();
+
+            StationsDataGrid.PreviewKeyDown += StationsDataGrid_PreviewKeyDown;
         }
 
         /// <summary>
@@ -112,7 +114,8 @@ namespace TA_WPF.Views
                 }
             }
         }
-        
+
+
         /// <summary>
         /// 处理页码输入框失去焦点事件
         /// </summary>

@@ -8,6 +8,7 @@ using TA_WPF.Models;
 using TA_WPF.ViewModels;
 using TA_WPF.Utils;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace TA_WPF.Views
 {
@@ -32,6 +33,79 @@ namespace TA_WPF.Views
             
             // 初始化拖拽指示器
             InitializeDragInsertionIndicator();
+
+            //添加DataGrid的键盘事件处理，支持Ctrl+A全选和Delete删除
+            AddKeyboardEventHandlers();
+        }
+
+        /// <summary>
+        /// 添加键盘事件处理器
+        /// </summary>
+        private void AddKeyboardEventHandlers()
+        {
+            // 为整个UserControl添加键盘事件处理，确保无论焦点在哪里都能捕获按键
+            this.PreviewKeyDown += Collections_PreviewKeyDown;
+            
+            // 也为列表视图和网格视图单独添加事件，以确保优先捕获
+            var children = FindVisualChildren<FrameworkElement>(this);
+            foreach (var child in children)
+            {
+                if (child is DataGrid dataGrid)
+                {
+                    dataGrid.PreviewKeyDown += Collections_PreviewKeyDown;
+                }
+                else if (child is ListBox listBox)
+                {
+                    listBox.PreviewKeyDown += Collections_PreviewKeyDown;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 处理键盘事件，支持Ctrl+A全选和Delete删除
+        /// </summary>
+        private void Collections_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (DataContext is QueryAllCollectionsViewModel viewModel)
+            {
+                // 处理Ctrl+A全选
+                if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control)
+                {
+                    viewModel.SelectAllCommand.Execute(null);
+                    e.Handled = true;
+                }
+                
+                // 处理Delete键删除选中项
+                else if (e.Key == Key.Delete && viewModel.HasSelection)
+                {
+                    // 调用删除命令，与红色删除按钮行为一致
+                    viewModel.DeleteCollectionCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 查找指定类型的所有子可视元素
+        /// </summary>
+        private List<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
+        {
+            List<T> results = new List<T>();
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                
+                if (child is T typedChild)
+                {
+                    results.Add(typedChild);
+                }
+                
+                results.AddRange(FindVisualChildren<T>(child));
+            }
+            
+            return results;
         }
 
         /// <summary>
@@ -42,8 +116,8 @@ namespace TA_WPF.Views
             _tooltipText = new TextBlock
             {
                 Padding = new Thickness(8),
-                Background = System.Windows.Media.Brushes.DarkSlateGray,
-                Foreground = System.Windows.Media.Brushes.White,
+                Background = Brushes.DarkSlateGray,
+                Foreground = Brushes.White,
                 FontSize = 14
             };
 

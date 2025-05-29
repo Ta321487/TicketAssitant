@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -9,7 +8,6 @@ using TA_WPF.Utils;
 using System.IO;
 using System.Diagnostics;
 using System.Windows.Media.Imaging;
-using System.Threading.Tasks;
 
 namespace TA_WPF.ViewModels
 {

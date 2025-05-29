@@ -384,8 +384,8 @@ namespace TA_WPF.ViewModels
 
             // 确认删除
             string message = SelectedCollections.Count == 1
-                ? $"确定要删除收藏夹 \"{SelectedCollections[0].CollectionName}\" 吗？"
-                : $"确定要删除选中的 {SelectedCollections.Count} 个收藏夹吗？";
+                ? $"确定要删除收藏夹 \"{SelectedCollections[0].CollectionName}\" 吗？此操作不可撤销。"
+                : $"确定要删除选中的 {SelectedCollections.Count} 个收藏夹吗？此操作不可撤销。";
 
             if (MessageBoxHelper.ShowConfirmation(message) == MessageBoxResult.Yes)
             {

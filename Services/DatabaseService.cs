@@ -2879,17 +2879,180 @@ namespace TA_WPF.Services
         /// </summary>
         private RouteInfo MapRouteInfo(DbDataReader reader)
         {
-            return new RouteInfo
+            try
             {
-                Id = reader.GetInt32(reader.GetOrdinal("id")),
-                RouteName = reader.IsDBNull(reader.GetOrdinal("route_name")) ? null : reader.GetString(reader.GetOrdinal("route_name")),
-                Description = reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
-                TotalDistance = reader.IsDBNull(reader.GetOrdinal("total_distance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_distance")),
-                CreateTime = reader.IsDBNull(reader.GetOrdinal("create_time")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("create_time")),
-                UpdateTime = reader.IsDBNull(reader.GetOrdinal("update_time")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("update_time")),
-                IsFavorite = reader.IsDBNull(reader.GetOrdinal("is_favorite")) ? false : reader.GetBoolean(reader.GetOrdinal("is_favorite")),
-                SortOrder = reader.IsDBNull(reader.GetOrdinal("sort_order")) ? 0 : reader.GetInt32(reader.GetOrdinal("sort_order"))
-            };
+                var route = new RouteInfo
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("id")),
+                    RouteName = reader.IsDBNull(reader.GetOrdinal("route_name")) ? null : reader.GetString(reader.GetOrdinal("route_name")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
+                    TotalDistance = reader.IsDBNull(reader.GetOrdinal("total_distance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_distance")),
+                    CreateTime = reader.IsDBNull(reader.GetOrdinal("create_time")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("create_time")),
+                    UpdateTime = reader.IsDBNull(reader.GetOrdinal("update_time")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("update_time")),
+                    IsFavorite = reader.IsDBNull(reader.GetOrdinal("is_favorite")) ? false : reader.GetBoolean(reader.GetOrdinal("is_favorite")),
+                    SortOrder = reader.IsDBNull(reader.GetOrdinal("sort_order")) ? 0 : reader.GetInt32(reader.GetOrdinal("sort_order"))
+                };
+                
+                // 读取BLOB数据(封面图片)
+                int coverImageIdx = reader.GetOrdinal("cover_image");
+                if (!reader.IsDBNull(coverImageIdx))
+                {
+                    Debug.WriteLine($"MapRouteInfo: 检测到路线ID={route.Id}的图片数据");
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        byte[] buffer = new byte[1024];
+                        long bytesRead;
+                        long fieldOffset = 0;
+                        using (var stream = reader.GetStream(coverImageIdx))
+                        {
+                            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                ms.Write(buffer, 0, (int)bytesRead);
+                                fieldOffset += bytesRead;
+                            }
+                        }
+                        route.CoverImage = ms.ToArray();
+                        Debug.WriteLine($"MapRouteInfo: 已加载路线ID={route.Id}的图片数据，大小={route.CoverImage.Length}字节");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine($"MapRouteInfo: 路线ID={route.Id}没有图片数据");
+                }
+                
+                return route;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MapRouteInfo异常: {ex.Message}");
+                LogHelper.LogError($"映射路线信息异常: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 添加路线
+        /// </summary>
+        /// <param name="route">路线信息</param>
+        /// <returns>添加是否成功</returns>
+        public async Task<bool> AddRouteAsync(RouteInfo route)
+        {
+            if (route == null) throw new ArgumentNullException(nameof(route));
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"INSERT INTO route_info 
+                                    (route_name, description, cover_image, create_time, update_time, total_distance, is_favorite, sort_order) 
+                                    VALUES 
+                                    (@RouteName, @Description, @CoverImage, @CreateTime, @UpdateTime, @TotalDistance, @IsFavorite, @SortOrder)";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteName", route.RouteName);
+                        command.Parameters.AddWithValue("@Description", route.Description ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@CoverImage", route.CoverImage ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@CreateTime", route.CreateTime);
+                        command.Parameters.AddWithValue("@UpdateTime", route.UpdateTime);
+                        command.Parameters.AddWithValue("@TotalDistance", route.TotalDistance);
+                        command.Parameters.AddWithValue("@IsFavorite", route.IsFavorite);
+                        command.Parameters.AddWithValue("@SortOrder", route.SortOrder);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"添加路线信息失败: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 更新路线信息
+        /// </summary>
+        /// <param name="route">要更新的路线信息</param>
+        /// <returns>更新是否成功</returns>
+        public async Task<bool> UpdateRouteAsync(RouteInfo route)
+        {
+            if (route == null || route.Id <= 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"UPDATE route_info 
+                                   SET route_name = @RouteName, 
+                                       description = @Description, 
+                                       cover_image = @CoverImage, 
+                                       update_time = @UpdateTime, 
+                                       total_distance = @TotalDistance,
+                                       is_favorite = @IsFavorite,
+                                       sort_order = @SortOrder 
+                                   WHERE id = @Id";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Id", route.Id);
+                        command.Parameters.AddWithValue("@RouteName", route.RouteName);
+                        command.Parameters.AddWithValue("@Description", route.Description ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@CoverImage", route.CoverImage ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@UpdateTime", route.UpdateTime);
+                        command.Parameters.AddWithValue("@TotalDistance", route.TotalDistance);
+                        command.Parameters.AddWithValue("@IsFavorite", route.IsFavorite);
+                        command.Parameters.AddWithValue("@SortOrder", route.SortOrder);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"更新路线信息失败: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 根据ID列表删除路线
+        /// </summary>
+        /// <param name="routeIds">路线ID列表</param>
+        /// <returns>是否删除成功</returns>
+        public async Task<bool> DeleteRoutesByIdsAsync(List<int> routeIds)
+        {
+            if (routeIds == null || routeIds.Count == 0)
+            {
+                return true; // 没有要删除的ID，视为成功
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 构建包含所有ID的IN子句
+                    string idList = string.Join(",", routeIds);
+                    string query = $"DELETE FROM route_info WHERE id IN ({idList})";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"批量删除路线失败: {ex.Message}", ex);
+                Debug.WriteLine($"批量删除路线失败: {ex.Message}");
+                return false;
+            }
         }
     }
 }

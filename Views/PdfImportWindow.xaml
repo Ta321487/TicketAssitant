@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:TA_WPF.Converters"
         xmlns:utils="clr-namespace:TA_WPF.Utils"
         mc:Ignorable="d"
-        Title="12306车票PDF导入" Height="780" Width="900"
+        Title="从12306行程提示中添加车票" Height="780" Width="900"
         d:DesignHeight="1400" d:DesignWidth="1200"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
@@ -187,7 +187,7 @@
 
                 <!-- 标题 -->
                 <TextBlock Grid.Row="0" 
-                         Text="从12306导入电子客票" 
+                         Text="从12306行程提示中添加车票" 
                          Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
                          Margin="0,0,0,16">
                 </TextBlock>

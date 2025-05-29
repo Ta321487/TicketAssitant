@@ -223,28 +223,28 @@
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button x:Name="ImportTicketButton"
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="导入车票"
+                        ToolTip="以你喜欢的方式添加车票"
                         Margin="0,0,8,0"
                         Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36"
                         Click="ImportTicketButton_Click">
                     <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="Import" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="导入车票" VerticalAlignment="Center"/>
+                        <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="添加车票" VerticalAlignment="Center"/>
                     </StackPanel>
                     <Button.ContextMenu>
                         <ContextMenu FontFamily="Microsoft YaHei">
-                            <MenuItem Header="手工录入车票" Command="{Binding AddTicketCommand}" FontFamily="Microsoft YaHei">
+                            <MenuItem Header="手工添加车票" Command="{Binding AddTicketCommand}" FontFamily="Microsoft YaHei">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="PencilOutline" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="OCR导入车票" Command="{Binding MainViewModel.OcrTicketCommand}" FontFamily="Microsoft YaHei">
+                            <MenuItem Header="OCR添加车票" Command="{Binding MainViewModel.OcrTicketCommand}" FontFamily="Microsoft YaHei">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="CameraOutline" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="从12306导入车票" Command="{Binding MainViewModel.Import12306TicketCommand}" FontFamily="Microsoft YaHei">
+                            <MenuItem Header="从12306 PDF中添加车票" Command="{Binding MainViewModel.Import12306TicketCommand}" FontFamily="Microsoft YaHei">
                                 <MenuItem.Icon>
                                     <materialDesign:PackIcon Kind="CloudDownloadOutline" />
                                 </MenuItem.Icon>

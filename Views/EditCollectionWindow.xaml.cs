@@ -3,6 +3,7 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace TA_WPF.Views
 {
@@ -60,9 +61,9 @@ namespace TA_WPF.Views
         /// </summary>
         private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
-            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
-                DependencyObject child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
                 
                 if (child != null && child is T)
                 {

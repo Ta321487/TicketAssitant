@@ -46,17 +46,17 @@ namespace TA_WPF.ViewModels
 
             // Initialize commands
             RefreshCommand = new RelayCommand(async () => await LoadStationsAsync());
-            AddStationCommand = new RelayCommand(AddStation, CanAddStation); 
-            EditStationCommand = new RelayCommand<StationInfo>(EditStation, CanEditStation); 
-            DeleteStationCommand = new RelayCommand<StationInfo>(DeleteStation, CanDeleteStation); 
-            DeleteStationsCommand = new RelayCommand(DeleteSelectedStations, CanDeleteSelectedStations); 
-            AdvancedQueryCommand = new RelayCommand(OpenAdvancedQuery, CanOpenAdvancedQuery); 
-            
+            AddStationCommand = new RelayCommand(AddStation, CanAddStation);
+            EditStationCommand = new RelayCommand<StationInfo>(EditStation, CanEditStation);
+            DeleteStationCommand = new RelayCommand<StationInfo>(DeleteStation, CanDeleteStation);
+            DeleteStationsCommand = new RelayCommand(DeleteSelectedStations, CanDeleteSelectedStations);
+            AdvancedQueryCommand = new RelayCommand(OpenAdvancedQuery, CanOpenAdvancedQuery);
+
             // 添加选择相关命令
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll, CanUnselectAll);
             InvertSelectionCommand = new RelayCommand(InvertSelection, CanInvertSelection);
-            
+
             // 添加双击命令
             DoubleClickEditCommand = new RelayCommand<StationInfo>(DoubleClickEditStation);
         }
@@ -103,7 +103,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         // 添加多选支持
         public ObservableCollection<StationInfo> SelectedStations
         {
@@ -120,14 +120,14 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         // 是否有选中的项
         public bool HasSelection => _selectedStations != null && _selectedStations.Count > 0;
-        
+
         // 是否选中了全部项
-        public bool IsAllSelected => _stations != null && _selectedStations != null && 
+        public bool IsAllSelected => _stations != null && _selectedStations != null &&
                                     _stations.Count > 0 && _stations.Count == _selectedStations.Count;
-                                    
+
         // 选中项的数量，用于控制修改按钮的显示与启用状态
         public int SelectedItemsCount => _selectedStations?.Count ?? 0;
 
@@ -165,7 +165,7 @@ namespace TA_WPF.ViewModels
 
         // 是否有数据（用于控制UI显示）
         public bool HasData => _stations != null && _stations.Count > 0;
-        
+
         // 是否没有数据（用于控制"暂无数据"提示的显示）
         public bool HasNoData => _stations == null || _stations.Count == 0;
 
@@ -176,12 +176,12 @@ namespace TA_WPF.ViewModels
         public ICommand DeleteStationCommand { get; }
         public ICommand DeleteStationsCommand { get; }
         public ICommand AdvancedQueryCommand { get; }
-        
+
         // 选择相关命令
         public ICommand SelectAllCommand { get; }
         public ICommand UnselectAllCommand { get; }
         public ICommand InvertSelectionCommand { get; }
-        
+
         // 添加双击命令
         public ICommand DoubleClickEditCommand { get; }
 
@@ -189,19 +189,20 @@ namespace TA_WPF.ViewModels
         {
             // 创建StationImportService
             var stationImportService = new StationImportService(_databaseService);
-            
+
             // 创建并显示ImportStationFrom12306Window
             var importWindow = new ImportStationFrom12306Window(stationImportService, _mainViewModel);
-            
+
             // 获取导入ViewModel并设置刷新回调
             if (importWindow.DataContext is ImportStationFrom12306ViewModel viewModel)
             {
                 // 设置回调以在导入完成后刷新数据
-                viewModel.DataRefreshCallback = async () => {
-                    await LoadStationsAsync(); 
+                viewModel.DataRefreshCallback = async () =>
+                {
+                    await LoadStationsAsync();
                 };
             }
-            
+
             importWindow.Owner = Application.Current.MainWindow;
             importWindow.ShowDialog();
         }
@@ -211,17 +212,17 @@ namespace TA_WPF.ViewModels
         {
             // 确保只有选中一个车站时才能编辑
             if (station == null || _selectedStations.Count != 1) return;
-            
+
             // 创建StationSearchService
             var stationSearchService = new StationSearchService(_databaseService);
-            
+
             // 创建并显示EditStationWindow
             var editStationWindow = new EditStationWindow(
-                _databaseService, 
-                stationSearchService, 
-                station, 
+                _databaseService,
+                stationSearchService,
+                station,
                 async () => await LoadStationsAsync());
-            
+
             editStationWindow.Owner = Application.Current.MainWindow;
             editStationWindow.ShowDialog();
         }
@@ -239,12 +240,12 @@ namespace TA_WPF.ViewModels
                     IsLoading = true;
                     // 执行删除操作
                     bool deleted = await _databaseService.DeleteStationsByIdsAsync(new List<int> { station.Id });
-                    if (deleted) 
+                    if (deleted)
                     {
                         await LoadStationsAsync(); // 刷新数据
                         MessageBoxHelper.ShowInfo($"车站 '{station.StationName}' 已成功删除。");
-                    } 
-                    else 
+                    }
+                    else
                     {
                         MessageBoxHelper.ShowError("删除车站失败。");
                     }
@@ -280,28 +281,28 @@ namespace TA_WPF.ViewModels
                             _advancedQueryViewModel.IsQueryPanelVisible = !_advancedQueryViewModel.IsQueryPanelVisible;
                             return;
                         }
-                        
+
                         // 创建StationSearchService
                         var stationSearchService = new StationSearchService(_databaseService);
-                        
+
                         // 创建高级查询ViewModel
                         _advancedQueryViewModel = new AdvancedQueryStationViewModel(_databaseService, stationSearchService);
-                        
+
                         // 设置查询面板可见
                         _advancedQueryViewModel.IsQueryPanelVisible = true;
-                        
+
                         // 订阅筛选条件应用事件
                         _advancedQueryViewModel.FilterApplied += AdvancedQueryViewModel_FilterApplied;
-                        
+
                         // 清空容器
                         container.Children.Clear();
-                        
+
                         // 创建高级查询面板
                         _advancedQueryPanel = new AdvancedQueryStationPanel
                         {
                             DataContext = _advancedQueryViewModel
                         };
-                        
+
                         // 添加到容器
                         container.Children.Add(_advancedQueryPanel);
                     }
@@ -322,7 +323,7 @@ namespace TA_WPF.ViewModels
                 MessageBoxHelper.ShowError($"打开高级查询面板时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 查找QueryAllStationsPage用户控件
         /// </summary>
@@ -343,7 +344,7 @@ namespace TA_WPF.ViewModels
                         {
                             return queryPage;
                         }
-                        
+
                         // 如果没有直接找到，可能是嵌套在其他控件中，尝试查找名为QueryAllStationsPageControl的控件
                         var namedQueryPage = FindChildByName(mainContent, "QueryAllStationsPageControl");
                         if (namedQueryPage != null)
@@ -355,7 +356,7 @@ namespace TA_WPF.ViewModels
             }
             return null;
         }
-        
+
         /// <summary>
         /// 递归查找指定类型的子控件
         /// </summary>
@@ -369,12 +370,12 @@ namespace TA_WPF.ViewModels
 
             // 获取子元素数量
             int childCount = VisualTreeHelper.GetChildrenCount(parent);
-            
+
             // 递归查找每个子元素
             for (int i = 0; i < childCount; i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 // 递归查找
                 var result = FindChild<T>(child);
                 if (result != null)
@@ -382,10 +383,10 @@ namespace TA_WPF.ViewModels
                     return result;
                 }
             }
-            
+
             return null;
         }
-        
+
         /// <summary>
         /// 递归查找指定名称的子控件
         /// </summary>
@@ -399,12 +400,12 @@ namespace TA_WPF.ViewModels
 
             // 获取子元素数量
             int childCount = VisualTreeHelper.GetChildrenCount(parent);
-            
+
             // 递归查找每个子元素
             for (int i = 0; i < childCount; i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 // 递归查找
                 var result = FindChildByName(child, name);
                 if (result != null)
@@ -412,7 +413,7 @@ namespace TA_WPF.ViewModels
                     return result;
                 }
             }
-            
+
             return null;
         }
 
@@ -424,10 +425,10 @@ namespace TA_WPF.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 // 保存最后一次的查询条件，用于分页时重新应用
                 _lastQueryFilter = e;
-                
+
                 // 使用新的数据库方法，直接在数据库层面应用查询条件
                 // 获取符合条件的车站总数
                 TotalCount = await _databaseService.GetStationCountAdvancedAsync(
@@ -437,11 +438,11 @@ namespace TA_WPF.ViewModels
                     e.District,
                     e.UseMyDepartStations ? e.MyDepartStations : null
                 );
-                
+
                 // 更新分页信息
                 _paginationViewModel.TotalItems = TotalCount;
                 _paginationViewModel.CurrentPage = 1; // 重置为第一页
-                
+
                 // 获取当前页的数据
                 var stations = await _databaseService.QueryStationsAdvancedAsync(
                     _paginationViewModel.CurrentPage,
@@ -452,13 +453,13 @@ namespace TA_WPF.ViewModels
                     e.District,
                     e.UseMyDepartStations ? e.MyDepartStations : null
                 );
-                
+
                 // 更新UI数据
                 Stations = new ObservableCollection<StationInfo>(stations);
-                
+
                 // 清空选择
                 SelectedStations.Clear();
-                
+
                 // 更新UI状态
                 OnPropertyChanged(nameof(HasData));
                 OnPropertyChanged(nameof(HasNoData));
@@ -469,7 +470,7 @@ namespace TA_WPF.ViewModels
             {
                 LogHelper.LogError($"应用高级查询筛选条件时出错: {ex.Message}", ex);
                 MessageBoxHelper.ShowError($"应用高级查询筛选条件时出错: {ex.Message}");
-                
+
                 // 出错时恢复到初始状态
                 await LoadStationsAsync();
             }
@@ -478,57 +479,57 @@ namespace TA_WPF.ViewModels
                 IsLoading = false;
             }
         }
-        
+
         private bool CanOpenAdvancedQuery() => true;
-        
+
         // --- 选择相关方法 ---
         public void SelectAll()
         {
             if (_stations == null || _stations.Count == 0)
                 return;
-                
+
             SelectedStations.Clear();
             foreach (var station in _stations)
             {
                 SelectedStations.Add(station);
             }
-            
+
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllSelected));
-            
+
             // 通知DataGrid更新选中状态
             SelectionChanged?.Invoke(this, new StationSelectionChangedEventArgs(new List<StationInfo>(), _stations.ToList()));
         }
-        
+
         public bool CanSelectAll() => HasData && !IsAllSelected;
-        
+
         public void UnselectAll()
         {
             if (_selectedStations == null || _selectedStations.Count == 0)
                 return;
-                
+
             // 备份当前选中项以便触发事件
             var previousSelected = new List<StationInfo>(_selectedStations);
-            
+
             SelectedStations.Clear();
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllSelected));
-            
+
             // 通知DataGrid更新选中状态
             SelectionChanged?.Invoke(this, new StationSelectionChangedEventArgs(previousSelected, new List<StationInfo>()));
         }
-        
+
         public bool CanUnselectAll() => HasSelection;
-        
+
         public void InvertSelection()
         {
             if (_stations == null || _stations.Count == 0)
                 return;
-                
+
             var currentSelection = new HashSet<StationInfo>(_selectedStations);
             var toAdd = new List<StationInfo>();
             var toRemove = new List<StationInfo>(_selectedStations);
-            
+
             foreach (var station in _stations)
             {
                 if (!currentSelection.Contains(station))
@@ -536,21 +537,21 @@ namespace TA_WPF.ViewModels
                     toAdd.Add(station);
                 }
             }
-            
+
             SelectedStations.Clear();
-            
+
             foreach (var station in toAdd)
             {
                 SelectedStations.Add(station);
             }
-            
+
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllSelected));
-            
+
             // 通知DataGrid更新选中状态
             SelectionChanged?.Invoke(this, new StationSelectionChangedEventArgs(toRemove, toAdd));
         }
-        
+
         public bool CanInvertSelection() => HasData;
 
         // 事件用于通知View更新DataGrid的选中状态
@@ -561,7 +562,7 @@ namespace TA_WPF.ViewModels
         {
             public List<StationInfo> RemovedItems { get; }
             public List<StationInfo> AddedItems { get; }
-            
+
             public StationSelectionChangedEventArgs(List<StationInfo> removedItems, List<StationInfo> addedItems)
             {
                 RemovedItems = removedItems;
@@ -594,7 +595,7 @@ namespace TA_WPF.ViewModels
                         _lastQueryFilter.District,
                         _lastQueryFilter.UseMyDepartStations ? _lastQueryFilter.MyDepartStations : null
                     );
-                    
+
                     Stations = new ObservableCollection<StationInfo>(stations);
                 }
                 else
@@ -607,10 +608,10 @@ namespace TA_WPF.ViewModels
 
                     Stations = new ObservableCollection<StationInfo>(stationsData);
                 }
-                
+
                 // 清除选择
                 SelectedStations.Clear();
-                
+
                 // 通知UI更新数据状态
                 OnPropertyChanged(nameof(HasData));
                 OnPropertyChanged(nameof(HasNoData));
@@ -649,17 +650,17 @@ namespace TA_WPF.ViewModels
         private async void DeleteSelectedStations()
         {
             if (_selectedStations == null || _selectedStations.Count == 0) return;
-            
+
             string message;
             if (_selectedStations.Count == 1)
             {
-                message = $"确定要删除车站 '{_selectedStations[0].StationName}' 吗？";
+                message = $"确定要删除车站 '{_selectedStations[0].StationName}' 吗？此操作不可撤销。";
             }
             else
             {
-                message = $"确定要删除选中的 {_selectedStations.Count} 个车站吗？";
+                message = $"确定要删除选中的 {_selectedStations.Count} 个车站吗？此操作不可撤销。";
             }
-            
+
             var confirmResult = MessageBoxHelper.ShowConfirmation(message, "确认删除");
             if (confirmResult == MessageBoxResult.Yes)
             {
@@ -670,18 +671,18 @@ namespace TA_WPF.ViewModels
                     var stationIds = _selectedStations.Select(s => s.Id).ToList();
                     // 执行删除操作
                     bool deleted = await _databaseService.DeleteStationsByIdsAsync(stationIds);
-                    
+
                     if (deleted)
                     {
                         await LoadStationsAsync(); // 刷新数据
-                        
+
                         if (_selectedStations.Count == 1)
                         {
-                            MessageBoxHelper.ShowInfo($"车站 '{_selectedStations[0].StationName}' 已成功删除。");
+                            MessageBoxHelper.ShowInfo($"车站 '{_selectedStations[0].StationName}' 已成功删除。", "删除成功");
                         }
                         else
                         {
-                            MessageBoxHelper.ShowInfo($"已成功删除 {stationIds.Count} 个车站。");
+                            MessageBoxHelper.ShowInfo($"已成功删除 {stationIds.Count} 个车站。", "删除成功");
                         }
                     }
                     else
@@ -700,7 +701,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         private bool CanDeleteSelectedStations() => HasSelection;
 
         // 处理双击车站记录的方法

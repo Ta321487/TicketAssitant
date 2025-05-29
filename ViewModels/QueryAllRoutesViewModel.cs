@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Linq;
 using System.Collections.Generic;
 using System.Windows.Media;
+using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -53,6 +54,9 @@ namespace TA_WPF.ViewModels
             
             // 添加双击命令
             DoubleClickEditCommand = new RelayCommand<RouteInfo>(DoubleClickEditRoute);
+            
+            // 添加路线详情命令
+            ShowRouteDetailsCommand = new RelayCommand<RouteInfo>(ShowRouteDetails);
         }
 
         // 添加MainViewModel属性，解决绑定错误
@@ -94,6 +98,7 @@ namespace TA_WPF.ViewModels
                 {
                     _selectedRoute = value;
                     OnPropertyChanged(nameof(SelectedRoute));
+                    OnPropertyChanged(nameof(CanShowRouteDetails));
                 }
             }
         }
@@ -111,6 +116,7 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(HasSelection));
                     OnPropertyChanged(nameof(SelectedItemsCount));
                     OnPropertyChanged(nameof(CanEditSelectedRoute));
+                    OnPropertyChanged(nameof(CanShowRouteDetails));
                 }
             }
         }
@@ -127,6 +133,9 @@ namespace TA_WPF.ViewModels
 
         // 是否可以编辑选中的路线（仅当选中一个路线时可编辑）
         public bool CanEditSelectedRoute => SelectedItemsCount == 1;
+        
+        // 是否可以显示路线详情（仅当选中一个路线时可显示）
+        public bool CanShowRouteDetails => SelectedItemsCount == 1;
 
         public int TotalCount
         {
@@ -178,25 +187,114 @@ namespace TA_WPF.ViewModels
         
         // 添加双击命令
         public ICommand DoubleClickEditCommand { get; }
+        
+        // 添加路线详情命令
+        public ICommand ShowRouteDetailsCommand { get; }
 
         private void AddRoute()
         {
-            MessageBoxHelper.ShowInfo("添加路线功能暂未实现");
+            var addRouteWindow = new AddRouteWindow(_databaseService, _mainViewModel);
+            addRouteWindow.Owner = Application.Current.MainWindow;
+            
+            // 显示模态窗口
+            var result = addRouteWindow.ShowDialog();
+            
+            // 如果添加成功，刷新列表
+            if (result == true)
+            {
+                _ = LoadRoutesAsync();
+            }
         }
 
         private void EditRoute(RouteInfo route)
         {
-            MessageBoxHelper.ShowInfo("编辑路线功能暂未实现");
+            if (route == null)
+            {
+                MessageBoxHelper.ShowInfo("请先选择一条路线");
+                return;
+            }
+            
+            var editRouteWindow = new EditRouteWindow(route, _databaseService, _mainViewModel);
+            editRouteWindow.Owner = Application.Current.MainWindow;
+            
+            // 显示模态窗口
+            var result = editRouteWindow.ShowDialog();
+            
+            // 如果编辑成功，刷新列表
+            if (result == true)
+            {
+                _ = LoadRoutesAsync();
+            }
         }
 
         private void DeleteRoute(RouteInfo route)
         {
-            MessageBoxHelper.ShowInfo("删除路线功能暂未实现");
+            if (route != null)
+            {
+                // 将单个路线添加到选中集合并调用删除方法
+                if (!SelectedRoutes.Contains(route))
+                {
+                    SelectedRoutes.Clear();
+                    SelectedRoutes.Add(route);
+                }
+                DeleteSelectedRoutes();
+            }
         }
 
-        private void DeleteSelectedRoutes()
+        private async void DeleteSelectedRoutes()
         {
-            MessageBoxHelper.ShowInfo("批量删除路线功能暂未实现");
+            if (SelectedRoutes == null || SelectedRoutes.Count == 0)
+            {
+                return;
+            }
+            
+            string confirmMessage;
+            if (SelectedRoutes.Count == 1)
+            {
+                confirmMessage = $"确定要删除路线\"{SelectedRoutes[0].RouteName}\"吗？此操作不可撤销。";
+            }
+            else
+            {
+                confirmMessage = $"确定要删除选中的 {SelectedRoutes.Count} 条路线吗？此操作不可撤销。";
+            }
+            
+            // 显示确认对话框
+            MessageBoxResult result = MessageBoxHelper.ShowConfirmation(confirmMessage);
+            
+            // 如果用户确认删除
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    IsLoading = true;
+                    
+                    // 收集要删除的路线ID
+                    var routeIds = SelectedRoutes.Select(r => r.Id).ToList();
+                    
+                    // 调用服务执行删除
+                    bool success = await _databaseService.DeleteRoutesByIdsAsync(routeIds);
+                    
+                    if (success)
+                    {
+                        // 刷新列表
+                        await LoadRoutesAsync();
+                        MessageBoxHelper.ShowInfo("删除成功");
+                    }
+                    else
+                    {
+                        MessageBoxHelper.ShowError("删除失败，请稍后重试");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.LogError($"删除路线失败: {ex.Message}", ex);
+                    MessageBoxHelper.ShowError($"删除失败: {ex.Message}");
+                }
+                finally
+                {
+                    IsLoading = false;
+                }
+            }
         }
 
         private void OpenAdvancedQuery()
@@ -206,7 +304,22 @@ namespace TA_WPF.ViewModels
         
         private void DoubleClickEditRoute(RouteInfo route)
         {
-            MessageBoxHelper.ShowInfo("双击编辑路线功能暂未实现");
+            // 调用编辑方法
+            EditRoute(route);
+        }
+        
+        // 显示路线详情
+        private void ShowRouteDetails(RouteInfo route)
+        {
+            if (route == null)
+            {
+                route = SelectedRoute;
+            }
+            
+            if (route != null)
+            {
+                MessageBoxHelper.ShowInfo($"路线详情功能暂未实现\n选中的路线: {route.RouteName}");
+            }
         }
         
         // --- 选择相关方法 ---
@@ -351,6 +464,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(IsAllSelected));
             OnPropertyChanged(nameof(SelectedItemsCount));
             OnPropertyChanged(nameof(CanEditSelectedRoute));
+            OnPropertyChanged(nameof(CanShowRouteDetails));
         }
     }
 } 

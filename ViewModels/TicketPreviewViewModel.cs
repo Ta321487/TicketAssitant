@@ -19,7 +19,6 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using TA_WPF.Utils;
 using System.Diagnostics;
-
 namespace TA_WPF.ViewModels
 {
     public class TicketPreviewViewModel : BaseViewModel

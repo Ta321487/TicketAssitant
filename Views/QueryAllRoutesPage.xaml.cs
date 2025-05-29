@@ -32,6 +32,9 @@ namespace TA_WPF.Views
             
             // 初始化页码相关控件
             InitializePageComponents();
+            
+            // 添加加载完成事件，确保DataGrid获得焦点
+            Loaded += QueryAllRoutesPage_Loaded;
         }
 
         /// <summary>
@@ -59,6 +62,19 @@ namespace TA_WPF.Views
                 StaysOpen = false,
                 AllowsTransparency = true
             };
+        }
+        
+        /// <summary>
+        /// 页面加载完成后的处理
+        /// </summary>
+        private void QueryAllRoutesPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 确保DataGrid获取焦点，以便键盘事件能正常触发
+            var dataGrid = GetRoutesDataGrid();
+            if (dataGrid != null)
+            {
+                dataGrid.Focus();
+            }
         }
         
         /// <summary>
@@ -622,6 +638,38 @@ namespace TA_WPF.Views
                 if (e.Key == Key.Delete && viewModel.SelectedRoutes.Count > 0)
                 {
                     // 直接调用批量删除命令，与红色删除按钮行为一致
+                    viewModel.DeleteRoutesCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 备用的键盘事件处理，确保在PreviewKeyDown失效时也能捕获键盘事件
+        /// </summary>
+        private void RoutesDataGrid_KeyDown(object sender, KeyEventArgs e)
+        {
+            // 如果PreviewKeyDown已经处理了事件，则直接返回
+            if (e.Handled) return;
+            
+            if (DataContext is QueryAllRoutesViewModel viewModel)
+            {
+                // 备份处理Ctrl+A全选
+                if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                {
+                    Debug.WriteLine("KeyDown: 捕获到Ctrl+A组合键");
+                    if (viewModel.CanSelectAll())
+                    {
+                        viewModel.SelectAll();
+                        e.Handled = true;
+                    }
+                }
+                
+                // 备份处理Delete键删除选中项
+                if (e.Key == Key.Delete && viewModel.SelectedRoutes.Count > 0)
+                {
+                    Debug.WriteLine("KeyDown: 捕获到Delete键");
+                    // 直接调用批量删除命令
                     viewModel.DeleteRoutesCommand.Execute(null);
                     e.Handled = true;
                 }
