@@ -67,6 +67,8 @@
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
                 <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <Setter Property="Background" Value="Transparent" />
+                <EventSetter Event="Selected" Handler="DataGridRow_Selected"/>
+                <EventSetter Event="Unselected" Handler="DataGridRow_Unselected"/>
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
                         <Setter Property="BorderThickness" Value="4,0,0,0" />
@@ -325,6 +327,7 @@
                       materialDesign:DataGridAssist.ColumnHeaderPadding="8 4 8 4"
                       materialDesign:DataGridAssist.EnableEditBoxAssist="True"
                       SelectionChanged="DataGrid_SelectionChanged"
+                      PreviewMouseDown="RoutesDataGrid_PreviewMouseDown"
                       x:Name="RoutesDataGrid"
                       Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
 

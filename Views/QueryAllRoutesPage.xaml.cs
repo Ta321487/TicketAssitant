@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Diagnostics;
 
 namespace TA_WPF.Views
 {
@@ -258,53 +259,211 @@ namespace TA_WPF.Views
             // 防止循环事件
             if (_isInternalSelectionChange) return;
             
+            Debug.WriteLine($"DataGrid_SelectionChanged: 添加项 {e.AddedItems.Count}, 移除项 {e.RemovedItems.Count}");
+            
             if (DataContext is QueryAllRoutesViewModel viewModel)
             {
                 // 获取当前激活的键盘修饰键状态
                 bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
                 bool isShiftPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+                bool isModifierKeyPressed = isCtrlPressed || isShiftPressed;
                 
-                // 更新所有项的选择状态
-                foreach (RouteInfo item in e.RemovedItems)
+                Debug.WriteLine($"DataGrid_SelectionChanged - Ctrl: {isCtrlPressed}, Shift: {isShiftPressed}");
+                
+                var dataGrid = sender as DataGrid;
+                if (dataGrid == null) return;
+                
+                // 如果是Shift键按下状态，阻止默认的清除选择行为
+                if (isShiftPressed && _lastSelectedItem != null && e.AddedItems.Count > 0)
                 {
-                    item.IsSelected = false;
-                    if (viewModel.SelectedRoutes.Contains(item))
+                    try
                     {
-                        viewModel.SelectedRoutes.Remove(item);
+                        _isInternalSelectionChange = true;
+                        
+                        // 防止原有选择项被清除
+                        foreach (RouteInfo item in e.RemovedItems)
+                        {
+                            // 在Shift模式下，不应该移除之前的选择
+                            Debug.WriteLine($"保留Shift选择中的项: {item.RouteName}");
+                            if (!dataGrid.SelectedItems.Contains(item))
+                            {
+                                dataGrid.SelectedItems.Add(item);
+                            }
+                            item.IsSelected = true;
+                            
+                            // 同步到ViewModel
+                            if (!viewModel.SelectedRoutes.Contains(item))
+                            {
+                                viewModel.SelectedRoutes.Add(item);
+                            }
+                        }
+                        
+                        // 记录当前选中项，供Shift选择使用
+                        RouteInfo currentItem = e.AddedItems[0] as RouteInfo;
+                        
+                        // 直接调用HandleShiftSelection处理范围选择
+                        Debug.WriteLine("处理Shift连续选择");
+                        HandleShiftSelection(viewModel, currentItem, dataGrid);
+                        
+                        // 更新SelectedRoute属性
+                        if (viewModel.SelectedRoutes.Count == 1)
+                        {
+                            viewModel.SelectedRoute = viewModel.SelectedRoutes[0];
+                        }
+                        else
+                        {
+                            viewModel.SelectedRoute = null;
+                        }
+                        
+                        // 手动触发属性更新
+                        viewModel.NotifySelectionChanged();
+                        
+                        Debug.WriteLine($"Shift选择后当前选中项数量: {viewModel.SelectedRoutes.Count}");
+                        return;
+                    }
+                    finally
+                    {
+                        _isInternalSelectionChange = false;
                     }
                 }
-
-                // 添加新选择的项
-                foreach (RouteInfo item in e.AddedItems)
+                
+                // 如果是Ctrl键按下状态，使用自定义处理
+                else if (isCtrlPressed && e.AddedItems.Count > 0)
                 {
-                    item.IsSelected = true;
-                    if (!viewModel.SelectedRoutes.Contains(item))
+                    try
                     {
-                        viewModel.SelectedRoutes.Add(item);
+                        _isInternalSelectionChange = true;
+                        
+                        // 防止在Ctrl键模式下其他选中项被错误清除
+                        foreach (RouteInfo item in e.RemovedItems)
+                        {
+                            if (item.IsSelected)
+                            {
+                                Debug.WriteLine($"在Ctrl模式下保留选中状态: {item.RouteName}");
+                                if (!dataGrid.SelectedItems.Contains(item))
+                                {
+                                    dataGrid.SelectedItems.Add(item);
+                                }
+                            }
+                        }
+                        
+                        // 处理新添加的项
+                        foreach (RouteInfo item in e.AddedItems)
+                        {
+                            Debug.WriteLine($"Ctrl模式添加项: {item.RouteName}");
+                            item.IsSelected = true;
+                            if (!viewModel.SelectedRoutes.Contains(item))
+                            {
+                                viewModel.SelectedRoutes.Add(item);
+                            }
+                        }
+                        
+                        // 记录最后选中的项
+                        if (e.AddedItems.Count > 0)
+                        {
+                            _lastSelectedItem = e.AddedItems[e.AddedItems.Count - 1] as RouteInfo;
+                        }
+                        
+                        // 同步数据状态和UI状态
+                        foreach (var item in viewModel.Routes)
+                        {
+                            bool shouldBeSelected = viewModel.SelectedRoutes.Contains(item);
+                            
+                            if (shouldBeSelected && !dataGrid.SelectedItems.Contains(item))
+                            {
+                                dataGrid.SelectedItems.Add(item);
+                            }
+                            else if (!shouldBeSelected && dataGrid.SelectedItems.Contains(item))
+                            {
+                                dataGrid.SelectedItems.Remove(item);
+                            }
+                            
+                            item.IsSelected = shouldBeSelected;
+                        }
+                        
+                        // 更新SelectedRoute属性
+                        if (viewModel.SelectedRoutes.Count == 1)
+                        {
+                            viewModel.SelectedRoute = viewModel.SelectedRoutes[0];
+                        }
+                        else
+                        {
+                            viewModel.SelectedRoute = null;
+                        }
+                        
+                        // 手动触发属性更新
+                        viewModel.NotifySelectionChanged();
+                        
+                        Debug.WriteLine($"Ctrl处理后当前选中项数量: {viewModel.SelectedRoutes.Count}");
+                        return;
+                    }
+                    finally
+                    {
+                        _isInternalSelectionChange = false;
+                    }
+                }
+                
+                // 无修饰键的常规处理
+                try
+                {
+                    _isInternalSelectionChange = true;
+                    
+                    // 更新所有项的选择状态
+                    foreach (RouteInfo item in e.RemovedItems)
+                    {
+                        Debug.WriteLine($"移除项: {item.RouteName}");
+                        item.IsSelected = false;
+                        if (viewModel.SelectedRoutes.Contains(item))
+                        {
+                            viewModel.SelectedRoutes.Remove(item);
+                        }
+                    }
+
+                    // 添加新选择的项
+                    foreach (RouteInfo item in e.AddedItems)
+                    {
+                        Debug.WriteLine($"添加项: {item.RouteName}");
+                        item.IsSelected = true;
+                        if (!viewModel.SelectedRoutes.Contains(item))
+                        {
+                            viewModel.SelectedRoutes.Add(item);
+                        }
                     }
                     
-                    // 记录最后一个选中的项，用于Shift选择
-                    _lastSelectedItem = item;
+                    // 记录最后选中的项，用于后续Shift多选操作
+                    if (e.AddedItems.Count > 0)
+                    {
+                        _lastSelectedItem = e.AddedItems[e.AddedItems.Count - 1] as RouteInfo;
+                        Debug.WriteLine($"更新最后选中项: {_lastSelectedItem?.RouteName}");
+                    }
+                    
+                    // 更新SelectedRoute属性以便修改按钮能正确获取
+                    if (viewModel.SelectedRoutes.Count == 1)
+                    {
+                        viewModel.SelectedRoute = viewModel.SelectedRoutes[0];
+                    }
+                    else
+                    {
+                        viewModel.SelectedRoute = null;
+                    }
+                    
+                    // 手动触发属性更新
+                    viewModel.NotifySelectionChanged();
+                    
+                    // 确保选中项在视觉上也被选中（显示紫色指示器）
+                    // 先清除再添加所有选中项，确保UI状态与模型状态完全同步
+                    dataGrid.SelectedItems.Clear();
+                    foreach (RouteInfo item in viewModel.SelectedRoutes)
+                    {
+                        dataGrid.SelectedItems.Add(item);
+                    }
+                    
+                    Debug.WriteLine($"当前选中项数量: {viewModel.SelectedRoutes.Count}");
                 }
-                
-                // 处理Shift键连续选择
-                if (isShiftPressed && e.AddedItems.Count > 0 && sender is DataGrid dataGrid && dataGrid.Items.Count > 0)
+                finally
                 {
-                    HandleShiftSelection(viewModel, e.AddedItems[0] as RouteInfo, dataGrid);
+                    _isInternalSelectionChange = false;
                 }
-                
-                // 更新SelectedRoute属性以便修改按钮能正确获取
-                if (viewModel.SelectedRoutes.Count == 1)
-                {
-                    viewModel.SelectedRoute = viewModel.SelectedRoutes[0];
-                }
-                else
-                {
-                    viewModel.SelectedRoute = null;
-                }
-                
-                // 手动触发属性更新
-                viewModel.NotifySelectionChanged();
             }
         }
         
@@ -313,23 +472,88 @@ namespace TA_WPF.Views
         /// </summary>
         private void HandleShiftSelection(QueryAllRoutesViewModel viewModel, RouteInfo currentItem, DataGrid dataGrid)
         {
-            if (_lastSelectedItem == null || currentItem == null) return;
+            // 当没有上一次选择或当前选择为空时，直接返回
+            if (_lastSelectedItem == null || currentItem == null) 
+            {
+                Debug.WriteLine("HandleShiftSelection: 缺少必要的参考点，取消处理");
+                return;
+            }
+            
+            Debug.WriteLine($"HandleShiftSelection: 从 {_lastSelectedItem.RouteName} 到 {currentItem.RouteName}");
+            
+            // 防止重复选择同一个项
+            if (_lastSelectedItem == currentItem)
+            {
+                Debug.WriteLine("选择了相同的项，无需处理范围选择");
+                return;
+            }
             
             // 找到上一个选中项和当前选中项的索引
-            int lastIndex = dataGrid.Items.IndexOf(_lastSelectedItem);
-            int currentIndex = dataGrid.Items.IndexOf(currentItem);
+            int lastIndex = -1;
+            int currentIndex = -1;
             
-            if (lastIndex == -1 || currentIndex == -1) return;
+            // 遍历所有项目获取索引，避免可能的索引不匹配问题
+            for (int i = 0; i < dataGrid.Items.Count; i++)
+            {
+                var item = dataGrid.Items[i] as RouteInfo;
+                if (item == _lastSelectedItem)
+                {
+                    lastIndex = i;
+                }
+                if (item == currentItem)
+                {
+                    currentIndex = i;
+                }
+                
+                // 找到两个索引后可以提前退出循环
+                if (lastIndex != -1 && currentIndex != -1)
+                {
+                    break;
+                }
+            }
             
+            if (lastIndex == -1 || currentIndex == -1) 
+            {
+                Debug.WriteLine("找不到索引，使用Items.IndexOf再次尝试");
+                
+                // 再次尝试使用IndexOf获取索引
+                lastIndex = dataGrid.Items.IndexOf(_lastSelectedItem);
+                currentIndex = dataGrid.Items.IndexOf(currentItem);
+                
+                if (lastIndex == -1 || currentIndex == -1)
+                {
+                    Debug.WriteLine("仍然找不到索引，取消处理");
+                    return;
+                }
+            }
+            
+            Debug.WriteLine($"索引范围: 从 {lastIndex} 到 {currentIndex}");
+            
+            // 计算开始和结束索引
+            int startIndex = System.Math.Min(lastIndex, currentIndex);
+            int endIndex = System.Math.Max(lastIndex, currentIndex);
+            
+            Debug.WriteLine($"选择范围: {startIndex} 到 {endIndex}");
+            
+            // 为避免循环事件，在一批操作中完成所有选择
             try
             {
                 _isInternalSelectionChange = true;
                 
-                // 计算开始和结束索引
-                int startIndex = System.Math.Min(lastIndex, currentIndex);
-                int endIndex = System.Math.Max(lastIndex, currentIndex);
+                // 确保已经选中的项不会丢失（处理ShiftKey不会清除原有选择）
+                var existingSelectedItems = new List<RouteInfo>();
+                foreach (RouteInfo item in dataGrid.SelectedItems)
+                {
+                    existingSelectedItems.Add(item);
+                }
                 
-                // 选择开始和结束索引之间的所有项
+                // 确保原始选择不丢失
+                if (!existingSelectedItems.Contains(_lastSelectedItem))
+                {
+                    existingSelectedItems.Add(_lastSelectedItem);
+                }
+                
+                // 选择范围内的所有项
                 for (int i = startIndex; i <= endIndex; i++)
                 {
                     if (i >= 0 && i < dataGrid.Items.Count)
@@ -337,19 +561,39 @@ namespace TA_WPF.Views
                         var item = dataGrid.Items[i] as RouteInfo;
                         if (item != null)
                         {
-                            if (!dataGrid.SelectedItems.Contains(item))
-                            {
-                                dataGrid.SelectedItems.Add(item);
-                            }
+                            Debug.WriteLine($"处理范围内项: {item.RouteName}");
                             
+                            // 首先确保数据模型状态正确
+                            item.IsSelected = true;
+                            
+                            // 然后确保视图模型状态正确
                             if (!viewModel.SelectedRoutes.Contains(item))
                             {
                                 viewModel.SelectedRoutes.Add(item);
-                                item.IsSelected = true;
+                            }
+                            
+                            // 添加到临时选中列表
+                            if (!existingSelectedItems.Contains(item))
+                            {
+                                existingSelectedItems.Add(item);
                             }
                         }
                     }
                 }
+                
+                // 重要：确保UI状态与模型状态同步
+                // 先清除所有DataGrid选择，然后重新添加所有需要选中的项
+                dataGrid.SelectedItems.Clear();
+                foreach (var item in existingSelectedItems)
+                {
+                    dataGrid.SelectedItems.Add(item);
+                    Debug.WriteLine($"同步Shift选择状态: {item.RouteName}");
+                }
+                
+                // 手动触发属性更新
+                viewModel.NotifySelectionChanged();
+                
+                Debug.WriteLine($"Shift选择完成，当前选中项: {viewModel.SelectedRoutes.Count}");
             }
             finally
             {
@@ -390,6 +634,246 @@ namespace TA_WPF.Views
         private DataGrid GetRoutesDataGrid()
         {
             return this.FindName("RoutesDataGrid") as DataGrid;
+        }
+
+        /// <summary>
+        /// 处理DataGrid的鼠标点击事件
+        /// </summary>
+        private void RoutesDataGrid_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!(DataContext is QueryAllRoutesViewModel viewModel) || !(sender is DataGrid dataGrid))
+                return;
+            
+            // 获取修饰键状态
+            bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+            bool isShiftPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+            bool isModifierKeyPressed = isCtrlPressed || isShiftPressed;
+            
+            Debug.WriteLine($"RoutesDataGrid_PreviewMouseDown - Ctrl: {isCtrlPressed}, Shift: {isShiftPressed}");
+            
+            // 获取点击位置下的行
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+            DataGridRow row = null;
+            
+            // 向上查找DataGridRow
+            while ((dep != null) && !(dep is DataGridRow))
+            {
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            
+            if (!(dep is DataGridRow clickedRow && clickedRow.Item is RouteInfo clickedItem))
+                return;
+            
+            // 记录当前点击的行数据
+            row = clickedRow;
+            
+            // 如果是Shift键多选
+            if (isShiftPressed && _lastSelectedItem != null && _lastSelectedItem != clickedItem)
+            {
+                Debug.WriteLine($"Shift键多选: 从 {_lastSelectedItem.RouteName} 到 {clickedItem.RouteName}");
+                
+                try
+                {
+                    _isInternalSelectionChange = true;
+                    
+                    // 记录当前选中项，供后续处理
+                    if (!viewModel.SelectedRoutes.Contains(clickedItem))
+                    {
+                        viewModel.SelectedRoutes.Add(clickedItem);
+                        clickedItem.IsSelected = true;
+                    }
+                    
+                    // 执行范围选择
+                    HandleShiftSelection(viewModel, clickedItem, dataGrid);
+                    
+                    // 阻止默认的选择行为，因为我们已经手动处理了选择逻辑
+                    e.Handled = true;
+                }
+                finally
+                {
+                    _isInternalSelectionChange = false;
+                }
+            }
+            // 如果是Ctrl键多选
+            else if (isCtrlPressed)
+            {
+                Debug.WriteLine($"Ctrl键多选: 选择或取消选择 {clickedItem.RouteName}");
+                
+                try
+                {
+                    _isInternalSelectionChange = true;
+                    
+                    // 现有选中项集合（用于确定是否需要重新同步UI）
+                    var currentSelectedItems = new HashSet<RouteInfo>(viewModel.SelectedRoutes);
+                    
+                    // 切换选中状态
+                    if (clickedItem.IsSelected)
+                    {
+                        // 取消选中
+                        clickedItem.IsSelected = false;
+                        if (viewModel.SelectedRoutes.Contains(clickedItem))
+                        {
+                            viewModel.SelectedRoutes.Remove(clickedItem);
+                        }
+                        // 从DataGrid中移除选择
+                        if (dataGrid.SelectedItems.Contains(clickedItem))
+                        {
+                            dataGrid.SelectedItems.Remove(clickedItem);
+                        }
+                    }
+                    else
+                    {
+                        // 选中
+                        clickedItem.IsSelected = true;
+                        if (!viewModel.SelectedRoutes.Contains(clickedItem))
+                        {
+                            viewModel.SelectedRoutes.Add(clickedItem);
+                        }
+                        // 添加到DataGrid选择中
+                        if (!dataGrid.SelectedItems.Contains(clickedItem))
+                        {
+                            dataGrid.SelectedItems.Add(clickedItem);
+                        }
+                    }
+                    
+                    // 更新最后选中项
+                    if (clickedItem.IsSelected)
+                    {
+                        _lastSelectedItem = clickedItem;
+                    }
+                    
+                    // 更新SelectedRoute属性
+                    if (viewModel.SelectedRoutes.Count == 1)
+                    {
+                        viewModel.SelectedRoute = viewModel.SelectedRoutes[0];
+                    }
+                    else
+                    {
+                        viewModel.SelectedRoute = null;
+                    }
+                    
+                    // 关键修复：确保UI状态与数据状态同步
+                    // 清除并重新设置DataGrid的选中项
+                    dataGrid.SelectedItems.Clear();
+                    foreach (var item in viewModel.SelectedRoutes)
+                    {
+                        dataGrid.SelectedItems.Add(item);
+                        Debug.WriteLine($"同步选中状态: {item.RouteName}");
+                    }
+                    
+                    // 手动触发属性更新
+                    viewModel.NotifySelectionChanged();
+                    
+                    // 阻止默认的选择行为
+                    e.Handled = true;
+                    
+                    Debug.WriteLine($"Ctrl键多选后当前选中数量: {viewModel.SelectedRoutes.Count}");
+                }
+                finally
+                {
+                    _isInternalSelectionChange = false;
+                }
+            }
+            // 如果没有按下修饰键且当前是全选状态，则只选择点击的行
+            else if (!isModifierKeyPressed && viewModel.IsAllSelected)
+            {
+                Debug.WriteLine($"从全选状态切换到单选: {clickedItem.RouteName}");
+                
+                try 
+                {
+                    _isInternalSelectionChange = true;
+                    
+                    dataGrid.SelectedItems.Clear();
+                    dataGrid.SelectedItem = clickedItem;
+                    
+                    // 更新所有项的选择状态
+                    foreach (var item in viewModel.Routes)
+                    {
+                        item.IsSelected = (item == clickedItem);
+                    }
+                    
+                    // 更新ViewModel中的SelectedRoutes集合
+                    viewModel.SelectedRoutes.Clear();
+                    viewModel.SelectedRoutes.Add(clickedItem);
+                    viewModel.SelectedRoute = clickedItem;
+                    
+                    // 记录最后选中项
+                    _lastSelectedItem = clickedItem;
+                    
+                    // 手动触发属性更新
+                    viewModel.NotifySelectionChanged();
+                    
+                    // 阻止默认的选择行为
+                    e.Handled = true;
+                    
+                    Debug.WriteLine("单项选择完成");
+                }
+                finally
+                {
+                    _isInternalSelectionChange = false;
+                }
+            }
+            // 无修饰键的普通单击
+            else if (!isModifierKeyPressed)
+            {
+                // 记录最后选中项，用于后续的Shift多选
+                _lastSelectedItem = clickedItem;
+                Debug.WriteLine($"记录普通点击的行: {clickedItem.RouteName}");
+            }
+        }
+        
+        /// <summary>
+        /// 处理DataGrid行选中事件
+        /// </summary>
+        private void DataGridRow_Selected(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("DataGridRow_Selected 触发");
+            
+            if (sender is DataGridRow row && row.Item is RouteInfo item && DataContext is QueryAllRoutesViewModel viewModel)
+            {
+                // 更新模型的选中状态
+                if (!item.IsSelected)
+                {
+                    item.IsSelected = true;
+                    Debug.WriteLine($"行选中: {item.RouteName}");
+                    
+                    // 如果不在SelectedRoutes中，则添加
+                    if (!viewModel.SelectedRoutes.Contains(item))
+                    {
+                        viewModel.SelectedRoutes.Add(item);
+                    }
+                    
+                    // 触发UI更新
+                    viewModel.NotifySelectionChanged();
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 处理DataGrid行取消选中事件
+        /// </summary>
+        private void DataGridRow_Unselected(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("DataGridRow_Unselected 触发");
+            
+            if (sender is DataGridRow row && row.Item is RouteInfo item && DataContext is QueryAllRoutesViewModel viewModel)
+            {
+                // 更新模型的选中状态
+                if (item.IsSelected)
+                {
+                    item.IsSelected = false;
+                    Debug.WriteLine($"行取消选中: {item.RouteName}");
+                    
+                    // 从SelectedRoutes中移除
+                    if (viewModel.SelectedRoutes.Contains(item))
+                    {
+                        viewModel.SelectedRoutes.Remove(item);
+                    }
+                    
+                    // 触发UI更新
+                    viewModel.NotifySelectionChanged();
+                }
+            }
         }
     }
 } 
