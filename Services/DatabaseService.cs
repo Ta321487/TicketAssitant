@@ -2770,5 +2770,126 @@ namespace TA_WPF.Services
                 }
             }
         }
+
+        /// <summary>
+        /// 获取所有路线信息
+        /// </summary>
+        /// <returns>路线信息列表</returns>
+        public async Task<List<RouteInfo>> GetRoutesAsync()
+        {
+            // 调用分页方法获取所有记录
+            // 传递最大可能的页大小，确保获取所有记录
+            return await GetRoutesAsync(1, int.MaxValue, "id", true);
+        }
+
+        /// <summary>
+        /// 获取分页的路线信息
+        /// </summary>
+        /// <param name="pageNumber">页码 (从1开始)</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <param name="orderBy">排序字段</param>
+        /// <param name="ascending">是否升序</param>
+        /// <returns>路线信息列表</returns>
+        public async Task<List<RouteInfo>> GetRoutesAsync(int pageNumber, int pageSize, string orderBy = "id", bool ascending = true)
+        {
+            var items = new List<RouteInfo>();
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0) pageSize = 10; // Default page size
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 构建排序方向
+                    string direction = ascending ? "ASC" : "DESC";
+                    
+                    // 显式列出所有需要的列
+                    string columns = @"`id`, `route_name`, `description`, `cover_image`, 
+                                     `create_time`, `update_time`, `total_distance`, 
+                                     `is_favorite`, `sort_order`";
+
+                    // 构建查询语句
+                    string query = $"SELECT {columns} FROM route_info ";
+
+                    // 添加排序
+                    query += $"ORDER BY `{orderBy}` {direction} ";
+                    
+                    // 只有分页查询需要LIMIT子句
+                    if (pageSize < int.MaxValue)
+                    {
+                        query += "LIMIT @Offset, @PageSize";
+                    }
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        // 只有分页查询需要添加这些参数
+                        if (pageSize < int.MaxValue)
+                        {
+                            command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                            command.Parameters.AddWithValue("@PageSize", pageSize);
+                        }
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                items.Add(MapRouteInfo(reader));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取路线列表失败: {ex.Message}", ex);
+                throw;
+            }
+            
+            return items;
+        }
+
+        /// <summary>
+        /// 获取路线总数
+        /// </summary>
+        /// <returns>路线总数</returns>
+        public async Task<int> GetRouteCountAsync()
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    using (var command = new MySqlCommand("SELECT COUNT(*) FROM route_info", connection))
+                    {
+                        // Set timeout for count operation as well
+                        command.CommandTimeout = 15; // 15 seconds
+                        object result = await command.ExecuteScalarAsync();
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取路线总数时出错: {ex.Message}", ex);
+                throw new Exception($"获取路线总数时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 将 DataReader 映射到 RouteInfo 对象
+        /// </summary>
+        private RouteInfo MapRouteInfo(DbDataReader reader)
+        {
+            return new RouteInfo
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("id")),
+                RouteName = reader.IsDBNull(reader.GetOrdinal("route_name")) ? null : reader.GetString(reader.GetOrdinal("route_name")),
+                Description = reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
+                TotalDistance = reader.IsDBNull(reader.GetOrdinal("total_distance")) ? 0 : reader.GetDecimal(reader.GetOrdinal("total_distance")),
+                CreateTime = reader.IsDBNull(reader.GetOrdinal("create_time")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("create_time")),
+                UpdateTime = reader.IsDBNull(reader.GetOrdinal("update_time")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("update_time")),
+                IsFavorite = reader.IsDBNull(reader.GetOrdinal("is_favorite")) ? false : reader.GetBoolean(reader.GetOrdinal("is_favorite")),
+                SortOrder = reader.IsDBNull(reader.GetOrdinal("sort_order")) ? 0 : reader.GetInt32(reader.GetOrdinal("sort_order"))
+            };
+        }
     }
 }

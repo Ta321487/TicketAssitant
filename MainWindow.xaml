@@ -300,6 +300,55 @@
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
                                 </TreeViewItem>
+                                <!-- 路线管理菜单项 -->
+                                <TreeViewItem IsExpanded="True">
+                                    <TreeViewItem.Header>
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="RoadVariant" Margin="0,0,8,0"/>
+                                            <TextBlock Text="路线管理"/>
+                                        </StackPanel>
+                                    </TreeViewItem.Header>
+                                    <TreeViewItem>
+                                        <TreeViewItem.Header>
+                                            <Button Content="路线中心" 
+                                                    Command="{Binding RouteCenterCommand}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    HorizontalContentAlignment="Left"
+                                                    Width="200"
+                                                    Margin="0"
+                                                    Foreground="{DynamicResource GlobalAccentBrush}">
+                                                <Button.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="Routes" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </Button.ContentTemplate>
+                                            </Button>
+                                        </TreeViewItem.Header>
+                                    </TreeViewItem>
+                                    <TreeViewItem>
+                                        <TreeViewItem.Header>
+                                            <Button Content="路线图谱" 
+                                                    Command="{Binding RouteMapCommand}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    HorizontalContentAlignment="Left"
+                                                    Width="200"
+                                                    Margin="0"
+                                                    Foreground="{DynamicResource GlobalAccentBrush}">
+                                                <Button.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="Map" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </Button.ContentTemplate>
+                                            </Button>
+                                        </TreeViewItem.Header>
+                                    </TreeViewItem>
+                                </TreeViewItem>
                                 <TreeViewItem>
                                     <TreeViewItem.Header>
                                         <Button x:Name="SettingsButton"
@@ -361,6 +410,11 @@
                     <views:DashboardView Grid.Column="1" 
                                         DataContext="{Binding DashboardViewModel}"
                                         Visibility="{Binding DataContext.ShowDashboardView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    
+                    <!-- 路线中心页面 -->
+                    <views:QueryAllRoutesPage Grid.Column="1"
+                                             DataContext="{Binding QueryAllRoutesViewModel}"
+                                             Visibility="{Binding DataContext.ShowRouteCenter, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </Grid>
             </Grid>
     </Grid>

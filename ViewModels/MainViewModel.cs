@@ -33,6 +33,7 @@ namespace TA_WPF.ViewModels
         private readonly DashboardViewModel _dashboardViewModel;
         private readonly QueryAllStationsViewModel _queryAllStationsViewModel;
         private readonly QueryAllCollectionsViewModel _queryAllCollectionsViewModel;
+        private readonly QueryAllRoutesViewModel _queryAllRoutesViewModel;
 
         private bool _showWelcome = true;
         private bool _showSettings = false;
@@ -40,6 +41,8 @@ namespace TA_WPF.ViewModels
         private bool _showDashboardView = false;
         private bool _showQueryAllStations = false;
         private bool _showQueryAllCollections = false;
+        private bool _showRouteCenter = false;
+        private bool _showRouteMap = false;
         private string _connectionString;
 
         /// <summary>
@@ -77,12 +80,17 @@ namespace TA_WPF.ViewModels
                 // 初始化仪表盘视图模型
                 _dashboardViewModel = new DashboardViewModel(_databaseService, _configurationService);
 
+                // 初始化路线中心视图模型
+                _queryAllRoutesViewModel = new QueryAllRoutesViewModel(_databaseService, new PaginationViewModel(), this);
+
                 // 初始化命令
                 ShowHomeCommand = new RelayCommand(ShowHome);
                 TicketListCommand = new RelayCommand(async () => await QueryAllAsync());
                 ShowDashboardCommand = new RelayCommand(ShowDashboard);
                 StationListCommand = new RelayCommand(async () => await QueryAllStationsAsync());
                 CollectionListCommand = new RelayCommand(async () => await QueryAllCollectionsAsync());
+                RouteCenterCommand = new RelayCommand(async () => await QueryAllRoutesAsync());
+                RouteMapCommand = new RelayCommand(ShowRouteMapView);
 
                 // 新增添加车票相关命令
                 OcrTicketCommand = new RelayCommand(ShowOcrTicketFeatureNotAvailable);
@@ -129,6 +137,11 @@ namespace TA_WPF.ViewModels
         public DashboardViewModel DashboardViewModel => _dashboardViewModel;
 
         /// <summary>
+        /// 路线中心视图模型
+        /// </summary>
+        public QueryAllRoutesViewModel QueryAllRoutesViewModel => _queryAllRoutesViewModel;
+
+        /// <summary>
         /// 是否显示欢迎页
         /// </summary>
         public bool ShowWelcome
@@ -149,6 +162,8 @@ namespace TA_WPF.ViewModels
                         ShowDashboardView = false;
                         ShowQueryAllStations = false;
                         ShowQueryAllCollections = false;
+                        ShowRouteCenter = false;
+                        ShowRouteMap = false;
                     }
                 }
             }
@@ -175,6 +190,8 @@ namespace TA_WPF.ViewModels
                         ShowDashboardView = false;
                         ShowQueryAllStations = false;
                         ShowQueryAllCollections = false;
+                        ShowRouteCenter = false;
+                        ShowRouteMap = false;
                     }
                 }
             }
@@ -201,6 +218,8 @@ namespace TA_WPF.ViewModels
                         ShowDashboardView = false;
                         ShowQueryAllStations = false;
                         ShowQueryAllCollections = false;
+                        ShowRouteCenter = false;
+                        ShowRouteMap = false;
                     }
                 }
             }
@@ -227,6 +246,8 @@ namespace TA_WPF.ViewModels
                         ShowQueryAllTickets = false;
                         ShowQueryAllStations = false;
                         ShowQueryAllCollections = false;
+                        ShowRouteCenter = false;
+                        ShowRouteMap = false;
                     }
                 }
             }
@@ -253,6 +274,8 @@ namespace TA_WPF.ViewModels
                         ShowQueryAllTickets = false;
                         ShowDashboardView = false;
                         ShowQueryAllCollections = false;
+                        ShowRouteCenter = false;
+                        ShowRouteMap = false;
                     }
                 }
             }
@@ -279,6 +302,64 @@ namespace TA_WPF.ViewModels
                         ShowQueryAllTickets = false;
                         ShowDashboardView = false;
                         ShowQueryAllStations = false;
+                        ShowRouteCenter = false;
+                        ShowRouteMap = false;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否显示路线中心页面
+        /// </summary>
+        public bool ShowRouteCenter
+        {
+            get => _showRouteCenter;
+            set
+            {
+                if (_showRouteCenter != value)
+                {
+                    _showRouteCenter = value;
+                    OnPropertyChanged(nameof(ShowRouteCenter));
+
+                    // 如果显示路线中心页面，则隐藏其他页面
+                    if (value)
+                    {
+                        ShowWelcome = false;
+                        ShowSettings = false;
+                        ShowQueryAllTickets = false;
+                        ShowDashboardView = false;
+                        ShowQueryAllStations = false;
+                        ShowQueryAllCollections = false;
+                        ShowRouteMap = false;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 是否显示路线图谱页面
+        /// </summary>
+        public bool ShowRouteMap
+        {
+            get => _showRouteMap;
+            set
+            {
+                if (_showRouteMap != value)
+                {
+                    _showRouteMap = value;
+                    OnPropertyChanged(nameof(ShowRouteMap));
+
+                    // 如果显示路线图谱页面，则隐藏其他页面
+                    if (value)
+                    {
+                        ShowWelcome = false;
+                        ShowSettings = false;
+                        ShowQueryAllTickets = false;
+                        ShowDashboardView = false;
+                        ShowQueryAllStations = false;
+                        ShowQueryAllCollections = false;
+                        ShowRouteCenter = false;
                     }
                 }
             }
@@ -333,6 +414,16 @@ namespace TA_WPF.ViewModels
         /// 车票收藏夹命令
         /// </summary>
         public ICommand CollectionListCommand { get; }
+
+        /// <summary>
+        /// 路线中心命令
+        /// </summary>
+        public ICommand RouteCenterCommand { get; }
+
+        /// <summary>
+        /// 路线图谱命令
+        /// </summary>
+        public ICommand RouteMapCommand { get; }
 
         /// <summary>
         /// 修改连接命令
@@ -457,8 +548,16 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private async Task QueryAllAsync()
         {
-            ShowQueryAllTickets = true;
-            await _queryAllTicketsViewModel.QueryAllAsync();
+            try
+            {
+                ShowQueryAllTickets = true;
+                await _queryAllTicketsViewModel.QueryAllAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"显示车票中心页面时出错: {ex.Message}");
+                LogHelper.LogError($"显示车票中心页面时出错: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -543,6 +642,34 @@ namespace TA_WPF.ViewModels
                 MessageBoxHelper.ShowError($"打开12306 PDF导入车票窗口时出错: {ex.Message}");
                 LogHelper.LogError($"打开12306 PDF导入车票窗口时出错: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// 路线中心相关功能
+        /// </summary>
+        private async Task QueryAllRoutesAsync()
+        {
+            try
+            {
+                // 显示路线中心页面
+                ShowRouteCenter = true;
+                
+                // 加载路线数据
+                await _queryAllRoutesViewModel.QueryAllAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.ShowError($"加载路线中心失败: {ex.Message}");
+                LogHelper.LogError($"加载路线中心失败", ex);
+            }
+        }
+
+        /// <summary>
+        /// 显示路线图谱功能
+        /// </summary>
+        private void ShowRouteMapView()
+        {
+            MessageBoxHelper.ShowInfo("此功能尚未实现", "路线图谱");
         }
     }
 }
