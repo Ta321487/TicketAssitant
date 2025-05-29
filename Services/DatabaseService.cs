@@ -1190,7 +1190,7 @@ namespace TA_WPF.Services
                       `id` int NOT NULL AUTO_INCREMENT,
                       `collection_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '收藏夹名称',
                       `description` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '收藏夹描述',
-                      `cover_image` mediumblob NOT NULL COMMENT '封面图片base64',
+                      `cover_image` blob NOT NULL COMMENT '封面图片base64',
                       `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
                       `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                       `importance` int NULL DEFAULT 0 COMMENT '评分1-5',
@@ -2599,6 +2599,175 @@ namespace TA_WPF.Services
             {
                 LogHelper.LogError($"搜索收藏夹失败: {ex.Message}", ex);
                 return new List<TicketCollectionInfo>();
+            }
+        }
+
+        /// <summary>
+        /// 创建路线信息表
+        /// </summary>
+        public async Task CreateRouteInfoTableAsync()
+        {
+            using (var connection = await GetOpenConnectionWithRetryAsync())
+            {
+                // 禁用外键约束检测
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    await disableChecksCmd.ExecuteNonQueryAsync();
+                }
+
+                string query = @"
+                    DROP TABLE IF EXISTS `route_info`;
+                    CREATE TABLE `route_info` (
+                      `id` int NOT NULL AUTO_INCREMENT COMMENT '路线ID',
+                      `route_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '路线名称',
+                      `description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '路线描述',
+                      `cover_image` blob NULL COMMENT '封面图片',
+                      `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                      `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                      `total_distance` decimal(10, 2) NULL DEFAULT 0 COMMENT '总里程(公里)',
+                      `is_favorite` tinyint(1) NULL DEFAULT 0 COMMENT '是否收藏',
+                      `sort_order` int NULL DEFAULT 0 COMMENT '排序顺序',
+                      PRIMARY KEY (`id`) USING BTREE
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;";
+
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                // 重新启用外键约束检测
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    await enableChecksCmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 创建路线与车票映射表
+        /// </summary>
+        public async Task CreateRouteTicketMappingTableAsync()
+        {
+            using (var connection = await GetOpenConnectionWithRetryAsync())
+            {
+                // 禁用外键约束检测
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    await disableChecksCmd.ExecuteNonQueryAsync();
+                }
+
+                string query = @"
+                    DROP TABLE IF EXISTS `route_ticket_mapping`;
+                    CREATE TABLE `route_ticket_mapping` (
+                      `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
+                      `route_id` int NOT NULL COMMENT '路线ID',
+                      `ticket_id` int NOT NULL COMMENT '车票ID',
+                      `order_index` int NULL DEFAULT 0 COMMENT '在路线中的顺序',
+                      `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
+                      PRIMARY KEY (`id`) USING BTREE,
+                      INDEX `idx_route`(`route_id` ASC) USING BTREE,
+                      INDEX `idx_ticket`(`ticket_id` ASC) USING BTREE,
+                      CONSTRAINT `fk_rt_route` FOREIGN KEY (`route_id`) REFERENCES `route_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                      CONSTRAINT `fk_rt_ticket` FOREIGN KEY (`ticket_id`) REFERENCES `train_ride_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;";
+
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                // 重新启用外键约束检测
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    await enableChecksCmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 创建路线与车站映射表
+        /// </summary>
+        public async Task CreateRouteStationMappingTableAsync()
+        {
+            using (var connection = await GetOpenConnectionWithRetryAsync())
+            {
+                // 禁用外键约束检测
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    await disableChecksCmd.ExecuteNonQueryAsync();
+                }
+
+                string query = @"
+                    DROP TABLE IF EXISTS `route_station_mapping`;
+                    CREATE TABLE `route_station_mapping` (
+                      `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
+                      `route_id` int NOT NULL COMMENT '路线ID',
+                      `station_id` int NOT NULL COMMENT '车站ID',
+                      `order_index` int NULL DEFAULT 0 COMMENT '在路线中的顺序',
+                      `station_role` tinyint NULL DEFAULT 0 COMMENT '车站角色：1=起点,2=终点,4=经停,8=换乘',
+                      `stay_time` int NULL DEFAULT 0 COMMENT '计划停留时间(分钟)',
+                      `notes` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
+                      `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
+                      PRIMARY KEY (`id`) USING BTREE,
+                      INDEX `idx_route`(`route_id` ASC) USING BTREE,
+                      INDEX `idx_station`(`station_id` ASC) USING BTREE,
+                      CONSTRAINT `fk_rs_route` FOREIGN KEY (`route_id`) REFERENCES `route_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+                      CONSTRAINT `fk_rs_station` FOREIGN KEY (`station_id`) REFERENCES `station_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;";
+
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                // 重新启用外键约束检测
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    await enableChecksCmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 创建路线统计信息表
+        /// </summary>
+        public async Task CreateRouteStatisticsTableAsync()
+        {
+            using (var connection = await GetOpenConnectionWithRetryAsync())
+            {
+                // 禁用外键约束检测
+                using (MySqlCommand disableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 0;", connection))
+                {
+                    await disableChecksCmd.ExecuteNonQueryAsync();
+                }
+
+                string query = @"
+                    DROP TABLE IF EXISTS `route_statistics`;
+                    CREATE TABLE `route_statistics` (
+                      `id` int NOT NULL AUTO_INCREMENT COMMENT '统计ID',
+                      `route_id` int NOT NULL COMMENT '路线ID',
+                      `total_cost` decimal(10, 2) NULL DEFAULT 0 COMMENT '总花费',
+                      `total_distance` decimal(10, 2) NULL DEFAULT 0 COMMENT '总里程(公里)',
+                      `provinces_passed` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '经过的省份(逗号分隔)',
+                      `cities_passed` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '经过的城市(逗号分隔)',
+                      `seat_type_stats` json NULL COMMENT '不同席别的里程统计',
+                      `railway_bureau_stats` json NULL COMMENT '不同铁路局的统计',
+                      `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                      PRIMARY KEY (`id`) USING BTREE,
+                      UNIQUE INDEX `uk_route`(`route_id` ASC) USING BTREE,
+                      CONSTRAINT `fk_stat_route` FOREIGN KEY (`route_id`) REFERENCES `route_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+                    ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;";
+
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                // 重新启用外键约束检测
+                using (MySqlCommand enableChecksCmd = new MySqlCommand("SET FOREIGN_KEY_CHECKS = 1;", connection))
+                {
+                    await enableChecksCmd.ExecuteNonQueryAsync();
+                }
             }
         }
     }

@@ -43,7 +43,7 @@ namespace TA_WPF.ViewModels
         private bool _isLoading = false;
 
         // 表和连接字符串相关
-        public List<string> RequiredTables { get; } = new List<string> { "station_info", "train_ride_info", "ticket_collections_info", "collection_mapped_tickets_info" };
+        public List<string> RequiredTables { get; } = new List<string> { "station_info", "train_ride_info", "ticket_collections_info", "collection_mapped_tickets_info", "route_info", "route_ticket_mapping", "route_station_mapping", "route_statistics" };
         public string ConnectionString { get; private set; } = string.Empty;
         public bool LoginSuccessful { get; private set; } = false;
 
@@ -712,6 +712,18 @@ namespace TA_WPF.ViewModels
 
                 // 创建collection_mapped_tickets_info表
                 await databaseService.CreateCollectionMappedTicketsInfoTableAsync();
+                
+                // 创建路线信息表
+                await databaseService.CreateRouteInfoTableAsync();
+                
+                // 创建路线与车票映射表
+                await databaseService.CreateRouteTicketMappingTableAsync();
+                
+                // 创建路线与车站映射表
+                await databaseService.CreateRouteStationMappingTableAsync();
+                
+                // 创建路线统计信息表
+                await databaseService.CreateRouteStatisticsTableAsync();
                 
                 Debug.WriteLine("使用DatabaseService创建表成功");
                 LogHelper.LogSystem("数据库", "使用DatabaseService创建必要的表成功");

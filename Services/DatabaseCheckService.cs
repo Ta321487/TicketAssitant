@@ -10,7 +10,7 @@ namespace TA_WPF.Services
     public class DatabaseCheckService
     {
         private readonly DatabaseService _databaseService;
-        private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info", "ticket_collections_info", "collection_mapped_tickets_info" }; // 必要的表
+        private List<string> _requiredTables = new List<string> { "station_info", "train_ride_info", "ticket_collections_info", "collection_mapped_tickets_info", "route_info", "route_ticket_mapping", "route_station_mapping", "route_statistics" }; // 必要的表
 
         /// <summary>
         /// 构造函数
@@ -33,33 +33,38 @@ namespace TA_WPF.Services
                 bool ticketTableExists = await _databaseService.TableExistsAsync("train_ride_info");
                 bool ticketCollectionsTableExists = await _databaseService.TableExistsAsync("ticket_collections_info");
                 bool collectionMappedTicketsTableExists = await _databaseService.TableExistsAsync("collection_mapped_tickets_info");
+                
+                // 检查路线相关表是否存在
+                bool routeInfoTableExists = await _databaseService.TableExistsAsync("route_info");
+                bool routeTicketMappingTableExists = await _databaseService.TableExistsAsync("route_ticket_mapping");
+                bool routeStationMappingTableExists = await _databaseService.TableExistsAsync("route_station_mapping");
+                bool routeStatisticsTableExists = await _databaseService.TableExistsAsync("route_statistics");
 
-                if (!stationTableExists || !ticketTableExists || !ticketCollectionsTableExists || !collectionMappedTicketsTableExists)
+                // 检查是否所有必要的表都存在
+                bool allTablesExist = stationTableExists && ticketTableExists && ticketCollectionsTableExists && 
+                                    collectionMappedTicketsTableExists && routeInfoTableExists && 
+                                    routeTicketMappingTableExists && routeStationMappingTableExists && 
+                                    routeStatisticsTableExists;
+
+                // 如果有表不存在，提示用户创建
+                if (!allTablesExist)
                 {
-                    // 构建提示消息
-                    string message = "数据库中缺少必要的表：\n";
-                    if (!stationTableExists)
+                    string missingTables = string.Join(", ", new[]
                     {
-                        message += "- 车站信息表 (station_info)\n";
-                    }
-                    if (!ticketTableExists)
-                    {
-                        message += "- 车票信息表 (train_ride_info)\n";
-                    }
-                    if (!ticketCollectionsTableExists)
-                    {
-                        message += "- 车票收藏夹信息表 (ticket_collections_info)\n";
-                    }
-                    if (!collectionMappedTicketsTableExists)
-                    {
-                        message += "- 收藏夹与车票关联表 (collection_mapped_tickets_info)\n";
-                    }
-                    message += "\n是否立即创建这些表？";
+                        !stationTableExists ? "车站信息表" : null,
+                        !ticketTableExists ? "车票信息表" : null,
+                        !ticketCollectionsTableExists ? "收藏夹信息表" : null,
+                        !collectionMappedTicketsTableExists ? "收藏夹-车票映射表" : null,
+                        !routeInfoTableExists ? "路线信息表" : null,
+                        !routeTicketMappingTableExists ? "路线-车票映射表" : null,
+                        !routeStationMappingTableExists ? "路线-车站映射表" : null,
+                        !routeStatisticsTableExists ? "路线统计信息表" : null
+                    }.Where(t => t != null));
 
-                    // 显示确认对话框
-                    var result = MessageDialog.Show(
-                        message,
-                        "缺少必要的表",
+                    // 弹出对话框询问是否创建
+                    bool? result = MessageDialog.Show(
+                        $"数据库中缺少以下表：{missingTables}，是否创建？",
+                        "表不存在",
                         MessageType.Question,
                         MessageButtons.YesNo);
 
@@ -81,6 +86,22 @@ namespace TA_WPF.Services
                         if (!collectionMappedTicketsTableExists)
                         {
                             await _databaseService.CreateCollectionMappedTicketsInfoTableAsync();
+                        }
+                        if (!routeInfoTableExists)
+                        {
+                            await _databaseService.CreateRouteInfoTableAsync();
+                        }
+                        if (!routeTicketMappingTableExists)
+                        {
+                            await _databaseService.CreateRouteTicketMappingTableAsync();
+                        }
+                        if (!routeStationMappingTableExists)
+                        {
+                            await _databaseService.CreateRouteStationMappingTableAsync();
+                        }
+                        if (!routeStatisticsTableExists)
+                        {
+                            await _databaseService.CreateRouteStatisticsTableAsync();
                         }
 
                         MessageDialog.Show(
