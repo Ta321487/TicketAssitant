@@ -470,6 +470,7 @@
                       Foreground="{DynamicResource MaterialDesignBody}"
                       SelectionChanged="TicketsDataGrid_SelectionChanged"
                       MouseDoubleClick="TicketsDataGrid_MouseDoubleClick"
+                      MouseRightButtonDown="TicketsDataGrid_MouseRightButtonDown"
                       BorderThickness="0"
                       BorderBrush="{DynamicResource MaterialDesignDivider}"
                       AlternationCount="2"

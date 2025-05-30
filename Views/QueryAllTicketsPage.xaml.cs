@@ -400,6 +400,70 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
+        /// 处理DataGrid右键点击事件，直接预览车票
+        /// </summary>
+        private void TicketsDataGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!(DataContext is QueryAllTicketsViewModel viewModel))
+                return;
+
+            // 获取点击位置下的行
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+            
+            // 向上查找DataGridRow
+            while ((dep != null) && !(dep is DataGridRow))
+            {
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            
+            // 如果找到了行，处理该行
+            if (dep is DataGridRow clickedRow && clickedRow.Item is TrainRideInfo clickedItem)
+            {
+                // 阻止事件冒泡，防止触发其他处理
+                e.Handled = true;
+                
+                // 先选中该行
+                DataGrid dataGrid = sender as DataGrid;
+                if (dataGrid != null)
+                {
+                    // 如果没有按住Ctrl或Shift，则清除其他选择
+                    if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl) &&
+                        !Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightShift))
+                    {
+                        try
+                        {
+                            // 清除当前DataGrid的所有选择
+                            dataGrid.SelectedItems.Clear();
+                            
+                            // 更新所有项的选择状态为false
+                            foreach (var item in viewModel.TrainRideInfos)
+                            {
+                                item.IsSelected = false;
+                            }
+                            
+                            // 选中当前行
+                            dataGrid.SelectedItem = clickedItem;
+                            clickedItem.IsSelected = true;
+                            
+                            // 更新ViewModel中的选中状态
+                            viewModel.UpdateSelectedItemsCountExternal(1);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.LogError($"选择车票时出错: {ex.Message}", ex);
+                        }
+                    }
+                }
+                
+                // 直接执行预览车票命令
+                if (viewModel.PreviewTicketCommand.CanExecute(null))
+                {
+                    viewModel.PreviewTicketCommand.Execute(null);
+                }
+            }
+        }
+
+        /// <summary>
         /// 处理DataGrid行选中事件
         /// </summary>
         private void DataGridRow_Selected(object sender, RoutedEventArgs e)

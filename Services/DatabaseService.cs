@@ -3054,5 +3054,119 @@ namespace TA_WPF.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// 根据自定义SQL查询获取路线数量
+        /// </summary>
+        /// <param name="query">SQL查询语句</param>
+        /// <returns>路线数量</returns>
+        public async Task<int> GetRouteCountByCustomQueryAsync(string query)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        // 设置超时时间
+                        command.CommandTimeout = 30; // 30秒
+                        
+                        // 执行查询并返回结果
+                        object result = await command.ExecuteScalarAsync();
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"根据自定义查询获取路线数量失败: {ex.Message}", ex);
+                throw new Exception($"获取路线数量时出错: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 根据自定义SQL查询获取路线列表
+        /// </summary>
+        /// <param name="query">SQL查询语句</param>
+        /// <param name="pageNumber">页码（如果查询已包含分页，可忽略）</param>
+        /// <param name="pageSize">每页大小（如果查询已包含分页，可忽略）</param>
+        /// <returns>路线列表</returns>
+        public async Task<List<RouteInfo>> GetRoutesByCustomQueryAsync(string query, int pageNumber = 1, int pageSize = 10)
+        {
+            var items = new List<RouteInfo>();
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        // 设置超时时间
+                        command.CommandTimeout = 30; // 30秒
+                        
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                items.Add(MapRouteInfo(reader));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"根据自定义查询获取路线列表失败: {ex.Message}", ex);
+                throw new Exception($"获取路线列表时出错: {ex.Message}", ex);
+            }
+            
+            return items;
+        }
+
+        /// <summary>
+        /// 根据名称模糊搜索路线
+        /// </summary>
+        /// <param name="searchText">搜索关键词</param>
+        /// <returns>匹配的路线列表</returns>
+        public async Task<List<RouteInfo>> SearchRoutesByNameAsync(string searchText)
+        {
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                return new List<RouteInfo>();
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"SELECT * FROM route_info 
+                                    WHERE route_name LIKE @SearchText 
+                                    ORDER BY sort_order ASC, update_time DESC
+                                    LIMIT 10";
+                    
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@SearchText", $"%{searchText}%");
+                        
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            var routes = new List<RouteInfo>();
+                            
+                            while (await reader.ReadAsync())
+                            {
+                                routes.Add(MapRouteInfo(reader));
+                            }
+                            
+                            return routes;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"搜索路线失败: {ex.Message}", ex);
+                return new List<RouteInfo>();
+            }
+        }
     }
 }

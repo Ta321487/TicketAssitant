@@ -871,6 +871,68 @@ namespace TA_WPF.Views
         }
         
         /// <summary>
+        /// 处理DataGrid右键点击事件，直接打开路线详情
+        /// </summary>
+        private void RoutesDataGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!(DataContext is QueryAllRoutesViewModel viewModel))
+                return;
+                
+            // 获取点击位置下的行
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+            
+            // 向上查找DataGridRow
+            while ((dep != null) && !(dep is DataGridRow))
+            {
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            
+            // 如果找到了行，处理该行
+            if (dep is DataGridRow clickedRow && clickedRow.Item is RouteInfo clickedItem)
+            {
+                // 阻止事件冒泡，防止触发其他处理
+                e.Handled = true;
+                
+                // 先选中该行
+                DataGrid dataGrid = sender as DataGrid;
+                if (dataGrid != null)
+                {
+                    // 如果没有按住Ctrl或Shift，则清除其他选择
+                    if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl) &&
+                        !Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightShift))
+                    {
+                        try
+                        {
+                            _isInternalSelectionChange = true;
+                            
+                            dataGrid.SelectedItems.Clear();
+                            viewModel.SelectedRoutes.Clear();
+                            
+                            // 选中右键点击的行
+                            dataGrid.SelectedItems.Add(clickedItem);
+                            viewModel.SelectedRoutes.Add(clickedItem);
+                            viewModel.SelectedRoute = clickedItem;
+                            clickedItem.IsSelected = true;
+                            
+                            // 记录最后选中项
+                            _lastSelectedItem = clickedItem;
+                            
+                            // 手动触发属性更新
+                            viewModel.NotifySelectionChanged();
+                        }
+                        finally
+                        {
+                            _isInternalSelectionChange = false;
+                        }
+                    }
+                }
+                
+                // 显示路线详情
+                viewModel.ShowRouteDetailsCommand.Execute(clickedItem);
+            }
+        }
+        
+        /// <summary>
         /// 处理DataGrid行选中事件
         /// </summary>
         private void DataGridRow_Selected(object sender, RoutedEventArgs e)

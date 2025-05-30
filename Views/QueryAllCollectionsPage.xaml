@@ -449,7 +449,8 @@
                      AlternationCount="2"
                      ColumnWidth="*"
                      Visibility="{Binding IsListView, Converter={StaticResource BooleanToVisibilityConverter}}"
-                     MouseDoubleClick="DataGrid_MouseDoubleClick">
+                     MouseDoubleClick="DataGrid_MouseDoubleClick"
+                     MouseRightButtonDown="DataGrid_MouseRightButtonDown">
                 <DataGrid.Resources>
                     <!-- 完全覆盖MaterialDesign默认的选中样式 -->
                     <SolidColorBrush x:Key="MaterialDesignSelection" Color="{DynamicResource Primary700}" Opacity="0.1" />
@@ -571,6 +572,7 @@
                      Visibility="{Binding IsGridView, Converter={StaticResource BooleanToVisibilityConverter}}"
                      Margin="0"
                      MouseDoubleClick="ListBox_MouseDoubleClick"
+                     MouseRightButtonDown="ListBox_MouseRightButtonDown"
                      AllowDrop="True"
                      PreviewMouseLeftButtonDown="ListBox_PreviewMouseLeftButtonDown"
                      PreviewMouseMove="ListBox_PreviewMouseMove"
@@ -679,6 +681,7 @@
                                     Background="#CC000000" 
                                     Visibility="Collapsed"
                                     Panel.ZIndex="1"
+                                    MouseRightButtonDown="HoverInfoPanel_MouseRightButtonDown"
                                     x:Name="HoverInfoPanel">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="230" Focusable="False">
                                     <StackPanel VerticalAlignment="Top" Margin="10">

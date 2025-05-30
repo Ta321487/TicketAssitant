@@ -11,6 +11,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Windows.Media;
 using TA_WPF.Views;
+using System.Diagnostics;
 
 namespace TA_WPF.ViewModels
 {
@@ -19,6 +20,7 @@ namespace TA_WPF.ViewModels
         private readonly DatabaseService _databaseService;
         private readonly PaginationViewModel _paginationViewModel;
         private readonly MainViewModel _mainViewModel;
+        private readonly AdvancedQueryRouteViewModel _advancedQueryViewModel;
 
         private ObservableCollection<RouteInfo> _routes;
         private int _totalCount;
@@ -26,12 +28,19 @@ namespace TA_WPF.ViewModels
         private ObservableCollection<RouteInfo> _selectedRoutes;
         private bool _isLoading;
         private double _dataGridRowHeight = 45; // 默认行高为45
+        private string _currentRouteName;
+        private DistanceRangeType _currentDistanceRange = DistanceRangeType.None;
+        private bool _currentIsFavorite = false;
+        private bool _currentIsAndCondition = true;
 
         public QueryAllRoutesViewModel(DatabaseService databaseService, PaginationViewModel paginationViewModel, MainViewModel mainViewModel)
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _paginationViewModel = paginationViewModel ?? throw new ArgumentNullException(nameof(paginationViewModel));
             _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
+
+            _advancedQueryViewModel = new AdvancedQueryRouteViewModel(databaseService);
+            _advancedQueryViewModel.FilterApplied += AdvancedQueryViewModel_FilterApplied;
 
             _routes = new ObservableCollection<RouteInfo>();
             _selectedRoutes = new ObservableCollection<RouteInfo>();
@@ -58,6 +67,30 @@ namespace TA_WPF.ViewModels
             // 添加路线详情命令
             ShowRouteDetailsCommand = new RelayCommand<RouteInfo>(ShowRouteDetails);
         }
+
+        // 添加处理高级查询事件的方法
+        private void AdvancedQueryViewModel_FilterApplied(object sender, RouteQueryFilterEventArgs e)
+        {
+            // 保存当前筛选条件
+            _currentRouteName = e.RouteName;
+            _currentDistanceRange = e.DistanceRange;
+            _currentIsFavorite = e.IsFavorite;
+            _currentIsAndCondition = e.IsAndCondition;
+
+            // 检查是否所有条件都为空，此时应该查询所有数据
+            bool allConditionsEmpty = string.IsNullOrWhiteSpace(e.RouteName) && 
+                                     e.DistanceRange == DistanceRangeType.None &&
+                                     !e.IsFavorite;
+                                     
+            // 重置到第一页
+            _paginationViewModel.CurrentPage = 1;
+            
+            // 加载符合条件的数据
+            _ = LoadRoutesAsync();
+        }
+        
+        // 添加AdvancedQueryViewModel属性
+        public AdvancedQueryRouteViewModel AdvancedQueryViewModel => _advancedQueryViewModel;
 
         // 添加MainViewModel属性，解决绑定错误
         public MainViewModel MainViewModel => _mainViewModel;
@@ -299,7 +332,8 @@ namespace TA_WPF.ViewModels
 
         private void OpenAdvancedQuery()
         {
-            MessageBoxHelper.ShowInfo("高级查询功能暂未实现");
+            // 切换高级查询面板的可见性
+            _advancedQueryViewModel.ToggleQueryPanelCommand.Execute(null);
         }
         
         private void DoubleClickEditRoute(RouteInfo route)
@@ -413,6 +447,18 @@ namespace TA_WPF.ViewModels
         // --- Data Loading ---
         public async Task QueryAllAsync()
         {
+            // 重置筛选条件
+            _currentRouteName = null;
+            _currentDistanceRange = DistanceRangeType.None;
+            _currentIsFavorite = false;
+            _currentIsAndCondition = true;
+            
+            // 重置高级查询面板
+            if (_advancedQueryViewModel != null)
+            {
+                _advancedQueryViewModel.ResetFilter();
+            }
+            
             _paginationViewModel.CurrentPage = 1; // Reset to first page
             await LoadRoutesAsync();
         }
@@ -422,10 +468,11 @@ namespace TA_WPF.ViewModels
             IsLoading = true;
             try
             {
-                TotalCount = await _databaseService.GetRouteCountAsync();
-                var routesData = await _databaseService.GetRoutesAsync(
-                    _paginationViewModel.CurrentPage,
-                    _paginationViewModel.PageSize);
+                // 使用高级查询条件获取路线总数
+                TotalCount = await GetFilteredRouteCountAsync();
+                
+                // 使用高级查询条件加载路线数据
+                var routesData = await GetFilteredRoutesAsync();
 
                 Routes = new ObservableCollection<RouteInfo>(routesData);
                 
@@ -455,6 +502,177 @@ namespace TA_WPF.ViewModels
             {
                 IsLoading = false;
             }
+        }
+        
+        // 获取筛选的路线总数
+        private async Task<int> GetFilteredRouteCountAsync()
+        {
+            try
+            {
+                // 构建SQL查询
+                string query = BuildFilterQuerySQL(true);
+                return await _databaseService.GetRouteCountByCustomQueryAsync(query);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取筛选路线总数失败: {ex.Message}", ex);
+                return 0;
+            }
+        }
+        
+        // 获取筛选的路线数据
+        private async Task<List<RouteInfo>> GetFilteredRoutesAsync()
+        {
+            try
+            {
+                // 构建SQL查询
+                string query = BuildFilterQuerySQL(false);
+                return await _databaseService.GetRoutesByCustomQueryAsync(
+                    query, 
+                    _paginationViewModel.CurrentPage,
+                    _paginationViewModel.PageSize);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取筛选路线数据失败: {ex.Message}", ex);
+                return new List<RouteInfo>();
+            }
+        }
+        
+        // 构建筛选SQL查询
+        private string BuildFilterQuerySQL(bool isCountQuery)
+        {
+            // 所有非空条件列表
+            var conditions = new List<string>();
+            
+            // 检查是否所有查询条件都为空（查询全部数据的情况）
+            bool allConditionsEmpty = string.IsNullOrWhiteSpace(_currentRouteName) && 
+                                      _currentDistanceRange == DistanceRangeType.None &&
+                                      !_currentIsFavorite;
+                                      
+            // 如果要查询所有数据，就不添加任何条件
+            if (!allConditionsEmpty)
+            {
+                if (_currentIsAndCondition)
+                {
+                    // AND条件模式 - 对未设置的条件使用IS NULL
+                    
+                    // 处理路线名称条件
+                    if (!string.IsNullOrWhiteSpace(_currentRouteName))
+                    {
+                        conditions.Add($"route_name LIKE '%{_currentRouteName}%'");
+                    }
+                    else
+                    {
+                        conditions.Add("route_name IS NULL");
+                    }
+                    
+                    // 处理总里程范围条件
+                    if (_currentDistanceRange == DistanceRangeType.None)
+                    {
+                        conditions.Add("total_distance IS NULL");
+                    }
+                    else
+                    {
+                        // 有明确的距离范围选择
+                        switch (_currentDistanceRange)
+                        {
+                            case DistanceRangeType.Range1: // 0-100公里
+                                conditions.Add("(total_distance <= 100)");
+                                break;
+                            case DistanceRangeType.Range2: // 100-500公里
+                                conditions.Add("(total_distance > 100 AND total_distance <= 500)");
+                                break;
+                            case DistanceRangeType.Range3: // 500-1000公里
+                                conditions.Add("(total_distance > 500 AND total_distance <= 1000)");
+                                break;
+                            case DistanceRangeType.Range4: // 1000-2000公里
+                                conditions.Add("(total_distance > 1000 AND total_distance <= 2000)");
+                                break;
+                            case DistanceRangeType.Range5: // 2000公里以上
+                                conditions.Add("(total_distance > 2000)");
+                                break;
+                        }
+                    }
+                    
+                    // 处理收藏状态条件
+                    if (_currentIsFavorite)
+                    {
+                        conditions.Add("is_favorite = 1");
+                    }
+                    else
+                    {
+                        conditions.Add("(is_favorite IS NULL OR is_favorite = 0)");
+                    }
+                }
+                else
+                {
+                    // OR条件模式 - 只有设置了的条件才添加
+                    
+                    // 处理路线名称条件（模糊匹配）
+                    if (!string.IsNullOrWhiteSpace(_currentRouteName))
+                    {
+                        conditions.Add($"route_name LIKE '%{_currentRouteName}%'");
+                    }
+                    
+                    // 处理总里程范围条件
+                    switch (_currentDistanceRange)
+                    {
+                        case DistanceRangeType.Range1: // 0-100公里
+                            conditions.Add("(total_distance <= 100)");
+                            break;
+                        case DistanceRangeType.Range2: // 100-500公里
+                            conditions.Add("(total_distance > 100 AND total_distance <= 500)");
+                            break;
+                        case DistanceRangeType.Range3: // 500-1000公里
+                            conditions.Add("(total_distance > 500 AND total_distance <= 1000)");
+                            break;
+                        case DistanceRangeType.Range4: // 1000-2000公里
+                            conditions.Add("(total_distance > 1000 AND total_distance <= 2000)");
+                            break;
+                        case DistanceRangeType.Range5: // 2000公里以上
+                            conditions.Add("(total_distance > 2000)");
+                            break;
+                    }
+                    
+                    // 处理收藏状态条件
+                    if (_currentIsFavorite)
+                    {
+                        conditions.Add("is_favorite = 1");
+                    }
+                }
+            }
+            
+            // 构建完整SQL查询
+            string sql;
+            if (isCountQuery)
+            {
+                sql = "SELECT COUNT(*) FROM route_info";
+            }
+            else
+            {
+                sql = "SELECT * FROM route_info";
+            }
+            
+            // 添加WHERE子句
+            if (conditions.Count > 0)
+            {
+                sql += " WHERE ";
+                
+                // 根据条件组合方式连接条件
+                string connector = _currentIsAndCondition ? " AND " : " OR ";
+                sql += string.Join(connector, conditions);
+            }
+            
+            // 添加排序和分页（仅对数据查询）
+            if (!isCountQuery)
+            {
+                sql += " ORDER BY id DESC";
+                sql += $" LIMIT {(_paginationViewModel.CurrentPage - 1) * _paginationViewModel.PageSize}, {_paginationViewModel.PageSize}";
+            }
+            
+            Debug.WriteLine($"生成的SQL查询语句: {sql}");
+            return sql;
         }
 
         // 添加方法用于通知UI更新选择状态

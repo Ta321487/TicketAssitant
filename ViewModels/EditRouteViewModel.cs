@@ -21,7 +21,7 @@ namespace TA_WPF.ViewModels
     {
         private readonly DatabaseService _databaseService;
         private readonly MainViewModel _mainViewModel;
-        private RouteInfo _originalRoute;
+        private     RouteInfo _originalRoute;
         private int _routeId;
         private string _routeName;
         private string _description;

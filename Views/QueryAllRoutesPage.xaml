@@ -293,6 +293,7 @@
         <!-- 高级查询面板 (占位) -->
         <Grid Grid.Row="1" x:Name="QueryPanelContainer" Margin="10,10,10,0">
             <!-- 这里可以添加高级查询面板的实现 -->
+            <local:AdvancedQueryRoutePanel DataContext="{Binding AdvancedQueryViewModel}" />
         </Grid>
 
         <!-- 数据表格 -->
@@ -323,6 +324,7 @@
                       IsManipulationEnabled="True"
                       PreviewKeyDown="RoutesDataGrid_PreviewKeyDown"
                       KeyDown="RoutesDataGrid_KeyDown"
+                      MouseRightButtonDown="RoutesDataGrid_MouseRightButtonDown"
                       FontSize="{Binding MainViewModel.FontSize}"
                       RowHeight="{Binding DataGridRowHeight}"
                       RowStyle="{StaticResource DataGridRowStyle}"
@@ -355,36 +357,6 @@
                                   Command="{Binding DoubleClickEditCommand}" 
                                   CommandParameter="{Binding SelectedRoute}" />
                 </DataGrid.InputBindings>
-
-                <!-- 添加右键菜单 -->
-                <DataGrid.ContextMenu>
-                    <ContextMenu DataContext="{Binding Path=PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                        <MenuItem Header="路线详情" 
-                                  Command="{Binding ShowRouteDetailsCommand}" 
-                                  CommandParameter="{Binding SelectedRoute}"
-                                  IsEnabled="{Binding CanShowRouteDetails}">
-                            <MenuItem.Icon>
-                                <materialDesign:PackIcon Kind="InformationOutline" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Header="编辑路线" 
-                                  Command="{Binding EditRouteCommand}" 
-                                  CommandParameter="{Binding SelectedRoute}"
-                                  IsEnabled="{Binding CanEditSelectedRoute}">
-                            <MenuItem.Icon>
-                                <materialDesign:PackIcon Kind="Edit" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <Separator />
-                        <MenuItem Header="删除选中路线" 
-                                  Command="{Binding DeleteRoutesCommand}"
-                                  IsEnabled="{Binding HasSelection}">
-                            <MenuItem.Icon>
-                                <materialDesign:PackIcon Kind="Delete" Foreground="#F44336" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                    </ContextMenu>
-                </DataGrid.ContextMenu>
 
                 <DataGrid.Columns>
                     <!-- ID Column - 隐藏 -->

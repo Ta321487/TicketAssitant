@@ -359,10 +359,10 @@ namespace TA_WPF.Views
                 // 设置当前选择项
                 viewModel.SelectedCollection = collection;
                 
-                // 执行打开命令
-                if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
+                // 执行编辑命令
+                if (viewModel.EditCollectionCommand.CanExecute(null))
                 {
-                    viewModel.OpenCollectionTicketsCommand.Execute(null);
+                    viewModel.EditCollectionCommand.Execute(null);
                 }
                 
                 e.Handled = true;
@@ -373,7 +373,7 @@ namespace TA_WPF.Views
         /// ListBox双击事件处理
         /// </summary>
         private void ListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-                {
+        {
             var viewModel = DataContext as QueryAllCollectionsViewModel;
             if (viewModel == null) return;
 
@@ -403,13 +403,214 @@ namespace TA_WPF.Views
                 // 设置当前选择项
                 viewModel.SelectedCollection = collection;
                 
-                // 执行打开命令
-                if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
-                    {
-                    viewModel.OpenCollectionTicketsCommand.Execute(null);
-                    }
+                // 执行编辑命令
+                if (viewModel.EditCollectionCommand.CanExecute(null))
+                {
+                    viewModel.EditCollectionCommand.Execute(null);
+                }
                 
                 e.Handled = true;
+            }
+        }
+        
+        /// <summary>
+        /// DataGrid右键点击事件处理
+        /// </summary>
+        private void DataGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var viewModel = DataContext as QueryAllCollectionsViewModel;
+            if (viewModel == null) return;
+
+            // 获取点击位置下的行
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+            
+            // 向上查找DataGridRow
+            while ((dep != null) && !(dep is DataGridRow))
+            {
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            
+            // 如果找到了行，处理该行
+            if (dep is DataGridRow clickedRow && clickedRow.Item is TicketCollectionInfo collection)
+            {
+                // 阻止事件冒泡，防止触发其他处理
+                e.Handled = true;
+                
+                // 先选中该行
+                DataGrid dataGrid = sender as DataGrid;
+                if (dataGrid != null)
+                {
+                    // 如果没有按住Ctrl或Shift，则清除其他选择
+                    if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl) &&
+                        !Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightShift))
+                    {
+                        try
+                        {
+                            // 设置批量操作标志(如有该字段)
+                            var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (field != null)
+                                field.SetValue(viewModel, true);
+                            
+                            // 确保只有当前项被选中
+                            foreach (var item in viewModel.Collections)
+                            {
+                                item.IsSelected = (item == collection);
+                            }
+                            
+                            // 清空并重新设置选中集合
+                            viewModel.SelectedCollections.Clear();
+                            viewModel.SelectedCollections.Add(collection);
+                            
+                            // 重置批量操作标志
+                            if (field != null)
+                                field.SetValue(viewModel, false);
+                            
+                            // 设置当前选择项
+                            viewModel.SelectedCollection = collection;
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.LogError($"选择收藏夹时出错: {ex.Message}", ex);
+                        }
+                    }
+                }
+                
+                // 执行打开收藏夹车票命令
+                if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
+                {
+                    viewModel.OpenCollectionTicketsCommand.Execute(null);
+                }
+            }
+        }
+
+        /// <summary>
+        /// ListBox右键点击事件处理
+        /// </summary>
+        private void ListBox_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var viewModel = DataContext as QueryAllCollectionsViewModel;
+            if (viewModel == null) return;
+
+            // 从原始事件源获取数据上下文
+            TicketCollectionInfo collection = null;
+            
+            // 获取点击位置下的元素
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+            
+            // 向上查找包含数据上下文的元素
+            while (dep != null && collection == null)
+            {
+                if (dep is FrameworkElement element && element.DataContext is TicketCollectionInfo)
+                {
+                    collection = element.DataContext as TicketCollectionInfo;
+                    break;
+                }
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            
+            if (collection != null)
+            {
+                // 阻止事件冒泡，防止触发其他处理
+                e.Handled = true;
+                
+                // 如果没有按住Ctrl或Shift，则清除其他选择
+                if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl) &&
+                    !Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightShift))
+                {
+                    try
+                    {
+                        // 设置批量操作标志(如有该字段)
+                        var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        if (field != null)
+                            field.SetValue(viewModel, true);
+                        
+                        // 确保只有当前项被选中
+                        foreach (var item in viewModel.Collections)
+                        {
+                            item.IsSelected = (item == collection);
+                        }
+                        
+                        // 清空并重新设置选中集合
+                        viewModel.SelectedCollections.Clear();
+                        viewModel.SelectedCollections.Add(collection);
+                        
+                        // 重置批量操作标志
+                        if (field != null)
+                            field.SetValue(viewModel, false);
+                        
+                        // 设置当前选择项
+                        viewModel.SelectedCollection = collection;
+                    }
+                    catch (Exception ex)
+                    {
+                        LogHelper.LogError($"选择收藏夹时出错: {ex.Message}", ex);
+                    }
+                }
+                
+                // 执行打开收藏夹车票命令
+                if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
+                {
+                    viewModel.OpenCollectionTicketsCommand.Execute(null);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 处理遮罩层的右键点击事件
+        /// </summary>
+        private void HoverInfoPanel_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var viewModel = DataContext as QueryAllCollectionsViewModel;
+            if (viewModel == null) return;
+            
+            // 获取Border的数据上下文，即收藏夹对象
+            if (sender is Border border && border.DataContext is TicketCollectionInfo collection)
+            {
+                // 阻止事件冒泡，防止触发其他处理
+                e.Handled = true;
+                
+                // 如果没有按住Ctrl或Shift，则清除其他选择
+                if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl) &&
+                    !Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightShift))
+                {
+                    try
+                    {
+                        // 设置批量操作标志(如有该字段)
+                        var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        if (field != null)
+                            field.SetValue(viewModel, true);
+                        
+                        // 确保只有当前项被选中
+                        foreach (var item in viewModel.Collections)
+                        {
+                            item.IsSelected = (item == collection);
+                        }
+                        
+                        // 清空并重新设置选中集合
+                        viewModel.SelectedCollections.Clear();
+                        viewModel.SelectedCollections.Add(collection);
+                        
+                        // 重置批量操作标志
+                        if (field != null)
+                            field.SetValue(viewModel, false);
+                        
+                        // 设置当前选择项
+                        viewModel.SelectedCollection = collection;
+                    }
+                    catch (Exception ex)
+                    {
+                        LogHelper.LogError($"选择收藏夹时出错: {ex.Message}", ex);
+                    }
+                }
+                
+                // 执行打开收藏夹车票命令
+                if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
+                {
+                    viewModel.OpenCollectionTicketsCommand.Execute(null);
+                }
             }
         }
         
