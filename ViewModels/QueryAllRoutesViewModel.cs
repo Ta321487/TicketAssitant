@@ -352,7 +352,9 @@ namespace TA_WPF.ViewModels
             
             if (route != null)
             {
-                MessageBoxHelper.ShowInfo($"路线详情功能暂未实现\n选中的路线: {route.RouteName}");
+                var routeDetailWindow = new RouteDetailWindow(route, _databaseService, _mainViewModel);
+                routeDetailWindow.Owner = Application.Current.MainWindow;
+                routeDetailWindow.ShowDialog();
             }
         }
         

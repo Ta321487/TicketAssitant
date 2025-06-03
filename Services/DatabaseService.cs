@@ -38,21 +38,21 @@ namespace TA_WPF.Services
                 catch (MySqlException ex)
                 {
                     retryCount++;
-                    
+
                     // 检查是否为认证问题
-                    bool isAuthIssue = ex.Message.Contains("Access denied") || 
+                    bool isAuthIssue = ex.Message.Contains("Access denied") ||
                                        ex.Message.Contains("Authentication") ||
                                        ex.Message.Contains("using method");
-                    
+
                     if (isAuthIssue)
                     {
                         // 记录详细的认证错误信息
                         LogHelper.LogSystemError("数据库", $"认证失败: {ex.Message}, 错误代码: {ex.Number}", ex);
-                        
+
                         // 如果是认证问题，直接抛出异常，因为重试可能无法解决
                         throw;
                     }
-                    
+
                     if (retryCount >= MaxRetryCount)
                     {
                         // 记录详细的最终错误信息
@@ -97,7 +97,7 @@ namespace TA_WPF.Services
                 {
                     // 构建排序方向
                     string direction = ascending ? "ASC" : "DESC";
-                    
+
                     // 显式列出所有需要的列
                     string columns = @"`id`, `station_name`, `province`, `city`, `district`, 
                                      `longitude`, `latitude`, `station_code`, `station_pinyin`, 
@@ -108,7 +108,7 @@ namespace TA_WPF.Services
 
                     // 添加排序
                     query += $"ORDER BY `{orderBy}` {direction} ";
-                    
+
                     // 只有分页查询需要LIMIT子句
                     if (pageSize < int.MaxValue)
                     {
@@ -139,7 +139,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"获取车站列表失败: {ex.Message}", ex);
                 throw;
             }
-            
+
             return items;
         }
 
@@ -153,19 +153,19 @@ namespace TA_WPF.Services
         private async Task<List<StationInfo>> QueryStationsAsync(MySqlCommand command, string whereClause = null, Dictionary<string, object> parameters = null)
         {
             var items = new List<StationInfo>();
-            
+
             try
             {
                 string query = "SELECT * FROM station_info";
-                
+
                 // 添加WHERE子句
                 if (!string.IsNullOrWhiteSpace(whereClause))
                 {
                     query += $" WHERE {whereClause}";
                 }
-                
+
                 command.CommandText = query;
-                
+
                 // 添加参数
                 if (parameters != null)
                 {
@@ -174,7 +174,7 @@ namespace TA_WPF.Services
                         command.Parameters.AddWithValue(param.Key, param.Value);
                     }
                 }
-                
+
                 using (var reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -182,7 +182,7 @@ namespace TA_WPF.Services
                         items.Add(MapStationInfo(reader));
                     }
                 }
-                
+
                 return items;
             }
             catch (Exception ex)
@@ -238,7 +238,7 @@ namespace TA_WPF.Services
                     {
                         { "@StationName", stationName }
                     };
-                    
+
                     using (var command = new MySqlCommand(null, connection))
                     {
                         var results = await QueryStationsAsync(command, "station_name = @StationName", parameters);
@@ -1238,7 +1238,7 @@ namespace TA_WPF.Services
                       CONSTRAINT `fk_ct_collection` FOREIGN KEY (`collection_id`) REFERENCES `ticket_collections_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
                       CONSTRAINT `fk_ct_ticket` FOREIGN KEY (`ticket_id`) REFERENCES `train_ride_info` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
                     ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;";
-                
+
                 using (var command = new MySqlCommand(query, connection))
                 {
                     await command.ExecuteNonQueryAsync();
@@ -1398,7 +1398,7 @@ namespace TA_WPF.Services
                 return new List<string>();
             }
         }
-        
+
         /// <summary>
         /// 获取所有不同的到达车站
         /// </summary>
@@ -1467,23 +1467,23 @@ namespace TA_WPF.Services
                             railway_bureau = @RailwayBureau
                         WHERE id = @Id";
 
-                        using (var command = new MySqlCommand(query, connection))
-                        {
-                            command.Parameters.AddWithValue("@Id", station.Id);
-                            command.Parameters.AddWithValue("@StationName", station.StationName);
-                            command.Parameters.AddWithValue("@Province", station.Province ?? (object)DBNull.Value);
-                            command.Parameters.AddWithValue("@City", station.City ?? (object)DBNull.Value);
-                            command.Parameters.AddWithValue("@District", station.District ?? (object)DBNull.Value);
-                            command.Parameters.AddWithValue("@Longitude", station.Longitude ?? (object)DBNull.Value);
-                            command.Parameters.AddWithValue("@Latitude", station.Latitude ?? (object)DBNull.Value);
-                            command.Parameters.AddWithValue("@StationPinyin", station.StationPinyin ?? (object)DBNull.Value);
-                            command.Parameters.AddWithValue("@StationCode", station.StationCode ?? (object)DBNull.Value);
-                            command.Parameters.AddWithValue("@StationLevel", station.StationLevel);
-                            command.Parameters.AddWithValue("@RailwayBureau", station.RailwayBureau ?? (object)DBNull.Value);
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Id", station.Id);
+                        command.Parameters.AddWithValue("@StationName", station.StationName);
+                        command.Parameters.AddWithValue("@Province", station.Province ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@City", station.City ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@District", station.District ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@Longitude", station.Longitude ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@Latitude", station.Latitude ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@StationPinyin", station.StationPinyin ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@StationCode", station.StationCode ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@StationLevel", station.StationLevel);
+                        command.Parameters.AddWithValue("@RailwayBureau", station.RailwayBureau ?? (object)DBNull.Value);
 
-                            int rowsAffected = await command.ExecuteNonQueryAsync();
-                            return rowsAffected > 0;
-                        }
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
                 }
             }
             catch (Exception ex)
@@ -1505,12 +1505,12 @@ namespace TA_WPF.Services
         /// <param name="myDepartStations">我的常用车站列表（包含出发站和到达站）</param>
         /// <returns>符合条件的车站列表</returns>
         public async Task<List<StationInfo>> QueryStationsAdvancedAsync(
-            int pageNumber, 
-            int pageSize, 
-            string stationName = null, 
-            string province = null, 
-            string city = null, 
-            string district = null, 
+            int pageNumber,
+            int pageSize,
+            string stationName = null,
+            string province = null,
+            string city = null,
+            string district = null,
             List<string> myDepartStations = null)
         {
             if (pageNumber <= 0) pageNumber = 1;
@@ -1560,7 +1560,7 @@ namespace TA_WPF.Services
                             stationPlaceholders.Add(paramName);
                             parameters[paramName] = myDepartStations[i];
                         }
-                        
+
                         conditions.Add($"station_name IN ({string.Join(", ", stationPlaceholders)})");
                     }
 
@@ -1568,7 +1568,7 @@ namespace TA_WPF.Services
                     if (conditions.Count > 0)
                     {
                         queryBuilder.Append(" WHERE ");
-                        
+
                         // 使用AND连接条件，实现级联筛选
                         string connector = " AND ";
                         queryBuilder.Append(string.Join(connector, conditions));
@@ -1618,10 +1618,10 @@ namespace TA_WPF.Services
         /// <param name="myDepartStations">我的常用车站列表（包含出发站和到达站）</param>
         /// <returns>符合条件的车站总数</returns>
         public async Task<int> GetStationCountAdvancedAsync(
-            string stationName = null, 
-            string province = null, 
-            string city = null, 
-            string district = null, 
+            string stationName = null,
+            string province = null,
+            string city = null,
+            string district = null,
             List<string> myDepartStations = null)
         {
             try
@@ -1668,7 +1668,7 @@ namespace TA_WPF.Services
                             stationPlaceholders.Add(paramName);
                             parameters[paramName] = myDepartStations[i];
                         }
-                        
+
                         conditions.Add($"station_name IN ({string.Join(", ", stationPlaceholders)})");
                     }
 
@@ -1676,7 +1676,7 @@ namespace TA_WPF.Services
                     if (conditions.Count > 0)
                     {
                         queryBuilder.Append(" WHERE ");
-                        
+
                         // 使用AND连接条件，实现级联筛选
                         string connector = " AND ";
                         queryBuilder.Append(string.Join(connector, conditions));
@@ -1728,13 +1728,13 @@ namespace TA_WPF.Services
                 Debug.WriteLine("添加收藏夹失败: 封面图片不能为空");
                 return false;
             }
-            
+
             // 检查图片大小是否超过数据库限制 (16MB - mediumblob限制)
             // 实际设置为1MB以便有足够余量
-            if (collection.CoverImage.Length > 1024 * 1024) 
+            if (collection.CoverImage.Length > 1024 * 1024)
             {
                 MessageBoxHelper.ShowError("图片大小超过限制(1MB)，请使用较小的图片");
-                Debug.WriteLine($"添加收藏夹失败: 图片大小({collection.CoverImage.Length/1024}KB)超过限制(1MB)");
+                Debug.WriteLine($"添加收藏夹失败: 图片大小({collection.CoverImage.Length / 1024}KB)超过限制(1MB)");
                 return false;
             }
 
@@ -1758,16 +1758,16 @@ namespace TA_WPF.Services
                         command.Parameters.AddWithValue("@CreateTime", collection.CreateTime);
                         command.Parameters.AddWithValue("@UpdateTime", collection.UpdateTime);
                         command.Parameters.AddWithValue("@SortOrder", collection.SortOrder);
-                        
+
                         // 确保Importance参数类型正确，将其显式转换为int
                         command.Parameters.AddWithValue("@Importance", (int)collection.Importance);
 
                         int rowsAffected = await command.ExecuteNonQueryAsync();
                         bool success = rowsAffected > 0;
-                        
+
                         // 记录执行结果
                         Debug.WriteLine($"添加收藏夹结果: {success}, 影响行数: {rowsAffected}");
-                        
+
                         return success;
                     }
                 }
@@ -1776,7 +1776,7 @@ namespace TA_WPF.Services
             {
                 LogHelper.LogError($"添加收藏夹信息失败: {ex.Message}", ex);
                 Debug.WriteLine($"添加收藏夹失败: {ex.Message}");
-                
+
                 // 如果是数据过长错误，提供更明确的错误信息
                 if (ex.Message.Contains("Data too long"))
                 {
@@ -1786,7 +1786,7 @@ namespace TA_WPF.Services
                 {
                     MessageBoxHelper.ShowError($"保存收藏夹失败: {ex.Message}");
                 }
-                
+
                 return false;
             }
         }
@@ -1836,7 +1836,7 @@ namespace TA_WPF.Services
                 {
                     // 构建排序方向
                     string direction = ascending ? "ASC" : "DESC";
-                    
+
                     string query = $@"SELECT * FROM ticket_collections_info 
                                    ORDER BY {orderBy} {direction}
                                    LIMIT @Offset, @PageSize";
@@ -1854,7 +1854,7 @@ namespace TA_WPF.Services
                             }
                         }
                     }
-                    
+
                     // 获取每个收藏夹关联的车票数量
                     foreach (var collection in items)
                     {
@@ -1874,10 +1874,10 @@ namespace TA_WPF.Services
                 Debug.WriteLine($"获取收藏夹列表失败: {ex.Message}");
                 throw;
             }
-            
+
             return items;
         }
-        
+
         /// <summary>
         /// 映射数据读取器到收藏夹信息对象
         /// </summary>
@@ -1890,7 +1890,7 @@ namespace TA_WPF.Services
                 // 获取importance的索引
                 int importanceIdx = reader.GetOrdinal("importance");
                 int importanceValue = 0;
-                
+
                 // 正确读取importance值
                 if (!reader.IsDBNull(importanceIdx))
                 {
@@ -1902,7 +1902,7 @@ namespace TA_WPF.Services
                 {
                     Debug.WriteLine("从数据库读取的评分值为NULL，使用默认值0");
                 }
-                
+
                 // 获取ticket_count的值
                 int ticketCount = 0;
                 if (reader.HasRows && reader.FieldCount > 0)
@@ -1917,7 +1917,7 @@ namespace TA_WPF.Services
                         }
                     }
                 }
-                
+
                 var collection = new TicketCollectionInfo
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("id")),
@@ -1929,28 +1929,28 @@ namespace TA_WPF.Services
                     Importance = importanceValue, // 使用上面获取的评分值
                     TicketCount = ticketCount     // 设置车票数量
                 };
-            
-            // 读取BLOB数据(封面图片)
-            if (!reader.IsDBNull(reader.GetOrdinal("cover_image")))
-            {
-                using (MemoryStream ms = new MemoryStream())
+
+                // 读取BLOB数据(封面图片)
+                if (!reader.IsDBNull(reader.GetOrdinal("cover_image")))
                 {
-                    byte[] buffer = new byte[1024];
-                    long bytesRead;
-                    long fieldOffset = 0;
-                    using (var stream = reader.GetStream(reader.GetOrdinal("cover_image")))
+                    using (MemoryStream ms = new MemoryStream())
                     {
-                        while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+                        byte[] buffer = new byte[1024];
+                        long bytesRead;
+                        long fieldOffset = 0;
+                        using (var stream = reader.GetStream(reader.GetOrdinal("cover_image")))
                         {
-                            ms.Write(buffer, 0, (int)bytesRead);
-                            fieldOffset += bytesRead;
+                            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                ms.Write(buffer, 0, (int)bytesRead);
+                                fieldOffset += bytesRead;
+                            }
                         }
+                        collection.CoverImage = ms.ToArray();
                     }
-                    collection.CoverImage = ms.ToArray();
                 }
-            }
-            
-            return collection;
+
+                return collection;
             }
             catch (Exception ex)
             {
@@ -1995,7 +1995,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"按名称查询收藏夹失败: {ex.Message}", ex);
                 Debug.WriteLine($"按名称查询收藏夹失败: {ex.Message}");
             }
-            
+
             return null;
         }
 
@@ -2037,7 +2037,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"查询匹配收藏夹名称失败: {ex.Message}", ex);
                 Debug.WriteLine($"查询匹配收藏夹名称失败: {ex.Message}");
             }
-            
+
             return names;
         }
 
@@ -2078,10 +2078,10 @@ namespace TA_WPF.Services
 
                         int rowsAffected = await command.ExecuteNonQueryAsync();
                         bool success = rowsAffected > 0;
-                        
+
                         // 记录执行结果
                         Debug.WriteLine($"更新收藏夹结果: {success}, 影响行数: {rowsAffected}");
-                        
+
                         return success;
                     }
                 }
@@ -2090,7 +2090,7 @@ namespace TA_WPF.Services
             {
                 LogHelper.LogError($"更新收藏夹信息失败: {ex.Message}", ex);
                 Debug.WriteLine($"更新收藏夹失败: {ex.Message}");
-                
+
                 // 如果是数据过长错误，提供更明确的错误信息
                 if (ex.Message.Contains("Data too long"))
                 {
@@ -2100,7 +2100,7 @@ namespace TA_WPF.Services
                 {
                     MessageBoxHelper.ShowError($"更新收藏夹失败: {ex.Message}");
                 }
-                
+
                 return false;
             }
         }
@@ -2182,10 +2182,10 @@ namespace TA_WPF.Services
 
                             // 提交事务
                             await transaction.CommitAsync();
-                            
+
                             // 记录执行结果
                             Debug.WriteLine($"批量更新收藏夹排序顺序结果: {successCount}/{collectionSortOrders.Count} 条记录更新成功");
-                            
+
                             return successCount > 0;
                         }
                     }
@@ -2207,17 +2207,17 @@ namespace TA_WPF.Services
         public async Task<List<int>> GetCollectionTicketIdsAsync(int collectionId)
         {
             var ticketIds = new List<int>();
-            
+
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
                     string query = "SELECT ticket_id FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@CollectionId", collectionId);
-                        
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             while (await reader.ReadAsync())
@@ -2233,7 +2233,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"获取收藏夹中车票ID列表失败: {ex.Message}", ex);
                 Debug.WriteLine($"获取收藏夹中车票ID列表失败: {ex.Message}");
             }
-            
+
             return ticketIds;
         }
 
@@ -2247,7 +2247,7 @@ namespace TA_WPF.Services
         public async Task<List<TrainRideInfo>> GetCollectionTicketsAsync(int collectionId, int pageNumber = 1, int pageSize = 10)
         {
             var tickets = new List<TrainRideInfo>();
-            
+
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
@@ -2259,13 +2259,13 @@ namespace TA_WPF.Services
                         WHERE m.collection_id = @CollectionId
                         ORDER BY m.add_time DESC
                         LIMIT @Offset, @PageSize";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@CollectionId", collectionId);
                         command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
                         command.Parameters.AddWithValue("@PageSize", pageSize);
-                        
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             while (await reader.ReadAsync())
@@ -2281,7 +2281,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"获取收藏夹中车票失败: {ex.Message}", ex);
                 Debug.WriteLine($"获取收藏夹中车票失败: {ex.Message}");
             }
-            
+
             return tickets;
         }
 
@@ -2297,7 +2297,7 @@ namespace TA_WPF.Services
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
                     string query = "SELECT COUNT(*) FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@CollectionId", collectionId);
@@ -2339,18 +2339,18 @@ namespace TA_WPF.Services
                             return true;
                         }
                     }
-                    
+
                     // 添加映射
                     string insertQuery = @"
                         INSERT INTO collection_mapped_tickets_info (collection_id, ticket_id, add_time)
                         VALUES (@CollectionId, @TicketId, @AddTime)";
-                    
+
                     using (var command = new MySqlCommand(insertQuery, connection))
                     {
                         command.Parameters.AddWithValue("@CollectionId", collectionId);
                         command.Parameters.AddWithValue("@TicketId", ticketId);
                         command.Parameters.AddWithValue("@AddTime", DateTime.Now);
-                        
+
                         int rowsAffected = await command.ExecuteNonQueryAsync();
                         return rowsAffected > 0;
                     }
@@ -2375,9 +2375,9 @@ namespace TA_WPF.Services
             {
                 return 0;
             }
-            
+
             int successCount = 0;
-            
+
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
@@ -2388,14 +2388,14 @@ namespace TA_WPF.Services
                         string insertQuery = @"
                             INSERT INTO collection_mapped_tickets_info (collection_id, ticket_id, add_time)
                             VALUES (@CollectionId, @TicketId, @AddTime)";
-                        
+
                         using (var command = new MySqlCommand(insertQuery, connection, transaction as MySqlTransaction))
                         {
                             // 创建可重用的参数
                             var collectionIdParam = command.Parameters.Add("@CollectionId", MySqlDbType.Int32);
                             var ticketIdParam = command.Parameters.Add("@TicketId", MySqlDbType.Int32);
                             var addTimeParam = command.Parameters.Add("@AddTime", MySqlDbType.DateTime);
-                            
+
                             foreach (var mapping in mappings)
                             {
                                 // 检查是否已存在
@@ -2411,12 +2411,12 @@ namespace TA_WPF.Services
                                         continue;
                                     }
                                 }
-                                
+
                                 // 设置参数值
                                 collectionIdParam.Value = mapping.CollectionId;
                                 ticketIdParam.Value = mapping.TicketId;
                                 addTimeParam.Value = mapping.AddTime;
-                                
+
                                 // 执行插入
                                 int rowsAffected = await command.ExecuteNonQueryAsync();
                                 if (rowsAffected > 0)
@@ -2425,11 +2425,11 @@ namespace TA_WPF.Services
                                 }
                             }
                         }
-                        
+
                         // 提交事务
                         await transaction.CommitAsync();
                     }
-                    
+
                     // 更新收藏夹中的车票数量
                     if (successCount > 0 && mappings.Count > 0)
                     {
@@ -2442,7 +2442,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"批量添加车票到收藏夹失败: {ex.Message}", ex);
                 Debug.WriteLine($"批量添加车票到收藏夹失败: {ex.Message}");
             }
-            
+
             return successCount;
         }
 
@@ -2458,7 +2458,7 @@ namespace TA_WPF.Services
             {
                 return true;
             }
-            
+
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
@@ -2466,16 +2466,16 @@ namespace TA_WPF.Services
                     // 构建包含所有ID的IN子句
                     string idList = string.Join(",", ticketIds);
                     string query = $"DELETE FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId AND ticket_id IN ({idList})";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@CollectionId", collectionId);
-                        
+
                         int rowsAffected = await command.ExecuteNonQueryAsync();
-                        
+
                         // 更新收藏夹中的车票数量
                         await UpdateCollectionTicketCountAsync(collectionId);
-                        
+
                         return rowsAffected > 0;
                     }
                 }
@@ -2501,15 +2501,15 @@ namespace TA_WPF.Services
                 {
                     // 获取当前车票数量
                     int ticketCount = await GetCollectionTicketCountAsync(collectionId);
-                    
+
                     // 更新收藏夹中的车票数量字段
                     string query = "UPDATE ticket_collections_info SET update_time = @UpdateTime WHERE id = @CollectionId";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@CollectionId", collectionId);
                         command.Parameters.AddWithValue("@UpdateTime", DateTime.Now);
-                        
+
                         int rowsAffected = await command.ExecuteNonQueryAsync();
                         return rowsAffected > 0;
                     }
@@ -2536,18 +2536,18 @@ namespace TA_WPF.Services
                                         (SELECT COUNT(*) FROM collection_mapped_tickets_info cmti WHERE cmti.collection_id = tci.id) AS ticket_count
                                     FROM ticket_collections_info tci
                                     ORDER BY tci.sort_order ASC, tci.update_time DESC";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             var collections = new List<TicketCollectionInfo>();
-                            
+
                             while (await reader.ReadAsync())
                             {
                                 collections.Add(MapCollectionInfo(reader));
                             }
-                            
+
                             return collections;
                         }
                     }
@@ -2559,7 +2559,7 @@ namespace TA_WPF.Services
                 return new List<TicketCollectionInfo>();
             }
         }
-        
+
         /// <summary>
         /// 根据名称模糊查询收藏夹
         /// </summary>
@@ -2576,20 +2576,20 @@ namespace TA_WPF.Services
                                     FROM ticket_collections_info tci
                                     WHERE tci.collection_name LIKE @SearchText
                                     ORDER BY tci.sort_order ASC, tci.update_time DESC";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@SearchText", $"%{searchText}%");
-                        
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             var collections = new List<TicketCollectionInfo>();
-                            
+
                             while (await reader.ReadAsync())
                             {
                                 collections.Add(MapCollectionInfo(reader));
                             }
-                            
+
                             return collections;
                         }
                     }
@@ -2708,6 +2708,8 @@ namespace TA_WPF.Services
                       `stay_time` int NULL DEFAULT 0 COMMENT '计划停留时间(分钟)',
                       `notes` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
                       `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
+                      `distance_from_prev` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '距离上一站点距离(公里)',
+                      `distance_from_start` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '距起点累计距离(公里)',
                       PRIMARY KEY (`id`) USING BTREE,
                       INDEX `idx_route`(`route_id` ASC) USING BTREE,
                       INDEX `idx_station`(`station_id` ASC) USING BTREE,
@@ -2747,7 +2749,6 @@ namespace TA_WPF.Services
                       `id` int NOT NULL AUTO_INCREMENT COMMENT '统计ID',
                       `route_id` int NOT NULL COMMENT '路线ID',
                       `total_cost` decimal(10, 2) NULL DEFAULT 0 COMMENT '总花费',
-                      `total_distance` decimal(10, 2) NULL DEFAULT 0 COMMENT '总里程(公里)',
                       `provinces_passed` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '经过的省份(逗号分隔)',
                       `cities_passed` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '经过的城市(逗号分隔)',
                       `seat_type_stats` json NULL COMMENT '不同席别的里程统计',
@@ -2802,7 +2803,7 @@ namespace TA_WPF.Services
                 {
                     // 构建排序方向
                     string direction = ascending ? "ASC" : "DESC";
-                    
+
                     // 显式列出所有需要的列
                     string columns = @"`id`, `route_name`, `description`, `cover_image`, 
                                      `create_time`, `update_time`, `total_distance`, 
@@ -2813,7 +2814,7 @@ namespace TA_WPF.Services
 
                     // 添加排序
                     query += $"ORDER BY `{orderBy}` {direction} ";
-                    
+
                     // 只有分页查询需要LIMIT子句
                     if (pageSize < int.MaxValue)
                     {
@@ -2844,7 +2845,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"获取路线列表失败: {ex.Message}", ex);
                 throw;
             }
-            
+
             return items;
         }
 
@@ -2892,7 +2893,7 @@ namespace TA_WPF.Services
                     IsFavorite = reader.IsDBNull(reader.GetOrdinal("is_favorite")) ? false : reader.GetBoolean(reader.GetOrdinal("is_favorite")),
                     SortOrder = reader.IsDBNull(reader.GetOrdinal("sort_order")) ? 0 : reader.GetInt32(reader.GetOrdinal("sort_order"))
                 };
-                
+
                 // 读取BLOB数据(封面图片)
                 int coverImageIdx = reader.GetOrdinal("cover_image");
                 if (!reader.IsDBNull(coverImageIdx))
@@ -2919,7 +2920,7 @@ namespace TA_WPF.Services
                 {
                     Debug.WriteLine($"MapRouteInfo: 路线ID={route.Id}没有图片数据");
                 }
-                
+
                 return route;
             }
             catch (Exception ex)
@@ -3070,7 +3071,7 @@ namespace TA_WPF.Services
                     {
                         // 设置超时时间
                         command.CommandTimeout = 30; // 30秒
-                        
+
                         // 执行查询并返回结果
                         object result = await command.ExecuteScalarAsync();
                         return Convert.ToInt32(result);
@@ -3103,7 +3104,7 @@ namespace TA_WPF.Services
                     {
                         // 设置超时时间
                         command.CommandTimeout = 30; // 30秒
-                        
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             while (await reader.ReadAsync())
@@ -3119,7 +3120,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"根据自定义查询获取路线列表失败: {ex.Message}", ex);
                 throw new Exception($"获取路线列表时出错: {ex.Message}", ex);
             }
-            
+
             return items;
         }
 
@@ -3143,20 +3144,20 @@ namespace TA_WPF.Services
                                     WHERE route_name LIKE @SearchText 
                                     ORDER BY sort_order ASC, update_time DESC
                                     LIMIT 10";
-                    
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@SearchText", $"%{searchText}%");
-                        
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             var routes = new List<RouteInfo>();
-                            
+
                             while (await reader.ReadAsync())
                             {
                                 routes.Add(MapRouteInfo(reader));
                             }
-                            
+
                             return routes;
                         }
                     }
