@@ -22,7 +22,7 @@ namespace TA_WPF.ViewModels
         private double _dataGridRowHeight = 45; // 默认行高为45
 
         // 标签页数据集合 - 为后续实现准备
-        private ObservableCollection<object> _tickets;
+        private RouteTicketViewModel _tickets;
         private ObservableCollection<object> _stations;
         private object _statistics;
 
@@ -39,8 +39,11 @@ namespace TA_WPF.ViewModels
             _paginationViewModel.PageSizeChanged += async (s, e) => await RefreshDataAsync();
 
             // 初始化数据集合
-            _tickets = new ObservableCollection<object>();
+            _tickets = new RouteTicketViewModel(route, databaseService, mainViewModel);
             _stations = new ObservableCollection<object>();
+
+            // 设置分页控制器为已初始化状态，防止初次加载时不触发事件
+            _tickets.PaginationViewModel.IsInitialized = true;
 
             // 初始化命令
             CloseCommand = new RelayCommand(Close);
@@ -145,8 +148,8 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 车票列表
-        public ObservableCollection<object> Tickets
+        // 车票列表视图模型
+        public RouteTicketViewModel Tickets
         {
             get => _tickets;
             set
@@ -188,10 +191,10 @@ namespace TA_WPF.ViewModels
         }
 
         // 是否有数据
-        public bool HasData => _tickets != null && _tickets.Count > 0;
+        public bool HasData => _tickets != null;
 
         // 是否没有数据
-        public bool HasNoData => _tickets == null || _tickets.Count == 0;
+        public bool HasNoData => _tickets == null;
 
         #endregion
 
@@ -217,22 +220,17 @@ namespace TA_WPF.ViewModels
             {
                 IsLoading = true;
 
-                // 模拟加载过程
-                await Task.Delay(500);
+                // 设置分页控制器为已初始化状态
+                _paginationViewModel.IsInitialized = true;
 
-                // 在实际应用中，这里会执行数据加载逻辑
-                // 例如，根据当前路线ID和分页信息加载车票、车站、统计数据
-                TotalCount = 20; // 模拟20条总记录
-                
-                // 模拟车票数据更新
-                Tickets.Clear();
+                // 加载车票数据
+                await _tickets.RefreshDataAsync();
                 
                 // 更新UI状态
                 OnPropertyChanged(nameof(HasData));
                 OnPropertyChanged(nameof(HasNoData));
                 
                 // 这里应该有更多的逻辑，比如:
-                // await LoadTicketsAsync();
                 // await LoadStationsAsync();
                 // await LoadStatisticsAsync();
             }

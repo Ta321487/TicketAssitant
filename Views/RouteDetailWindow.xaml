@@ -67,37 +67,7 @@
             
             <!-- 车票列表标签页 -->
             <TabItem Header="车票列表">
-                <Grid Margin="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <!-- 车票列表操作栏 -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Style="{StaticResource MaterialDesignFlatButton}"
-                                ToolTip="添加车票"
-                                Margin="0,0,8,0"
-                                Foreground="{DynamicResource PrimaryHueMidBrush}">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="TicketOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                <TextBlock Text="添加车票" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                    
-                    <!-- 车票列表 - 目前不实现具体内容 -->
-                    <Border Grid.Row="1" 
-                            BorderBrush="{DynamicResource MaterialDesignDivider}" 
-                            BorderThickness="1"
-                            Background="{DynamicResource MaterialDesignBackground}">
-                        <TextBlock Text="此处将显示车票列表" 
-                                   HorizontalAlignment="Center" 
-                                   VerticalAlignment="Center"
-                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
-                                   Style="{StaticResource MaterialDesignBody1TextBlock}"/>
-                    </Border>
-                </Grid>
+                <local:RouteTicketView DataContext="{Binding Tickets}" Margin="8" />
             </TabItem>
             
             <!-- 车站列表标签页 -->
@@ -185,45 +155,47 @@
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
                            Margin="0,0,8,0"/>
-                <ComboBox ItemsSource="{Binding PaginationViewModel.PageSizeOptions}"
-                          SelectedItem="{Binding PaginationViewModel.PageSize}"
+                <ComboBox ItemsSource="{Binding Tickets.PaginationViewModel.PageSizeOptions}"
+                          SelectedItem="{Binding Tickets.PaginationViewModel.PageSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                           Width="60"
                           materialDesign:HintAssist.Hint="页大小"
-                          Style="{StaticResource MaterialDesignThemedComboBox}"/>
+                          Style="{StaticResource MaterialDesignThemedComboBox}"
+                          VerticalAlignment="Center"
+                          ToolTip="每页显示的记录数量"/>
                 
                 <!-- 总记录数和选中项数量 -->
-                <TextBlock Text="{Binding TotalCount, StringFormat=总记录数: {0}}" 
+                <TextBlock Text="{Binding Tickets.TotalCount, StringFormat=总记录数: {0}}" 
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
                            Margin="16,0,0,0"/>
                 
                 <!-- 选择状态指示器 -->
-                <TextBlock Text="{Binding SelectedItemsCount, StringFormat=已选择 {0} 项}"
+                <TextBlock Text="{Binding Tickets.SelectedItemsCount, StringFormat=已选择 {0} 项}"
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
                            Margin="16,0,0,0"
                            Foreground="{DynamicResource MaterialDesignBodyLight}"
                            FontWeight="Medium"
-                           Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                           Visibility="{Binding Tickets.HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             </StackPanel>
 
             <!-- 右侧：分页导航 -->
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                    <Button Command="{Binding PaginationViewModel.FirstPageCommand}" 
+                    <Button Command="{Binding Tickets.PaginationViewModel.FirstPageCommand}" 
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="第一页"
                             Margin="0,0,4,0"
                             Foreground="{DynamicResource PrimaryHueMidBrush}"
-                            IsEnabled="{Binding PaginationViewModel.CanNavigateToFirstPage}">
+                            IsEnabled="{Binding Tickets.PaginationViewModel.CanNavigateToFirstPage}">
                         <materialDesign:PackIcon Kind="PageFirst" />
                     </Button>
-                    <Button Command="{Binding PaginationViewModel.PreviousPageCommand}" 
+                    <Button Command="{Binding Tickets.PaginationViewModel.PreviousPageCommand}" 
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="上一页"
                             Margin="0,0,4,0"
                             Foreground="{DynamicResource PrimaryHueMidBrush}"
-                            IsEnabled="{Binding PaginationViewModel.CanNavigateToPreviousPage}">
+                            IsEnabled="{Binding Tickets.PaginationViewModel.CanNavigateToPreviousPage}">
                         <materialDesign:PackIcon Kind="ChevronLeft" />
                     </Button>
                     <Border Background="{DynamicResource MaterialDesignPaper}" 
@@ -234,7 +206,7 @@
                             Margin="4,0"
                             Height="36">
                         <StackPanel Orientation="Horizontal" x:Name="PageInfoPanel" MouseLeftButtonDown="PageInfoPanel_MouseLeftButtonDown">
-                            <TextBlock Text="{Binding PaginationViewModel.CurrentPage}" 
+                            <TextBlock Text="{Binding Tickets.PaginationViewModel.CurrentPage}" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource PrimaryHueMidBrush}"
@@ -242,7 +214,7 @@
                             <TextBlock Text=" / " 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
                                        VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding PaginationViewModel.TotalPages}" 
+                            <TextBlock Text="{Binding Tickets.PaginationViewModel.TotalPages}" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
@@ -259,20 +231,20 @@
                              Visibility="Collapsed"
                              KeyDown="PageNumberInput_KeyDown"
                              LostFocus="PageNumberInput_LostFocus"/>
-                    <Button Command="{Binding PaginationViewModel.NextPageCommand}" 
+                    <Button Command="{Binding Tickets.PaginationViewModel.NextPageCommand}" 
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="下一页"
                             Margin="4,0,0,0"
                             Foreground="{DynamicResource PrimaryHueMidBrush}"
-                            IsEnabled="{Binding PaginationViewModel.CanNavigateToNextPage}">
+                            IsEnabled="{Binding Tickets.PaginationViewModel.CanNavigateToNextPage}">
                         <materialDesign:PackIcon Kind="ChevronRight" />
                     </Button>
-                    <Button Command="{Binding PaginationViewModel.LastPageCommand}" 
+                    <Button Command="{Binding Tickets.PaginationViewModel.LastPageCommand}" 
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="最后一页"
                             Margin="4,0,0,0"
                             Foreground="{DynamicResource PrimaryHueMidBrush}"
-                            IsEnabled="{Binding PaginationViewModel.CanNavigateToLastPage}">
+                            IsEnabled="{Binding Tickets.PaginationViewModel.CanNavigateToLastPage}">
                         <materialDesign:PackIcon Kind="PageLast" />
                     </Button>
                 </StackPanel>

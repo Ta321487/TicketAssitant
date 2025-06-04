@@ -91,9 +91,9 @@ namespace TA_WPF.Views
             PageNumberInput.Visibility = Visibility.Visible;
 
             // 设置当前页码为默认值
-            if (_viewModel != null && _viewModel.PaginationViewModel != null)
+            if (_viewModel != null && _viewModel.Tickets != null && _viewModel.Tickets.PaginationViewModel != null)
             {
-                PageNumberInput.Text = _viewModel.PaginationViewModel.CurrentPage.ToString();
+                PageNumberInput.Text = _viewModel.Tickets.PaginationViewModel.CurrentPage.ToString();
             }
 
             // 聚焦并全选
@@ -141,28 +141,28 @@ namespace TA_WPF.Views
         /// </summary>
         private void TryNavigateToPage()
         {
-            if (PageInfoPanel == null || PageNumberInput == null || _viewModel == null || _viewModel.PaginationViewModel == null)
+            if (PageInfoPanel == null || PageNumberInput == null || _viewModel == null || _viewModel.Tickets == null || _viewModel.Tickets.PaginationViewModel == null)
                 return;
 
             // 尝试解析页码
             if (int.TryParse(PageNumberInput.Text, out int pageNumber))
             {
                 // 确保页码在有效范围内
-                if (pageNumber > 0 && pageNumber <= _viewModel.PaginationViewModel.TotalPages)
+                if (pageNumber > 0 && pageNumber <= _viewModel.Tickets.PaginationViewModel.TotalPages)
                 {
                     // 设置新的页码
-                    _viewModel.PaginationViewModel.CurrentPage = pageNumber;
+                    _viewModel.Tickets.PaginationViewModel.CurrentPage = pageNumber;
                     
                     // 确保页码变更后触发数据加载
-                    _viewModel.PaginationViewModel.IsInitialized = true;
+                    _viewModel.Tickets.PaginationViewModel.IsInitialized = true;
                     
                     // 直接调用加载方法确保数据刷新
-                    _ = _viewModel.RefreshDataAsync();
+                    _ = _viewModel.Tickets.RefreshDataAsync();
                 }
                 else
                 {
                     // 显示错误提示
-                    _tooltipText.Text = $"页码必须在 1 到 {_viewModel.PaginationViewModel.TotalPages} 之间";
+                    _tooltipText.Text = $"页码必须在 1 到 {_viewModel.Tickets.PaginationViewModel.TotalPages} 之间";
                     _pageNumberTooltip.PlacementTarget = PageNumberInput;
                     _pageNumberTooltip.IsOpen = true;
 
@@ -177,7 +177,7 @@ namespace TA_WPF.Views
                     timer.Start();
 
                     // 恢复原始页码
-                    PageNumberInput.Text = _viewModel.PaginationViewModel.CurrentPage.ToString();
+                    PageNumberInput.Text = _viewModel.Tickets.PaginationViewModel.CurrentPage.ToString();
                     PageNumberInput.SelectAll();
                     return;
                 }

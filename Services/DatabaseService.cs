@@ -3169,5 +3169,149 @@ namespace TA_WPF.Services
                 return new List<RouteInfo>();
             }
         }
+
+        /// <summary>
+        /// 获取指定路线的车票总数
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <returns>车票总数</returns>
+        public async Task<int> GetRouteTicketsCountAsync(int routeId)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"SELECT COUNT(*) 
+                                    FROM route_ticket_mapping 
+                                    WHERE route_id = @RouteId";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        object result = await command.ExecuteScalarAsync();
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取路线车票总数失败: {ex.Message}", ex);
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// 获取指定路线的车票列表（包含车票详细信息）
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <param name="pageNumber">页码</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <returns>车票映射列表</returns>
+        public async Task<List<RouteTicketMapping>> GetRouteTicketsAsync(int routeId, int pageNumber = 1, int pageSize = 10)
+        {
+            var items = new List<RouteTicketMapping>();
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0) pageSize = 10;
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 使用JOIN联合查询获取车票详情和映射信息
+                    string query = @"SELECT m.id, m.route_id, m.ticket_id, m.order_index, m.add_time, 
+                                    t.ticket_number, t.check_in_location, t.depart_station, t.train_no, t.arrive_station,
+                                    t.depart_station_pinyin, t.arrive_station_pinyin, t.depart_date, t.depart_time, 
+                                    t.coach_no, t.seat_no, t.money, t.seat_type, t.additional_info, t.ticket_purpose, 
+                                    t.hint, t.depart_station_code, t.arrive_station_code, t.ticket_modification_type,
+                                    t.ticket_type_flags, t.payment_channel_flags
+                                    FROM route_ticket_mapping m
+                                    INNER JOIN train_ride_info t ON m.ticket_id = t.id
+                                    WHERE m.route_id = @RouteId
+                                    ORDER BY m.order_index ASC, m.add_time DESC
+                                    LIMIT @Offset, @PageSize";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                        command.Parameters.AddWithValue("@PageSize", pageSize);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                // 创建映射对象
+                                var mapping = new RouteTicketMapping
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("id")),
+                                    RouteId = reader.GetInt32(reader.GetOrdinal("route_id")),
+                                    TicketId = reader.GetInt32(reader.GetOrdinal("ticket_id")),
+                                    OrderIndex = reader.GetInt32(reader.GetOrdinal("order_index")),
+                                    AddTime = reader.GetDateTime(reader.GetOrdinal("add_time")),
+                                    
+                                    // 映射车票信息
+                                    Ticket = new TrainRideInfo
+                                    {
+                                        Id = reader.GetInt32(reader.GetOrdinal("ticket_id")),
+                                        TicketNumber = reader.IsDBNull(reader.GetOrdinal("ticket_number")) ? null : reader.GetString(reader.GetOrdinal("ticket_number")),
+                                        CheckInLocation = reader.IsDBNull(reader.GetOrdinal("check_in_location")) ? null : reader.GetString(reader.GetOrdinal("check_in_location")),
+                                        DepartStation = reader.IsDBNull(reader.GetOrdinal("depart_station")) ? null : reader.GetString(reader.GetOrdinal("depart_station")),
+                                        TrainNo = reader.IsDBNull(reader.GetOrdinal("train_no")) ? null : reader.GetString(reader.GetOrdinal("train_no")),
+                                        ArriveStation = reader.IsDBNull(reader.GetOrdinal("arrive_station")) ? null : reader.GetString(reader.GetOrdinal("arrive_station")),
+                                        DepartStationPinyin = reader.IsDBNull(reader.GetOrdinal("depart_station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("depart_station_pinyin")),
+                                        ArriveStationPinyin = reader.IsDBNull(reader.GetOrdinal("arrive_station_pinyin")) ? null : reader.GetString(reader.GetOrdinal("arrive_station_pinyin")),
+                                        DepartDate = reader.IsDBNull(reader.GetOrdinal("depart_date")) ? null : reader.GetDateTime(reader.GetOrdinal("depart_date")),
+                                        CoachNo = reader.IsDBNull(reader.GetOrdinal("coach_no")) ? null : reader.GetString(reader.GetOrdinal("coach_no")),
+                                        SeatNo = reader.IsDBNull(reader.GetOrdinal("seat_no")) ? null : reader.GetString(reader.GetOrdinal("seat_no")),
+                                        Money = reader.IsDBNull(reader.GetOrdinal("money")) ? null : reader.GetDecimal(reader.GetOrdinal("money")),
+                                        SeatType = reader.IsDBNull(reader.GetOrdinal("seat_type")) ? null : reader.GetString(reader.GetOrdinal("seat_type")),
+                                        AdditionalInfo = reader.IsDBNull(reader.GetOrdinal("additional_info")) ? null : reader.GetString(reader.GetOrdinal("additional_info")),
+                                        TicketPurpose = reader.IsDBNull(reader.GetOrdinal("ticket_purpose")) ? null : reader.GetString(reader.GetOrdinal("ticket_purpose")),
+                                        Hint = reader.IsDBNull(reader.GetOrdinal("hint")) ? null : reader.GetString(reader.GetOrdinal("hint")),
+                                        DepartStationCode = reader.IsDBNull(reader.GetOrdinal("depart_station_code")) ? null : reader.GetString(reader.GetOrdinal("depart_station_code")),
+                                        ArriveStationCode = reader.IsDBNull(reader.GetOrdinal("arrive_station_code")) ? null : reader.GetString(reader.GetOrdinal("arrive_station_code")),
+                                        TicketModificationType = reader.IsDBNull(reader.GetOrdinal("ticket_modification_type")) ? null : reader.GetString(reader.GetOrdinal("ticket_modification_type")),
+                                        TicketTypeFlags = reader.IsDBNull(reader.GetOrdinal("ticket_type_flags")) ? 0 : reader.GetInt32(reader.GetOrdinal("ticket_type_flags")),
+                                        PaymentChannelFlags = reader.IsDBNull(reader.GetOrdinal("payment_channel_flags")) ? 0 : reader.GetInt32(reader.GetOrdinal("payment_channel_flags"))
+                                    }
+                                };
+
+                                // 处理时间字段
+                                if (!reader.IsDBNull(reader.GetOrdinal("depart_time")))
+                                {
+                                    try
+                                    {
+                                        // 尝试从MySQL读取时间
+                                        if (reader is MySqlDataReader mysqlReader)
+                                        {
+                                            mapping.Ticket.DepartTime = mysqlReader.GetTimeSpan(reader.GetOrdinal("depart_time"));
+                                        }
+                                        else
+                                        {
+                                            // 尝试从字符串解析
+                                            string timeStr = reader.GetString(reader.GetOrdinal("depart_time"));
+                                            mapping.Ticket.DepartTime = TimeSpan.Parse(timeStr);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Debug.WriteLine($"解析时间出错: {ex.Message}");
+                                    }
+                                }
+                                
+                                items.Add(mapping);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取路线车票列表失败: {ex.Message}", ex);
+                throw;
+            }
+
+            return items;
+        }
     }
 }
