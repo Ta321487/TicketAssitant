@@ -6,6 +6,7 @@ using System.Windows.Controls.Primitives;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
+using MaterialDesignThemes.Wpf;
 
 namespace TA_WPF.Views
 {
@@ -17,6 +18,7 @@ namespace TA_WPF.Views
         private readonly RouteDetailViewModel _viewModel;
         private Popup _pageNumberTooltip;
         private TextBlock _tooltipText;
+        private readonly ThemeService _themeService;
 
         public RouteDetailWindow(RouteInfo route, DatabaseService databaseService, MainViewModel mainViewModel)
         {
@@ -26,6 +28,15 @@ namespace TA_WPF.Views
             _viewModel = new RouteDetailViewModel(route, databaseService, mainViewModel);
             DataContext = _viewModel;
 
+            // 获取主题服务
+            _themeService = ThemeService.Instance;
+
+            // 应用当前主题
+            ApplyTheme(_viewModel.MainViewModel.IsDarkMode);
+
+            // 订阅主题变更事件
+            _themeService.ThemeChanged += OnThemeChanged;
+
             // 注册关闭事件
             _viewModel.CloseRequested += ViewModel_CloseRequested;
 
@@ -34,6 +45,12 @@ namespace TA_WPF.Views
             
             // 初始化页码提示工具提示
             InitializePageComponents();
+
+            // 窗口关闭时取消订阅事件
+            this.Closed += (s, e) =>
+            {
+                _themeService.ThemeChanged -= OnThemeChanged;
+            };
         }
 
         private void RouteDetailWindow_Loaded(object sender, RoutedEventArgs e)
@@ -48,10 +65,41 @@ namespace TA_WPF.Views
             Close();
         }
 
+        /// <summary>
+        /// 应用主题
+        /// </summary>
+        private void ApplyTheme(bool isDarkMode)
+        {
+            // 设置窗口主题
+            ThemeAssist.SetTheme(this, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
+
+            // 获取当前资源字典
+            var paletteHelper = new PaletteHelper();
+            var theme = paletteHelper.GetTheme();
+
+            // 设置深色/浅色模式
+            theme.SetBaseTheme(isDarkMode ? Theme.Dark : Theme.Light);
+
+            // 应用主题到窗口
+            paletteHelper.SetTheme(theme);
+
+            // 强制刷新窗口
+            this.UpdateLayout();
+        }
+
+        /// <summary>
+        /// 主题变更事件处理
+        /// </summary>
+        private void OnThemeChanged(object sender, bool isDarkMode)
+        {
+            ApplyTheme(isDarkMode);
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             // 取消注册事件
             _viewModel.CloseRequested -= ViewModel_CloseRequested;
+            _themeService.ThemeChanged -= OnThemeChanged;
             base.OnClosed(e);
         }
         

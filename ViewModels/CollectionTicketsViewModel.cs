@@ -293,7 +293,7 @@ namespace TA_WPF.ViewModels
             
             // 询问用户是否确认移除
             var result = MessageBoxHelper.ShowConfirmation(
-                $"确定要从收藏夹中移除选中的 {selectedTicketIds.Count} 张车票吗？",
+                $"确定要从该收藏夹中移除选中的 {selectedTicketIds.Count} 张车票吗？",
                 "确认操作");
                 
             if (result != MessageBoxResult.Yes)

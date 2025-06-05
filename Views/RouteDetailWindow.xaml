@@ -18,6 +18,7 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="Microsoft YaHei"
+        materialDesign:ThemeAssist.Theme="{Binding MainViewModel.IsDarkMode, Converter={StaticResource BooleanToThemeConverter}}"
         MinWidth="800" MinHeight="500">
 
     <Window.Resources>
@@ -33,6 +34,7 @@
 
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
             <SolidColorBrush x:Key="MaterialDesignDarkForeground" Color="White" />
             
             <!-- ComboBox 样式 -->
@@ -63,15 +65,18 @@
                     Style="{StaticResource MaterialDesignTabControl}"
                     Background="{DynamicResource MaterialDesignPaper}"
                     TabStripPlacement="Top"
+                    FontSize="{Binding MainViewModel.FontSize}"
                     Margin="10">
             
             <!-- 车票列表标签页 -->
-            <TabItem Header="车票列表">
+            <TabItem Header="车票列表" 
+                     FontSize="{Binding MainViewModel.FontSize}">
                 <local:RouteTicketView DataContext="{Binding Tickets}" Margin="8" />
             </TabItem>
             
             <!-- 车站列表标签页 -->
-            <TabItem Header="车站列表">
+            <TabItem Header="车站列表"
+                     FontSize="{Binding MainViewModel.FontSize}">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -83,6 +88,7 @@
                         <Button Style="{StaticResource MaterialDesignFlatButton}"
                                 ToolTip="添加车站"
                                 Margin="0,0,8,0"
+                                FontSize="{Binding MainViewModel.FontSize}"
                                 Foreground="{DynamicResource PrimaryHueMidBrush}">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="MapMarkerPlusOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -99,6 +105,7 @@
                         <TextBlock Text="此处将显示车站列表" 
                                    HorizontalAlignment="Center" 
                                    VerticalAlignment="Center"
+                                   FontSize="{Binding MainViewModel.FontSize}"
                                    Foreground="{DynamicResource MaterialDesignBodyLight}"
                                    Style="{StaticResource MaterialDesignBody1TextBlock}"/>
                     </Border>
@@ -106,7 +113,8 @@
             </TabItem>
             
             <!-- 统计摘要标签页 -->
-            <TabItem Header="统计摘要">
+            <TabItem Header="统计摘要"
+                     FontSize="{Binding MainViewModel.FontSize}">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -118,6 +126,7 @@
                         <Button Style="{StaticResource MaterialDesignFlatButton}"
                                 ToolTip="刷新统计"
                                 Margin="0,0,8,0"
+                                FontSize="{Binding MainViewModel.FontSize}"
                                 Foreground="{DynamicResource PrimaryHueMidBrush}">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -134,6 +143,7 @@
                         <TextBlock Text="此处将显示统计摘要" 
                                    HorizontalAlignment="Center" 
                                    VerticalAlignment="Center"
+                                   FontSize="{Binding MainViewModel.FontSize}"
                                    Foreground="{DynamicResource MaterialDesignBodyLight}"
                                    Style="{StaticResource MaterialDesignBody1TextBlock}"/>
                     </Border>
@@ -154,10 +164,12 @@
                 <TextBlock Text="每页显示:" 
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
+                           FontSize="{Binding MainViewModel.FontSize}"
                            Margin="0,0,8,0"/>
                 <ComboBox ItemsSource="{Binding Tickets.PaginationViewModel.PageSizeOptions}"
                           SelectedItem="{Binding Tickets.PaginationViewModel.PageSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                           Width="60"
+                          FontSize="{Binding MainViewModel.FontSize}"
                           materialDesign:HintAssist.Hint="页大小"
                           Style="{StaticResource MaterialDesignThemedComboBox}"
                           VerticalAlignment="Center"
@@ -167,12 +179,14 @@
                 <TextBlock Text="{Binding Tickets.TotalCount, StringFormat=总记录数: {0}}" 
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
+                           FontSize="{Binding MainViewModel.FontSize}"
                            Margin="16,0,0,0"/>
                 
                 <!-- 选择状态指示器 -->
                 <TextBlock Text="{Binding Tickets.SelectedItemsCount, StringFormat=已选择 {0} 项}"
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
+                           FontSize="{Binding MainViewModel.FontSize}"
                            Margin="16,0,0,0"
                            Foreground="{DynamicResource MaterialDesignBodyLight}"
                            FontWeight="Medium"
@@ -209,13 +223,16 @@
                             <TextBlock Text="{Binding Tickets.PaginationViewModel.CurrentPage}" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
                                        FontWeight="SemiBold"
+                                       FontSize="{Binding MainViewModel.FontSize}"
                                        Foreground="{DynamicResource PrimaryHueMidBrush}"
                                        VerticalAlignment="Center"/>
                             <TextBlock Text=" / " 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                       FontSize="{Binding MainViewModel.FontSize}"
                                        VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding Tickets.PaginationViewModel.TotalPages}" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                       FontSize="{Binding MainViewModel.FontSize}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -224,6 +241,7 @@
                              Height="36"
                              Margin="4,0"
                              Style="{StaticResource MaterialDesignTextBox}"
+                             FontSize="{Binding MainViewModel.FontSize}"
                              materialDesign:HintAssist.Hint="页码"
                              VerticalAlignment="Center"
                              HorizontalContentAlignment="Center"

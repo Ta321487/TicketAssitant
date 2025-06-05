@@ -11,7 +11,8 @@ namespace TA_WPF.ViewModels
     {
         None = 0,
         Window = 1,
-        Aisle = 2
+        Aisle = 2,
+        Middle = 3
     }
     
     public class AdvancedQueryTicketViewModel : BaseViewModel

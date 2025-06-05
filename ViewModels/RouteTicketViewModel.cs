@@ -538,8 +538,25 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void ShowAddTickets()
         {
-            // 暂不实现
-            MessageBoxHelper.ShowInfo("功能尚未实现");
+            try
+            {
+                // 创建添加车票窗口
+                var window = new Views.AddTicketsToRouteWindow(_route, _databaseService, _mainViewModel);
+                
+                // 显示窗口并获取结果
+                bool? result = window.ShowDialog();
+                
+                // 如果用户确认添加，刷新数据
+                if (result == true)
+                {
+                    _ = RefreshDataAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"显示添加车票窗口失败: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"显示添加车票窗口失败: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -555,8 +572,59 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void RemoveSelectedTickets()
         {
-            // 暂不实现
-            MessageBoxHelper.ShowInfo("功能尚未实现");
+            // 获取选中的车票
+            var selectedTickets = _selectedTickets.ToList();
+            if (selectedTickets.Count == 0)
+                return;
+
+            // 显示确认对话框
+            string message = $"确定要从该路线中移除选中的 {selectedTickets.Count} 张车票吗？";
+            if (MessageBoxHelper.ShowConfirmation(message) != MessageBoxResult.Yes)
+                return;
+
+            // 执行删除操作
+            _ = RemoveTicketsAsync(selectedTickets);
+        }
+
+        /// <summary>
+        /// 异步执行删除车票操作
+        /// </summary>
+        /// <param name="ticketsToRemove">要删除的车票列表</param>
+        private async Task RemoveTicketsAsync(List<RouteTicketMapping> ticketsToRemove)
+        {
+            try
+            {
+                IsLoading = true;
+
+                // 获取要删除的车票ID列表
+                var ticketIds = ticketsToRemove.Select(t => t.TicketId).ToList();
+
+                // 从数据库中删除车票与路线的映射关系
+                bool success = await _databaseService.RemoveTicketsFromRouteAsync(_route.Id, ticketIds);
+
+                if (success)
+                {
+                    // 刷新数据
+                    await RefreshDataAsync();
+                    
+                    // 显示操作成功提示
+                    MessageBoxHelper.ShowInfo($"已从路线中移除{ticketIds.Count}张车票");
+                }
+                else
+                {
+                    // 显示删除失败提示
+                    MessageBoxHelper.ShowError("删除失败，请重试");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"从路线中移除车票失败: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"操作失败: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         /// <summary>

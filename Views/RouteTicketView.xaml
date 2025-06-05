@@ -7,7 +7,8 @@
              xmlns:local="clr-namespace:TA_WPF.Views"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:viewmodels="clr-namespace:TA_WPF.ViewModels"
-             mc:Ignorable="d" 
+             mc:Ignorable="d"
+             TextElement.FontSize="{Binding MainViewModel.FontSize}" 
              d:DesignHeight="450" d:DesignWidth="800">
 
     <UserControl.Resources>
@@ -63,6 +64,7 @@
                 <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                 <Setter Property="FontWeight" Value="Normal" />
                 <Setter Property="Padding" Value="4,2" />
+                <Setter Property="FontSize" Value="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
             </Style>
             
             <!-- 数据表格行样式 -->
@@ -94,6 +96,7 @@
                 <Setter Property="MinHeight" Value="45" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="FontSize" Value="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -113,6 +116,7 @@
                         Foreground="{DynamicResource PrimaryHueMidBrush}"
                         ToolTip="添加车票"
                         Margin="0,0,8,0"
+                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -126,6 +130,8 @@
                         Foreground="{DynamicResource PrimaryHueMidBrush}"
                         ToolTip="移除车票"
                         Margin="0,0,8,0"
+                        IsEnabled="{Binding HasSelectedItems}"
+                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="SwapHorizontal" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -140,6 +146,7 @@
                         Margin="0,0,8,0"
                         Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="CheckboxMultipleMarkedOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -154,6 +161,7 @@
                         Margin="0,0,8,0"
                         Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="CheckboxMultipleMarkedCircleOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -168,6 +176,7 @@
                         Margin="0,0,8,0"
                         Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="CheckboxMultipleBlankOutline" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -181,6 +190,7 @@
                         Foreground="{DynamicResource PrimaryHueMidBrush}"
                         ToolTip="刷新"
                         Margin="0,0,8,0"
+                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         Height="36">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -199,11 +209,13 @@
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
                       CanUserResizeRows="False"
+                      CanUserResizeColumns="False"
                       IsReadOnly="True"
                       AutoGenerateColumns="False"
                       HeadersVisibility="Column"
                       GridLinesVisibility="None"
                       RowHeight="45"
+                      FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                       Foreground="{DynamicResource MaterialDesignBody}"
                       Background="{DynamicResource MaterialDesignPaper}"
                       SelectionMode="Extended"
