@@ -1,16 +1,12 @@
-using System;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows;
-using System.Windows.Controls;
-using System.Linq;
-using System.Collections.Generic;
 using TA_WPF.Views;
-using System.Windows.Media;
 
 namespace TA_WPF.ViewModels
 {

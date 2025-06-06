@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using TA_WPF.Models;
 using TA_WPF.Utils;
 
@@ -57,7 +53,7 @@ namespace TA_WPF.Services
             try
             {
                 var stations = new List<StationInfo>();
-                
+
                 // 提取var station_names ='...'之间的内容
                 var match = Regex.Match(stationData, @"var station_names ='(.*?)';", RegexOptions.Singleline);
                 if (!match.Success)
@@ -67,10 +63,10 @@ namespace TA_WPF.Services
                 }
 
                 string stationNamesStr = match.Groups[1].Value;
-                
+
                 // 按@符号分割每个车站信息
                 var stationEntries = stationNamesStr.Split(new[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
-                
+
                 int count = 0;
                 foreach (var entry in stationEntries)
                 {
@@ -86,17 +82,17 @@ namespace TA_WPF.Services
                     string stationCode = parts.Length > 2 ? parts[2] : "";
                     string stationPinyin = parts.Length > 3 ? parts[3] : "";
                     string stationPinyinAbbr = parts.Length > 4 ? parts[4] : "";
-                    
+
                     // 确保站名以"站"结尾
                     string formattedStationName = StationNameHelper.EnsureStationSuffix(stationName);
-                    
+
                     // 确保拼音字段长度不超过数据库字段最大长度（50个字符）
                     if (stationPinyin.Length > 50)
                     {
                         LogHelper.LogWarning($"车站 '{formattedStationName}' 的拼音字段长度 ({stationPinyin.Length}) 超过数据库限制 (50)，已自动截断");
                         stationPinyin = stationPinyin.Substring(0, 50);
                     }
-                    
+
                     // 创建车站信息对象
                     var station = new StationInfo
                     {
@@ -104,11 +100,11 @@ namespace TA_WPF.Services
                         StationCode = stationCode,
                         StationPinyin = stationPinyin
                     };
-                    
+
                     stations.Add(station);
                     count++;
                 }
-                
+
                 LogHelper.LogInfo($"从12306数据中解析了{count}个车站信息");
                 return stations;
             }
@@ -126,7 +122,7 @@ namespace TA_WPF.Services
         /// <param name="progressCallback">进度回调</param>
         /// <returns>导入统计信息</returns>
         public async Task<(int total, int imported, int skipped, List<string> newStations, List<int> importedIds)> ImportStationsAsync(
-            List<StationInfo> stations, 
+            List<StationInfo> stations,
             Action<int, int> progressCallback)
         {
             int total = stations.Count;
@@ -134,20 +130,20 @@ namespace TA_WPF.Services
             int skipped = 0;
             var newStations = new List<string>();
             var importedIds = new List<int>();
-            
+
             try
             {
                 // 获取数据库中现有的车站
                 var existingStations = await _databaseService.GetStationsAsync();
                 var existingStationNames = new HashSet<string>(
                     existingStations.Select(s => StationNameHelper.RemoveStationSuffix(s.StationName)));
-                
+
                 // 逐个导入车站
                 for (int i = 0; i < stations.Count; i++)
                 {
                     var station = stations[i];
                     string stationNameWithoutSuffix = StationNameHelper.RemoveStationSuffix(station.StationName);
-                    
+
                     // 检查车站是否已存在
                     if (existingStationNames.Contains(stationNameWithoutSuffix))
                     {
@@ -165,7 +161,7 @@ namespace TA_WPF.Services
                             {
                                 importedIds.Add(insertedStation.Id);
                             }
-                            
+
                             imported++;
                             newStations.Add(station.StationName);
                         }
@@ -176,11 +172,11 @@ namespace TA_WPF.Services
                             skipped++;
                         }
                     }
-                    
+
                     // 报告进度
                     progressCallback?.Invoke(i + 1, total);
                 }
-                
+
                 LogHelper.LogInfo($"导入完成：总共{total}个车站，新增{imported}个，跳过{skipped}个");
                 return (total, imported, skipped, newStations, importedIds);
             }
@@ -195,7 +191,7 @@ namespace TA_WPF.Services
                 throw new Exception($"导入车站信息失败: {ex.Message}", ex);
             }
         }
-        
+
         /// <summary>
         /// 回滚已导入的车站数据
         /// </summary>
@@ -209,13 +205,13 @@ namespace TA_WPF.Services
                 {
                     return;
                 }
-                
+
                 // 调用数据库服务删除指定ID的车站
                 await _databaseService.DeleteStationsByIdsAsync(stationIds);
-                
+
                 // 重置自增ID，避免空洞
                 await _databaseService.ResetStationsAutoIncrementAsync();
-                
+
                 LogHelper.LogInfo($"已回滚{stationIds.Count}个导入的车站");
             }
             catch (Exception ex)
@@ -225,4 +221,4 @@ namespace TA_WPF.Services
             }
         }
     }
-} 
+}

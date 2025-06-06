@@ -1,11 +1,7 @@
-using System;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows;
 
 namespace TA_WPF.ViewModels
 {
@@ -23,8 +19,9 @@ namespace TA_WPF.ViewModels
 
         // 标签页数据集合 - 为后续实现准备
         private RouteTicketViewModel _tickets;
-        private ObservableCollection<object> _stations;
+        private RouteStationViewModel _stations;
         private object _statistics;
+        private object _activeViewModel; // 当前活动的ViewModel
 
         public RouteDetailViewModel(RouteInfo route, DatabaseService databaseService, MainViewModel mainViewModel)
         {
@@ -40,10 +37,14 @@ namespace TA_WPF.ViewModels
 
             // 初始化数据集合
             _tickets = new RouteTicketViewModel(route, databaseService, mainViewModel);
-            _stations = new ObservableCollection<object>();
+            _stations = new RouteStationViewModel(route, databaseService, mainViewModel);
+
+            // 默认活动视图模型为车票视图模型
+            _activeViewModel = _tickets;
 
             // 设置分页控制器为已初始化状态，防止初次加载时不触发事件
             _tickets.PaginationViewModel.IsInitialized = true;
+            _stations.PaginationViewModel.IsInitialized = true;
 
             // 初始化命令
             CloseCommand = new RelayCommand(Close);
@@ -162,8 +163,8 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 车站列表
-        public ObservableCollection<object> Stations
+        // 车站列表视图模型
+        public RouteStationViewModel Stations
         {
             get => _stations;
             set
@@ -186,6 +187,20 @@ namespace TA_WPF.ViewModels
                 {
                     _statistics = value;
                     OnPropertyChanged(nameof(Statistics));
+                }
+            }
+        }
+
+        // 当前活动的ViewModel（根据当前选中的标签页）
+        public object ActiveViewModel
+        {
+            get => _activeViewModel;
+            set
+            {
+                if (_activeViewModel != value)
+                {
+                    _activeViewModel = value;
+                    OnPropertyChanged(nameof(ActiveViewModel));
                 }
             }
         }
@@ -213,6 +228,26 @@ namespace TA_WPF.ViewModels
             CloseRequested?.Invoke(this, EventArgs.Empty);
         }
 
+        // 根据标签页索引设置活动视图模型
+        public void SetActiveViewModel(int tabIndex)
+        {
+            switch (tabIndex)
+            {
+                case 0: // 车票列表
+                    ActiveViewModel = Tickets;
+                    break;
+                case 1: // 车站列表
+                    ActiveViewModel = Stations;
+                    break;
+                case 2: // 统计摘要
+                    ActiveViewModel = Tickets; // 默认使用车票数据
+                    break;
+                default:
+                    ActiveViewModel = Tickets;
+                    break;
+            }
+        }
+
         // 刷新数据 - 可以公开调用
         public async Task RefreshDataAsync()
         {
@@ -225,14 +260,13 @@ namespace TA_WPF.ViewModels
 
                 // 加载车票数据
                 await _tickets.RefreshDataAsync();
-                
+
+                // 加载车站数据
+                await _stations.RefreshDataAsync();
+
                 // 更新UI状态
                 OnPropertyChanged(nameof(HasData));
                 OnPropertyChanged(nameof(HasNoData));
-                
-                // 这里应该有更多的逻辑，比如:
-                // await LoadStationsAsync();
-                // await LoadStatisticsAsync();
             }
             catch (Exception ex)
             {
@@ -250,4 +284,4 @@ namespace TA_WPF.ViewModels
         // 关闭窗口事件
         public event EventHandler CloseRequested;
     }
-} 
+}

@@ -1,9 +1,9 @@
-using System.Windows;
-using TA_WPF.Services;
-using TA_WPF.ViewModels;
 using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
+using System.Windows;
+using TA_WPF.Services;
 using TA_WPF.Utils;
+using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
 {
@@ -34,7 +34,7 @@ namespace TA_WPF.Views
             {
                 themeService.ThemeChanged -= OnThemeChanged;
             };
-            
+
             // 窗口关闭前的确认
             this.Closing += Window_Closing;
         }
@@ -56,13 +56,13 @@ namespace TA_WPF.Views
                     var result = MessageBoxHelper.ShowConfirmation(
                         "正在导入车站，关闭会导致导入中断，是否确认关闭？",
                         "确认关闭");
-                    
+
                     if (result == MessageBoxResult.Yes)
                     {
                         // 用户确认关闭，撤销已导入的数据
                         _forceClose = true; // 设置强制关闭标志，避免再次触发确认
                         viewModel.CancelAndRollbackImport();
-                        
+
                         // 如果有回调，触发数据刷新
                         if (viewModel.DataRefreshCallback != null)
                         {
@@ -90,15 +90,15 @@ namespace TA_WPF.Views
         private void ApplyTheme(bool isDarkMode)
         {
             // 设置窗口主题
-            ThemeAssist.SetTheme(this, isDarkMode ? 
-                BaseTheme.Dark : 
+            ThemeAssist.SetTheme(this, isDarkMode ?
+                BaseTheme.Dark :
                 BaseTheme.Light);
 
             // 更新主题
             var paletteHelper = new PaletteHelper();
             var theme = paletteHelper.GetTheme();
-            theme.SetBaseTheme(isDarkMode ? 
-                Theme.Dark : 
+            theme.SetBaseTheme(isDarkMode ?
+                Theme.Dark :
                 Theme.Light);
             paletteHelper.SetTheme(theme);
         }
@@ -111,4 +111,4 @@ namespace TA_WPF.Views
             ApplyTheme(isDarkMode);
         }
     }
-} 
+}

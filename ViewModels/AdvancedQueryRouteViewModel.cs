@@ -1,11 +1,9 @@
-using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Input;
+using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Diagnostics;
-using System.Collections.ObjectModel;
-using TA_WPF.Models;
 
 namespace TA_WPF.ViewModels
 {
@@ -21,14 +19,14 @@ namespace TA_WPF.ViewModels
         Range4 = 4, // 1000-2000公里
         Range5 = 5  // 2000公里以上
     }
-    
+
     /// <summary>
     /// 路线高级查询面板的ViewModel
     /// </summary>
     public class AdvancedQueryRouteViewModel : BaseViewModel
     {
         #region 字段
-        
+
         private bool _isQueryPanelVisible;
         private string _routeNameFilter = string.Empty;
         private DistanceRangeType _selectedDistanceRange = DistanceRangeType.None;
@@ -39,22 +37,22 @@ namespace TA_WPF.ViewModels
         private bool _isRouteNameDropdownOpen;
         private ObservableCollection<RouteInfo> _routeNameSuggestions = new ObservableCollection<RouteInfo>();
         private bool _isUpdatingRouteName = false;
-        
+
         private readonly DatabaseService _databaseService;
-        
+
         #endregion
-        
+
         #region 事件
-        
+
         /// <summary>
         /// 当应用查询条件时触发
         /// </summary>
         public event EventHandler<RouteQueryFilterEventArgs> FilterApplied;
-        
+
         #endregion
-        
+
         #region 构造函数
-        
+
         /// <summary>
         /// 设计时构造函数
         /// </summary>
@@ -68,7 +66,7 @@ namespace TA_WPF.ViewModels
             ClearDistanceRangeCommand = new RelayCommand(ClearDistanceRange);
             SelectRouteNameCommand = new RelayCommand<RouteInfo>(SelectRouteName);
         }
-        
+
         /// <summary>
         /// 运行时构造函数
         /// </summary>
@@ -77,26 +75,26 @@ namespace TA_WPF.ViewModels
             : this()
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
-            
+
             // 设置默认值
             IsQueryPanelVisible = false;
-            
+
             // 明确设置AND条件为选中状态
             _isAndCondition = true;
             _isOrCondition = false;
-            
+
             // 确保通知UI更新这些属性
             OnPropertyChanged(nameof(IsAndCondition));
             OnPropertyChanged(nameof(IsOrCondition));
-            
+
             // 更新按钮文本
             UpdateQueryButtonText();
         }
-        
+
         #endregion
-        
+
         #region 属性
-        
+
         /// <summary>
         /// 查询面板是否可见
         /// </summary>
@@ -112,7 +110,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 路线名称筛选器
         /// </summary>
@@ -126,7 +124,7 @@ namespace TA_WPF.ViewModels
                     _routeNameFilter = value;
                     OnPropertyChanged(nameof(RouteNameFilter));
                     UpdateQueryButtonText();
-                    
+
                     // 输入变化时搜索匹配的路线名称
                     if (!_isUpdatingRouteName)
                     {
@@ -135,7 +133,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 选中的距离范围
         /// </summary>
@@ -157,7 +155,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否选中距离范围1 (0-100公里)
         /// </summary>
@@ -173,7 +171,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否选中距离范围2 (100-500公里)
         /// </summary>
@@ -189,7 +187,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否选中距离范围3 (500-1000公里)
         /// </summary>
@@ -205,7 +203,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否选中距离范围4 (1000-2000公里)
         /// </summary>
@@ -221,7 +219,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否选中距离范围5 (2000公里以上)
         /// </summary>
@@ -237,7 +235,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否勾选"我收藏的路线"
         /// </summary>
@@ -254,7 +252,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否使用AND条件
         /// </summary>
@@ -267,7 +265,7 @@ namespace TA_WPF.ViewModels
                 {
                     _isAndCondition = value;
                     OnPropertyChanged(nameof(IsAndCondition));
-                    
+
                     // 当选择AND条件时，设置OR条件为相反值
                     if (value && _isOrCondition)
                     {
@@ -277,7 +275,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否使用OR条件
         /// </summary>
@@ -290,7 +288,7 @@ namespace TA_WPF.ViewModels
                 {
                     _isOrCondition = value;
                     OnPropertyChanged(nameof(IsOrCondition));
-                    
+
                     // 当选择OR条件时，设置AND条件为相反值
                     if (value && _isAndCondition)
                     {
@@ -300,7 +298,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 是否有激活的筛选条件
         /// </summary>
@@ -316,7 +314,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 查询按钮的文本
         /// </summary>
@@ -324,7 +322,7 @@ namespace TA_WPF.ViewModels
         {
             get => HasAnyActiveFilter() ? "查询" : "查询全部";
         }
-        
+
         /// <summary>
         /// 路线名称下拉框是否打开
         /// </summary>
@@ -340,7 +338,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 路线名称建议列表
         /// </summary>
@@ -356,45 +354,45 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 选择路线名称命令
         /// </summary>
         public ICommand SelectRouteNameCommand { get; }
-        
+
         #endregion
-        
+
         #region 命令
-        
+
         /// <summary>
         /// 切换查询面板可见性命令
         /// </summary>
         public ICommand ToggleQueryPanelCommand { get; }
-        
+
         /// <summary>
         /// 应用筛选条件命令
         /// </summary>
         public ICommand ApplyFilterCommand { get; }
-        
+
         /// <summary>
         /// 重置筛选条件命令
         /// </summary>
         public ICommand ResetFilterCommand { get; }
-        
+
         /// <summary>
         /// 清空路线名称命令
         /// </summary>
         public ICommand ClearRouteNameCommand { get; }
-        
+
         /// <summary>
         /// 清空距离范围命令
         /// </summary>
         public ICommand ClearDistanceRangeCommand { get; }
-        
+
         #endregion
-        
+
         #region 方法
-        
+
         /// <summary>
         /// 切换查询面板的可见性
         /// </summary>
@@ -402,18 +400,18 @@ namespace TA_WPF.ViewModels
         {
             IsQueryPanelVisible = !IsQueryPanelVisible;
         }
-        
+
         /// <summary>
         /// 检查是否有任何激活的筛选条件
         /// </summary>
         /// <returns>是否有激活的筛选条件</returns>
         private bool HasAnyActiveFilter()
         {
-            return !string.IsNullOrWhiteSpace(RouteNameFilter) || 
-                   SelectedDistanceRange != DistanceRangeType.None || 
+            return !string.IsNullOrWhiteSpace(RouteNameFilter) ||
+                   SelectedDistanceRange != DistanceRangeType.None ||
                    IsFavoriteChecked;
         }
-        
+
         /// <summary>
         /// 更新查询按钮文本
         /// </summary>
@@ -422,14 +420,14 @@ namespace TA_WPF.ViewModels
             HasActiveFilters = HasAnyActiveFilter();
             OnPropertyChanged(nameof(QueryButtonText));
         }
-        
+
         /// <summary>
         /// 应用筛选条件
         /// </summary>
         private void ApplyFilter()
         {
             Debug.WriteLine("应用路线高级查询筛选条件");
-            
+
             // 构建筛选条件参数
             var args = new RouteQueryFilterEventArgs
             {
@@ -438,11 +436,11 @@ namespace TA_WPF.ViewModels
                 IsFavorite = IsFavoriteChecked,
                 IsAndCondition = IsAndCondition
             };
-            
+
             // 触发筛选应用事件，让父级ViewModel处理具体的数据查询
             FilterApplied?.Invoke(this, args);
         }
-        
+
         /// <summary>
         /// 重置筛选条件
         /// </summary>
@@ -454,16 +452,16 @@ namespace TA_WPF.ViewModels
             IsFavoriteChecked = false;
             IsAndCondition = true;
             IsOrCondition = false;
-            
+
             // 更新按钮文本
             UpdateQueryButtonText();
-            
+
             // 触发查询所有路线的事件
             ApplyFilter();
-            
+
             Debug.WriteLine("重置所有筛选条件");
         }
-        
+
         /// <summary>
         /// 清空路线名称
         /// </summary>
@@ -473,7 +471,7 @@ namespace TA_WPF.ViewModels
             IsRouteNameDropdownOpen = false;
             UpdateQueryButtonText();
         }
-        
+
         /// <summary>
         /// 清空距离范围选择
         /// </summary>
@@ -482,7 +480,7 @@ namespace TA_WPF.ViewModels
             SelectedDistanceRange = DistanceRangeType.None;
             UpdateQueryButtonText();
         }
-        
+
         /// <summary>
         /// 搜索匹配的路线名称
         /// </summary>
@@ -496,19 +494,19 @@ namespace TA_WPF.ViewModels
                 RouteNameSuggestions.Clear();
                 return;
             }
-            
+
             try
             {
                 // 调用数据库服务搜索路线
                 var routes = await _databaseService.SearchRoutesByNameAsync(searchText);
-                
+
                 // 更新建议列表
                 RouteNameSuggestions.Clear();
                 foreach (var route in routes)
                 {
                     RouteNameSuggestions.Add(route);
                 }
-                
+
                 // 显示或隐藏下拉框
                 IsRouteNameDropdownOpen = RouteNameSuggestions.Count > 0;
             }
@@ -519,7 +517,7 @@ namespace TA_WPF.ViewModels
                 IsRouteNameDropdownOpen = false;
             }
         }
-        
+
         /// <summary>
         /// 选择路线名称
         /// </summary>
@@ -531,13 +529,13 @@ namespace TA_WPF.ViewModels
                 {
                     // 设置标记，防止更新文本时触发搜索
                     _isUpdatingRouteName = true;
-                    
+
                     // 更新文本框
                     RouteNameFilter = route.RouteName;
-                    
+
                     // 关闭下拉框
                     IsRouteNameDropdownOpen = false;
-                    
+
                     // 清空建议列表
                     RouteNameSuggestions.Clear();
                 }
@@ -548,7 +546,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 通知所有重要属性已更改，确保UI更新
         /// </summary>
@@ -569,10 +567,10 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(IsRouteNameDropdownOpen));
             OnPropertyChanged(nameof(RouteNameSuggestions));
         }
-        
+
         #endregion
     }
-    
+
     /// <summary>
     /// 路线筛选条件参数
     /// </summary>
@@ -594,4 +592,4 @@ namespace TA_WPF.ViewModels
             IsQueryPanelVisible = true;
         }
     }
-} 
+}

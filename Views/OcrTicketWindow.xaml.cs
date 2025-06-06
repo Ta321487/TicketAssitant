@@ -1,13 +1,12 @@
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using TA_WPF.Utils;
 using TA_WPF.ViewModels;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Windows.Controls;
 
 namespace TA_WPF.Views
 {
@@ -24,7 +23,7 @@ namespace TA_WPF.Views
         /// <param name="mainViewModel">主视图模型</param>
         public OcrTicketWindow(MainViewModel mainViewModel)
         {
-            try 
+            try
             {
                 // 在设计时和运行时都会调用的InitializeComponent
                 InitializeComponent();
@@ -104,13 +103,13 @@ namespace TA_WPF.Views
                         // 将错误处理包装在try-catch块中，防止设计时代码和运行时代码之间的差异导致错误
                         if (this.FindName("DisplayImage") is Image displayImage)
                             displayImage.Source = bitmap;
-                    
+
                         if (this.FindName("ImageContainer") is Panel imageContainer)
                             imageContainer.Visibility = Visibility.Visible;
-                    
+
                         if (this.FindName("NoImageBorder") is UIElement noImageBorder)
                             noImageBorder.Visibility = Visibility.Collapsed;
-                        
+
                         // 更新ViewModel中的图像
                         _viewModel.SelectedImage = bitmap;
                     }
@@ -155,11 +154,11 @@ namespace TA_WPF.Views
                 bitmap.EndInit();
 
                 // 设置图像，使用try-catch块保护UI更新
-                try 
+                try
                 {
                     if (this.FindName("DisplayImage") is Image displayImage)
                         displayImage.Source = bitmap;
-                        
+
                     // 更新ViewModel中的图像
                     _viewModel.SelectedImage = bitmap;
                 }
@@ -224,10 +223,10 @@ namespace TA_WPF.Views
             if (_viewModel.IsDownloadingModel)
             {
                 var result = MessageBoxHelper.ShowConfirmation(
-                    "您确定要退出本窗口吗？这会中断OCR模型下载进程", 
-                    "确认退出", 
+                    "您确定要退出本窗口吗？这会中断OCR模型下载进程",
+                    "确认退出",
                     MessageBoxButton.YesNo);
-                
+
                 if (result != MessageBoxResult.Yes)
                 {
                     // 取消关闭
@@ -239,43 +238,43 @@ namespace TA_WPF.Views
                 }
                 return;
             }
-            
+
             // 获取OCR环境服务实例
-            var ocrEnvironmentService = _viewModel.GetType().GetField("_ocrEnvironmentService", 
+            var ocrEnvironmentService = _viewModel.GetType().GetField("_ocrEnvironmentService",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(_viewModel);
-            
+
             if (ocrEnvironmentService != null)
             {
                 // 检查是否正在下载Python
                 var isDownloadingPythonProperty = ocrEnvironmentService.GetType().GetProperty("IsDownloadingPython");
                 bool isDownloadingPython = false;
-                
+
                 if (isDownloadingPythonProperty != null && isDownloadingPythonProperty.GetValue(ocrEnvironmentService) is bool pythonDownloading)
                 {
                     isDownloadingPython = pythonDownloading;
                 }
-                
+
                 // 检查是否正在下载CNOCR
                 var isDownloadingCnocrProperty = ocrEnvironmentService.GetType().GetProperty("IsDownloadingCnocr");
                 bool isDownloadingCnocr = false;
-                
+
                 if (isDownloadingCnocrProperty != null && isDownloadingCnocrProperty.GetValue(ocrEnvironmentService) is bool cnocrDownloading)
                 {
                     isDownloadingCnocr = cnocrDownloading;
                 }
-                
+
                 // 如果正在下载Python或CNOCR，询问用户是否确认退出
                 if (isDownloadingPython || isDownloadingCnocr)
                 {
-                    string message = isDownloadingPython 
-                        ? "Python尚未下载完毕，现在退出会导致下载中断，是否继续？" 
+                    string message = isDownloadingPython
+                        ? "Python尚未下载完毕，现在退出会导致下载中断，是否继续？"
                         : "CNOCR正在安装中，现在退出会导致安装中断，是否继续？";
-                    
+
                     var result = MessageBoxHelper.ShowConfirmation(
-                        message, 
-                        "确认退出", 
+                        message,
+                        "确认退出",
                         MessageBoxButton.YesNo);
-                    
+
                     if (result != MessageBoxResult.Yes)
                     {
                         // 取消关闭
@@ -285,7 +284,7 @@ namespace TA_WPF.Views
                     {
                         // 显示取消下载提示
                         LogHelper.LogInfo($"用户选择中断{(isDownloadingPython ? "Python" : "CNOCR")}下载并关闭窗口");
-                        
+
                         try
                         {
                             // 取消下载
@@ -294,13 +293,13 @@ namespace TA_WPF.Views
                             if (cancelMethod != null)
                             {
                                 cancelMethod.Invoke(ocrEnvironmentService, null);
-                                
+
                                 // 延迟关闭窗口，给资源清理一些时间
                                 Task.Run(async () =>
                                 {
                                     // 等待资源清理（至少3秒）
                                     await Task.Delay(3000);
-                                    
+
                                     // 确保完全清理，重新检查环境状态
                                     var checkEnvironmentMethod = ocrEnvironmentService.GetType().GetMethod("CheckEnvironment");
                                     if (checkEnvironmentMethod != null)
@@ -316,7 +315,7 @@ namespace TA_WPF.Views
                                         }
                                     }
                                 });
-                                
+
                                 // 强制进行垃圾回收，释放资源
                                 GC.Collect();
                                 GC.WaitForPendingFinalizers();
@@ -435,27 +434,27 @@ namespace TA_WPF.Views
                 {
                     // 获取拖放的文件列表
                     string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                    
+
                     // 只取第一个文件
                     if (files.Length > 0)
                     {
                         string filePath = files[0];
                         string fileExtension = Path.GetExtension(filePath).ToLower();
-                        
+
                         // 验证是否为图片文件
                         if (fileExtension == ".jpg" || fileExtension == ".jpeg" || fileExtension == ".png" || fileExtension == ".bmp")
                         {
                             LogHelper.LogInfo($"拖放导入图片: {filePath}");
-                            
+
                             // 尝试重置表单状态 - 通过反射调用私有方法
-                            var resetFormMethod = _viewModel.GetType().GetMethod("ResetFormState", 
+                            var resetFormMethod = _viewModel.GetType().GetMethod("ResetFormState",
                                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                             if (resetFormMethod != null)
                             {
                                 resetFormMethod.Invoke(_viewModel, null);
                                 LogHelper.LogInfo("已重置表单状态");
                             }
-                            
+
                             // 清除之前的OCR结果
                             if (_viewModel.OcrResults != null)
                             {
@@ -463,13 +462,13 @@ namespace TA_WPF.Views
                                 _viewModel.AverageConfidence = 0;
                                 _viewModel.JsonResult = string.Empty;
                             }
-                            
+
                             // 设置新选择的图片路径
                             _viewModel.SelectedImagePath = filePath;
-                            
+
                             // 显示图片加载成功消息
                             LogHelper.LogInfo($"成功通过拖放导入图片: {Path.GetFileName(filePath)}");
-                            
+
                             // 手动触发命令状态更新，确保按钮可用性立即更新
                             CommandManager.InvalidateRequerySuggested();
                         }
@@ -479,7 +478,7 @@ namespace TA_WPF.Views
                         }
                     }
                 }
-                
+
                 // 标记事件已处理，防止事件冒泡导致重复处理
                 e.Handled = true;
             }

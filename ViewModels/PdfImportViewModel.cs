@@ -1,17 +1,11 @@
-using System;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Win32;
+using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using TA_WPF.Models;
-using System.Linq;
-using System.Collections.Generic;
-using System.Diagnostics;
-using MaterialDesignThemes.Wpf;
 
 namespace TA_WPF.ViewModels
 {
@@ -23,7 +17,7 @@ namespace TA_WPF.ViewModels
         private readonly PdfImportService _pdfImportService;
         private readonly MainViewModel _mainViewModel;
         private readonly StationSearchService _stationSearchService;
-        
+
         private string _pdfContent = string.Empty;
         private string _selectedPdfPath = string.Empty;
         private bool _isLoading = false;
@@ -154,7 +148,7 @@ namespace TA_WPF.ViewModels
             SelectDepartStationCommand = new RelayCommand<StationInfo>(SelectDepartStation);
             SelectArriveStationCommand = new RelayCommand<StationInfo>(SelectArriveStation);
             ShowHelpCommand = new RelayCommand(ShowHelpInfo);
-            
+
             // 初始化表单相关集合
             TrainTypes = new ObservableCollection<string> { "G", "C", "D", "Z", "T", "K", "L", "S", "纯数字" };
             HourOptions = Enumerable.Range(0, 24).Select(h => h.ToString("00")).ToList();
@@ -196,7 +190,7 @@ namespace TA_WPF.ViewModels
 
             // 初始化并加载车站数据
             Task.Run(async () => await _stationSearchService.InitializeAsync());
-            
+
             // 重置字段启用状态
             ResetFormFieldsState();
 
@@ -219,11 +213,11 @@ namespace TA_WPF.ViewModels
                 // 如果设置了忽略标记，则跳过搜索
                 if (_ignoreSearchTextChange)
                     return;
-                
+
                 try
                 {
                     await SearchDepartStationsAsync(DepartStationSearchText);
-                    
+
                     // 当搜索结果为空且不是输入初期时，显示站名不存在提示
                     if (DepartStationSuggestions.Count == 0 && DepartStationSearchText.Length > 1 && IsDepartStationEnabled)
                     {
@@ -238,25 +232,25 @@ namespace TA_WPF.ViewModels
                 {
                     LogHelper.LogError($"搜索出发车站时出错: {ex.Message}", ex);
                 }
-                
+
                 // 如果用户已经启用了编辑模式，则尝试根据输入搜索并填充车站代码和拼音
                 if (IsDepartStationEnabled && !string.IsNullOrWhiteSpace(DepartStationSearchText))
                 {
                     DepartStation = DepartStationSearchText;
                 }
             }
-            
+
             // 当到达车站搜索文本变更时，进行搜索
             if (e.PropertyName == nameof(ArriveStationSearchText) && !string.IsNullOrWhiteSpace(ArriveStationSearchText))
             {
                 // 如果设置了忽略标记，则跳过搜索
                 if (_ignoreSearchTextChange)
                     return;
-                
+
                 try
                 {
                     await SearchArriveStationsAsync(ArriveStationSearchText);
-                    
+
                     // 当搜索结果为空且不是输入初期时，显示站名不存在提示
                     if (ArriveStationSuggestions.Count == 0 && ArriveStationSearchText.Length > 1 && IsArriveStationEnabled)
                     {
@@ -271,7 +265,7 @@ namespace TA_WPF.ViewModels
                 {
                     LogHelper.LogError($"搜索到达车站时出错: {ex.Message}", ex);
                 }
-                
+
                 // 如果用户已经启用了编辑模式，则尝试根据输入搜索并填充车站代码和拼音
                 if (IsArriveStationEnabled && !string.IsNullOrWhiteSpace(ArriveStationSearchText))
                 {
@@ -381,7 +375,7 @@ namespace TA_WPF.ViewModels
         /// 选择出发车站命令
         /// </summary>
         public ICommand SelectDepartStationCommand { get; }
-        
+
         /// <summary>
         /// 选择到达车站命令
         /// </summary>
@@ -399,10 +393,12 @@ namespace TA_WPF.ViewModels
             {
                 if (_ticketNumber != value)
                 {
-                    if(!string.IsNullOrEmpty(value)){
+                    if (!string.IsNullOrEmpty(value))
+                    {
                         _ticketNumber = FormValidationHelper.EnsureFirstLetterUpperCase(value);
                     }
-                    else{
+                    else
+                    {
                         _ticketNumber = value;
                     }
                     OnPropertyChanged(nameof(TicketNumber));
@@ -420,10 +416,12 @@ namespace TA_WPF.ViewModels
             {
                 if (_checkInLocation != value)
                 {
-                    if(!string.IsNullOrEmpty(value)){
+                    if (!string.IsNullOrEmpty(value))
+                    {
                         _checkInLocation = FormValidationHelper.EnsureFirstLetterUpperCase(value);
                     }
-                    else{
+                    else
+                    {
                         _checkInLocation = value;
                     }
                     OnPropertyChanged(nameof(CheckInLocation));
@@ -443,7 +441,7 @@ namespace TA_WPF.ViewModels
                 {
                     _departStation = value;
                     OnPropertyChanged(nameof(DepartStation));
-                    
+
                     // 当手动输入站名时，尝试自动匹配站点代码和拼音
                     if (!string.IsNullOrEmpty(value))
                     {
@@ -465,7 +463,7 @@ namespace TA_WPF.ViewModels
                 {
                     _arriveStation = value;
                     OnPropertyChanged(nameof(ArriveStation));
-                    
+
                     // 当手动输入站名时，尝试自动匹配站点代码和拼音
                     if (!string.IsNullOrEmpty(value))
                     {
@@ -992,7 +990,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         public bool IsBOCPayment
         {
             get => _isBOCPayment;
@@ -1111,7 +1109,7 @@ namespace TA_WPF.ViewModels
             get => _selectedDepartStation;
             set => SetProperty(ref _selectedDepartStation, value);
         }
-        
+
         /// <summary>
         /// 选中的到达车站
         /// </summary>
@@ -1577,12 +1575,12 @@ namespace TA_WPF.ViewModels
                 ArriveStationCode = ticket.ArriveStationCode;
                 Money = ticket.Money ?? 0;
             }
-            
+
             // 解析车次号
             if (!string.IsNullOrEmpty(ticket.TrainNo))
             {
                 // 尝试匹配开头的字母类型
-                var trainTypeMatch = System.Text.RegularExpressions.Regex.Match(ticket.TrainNo, @"^([GCDZTKLSY])"); 
+                var trainTypeMatch = System.Text.RegularExpressions.Regex.Match(ticket.TrainNo, @"^([GCDZTKLSY])");
 
                 if (trainTypeMatch.Success)
                 {
@@ -1603,7 +1601,7 @@ namespace TA_WPF.ViewModels
             {
                 DepartDate = ticket.DepartDate.Value;
             }
-            
+
             if (ticket.DepartTime.HasValue)
             {
                 DepartHour = ticket.DepartTime.Value.Hours;
@@ -1715,7 +1713,7 @@ namespace TA_WPF.ViewModels
 
                 // 移除站名中可能的"站"字后缀再验证
                 string normalizedStationName = StationNameHelper.RemoveStationSuffix(stationName);
-                
+
                 // 使用StationSearchService检测是否是有效站点
                 var stationInfo = _stationSearchService.GetStationInfo(normalizedStationName);
 
@@ -1746,25 +1744,25 @@ namespace TA_WPF.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 // 验证出发车站和到达车站是否存在
                 string departStationName = DepartStation;
                 string arriveStationName = ArriveStation;
-                
+
                 // 验证出发车站
                 if (!ValidateStationName(departStationName, true))
                 {
                     IsLoading = false;
                     return;
                 }
-                
+
                 // 验证到达车站
                 if (!ValidateStationName(arriveStationName, false))
                 {
                     IsLoading = false;
                     return;
                 }
-                
+
                 // 收集表单数据创建车票对象
                 var ticket = CreateTicketFromForm();
 
@@ -1782,19 +1780,19 @@ namespace TA_WPF.ViewModels
                     IsLoading = false;
                     return;
                 }
-                
+
                 // 保存车票信息
                 bool success = await _pdfImportService.SaveTicketAsync(ticket);
-                
+
                 if (success)
                 {
                     IsLoading = false; // 在显示消息和关闭前设置 IsLoading = false
-                    
+
                     // 刷新车票中心数据
                     await _mainViewModel.QueryAllTicketsViewModel.RefreshDataAsync();
-                    
+
                     MessageBoxHelper.ShowInfo("车票导入成功");
-                    
+
                     // 关闭窗口
                     Application.Current.Windows.OfType<Window>()
                         .FirstOrDefault(w => w.DataContext == this)?.Close();
@@ -1831,7 +1829,7 @@ namespace TA_WPF.ViewModels
             }
 
             // 格式化座位号
-            string seatNo; 
+            string seatNo;
             if (IsNoSeat)
             {
                 seatNo = "无座";
@@ -1840,7 +1838,7 @@ namespace TA_WPF.ViewModels
             {
                 seatNo = $"{SeatNo}{SelectedSeatPosition}";
             }
-            
+
             // 格式化车厢号
             string coachNo;
             if (IsExtraCoach)
@@ -1857,7 +1855,7 @@ namespace TA_WPF.ViewModels
             {
                 coachNo = $"{CoachNo}车";
             }
-            
+
             // 提示信息处理
             string hint = SelectedHint;
             if (SelectedHint == "自定义")
@@ -1921,10 +1919,10 @@ namespace TA_WPF.ViewModels
             if (IsABCPayment) flags |= 4;    // 农业银行
             if (IsCCBPayment) flags |= 8;    // 建设银行
             if (IsICBCPayment) flags |= 16;  // 工商银行
-            if(IsCMBPayment) flags |= 32;    // 招商银行
-            if(IsPSBCPayment) flags |= 64; // 邮储银行
-            if(IsBOCPayment) flags |= 128;  // 中国银行
-            if(IsCOMMPayment) flags |= 256;// 交通银行
+            if (IsCMBPayment) flags |= 32;    // 招商银行
+            if (IsPSBCPayment) flags |= 64; // 邮储银行
+            if (IsBOCPayment) flags |= 128;  // 中国银行
+            if (IsCOMMPayment) flags |= 256;// 交通银行
 
             return flags;
         }
@@ -1948,7 +1946,7 @@ namespace TA_WPF.ViewModels
             Application.Current.Windows.OfType<Window>()
                 .FirstOrDefault(w => w.DataContext == this)?.Close();
         }
-        
+
         /// <summary>
         /// 搜索出发车站
         /// </summary>
@@ -2024,7 +2022,7 @@ namespace TA_WPF.ViewModels
                 LogHelper.LogError($"搜索到达车站时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 搜索出发车站并自动填充代码和拼音
         /// </summary>
@@ -2050,7 +2048,7 @@ namespace TA_WPF.ViewModels
                 LogHelper.LogError($"搜索出发车站信息时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 搜索到达车站并自动填充代码和拼音
         /// </summary>
@@ -2166,16 +2164,16 @@ namespace TA_WPF.ViewModels
                     IsDepartStationEnabled = newState;
                     IsDepartStationPinyinEnabled = newState; // 同步相关字段
                     IsDepartStationCodeEnabled = newState;
-                    
+
                     // 如果启用了编辑模式，则激活搜索下拉框功能
                     if (newState && !string.IsNullOrWhiteSpace(DepartStationSearchText))
                     {
                         DepartStationSearchText = DepartStation; // 保持一致性
                         // 异步调用搜索，显示下拉提示
-                        Task.Run(async () => 
+                        Task.Run(async () =>
                         {
                             await SearchDepartStationsAsync(DepartStationSearchText);
-                            Application.Current.Dispatcher.Invoke(() => 
+                            Application.Current.Dispatcher.Invoke(() =>
                             {
                                 IsDepartStationDropdownOpen = DepartStationSuggestions.Count > 0;
                             });
@@ -2187,16 +2185,16 @@ namespace TA_WPF.ViewModels
                     IsArriveStationEnabled = newState;
                     IsArriveStationPinyinEnabled = newState;
                     IsArriveStationCodeEnabled = newState;
-                    
+
                     // 如果启用了编辑模式，则激活搜索下拉框功能
                     if (newState && !string.IsNullOrWhiteSpace(ArriveStationSearchText))
                     {
                         ArriveStationSearchText = ArriveStation; // 保持一致性
                         // 异步调用搜索，显示下拉提示
-                        Task.Run(async () => 
+                        Task.Run(async () =>
                         {
                             await SearchArriveStationsAsync(ArriveStationSearchText);
-                            Application.Current.Dispatcher.Invoke(() => 
+                            Application.Current.Dispatcher.Invoke(() =>
                             {
                                 IsArriveStationDropdownOpen = ArriveStationSuggestions.Count > 0;
                             });
@@ -2238,11 +2236,11 @@ namespace TA_WPF.ViewModels
                 case "TicketModificationType": IsTicketModificationTypeEnabled = !IsTicketModificationTypeEnabled; break;
                 case "TicketType": IsTicketTypeEnabled = !IsTicketTypeEnabled; break;
                 case "PaymentMethod": IsPaymentMethodEnabled = !IsPaymentMethodEnabled; break;
-                // 可以根据需要添加更多字段
+                    // 可以根据需要添加更多字段
             }
         }
 
-        
+
 
         // 辅助方法，用于简化属性设置和通知
         private bool SetProperty<T>(ref T storage, T value, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
@@ -2258,20 +2256,20 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void SelectDepartStation(StationInfo station)
         {
-            Debug.WriteLine("[PdfImportViewModel] SelectDepartStation执行，参数站点: " + 
+            Debug.WriteLine("[PdfImportViewModel] SelectDepartStation执行，参数站点: " +
                 (station?.StationName ?? "null"));
-            
+
             if (station != null)
             {
                 // 设置忽略标志，防止更新文本后立刻触发搜索
                 _ignoreSearchTextChange = true;
-                
+
                 // 保存选中站点
                 SelectedDepartStation = station;
-                
+
                 // 移除站名中的"站"后缀
                 string stationName = Utils.StationNameHelper.RemoveStationSuffix(station.StationName);
-                
+
                 // 更新出发车站文本框内容
                 _suppressNotifications = true;
                 DepartStationSearchText = stationName;
@@ -2279,23 +2277,23 @@ namespace TA_WPF.ViewModels
                 DepartStationPinyin = station.StationPinyin;
                 DepartStationCode = station.StationCode;
                 _suppressNotifications = false;
-                
+
                 // 确保在UI线程上关闭下拉列表
-                Application.Current.Dispatcher.Invoke(() => 
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     // 必须先将DepartStationSuggestions清空，然后关闭下拉菜单
                     DepartStationSuggestions = new ObservableCollection<StationInfo>();
                     IsDepartStationDropdownOpen = false;
                 });
-                
+
                 // 触发输入变更以更新UI
                 OnPropertyChanged(nameof(DepartStationSearchText));
                 OnPropertyChanged(nameof(DepartStation));
                 OnPropertyChanged(nameof(DepartStationPinyin));
                 OnPropertyChanged(nameof(DepartStationCode));
-                
+
                 Debug.WriteLine("[PdfImportViewModel] 出发车站已更新为: " + DepartStationSearchText);
-                
+
                 // 重置忽略标志
                 _ignoreSearchTextChange = false;
             }
@@ -2306,20 +2304,20 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void SelectArriveStation(StationInfo station)
         {
-            Debug.WriteLine("[PdfImportViewModel] SelectArriveStation执行，参数站点: " + 
+            Debug.WriteLine("[PdfImportViewModel] SelectArriveStation执行，参数站点: " +
                 (station?.StationName ?? "null"));
-            
+
             if (station != null)
             {
                 // 设置忽略标志，防止更新文本后立刻触发搜索
                 _ignoreSearchTextChange = true;
-                
+
                 // 保存选中站点
                 SelectedArriveStation = station;
-                
+
                 // 移除站名中的"站"后缀
                 string stationName = Utils.StationNameHelper.RemoveStationSuffix(station.StationName);
-                
+
                 // 更新到达车站文本框内容
                 _suppressNotifications = true;
                 ArriveStationSearchText = stationName;
@@ -2327,28 +2325,28 @@ namespace TA_WPF.ViewModels
                 ArriveStationPinyin = station.StationPinyin;
                 ArriveStationCode = station.StationCode;
                 _suppressNotifications = false;
-                
+
                 // 确保在UI线程上关闭下拉列表
-                Application.Current.Dispatcher.Invoke(() => 
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     // 必须先将ArriveStationSuggestions清空，然后关闭下拉菜单
                     ArriveStationSuggestions = new ObservableCollection<StationInfo>();
                     IsArriveStationDropdownOpen = false;
                 });
-                
+
                 // 触发输入变更以更新UI
                 OnPropertyChanged(nameof(ArriveStationSearchText));
                 OnPropertyChanged(nameof(ArriveStation));
                 OnPropertyChanged(nameof(ArriveStationPinyin));
                 OnPropertyChanged(nameof(ArriveStationCode));
-                
+
                 Debug.WriteLine("[PdfImportViewModel] 到达车站已更新为: " + ArriveStationSearchText);
-                
+
                 // 重置忽略标志
                 _ignoreSearchTextChange = false;
             }
         }
-        
+
         /// <summary>
         /// 处理出发车站选择事件
         /// </summary>
@@ -2359,7 +2357,7 @@ namespace TA_WPF.ViewModels
                 SelectDepartStation(SelectedDepartStation);
             }
         }
-        
+
         /// <summary>
         /// 处理到达车站选择事件
         /// </summary>
@@ -2387,4 +2385,4 @@ namespace TA_WPF.ViewModels
                 "如何获取12306电子客票");
         }
     }
-} 
+}

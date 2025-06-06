@@ -261,7 +261,7 @@ namespace TA_WPF
             try
             {
                 // 获取数据库连接字符串
-                string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString ?? 
+                string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString ??
                     "Server=localhost;Database=ta_wpf;User ID=root;Password=;CharSet=utf8;Connect Timeout=15;AllowPublicKeyRetrieval=true;UseCompression=false;Default Command Timeout=30;SslMode=none;Max Pool Size=50;AllowUserVariables=true;";
 
                 // 初始化站点搜索服务
@@ -495,17 +495,17 @@ namespace TA_WPF
                         LogHelper.LogError("忽略HwndSource相关异常", ex);
                         return;
                     }
-                    
+
                     // 检查是否是Visual Studio设计器相关异常
-                    if (ex.StackTrace != null && 
-                        (ex.StackTrace.Contains("Microsoft.VisualStudio") || 
+                    if (ex.StackTrace != null &&
+                        (ex.StackTrace.Contains("Microsoft.VisualStudio") ||
                         ex.StackTrace.Contains("DesignTools")))
                     {
                         System.Diagnostics.Debug.WriteLine($"忽略Visual Studio设计器相关异常: {ex.Message}");
                         LogHelper.LogError("忽略Visual Studio设计器相关异常", ex);
                         return;
                     }
-                    
+
                     // 处理其他异常
                     LogHelper.LogSystemError("异常处理", "未观察到的Task异常", ex);
                 }

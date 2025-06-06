@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Windows.Data;
 using TA_WPF.Utils;
@@ -17,12 +16,12 @@ namespace TA_WPF.Converters
         {
             if (values == null || values.Length == 0 || values[0] == null)
                 return string.Empty;
-            
+
             if (values[0] is int stationLevel)
             {
                 return StationLevelHelper.GetStationLevelText(stationLevel);
             }
-            
+
             return string.Empty;
         }
 
@@ -34,4 +33,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

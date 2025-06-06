@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Navigation;
 using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
@@ -33,7 +32,7 @@ namespace TA_WPF.Views
 
         private void SettingsPage_Loaded(object sender, RoutedEventArgs e)
         {
-            try 
+            try
             {
                 // 查找控件 - 使用逻辑树查找而不是FindName，更加可靠
                 fontSizeSlider = GetDescendantByName(this, "FontSizeSlider") as Slider;
@@ -142,14 +141,14 @@ namespace TA_WPF.Views
             {
                 int caretIndex = textBox.CaretIndex;
                 string text = textBox.Text;
-                
+
                 // 检查是否包含空格
                 if (text.Contains(" "))
                 {
                     // 移除所有空格
                     string newText = text.Replace(" ", "");
                     textBox.Text = newText;
-                    
+
                     // 调整光标位置，避免光标跳到文本末尾
                     if (caretIndex > newText.Length)
                     {
@@ -177,7 +176,7 @@ namespace TA_WPF.Views
                 {
                     // 移除所有空格和不允许的字符
                     string filteredText = Regex.Replace(pastedText, @"[^a-zA-Z0-9]", "");
-                    
+
                     if (sender is TextBox textBox)
                     {
                         // 处理选中的文本情况
@@ -192,12 +191,12 @@ namespace TA_WPF.Views
                         {
                             // 替换选中文本
                             newText = currentText.Substring(0, selectionStart) + filteredText;
-                            
+
                             if (selectionStart + selectionLength < currentText.Length)
                             {
                                 newText += currentText.Substring(selectionStart + selectionLength);
                             }
-                            
+
                             // 检查最大长度
                             if (newText.Length > textBox.MaxLength)
                             {
@@ -219,7 +218,7 @@ namespace TA_WPF.Views
                                     return;
                                 }
                             }
-                            
+
                             textBox.Text = newText;
                             textBox.CaretIndex = selectionStart + filteredText.Length;
                         }
@@ -242,19 +241,19 @@ namespace TA_WPF.Views
                                     return;
                                 }
                             }
-                            
+
                             newText = currentText.Substring(0, caretIndex) + filteredText;
-                            
+
                             if (caretIndex < currentText.Length)
                             {
                                 newText += currentText.Substring(caretIndex);
                             }
-                            
+
                             textBox.Text = newText;
                             textBox.CaretIndex = caretIndex + filteredText.Length;
                         }
                     }
-                    
+
                     // 取消默认的粘贴操作
                     e.CancelCommand();
                 }

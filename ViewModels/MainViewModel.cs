@@ -1,18 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
-using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -653,7 +641,7 @@ namespace TA_WPF.ViewModels
             {
                 // 显示路线中心页面
                 ShowRouteCenter = true;
-                
+
                 // 加载路线数据
                 await _queryAllRoutesViewModel.QueryAllAsync();
             }

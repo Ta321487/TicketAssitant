@@ -1,16 +1,11 @@
-using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Diagnostics;
-using System.ComponentModel;
-using System.Windows.Input; // Added for CommandManager
-using System.Collections.Generic;
 
 namespace TA_WPF.ViewModels
 {
@@ -37,17 +32,17 @@ namespace TA_WPF.ViewModels
             _collection = collection ?? throw new ArgumentNullException(nameof(collection));
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
-            
+
             // 初始化集合
             _tickets = new ObservableCollection<TrainRideInfo>();
             _selectedTickets = new ObservableCollection<TrainRideInfo>();
             _selectedTickets.CollectionChanged += SelectedTickets_CollectionChanged;
-            
+
             // 初始化分页视图模型
             _paginationViewModel = new PaginationViewModel();
             _paginationViewModel.PageChanged += PageChanged;
             _paginationViewModel.PageSizeChanged += PageSizeChanged;
-            
+
             // 初始化命令
             AddTicketsCommand = new RelayCommand(AddTickets);
             RemoveTicketsCommand = new RelayCommand(RemoveTickets, CanRemoveTickets);
@@ -55,10 +50,10 @@ namespace TA_WPF.ViewModels
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll, CanUnselectAll);
             InvertSelectionCommand = new RelayCommand(InvertSelection, CanInvertSelection);
-            
+
             // 标记分页组件为已初始化
             _paginationViewModel.IsInitialized = true;
-            
+
             // 加载数据
             _ = LoadTicketsAsync();
         }
@@ -103,7 +98,7 @@ namespace TA_WPF.ViewModels
                     {
                         _selectedTickets?.Clear();
                     }
-                    
+
                     OnPropertyChanged(nameof(Tickets));
                     OnPropertyChanged(nameof(HasData));
                     OnPropertyChanged(nameof(HasNoData));
@@ -268,10 +263,10 @@ namespace TA_WPF.ViewModels
             var addTicketsWindow = new Views.AddTicketsToCollectionWindow(_collection, _databaseService, _mainViewModel);
             addTicketsWindow.Owner = Application.Current.MainWindow;
             addTicketsWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            
+
             // 显示窗口
             bool? result = addTicketsWindow.ShowDialog();
-            
+
             // 如果窗口返回true，表示有数据变更，刷新列表
             if (result == true)
             {
@@ -287,35 +282,35 @@ namespace TA_WPF.ViewModels
             // 确保有选中的车票
             if (!HasSelectedItems)
                 return;
-                
+
             // 获取选中的车票ID列表
             var selectedTicketIds = SelectedTickets.Select(t => t.Id).ToList();
-            
+
             // 询问用户是否确认移除
             var result = MessageBoxHelper.ShowConfirmation(
                 $"确定要从该收藏夹中移除选中的 {selectedTicketIds.Count} 张车票吗？",
                 "确认操作");
-                
+
             if (result != MessageBoxResult.Yes)
                 return;
-                
+
             // 显示加载状态
             IsLoading = true;
-            
+
             try
             {
                 // 调用数据库服务移除车票
                 bool success = await _databaseService.RemoveTicketsFromCollectionAsync(_collection.Id, selectedTicketIds);
-                
+
                 if (success)
                 {
                     // 更新收藏夹中的车票数量
                     _collection.TicketCount = await _databaseService.GetCollectionTicketCountAsync(_collection.Id);
-                    
+
                     // 显示成功消息
                     MessageBoxHelper.ShowInformation(
                         $"已成功从收藏夹中移除 {selectedTicketIds.Count} 张车票");
-                    
+
                     // 刷新列表
                     await LoadTicketsAsync();
                 }
@@ -349,7 +344,7 @@ namespace TA_WPF.ViewModels
         {
             // 确保当前页面所有票被选中
             int currentPageCount = Tickets?.Count ?? 0;
-            
+
             // 仅当有票可选时才执行选择操作
             if (currentPageCount > 0)
             {
@@ -360,14 +355,14 @@ namespace TA_WPF.ViewModels
                     {
                         ticket.IsSelected = true;
                     }
-                    
+
                     // 确保选中数量与UI保持同步
                     if (SelectedTickets.Count != currentPageCount)
                     {
                         // 刷新选择状态
                         SynchronizeSelectionStates();
                     }
-                    
+
                     // 通知DataGrid更新选中状态
                     SelectionChanged?.Invoke(this, new TicketSelectionChangedEventArgs(
                         new List<TrainRideInfo>(), // 没有移除的项
@@ -389,15 +384,15 @@ namespace TA_WPF.ViewModels
         {
             if (Tickets == null)
                 return;
-                
+
             // 暂时取消事件订阅，避免事件循环
             SelectedTickets.CollectionChanged -= SelectedTickets_CollectionChanged;
-            
+
             try
             {
                 // 清空现有选择
                 SelectedTickets.Clear();
-                
+
                 // 添加所有选中的项
                 foreach (var ticket in Tickets)
                 {
@@ -411,7 +406,7 @@ namespace TA_WPF.ViewModels
             {
                 // 恢复事件订阅
                 SelectedTickets.CollectionChanged += SelectedTickets_CollectionChanged;
-                
+
                 // 通知UI更新
                 NotifySelectionChanged();
             }
@@ -430,18 +425,18 @@ namespace TA_WPF.ViewModels
             // 没有选中项时不执行操作
             if (Tickets == null || Tickets.Count == 0 || SelectedTickets.Count == 0)
                 return;
-                
+
             // 备份当前选中项以便触发事件
             var previousSelected = new List<TrainRideInfo>(_selectedTickets);
-            
+
             foreach (var ticket in Tickets)
             {
                 ticket.IsSelected = false;
             }
-            
+
             SelectedTickets.Clear();
             NotifySelectionChanged();
-            
+
             // 通知DataGrid更新选中状态
             SelectionChanged?.Invoke(this, new TicketSelectionChangedEventArgs(
                 previousSelected, // 之前选中的项都被移除
@@ -461,24 +456,24 @@ namespace TA_WPF.ViewModels
         {
             if (Tickets == null || Tickets.Count == 0)
                 return;
-                
+
             var currentSelection = new HashSet<TrainRideInfo>(_selectedTickets);
             var toAdd = new List<TrainRideInfo>();
             var toRemove = new List<TrainRideInfo>(_selectedTickets);
-            
+
             foreach (var ticket in Tickets)
             {
                 bool previousState = ticket.IsSelected;
                 ticket.IsSelected = !previousState;
-                
+
                 if (!previousState)
                 {
                     toAdd.Add(ticket);
                 }
             }
-            
+
             SynchronizeSelectionStates();
-            
+
             // 通知DataGrid更新选中状态
             SelectionChanged?.Invoke(this, new TicketSelectionChangedEventArgs(
                 toRemove,  // 之前选中现在取消选中的项
@@ -498,19 +493,19 @@ namespace TA_WPF.ViewModels
         {
             // 记录刷新操作
             Debug.WriteLine("正在刷新收藏夹车票列表...");
-            
+
             // 重置缓存
             _paginationViewModel.ClearCache();
-            
+
             // 重置到第一页
             _paginationViewModel.CurrentPage = 1;
-            
+
             // 重新加载数据
             await LoadTicketsAsync();
-            
+
             // 更新收藏夹的车票数量
             _collection.TicketCount = await _databaseService.GetCollectionTicketCountAsync(_collection.Id);
-            
+
             Debug.WriteLine($"刷新完成，收藏夹中有 {_collection.TicketCount} 张车票");
         }
 
@@ -528,26 +523,26 @@ namespace TA_WPF.ViewModels
             {
                 // 从数据库加载车票数据
                 var ticketsData = await LoadTicketsFromDatabaseAsync();
-                
+
                 // 添加调试信息
                 Debug.WriteLine($"从数据库加载了 {ticketsData.Count} 张车票");
-                
+
                 Tickets = new ObservableCollection<TrainRideInfo>(ticketsData);
-                
+
                 // 清除选择
                 SelectedTickets.Clear();
-                
+
                 // 更新总记录数
                 TotalCount = await GetTotalTicketCountAsync();
                 Debug.WriteLine($"收藏夹车票总数: {TotalCount}");
-                
+
                 // 确保分页计算正确
                 int maxPage = (TotalCount + _paginationViewModel.PageSize - 1) / _paginationViewModel.PageSize;
                 maxPage = Math.Max(1, maxPage); // 确保至少有1页
                 _paginationViewModel.TotalPages = maxPage;
-                
+
                 Debug.WriteLine($"当前页: {_paginationViewModel.CurrentPage}, 总页数: {_paginationViewModel.TotalPages}");
-                
+
                 // 如果当前页超出范围，则重置为第一页
                 if (_paginationViewModel.CurrentPage > maxPage)
                 {
@@ -602,7 +597,7 @@ namespace TA_WPF.ViewModels
         {
             await LoadTicketsAsync();
         }
-        
+
         /// <summary>
         /// 处理页大小变更事件
         /// </summary>
@@ -683,7 +678,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         private void SelectedTickets_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             NotifySelectionChanged();
@@ -705,7 +700,7 @@ namespace TA_WPF.ViewModels
             }
 
             _selectedTickets.CollectionChanged += SelectedTickets_CollectionChanged;
-            
+
             NotifySelectionChanged();
         }
 
@@ -718,7 +713,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(HasSelectedItems));
 
             // Use CommandManager to re-evaluate command states
-            CommandManager.InvalidateRequerySuggested(); 
+            CommandManager.InvalidateRequerySuggested();
         }
 
         #endregion
@@ -733,14 +728,14 @@ namespace TA_WPF.ViewModels
         {
             public List<TrainRideInfo> RemovedItems { get; }
             public List<TrainRideInfo> AddedItems { get; }
-            
+
             public TicketSelectionChangedEventArgs(List<TrainRideInfo> removedItems, List<TrainRideInfo> addedItems)
             {
                 RemovedItems = removedItems;
                 AddedItems = addedItems;
             }
         }
-        
+
         #endregion
     }
-} 
+}

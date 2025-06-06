@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -15,8 +14,6 @@ namespace TA_WPF.Models
         private string? _latitude;
         private string? _stationCode;
         private string? _stationPinyin;
-        private string? _stationAddress;
-        private string? _stationTelephone;
         private bool _isSelected;
         private int _stationLevel;
         private string? _railwayBureau;
@@ -138,32 +135,6 @@ namespace TA_WPF.Models
             }
         }
 
-        public string? StationAddress
-        {
-            get => _stationAddress;
-            set
-            {
-                if (_stationAddress != value)
-                {
-                    _stationAddress = value;
-                    OnPropertyChanged(nameof(StationAddress));
-                }
-            }
-        }
-
-        public string? StationTelephone
-        {
-            get => _stationTelephone;
-            set
-            {
-                if (_stationTelephone != value)
-                {
-                    _stationTelephone = value;
-                    OnPropertyChanged(nameof(StationTelephone));
-                }
-            }
-        }
-
         public bool IsSelected
         {
             get => _isSelected;
@@ -176,7 +147,7 @@ namespace TA_WPF.Models
                 }
             }
         }
-        
+
         public int StationLevel
         {
             get => _stationLevel;
@@ -189,7 +160,7 @@ namespace TA_WPF.Models
                 }
             }
         }
-        
+
         public string? RailwayBureau
         {
             get => _railwayBureau;

@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Windows.Data;
 
@@ -23,7 +22,7 @@ namespace TA_WPF.Converters
             {
                 return isFavorite ? "★" : "☆";
             }
-            
+
             return "☆"; // 默认返回空心五角星
         }
 
@@ -35,4 +34,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

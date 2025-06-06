@@ -1,9 +1,9 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
-using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace TA_WPF.Views
 {
@@ -23,17 +23,17 @@ namespace TA_WPF.Views
         public EditCollectionWindow(TicketCollectionInfo collection, DatabaseService databaseService = null, MainViewModel mainViewModel = null)
         {
             InitializeComponent();
-            
+
             // 创建视图模型并传入收藏夹信息
             _viewModel = new EditCollectionViewModel(collection, databaseService, mainViewModel);
-            
+
             // 设置DataContext
             DataContext = _viewModel;
-            
+
             // 注册Loaded事件，设置初始焦点
             this.Loaded += EditCollectionWindow_Loaded;
         }
-        
+
         /// <summary>
         /// 窗口加载完成事件处理
         /// </summary>
@@ -46,7 +46,7 @@ namespace TA_WPF.Views
                 firstTextBox.Focus();
             }
         }
-        
+
         /// <summary>
         /// 查找第一个TextBox控件
         /// </summary>
@@ -55,7 +55,7 @@ namespace TA_WPF.Views
             // 寻找视觉树中的第一个TextBox
             return FindVisualChild<TextBox>(this);
         }
-        
+
         /// <summary>
         /// 在视觉树中查找指定类型的第一个子元素
         /// </summary>
@@ -64,20 +64,20 @@ namespace TA_WPF.Views
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
                 DependencyObject child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 if (child != null && child is T)
                 {
                     return (T)child;
                 }
-                
+
                 T childOfChild = FindVisualChild<T>(child);
                 if (childOfChild != null)
                 {
                     return childOfChild;
                 }
             }
-            
+
             return null;
         }
     }
-} 
+}

@@ -12,4 +12,4 @@ namespace TA_WPF.Views
             InitializeComponent();
         }
     }
-} 
+}

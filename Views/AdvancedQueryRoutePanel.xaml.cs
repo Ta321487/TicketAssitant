@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
-using TA_WPF.ViewModels;
 using System.Windows.Threading;
+using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
 {
@@ -15,14 +12,14 @@ namespace TA_WPF.Views
     public partial class AdvancedQueryRoutePanel : UserControl
     {
         private DispatcherTimer _inputDebounceTimer;
-        
+
         public AdvancedQueryRoutePanel()
         {
             InitializeComponent();
-            
+
             // 添加Loaded事件处理，确保UI正确反映ViewModel状态
             this.Loaded += AdvancedQueryRoutePanel_Loaded;
-            
+
             // 初始化输入延迟计时器，用于路线名称搜索
             _inputDebounceTimer = new DispatcherTimer
             {
@@ -30,7 +27,7 @@ namespace TA_WPF.Views
             };
             _inputDebounceTimer.Tick += InputDebounceTimer_Tick;
         }
-        
+
         private void AdvancedQueryRoutePanel_Loaded(object sender, RoutedEventArgs e)
         {
             // 确保数据绑定已更新
@@ -39,7 +36,7 @@ namespace TA_WPF.Views
                 // 触发属性更新，确保UI反映最新状态
                 viewModel.NotifyPropertiesChanged();
             }
-            
+
             // 为路线名称输入框添加文本变更事件
             var routeNameTextBox = FindRouteNameTextBox();
             if (routeNameTextBox != null)
@@ -47,7 +44,7 @@ namespace TA_WPF.Views
                 routeNameTextBox.TextChanged += RouteNameTextBox_TextChanged;
             }
         }
-        
+
         private TextBox FindRouteNameTextBox()
         {
             // 查找XAML中的路线名称输入框
@@ -68,7 +65,7 @@ namespace TA_WPF.Views
             }
             return null;
         }
-        
+
         private void RouteNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (DataContext is AdvancedQueryRouteViewModel viewModel)
@@ -78,16 +75,16 @@ namespace TA_WPF.Views
                 _inputDebounceTimer.Start();
             }
         }
-        
+
         private void InputDebounceTimer_Tick(object sender, EventArgs e)
         {
             // 停止定时器
             _inputDebounceTimer.Stop();
-            
+
             // 此时已经过了设定的延迟时间，可以执行搜索操作
             // 无需额外代码，因为文本已经通过绑定更新到ViewModel，ViewModel会自动执行搜索
         }
-        
+
         /// <summary>
         /// 查找指定类型的子控件
         /// </summary>
@@ -111,4 +108,4 @@ namespace TA_WPF.Views
             }
         }
     }
-} 
+}

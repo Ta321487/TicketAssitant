@@ -1,11 +1,11 @@
 using LiveCharts;
 using LiveCharts.Wpf;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using TA_WPF.ViewModels;
-using System.Diagnostics;
 
 namespace TA_WPF.Views
 {
@@ -245,8 +245,8 @@ namespace TA_WPF.Views
                 if (textBox != null)
                 {
                     // 获取当前选择范围前后的文本和新输入的文本组合后的完整字符串
-                    string newText = textBox.Text.Substring(0, textBox.SelectionStart) + 
-                                     e.Text + 
+                    string newText = textBox.Text.Substring(0, textBox.SelectionStart) +
+                                     e.Text +
                                      textBox.Text.Substring(textBox.SelectionStart + textBox.SelectionLength);
 
                     // 移除逗号（千位分隔符）再解析

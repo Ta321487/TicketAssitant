@@ -5,9 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using TA_WPF.Utils;
 
 namespace TA_WPF.Services
@@ -40,15 +37,15 @@ namespace TA_WPF.Services
         {
             // 尝试检测的Python命令列表
             string[] pythonCommands = new string[] { "python", "python3", "py" };
-            
+
             // 在Windows系统上，还可能需要检查特定路径
             List<string> possiblePaths = new List<string>();
-            try 
+            try
             {
                 // 获取PATH环境变量中的路径，寻找Python安装
                 string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
                 string[] paths = pathEnv.Split(Path.PathSeparator);
-                
+
                 // 收集系统中可能的Python安装路径
                 foreach (string path in paths)
                 {
@@ -58,17 +55,17 @@ namespace TA_WPF.Services
                         string pythonExe = Path.Combine(path, "python.exe");
                         string python3Exe = Path.Combine(path, "python3.exe");
                         string pyExe = Path.Combine(path, "py.exe");
-                        
+
                         if (File.Exists(pythonExe)) possiblePaths.Add(pythonExe);
                         if (File.Exists(python3Exe)) possiblePaths.Add(python3Exe);
                         if (File.Exists(pyExe)) possiblePaths.Add(pyExe);
                     }
                 }
-                
+
                 // 检查常见的Python安装目录
                 string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
                 string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-                
+
                 // 添加可能的Python安装路径
                 string[] commonPaths = new[]
                 {
@@ -76,14 +73,14 @@ namespace TA_WPF.Services
                     Path.Combine(programFilesX86, "Python*"),
                     @"C:\Python*"
                 };
-                
+
                 foreach (string pattern in commonPaths)
                 {
                     try
                     {
                         string directory = Path.GetDirectoryName(pattern) ?? string.Empty;
                         string searchPattern = Path.GetFileName(pattern);
-                        
+
                         if (Directory.Exists(directory))
                         {
                             foreach (string dir in Directory.GetDirectories(directory, searchPattern))
@@ -105,14 +102,14 @@ namespace TA_WPF.Services
             {
                 Debug.WriteLine($"获取Python路径时出错: {ex.Message}");
             }
-            
+
             // 添加找到的路径到检测列表
             pythonCommands = pythonCommands.Concat(possiblePaths).ToArray();
-            
+
             // 记录诊断信息
             Debug.WriteLine($"开始检测Python安装状态...");
             Debug.WriteLine($"将尝试以下命令/路径: {string.Join(", ", pythonCommands)}");
-            
+
             // 依次尝试所有可能的Python命令
             foreach (string command in pythonCommands)
             {
@@ -129,13 +126,15 @@ namespace TA_WPF.Services
 
                         StringBuilder output = new StringBuilder();
                         StringBuilder error = new StringBuilder();
-                        
-                        process.OutputDataReceived += (sender, e) => {
+
+                        process.OutputDataReceived += (sender, e) =>
+                        {
                             if (!string.IsNullOrEmpty(e.Data))
                                 output.AppendLine(e.Data);
                         };
-                        
-                        process.ErrorDataReceived += (sender, e) => {
+
+                        process.ErrorDataReceived += (sender, e) =>
+                        {
                             if (!string.IsNullOrEmpty(e.Data))
                                 error.AppendLine(e.Data);
                         };
@@ -144,7 +143,7 @@ namespace TA_WPF.Services
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
                         await process.WaitForExitAsync();
-                        
+
                         // 记录诊断信息
                         Debug.WriteLine($"命令 '{command}' 返回: 退出代码={process.ExitCode}, 输出={output}, 错误={error}");
 
@@ -154,13 +153,13 @@ namespace TA_WPF.Services
                             string versionInfo = output.ToString().Trim();
                             if (string.IsNullOrEmpty(versionInfo))
                                 versionInfo = error.ToString().Trim();
-                            
+
                             Debug.WriteLine($"已检测到Python安装: {versionInfo}");
                             LogHelper.LogSystem("Python", $"已检测到Python安装: {versionInfo}");
-                            
+
                             // 更新当前Python路径
                             _pythonExePath = command;
-                            
+
                             return true;
                         }
                     }
@@ -171,7 +170,7 @@ namespace TA_WPF.Services
                     // 继续尝试下一个命令
                 }
             }
-            
+
             Debug.WriteLine("未检测到Python安装");
             return false;
         }
@@ -222,11 +221,11 @@ namespace TA_WPF.Services
                 string appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string modelDir2 = Path.Combine(appDataDir, "cnocr");
                 string versionModelDir = Path.Combine(modelDir2, "2.3"); // 特定版本目录
-                
+
                 // 3. 检测检测模型目录 (cnstd)
                 string cnstdDir = Path.Combine(appDataDir, "cnstd");
                 string cnstdVersionDir = Path.Combine(cnstdDir, "1.2"); // 特定版本目录
-                
+
                 // 4. 检测其他可能的目录
                 string versionModelDir1 = Path.Combine(modelDir2, "1"); // 另一个可能的版本目录
                 string pythonSitePackages = GetPythonSitePackagesDir(); // Python site-packages目录
@@ -252,7 +251,7 @@ namespace TA_WPF.Services
                                 }
                                 return true;
                             }
-                            
+
                             // 尝试搜索特定的模型子目录
                             string[] potentialModelDirs = Directory.GetDirectories(dir, "*", SearchOption.TopDirectoryOnly);
                             foreach (var potentialDir in potentialModelDirs)
@@ -282,7 +281,7 @@ namespace TA_WPF.Services
                         catch (Exception ex)
                         {
                             Debug.WriteLine($"搜索模型文件时出错: {ex.Message}");
-                            LogHelper.LogSystemError("模型",$"搜索模型文件时出错: {ex.Message}", ex);
+                            LogHelper.LogSystemError("模型", $"搜索模型文件时出错: {ex.Message}", ex);
 
                             // 继续搜索其他目录
                         }
@@ -300,7 +299,7 @@ namespace TA_WPF.Services
                 return false;
             }
         }
-        
+
         /// <summary>
         /// 获取Python的site-packages目录
         /// </summary>
@@ -339,7 +338,7 @@ namespace TA_WPF.Services
                 Debug.WriteLine($"获取Python site-packages目录时出错: {ex.Message}");
                 LogHelper.LogSystemError("Python环境", $"获取Python site-packages目录时出错", ex);
             }
-            
+
             return null;
         }
 
@@ -724,7 +723,7 @@ except Exception as e:
                     bool isDownloading = false;
                     string statusMessage = "正在准备OCR引擎...";
 
-                    process.OutputDataReceived += (sender, e) => 
+                    process.OutputDataReceived += (sender, e) =>
                     {
                         if (e.Data != null)
                         {
@@ -735,7 +734,8 @@ except Exception as e:
                                 if (int.TryParse(progressStr, out int progress))
                                 {
                                     // 使用Application.Current.Dispatcher确保在UI线程上更新进度
-                                    Application.Current.Dispatcher.Invoke(() => {
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
                                         // 获取当前OcrTicketViewModel实例
                                         var windows = Application.Current.Windows.OfType<Window>();
                                         var ocrWindow = windows.FirstOrDefault(w => w.GetType().Name == "OcrTicketWindow");
@@ -757,7 +757,8 @@ except Exception as e:
                                 // 处理状态信息
                                 statusMessage = e.Data.Substring(7);
                                 // 使用Application.Current.Dispatcher确保在UI线程上更新状态
-                                Application.Current.Dispatcher.Invoke(() => {
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
                                     var windows = Application.Current.Windows.OfType<Window>();
                                     var ocrWindow = windows.FirstOrDefault(w => w.GetType().Name == "OcrTicketWindow");
                                     if (ocrWindow != null && ocrWindow.DataContext is ViewModels.OcrTicketViewModel viewModel)
@@ -770,9 +771,10 @@ except Exception as e:
                             {
                                 isDownloading = true;
                                 statusMessage = "首次使用需要下载OCR模型，请耐心等待...";
-                                
+
                                 // 使用Application.Current.Dispatcher确保在UI线程上更新状态
-                                Application.Current.Dispatcher.Invoke(() => {
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
                                     var windows = Application.Current.Windows.OfType<Window>();
                                     var ocrWindow = windows.FirstOrDefault(w => w.GetType().Name == "OcrTicketWindow");
                                     if (ocrWindow != null && ocrWindow.DataContext is ViewModels.OcrTicketViewModel viewModel)
@@ -799,13 +801,13 @@ except Exception as e:
                         }
                     };
 
-                    process.ErrorDataReceived += (sender, e) => 
+                    process.ErrorDataReceived += (sender, e) =>
                     {
                         if (e.Data != null)
                         {
                             // 过滤掉一些常见的无关紧要的警告或错误，不显示在日志中
-                            if (e.Data.Contains("FutureWarning") || 
-                                e.Data.Contains("symlinks") || 
+                            if (e.Data.Contains("FutureWarning") ||
+                                e.Data.Contains("symlinks") ||
                                 e.Data.Contains("Ignoring --local-dir-use-symlinks") ||
                                 e.Data.Contains("warnings.warn") ||
                                 e.Data.Contains("huggingface_hub") ||
@@ -814,9 +816,9 @@ except Exception as e:
                                 // 不记录这些常见警告
                                 return;
                             }
-                            
+
                             // 过滤网络连接相关错误，仅保留核心错误信息
-                            if (e.Data.Contains("ConnectTimeoutError") || 
+                            if (e.Data.Contains("ConnectTimeoutError") ||
                                 e.Data.Contains("Connection to huggingface.co timed out") ||
                                 e.Data.Contains("Max retries exceeded") ||
                                 e.Data.Contains("10060") ||
@@ -828,7 +830,7 @@ except Exception as e:
                                 LogHelper.LogSystemError("网络", "网络连接超时：连接到模型服务器失败，但不影响使用已下载的模型");
                                 return;
                             }
-                            
+
                             errorBuilder.AppendLine(e.Data);
                             Debug.WriteLine($"OCR错误: {e.Data}");
                         }
@@ -843,7 +845,8 @@ except Exception as e:
                     // 重置下载状态
                     if (isDownloading)
                     {
-                        Application.Current.Dispatcher.Invoke(() => {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
                             var windows = Application.Current.Windows.OfType<Window>();
                             var ocrWindow = windows.FirstOrDefault(w => w.GetType().Name == "OcrTicketWindow");
                             if (ocrWindow != null && ocrWindow.DataContext is ViewModels.OcrTicketViewModel viewModel)
@@ -859,7 +862,7 @@ except Exception as e:
                     // 修改输出处理
                     string output = outputBuilder.ToString().Trim();
                     Debug.WriteLine($"OCR原始输出: {output}");
-                    
+
                     if (process.ExitCode != 0)
                     {
                         string error = errorBuilder.ToString();
@@ -868,14 +871,14 @@ except Exception as e:
                     }
 
                     // 尝试解析JSON格式
-                    try 
+                    try
                     {
                         // 清理输出中的非JSON部分
                         string jsonPart = ExtractJsonFromOutput(output);
                         if (!string.IsNullOrEmpty(jsonPart))
                         {
                             Debug.WriteLine($"提取的JSON部分: {jsonPart}");
-                            
+
                             // 使用更安全的设置解析JSON
                             var settings = new JsonSerializerSettings
                             {
@@ -883,7 +886,7 @@ except Exception as e:
                                 FloatFormatHandling = FloatFormatHandling.DefaultValue,
                                 NullValueHandling = NullValueHandling.Ignore
                             };
-                            
+
                             // 尝试验证JSON是否有效
                             object jsonObj = JsonConvert.DeserializeObject(jsonPart, settings);
                             string result = JsonConvert.SerializeObject(jsonObj, settings);
@@ -997,16 +1000,16 @@ except Exception as e:
                 string appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string appDir = AppDomain.CurrentDomain.BaseDirectory;
                 string assetsOnnxDir = Path.Combine(appDir, "Assets", "onnx");
-                
+
                 Debug.WriteLine($"尝试从内置目录复制模型文件: {assetsOnnxDir}");
-                
+
                 // 检查Assets/onnx目录是否存在
                 if (!Directory.Exists(assetsOnnxDir))
                 {
                     Debug.WriteLine("错误: Assets/onnx目录不存在");
                     return false;
                 }
-                
+
                 // 1. 检查并复制CnOCR识别模型
                 string cnocrModelSource = Path.Combine(assetsOnnxDir, "cnocr-v2.3-densenet_lite_136-gru-epoch=004-ft-model.onnx");
                 if (File.Exists(cnocrModelSource))
@@ -1016,13 +1019,13 @@ except Exception as e:
                     string cnocrVersionDir = Path.Combine(cnocrDir, "2.3");
                     string cnocrModelDir = Path.Combine(cnocrVersionDir, "densenet_lite_136-gru");
                     string cnocrModelTarget = Path.Combine(cnocrModelDir, "cnocr-v2.3-densenet_lite_136-gru-epoch=004-ft-model.onnx");
-                    
+
                     // 检查目标文件是否已存在
                     if (!File.Exists(cnocrModelTarget))
                     {
                         // 确保目标目录存在
                         Directory.CreateDirectory(cnocrModelDir);
-                        
+
                         // 复制模型文件
                         File.Copy(cnocrModelSource, cnocrModelTarget, true);
                         Debug.WriteLine($"已复制CnOCR识别模型: {cnocrModelTarget}");
@@ -1037,7 +1040,7 @@ except Exception as e:
                 {
                     Debug.WriteLine($"警告: CnOCR识别模型源文件不存在: {cnocrModelSource}");
                 }
-                
+
                 // 2. 检查并复制CNSTD检测模型
                 string cnstdModelSource = Path.Combine(assetsOnnxDir, "ch_PP-OCRv4_det_infer.onnx");
                 if (File.Exists(cnstdModelSource))
@@ -1048,13 +1051,13 @@ except Exception as e:
                     string ppocrDir = Path.Combine(cnstdVersionDir, "ppocr");
                     string cnstdModelDir = Path.Combine(ppocrDir, "ch_PP-OCRv4_det");
                     string cnstdModelTarget = Path.Combine(cnstdModelDir, "ch_PP-OCRv4_det_infer.onnx");
-                    
+
                     // 检查目标文件是否已存在
                     if (!File.Exists(cnstdModelTarget))
                     {
                         // 确保目标目录存在
                         Directory.CreateDirectory(cnstdModelDir);
-                        
+
                         // 复制模型文件
                         File.Copy(cnstdModelSource, cnstdModelTarget, true);
                         Debug.WriteLine($"已复制CNSTD检测模型: {cnstdModelTarget}");
@@ -1069,7 +1072,7 @@ except Exception as e:
                 {
                     Debug.WriteLine($"警告: CNSTD检测模型源文件不存在: {cnstdModelSource}");
                 }
-                
+
                 return copiedAnyFile;
             }
             catch (Exception ex)

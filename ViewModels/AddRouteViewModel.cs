@@ -1,16 +1,13 @@
-using System;
+using Microsoft.Win32;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.Win32;
+using System.Windows.Media.Imaging;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.IO;
-using System.Diagnostics;
-using System.Windows.Media.Imaging;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 
 namespace TA_WPF.ViewModels
 {
@@ -39,7 +36,7 @@ namespace TA_WPF.ViewModels
             _databaseService = databaseService;
             _mainViewModel = mainViewModel;
             _isFavorite = false; // 默认不收藏
-            
+
             // 初始化命令
             CreateCommand = new RelayCommand(CreateRoute, CanCreateRoute);
             CancelCommand = new RelayCommand(CancelOperation);
@@ -53,12 +50,12 @@ namespace TA_WPF.ViewModels
                 {
                     // 读取并处理默认图片
                     byte[] processedImage = LoadAndResizeImage(imagePath, 200, 100);
-                    
+
                     if (processedImage != null && processedImage.Length > 0)
                     {
                         CoverImagePath = imagePath;
                         CoverImage = processedImage;
-                        
+
                         // 通知UI更新按钮状态
                         OnPropertyChanged(nameof(IsValid));
                         CommandManager.InvalidateRequerySuggested();
@@ -144,7 +141,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 封面图片
         /// </summary>
@@ -185,8 +182,8 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 封面图片文件名
         /// </summary>
-        public string CoverImageFileName => !string.IsNullOrEmpty(CoverImagePath) 
-            ? Path.GetFileName(CoverImagePath) 
+        public string CoverImageFileName => !string.IsNullOrEmpty(CoverImagePath)
+            ? Path.GetFileName(CoverImagePath)
             : "暂未选择图片";
 
         /// <summary>
@@ -214,9 +211,9 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 输入是否有效
         /// </summary>
-        public bool IsValid => 
-            !string.IsNullOrWhiteSpace(RouteName) && 
-            HasCoverImage && 
+        public bool IsValid =>
+            !string.IsNullOrWhiteSpace(RouteName) &&
+            HasCoverImage &&
             !string.IsNullOrWhiteSpace(TotalDistance) &&
             decimal.TryParse(TotalDistance, out _);
 
@@ -248,19 +245,19 @@ namespace TA_WPF.ViewModels
                     MessageBoxHelper.ShowError("路线名称不能为空");
                     return;
                 }
-                
+
                 if (!HasCoverImage || CoverImage == null || CoverImage.Length == 0)
                 {
                     MessageBoxHelper.ShowError("请选择封面图片");
                     return;
                 }
-                
+
                 if (string.IsNullOrWhiteSpace(TotalDistance))
                 {
                     MessageBoxHelper.ShowError("请输入总里程");
                     return;
                 }
-                
+
                 if (!decimal.TryParse(TotalDistance, out decimal totalDistanceValue))
                 {
                     MessageBoxHelper.ShowError("总里程必须是有效的数值");
@@ -278,7 +275,7 @@ namespace TA_WPF.ViewModels
                     IsLoading = false;
                     return;
                 }
-                
+
                 // 创建路线对象
                 var route = new RouteInfo
                 {
@@ -353,16 +350,16 @@ namespace TA_WPF.ViewModels
                 {
                     // 读取文件路径
                     string filePath = openFileDialog.FileName;
-                    
+
                     // 处理图片：调整尺寸和压缩
                     byte[] processedImage = LoadAndResizeImage(filePath, 200, 100);
-                    
+
                     if (processedImage != null && processedImage.Length > 0)
                     {
                         // 保存路径和处理后的图片数据
                         CoverImagePath = filePath;
                         CoverImage = processedImage;
-                        
+
                         // 通知UI更新按钮状态
                         OnPropertyChanged(nameof(IsValid));
                         CommandManager.InvalidateRequerySuggested();
@@ -380,7 +377,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 加载并调整图片尺寸
         /// </summary>
@@ -403,29 +400,29 @@ namespace TA_WPF.ViewModels
                 double scaleX = (double)maxWidth / originalImage.PixelWidth;
                 double scaleY = (double)maxHeight / originalImage.PixelHeight;
                 double scale = Math.Min(scaleX, scaleY); // 等比缩放，取小的缩放比例
-                
+
                 // 如果图片比目标尺寸小，则不需要缩放
                 if (scale >= 1.0 && originalImage.PixelWidth <= maxWidth && originalImage.PixelHeight <= maxHeight)
                 {
                     // 直接使用原图，只压缩质量
                     return CompressImageQuality(File.ReadAllBytes(imagePath), 75);
                 }
-                
+
                 // 计算缩放后的尺寸
                 int newWidth = (int)(originalImage.PixelWidth * scale);
                 int newHeight = (int)(originalImage.PixelHeight * scale);
-                
+
                 // 创建缩放后的位图
                 TransformedBitmap transformedBitmap = new TransformedBitmap(
                     originalImage,
                     new ScaleTransform(scale, scale)
                 );
-                
+
                 // 编码为JPEG
                 JpegBitmapEncoder encoder = new JpegBitmapEncoder();
                 encoder.QualityLevel = 75; // 较好的质量
                 encoder.Frames.Add(BitmapFrame.Create(transformedBitmap));
-                
+
                 using (MemoryStream stream = new MemoryStream())
                 {
                     encoder.Save(stream);
@@ -437,7 +434,7 @@ namespace TA_WPF.ViewModels
                 Debug.WriteLine($"调整图片尺寸失败: {ex.Message}");
                 LogHelper.LogError($"调整图片尺寸失败: {ex.Message}", ex);
                 // 尝试使用备用方法
-                try 
+                try
                 {
                     // 如果转换失败，尝试直接压缩原图
                     return CompressImageQuality(File.ReadAllBytes(imagePath), 50);
@@ -450,7 +447,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 压缩图片质量
         /// </summary>
@@ -461,7 +458,7 @@ namespace TA_WPF.ViewModels
         {
             if (imageBytes == null || imageBytes.Length == 0)
                 return imageBytes;
-                
+
             try
             {
                 // 创建图片源
@@ -490,13 +487,13 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"压缩图片异常: {ex.Message}");
-                
+
                 // 如果压缩失败但文件不大，返回原图
                 if (imageBytes.Length <= 100 * 1024)
                 {
                     return imageBytes;
                 }
-                
+
                 return null; // 如果压缩失败且文件过大，返回null
             }
         }
@@ -521,4 +518,4 @@ namespace TA_WPF.ViewModels
             }
         }
     }
-} 
+}

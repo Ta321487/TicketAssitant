@@ -14,7 +14,7 @@ namespace TA_WPF.ViewModels
         Aisle = 2,
         Middle = 3
     }
-    
+
     public class AdvancedQueryTicketViewModel : BaseViewModel
     {
         #region 字段

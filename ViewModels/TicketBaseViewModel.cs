@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -7,7 +8,6 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.Views;
-using System.Diagnostics;
 
 namespace TA_WPF.ViewModels
 {
@@ -138,7 +138,7 @@ namespace TA_WPF.ViewModels
                         IsPSBCPayment = false;
                         IsBOCPayment = false;
                         IsCOMMPayment = false;
-                        
+
                     }
 
                     if (!_isInitializing) OnPaymentChannelChanged();
@@ -195,14 +195,17 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        public bool IsPSBCPayment {
+        public bool IsPSBCPayment
+        {
             get => _isPSBCPayment;
             set
             {
-                if (_isPSBCPayment != value) {
+                if (_isPSBCPayment != value)
+                {
                     _isPSBCPayment = value;
                     OnPropertyChanged(nameof(IsPSBCPayment));
-                    if(!_isInitializing && value) {
+                    if (!_isInitializing && value)
+                    {
                         IsABCPayment = false;
                         IsCCBPayment = false;
                         IsICBCPayment = false;
@@ -210,7 +213,7 @@ namespace TA_WPF.ViewModels
                         IsBOCPayment = false;
                         IsCOMMPayment = false;
                     }
-                    if(!_isInitializing) OnPaymentChannelChanged();
+                    if (!_isInitializing) OnPaymentChannelChanged();
                 }
             }
         }
@@ -235,18 +238,19 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        public bool IsCOMMPayment {
+        public bool IsCOMMPayment
+        {
             get => _isCOMMPayment;
-            set 
-            { 
-                if(_isCOMMPayment != value)
+            set
+            {
+                if (_isCOMMPayment != value)
                 {
                     _isCOMMPayment = value;
                     OnPropertyChanged(nameof(IsCOMMPayment));
                     if (!_isInitializing && value)
                     {
                         IsABCPayment = false;
-                        IsICBCPayment= false;
+                        IsICBCPayment = false;
                         IsCCBPayment = false;
                         IsCMBPayment = false;
                         IsPSBCPayment = false;
@@ -255,7 +259,7 @@ namespace TA_WPF.ViewModels
                     }
                 }
             }
-        
+
         }
 
         // 控制支付宝售票是否可用
@@ -305,10 +309,10 @@ namespace TA_WPF.ViewModels
             if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
             if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
             if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
-            if(IsCMBPayment) flags |= (int)PaymentChannelFlags.CMB;
-            if(IsPSBCPayment) flags |= (int)PaymentChannelFlags.PSBC;
-            if(IsBOCPayment)flags |= (int)PaymentChannelFlags.BOC;
-            if(IsCOMMPayment)flags |=(int)PaymentChannelFlags.COMM;
+            if (IsCMBPayment) flags |= (int)PaymentChannelFlags.CMB;
+            if (IsPSBCPayment) flags |= (int)PaymentChannelFlags.PSBC;
+            if (IsBOCPayment) flags |= (int)PaymentChannelFlags.BOC;
+            if (IsCOMMPayment) flags |= (int)PaymentChannelFlags.COMM;
             return flags;
         }
 
@@ -609,7 +613,7 @@ namespace TA_WPF.ViewModels
         {
             if (TrainRideInfos == null || TrainRideInfos.Count == 0)
                 return;
-            
+
             // 设置全选状态
             IsAllSelected = true;
 
@@ -621,7 +625,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(SelectionToggleText));
             OnPropertyChanged(nameof(SelectionToggleIcon));
             OnPropertyChanged(nameof(SelectionToggleTooltip));
-            
+
             // 通知DataGrid更新选中状态（这是关键步骤）
             // 通过强制刷新命令状态来触发UI更新
             CommandManager.InvalidateRequerySuggested();
@@ -634,7 +638,7 @@ namespace TA_WPF.ViewModels
         {
             if (TrainRideInfos == null || TrainRideInfos.Count == 0)
                 return;
-                
+
             // 设置取消全选状态
             IsAllSelected = false;
 
@@ -646,7 +650,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(SelectionToggleText));
             OnPropertyChanged(nameof(SelectionToggleIcon));
             OnPropertyChanged(nameof(SelectionToggleTooltip));
-            
+
             // 通知DataGrid更新选中状态
             CommandManager.InvalidateRequerySuggested();
         }
@@ -658,7 +662,7 @@ namespace TA_WPF.ViewModels
         {
             if (TrainRideInfos == null || TrainRideInfos.Count == 0)
                 return;
-                
+
             // 切换全选状态
             IsAllSelected = !IsAllSelected;
 
@@ -670,7 +674,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(SelectionToggleText));
             OnPropertyChanged(nameof(SelectionToggleIcon));
             OnPropertyChanged(nameof(SelectionToggleTooltip));
-            
+
             // 通知DataGrid更新选中状态
             CommandManager.InvalidateRequerySuggested();
         }
@@ -744,7 +748,7 @@ namespace TA_WPF.ViewModels
 
             // 强制更新选中项计数
             UpdateSelectedItemsCount();
-            
+
             // 通知UI更新相关属性
             OnPropertyChanged(nameof(HasSelectedItems));
             OnPropertyChanged(nameof(SelectionToggleText));
@@ -753,7 +757,7 @@ namespace TA_WPF.ViewModels
 
             // 强制刷新命令状态和DataGrid选择状态
             CommandManager.InvalidateRequerySuggested();
-            
+
             // 触发属性变更，确保绑定更新
             OnPropertyChanged(nameof(TrainRideInfos));
         }
@@ -1262,10 +1266,10 @@ namespace TA_WPF.ViewModels
                         OnPropertyChanged(nameof(SelectionToggleText));
                         OnPropertyChanged(nameof(SelectionToggleIcon));
                         OnPropertyChanged(nameof(SelectionToggleTooltip));
-                        
+
                         // 触发绑定更新
                         OnPropertyChanged(nameof(TrainRideInfos));
-                        
+
                         // 强制刷新命令状态
                         CommandManager.InvalidateRequerySuggested();
                     }

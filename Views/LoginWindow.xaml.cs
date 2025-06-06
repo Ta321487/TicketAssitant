@@ -1,5 +1,4 @@
 using MaterialDesignThemes.Wpf;
-using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,12 +18,12 @@ namespace TA_WPF.Views
     {
         private LoginViewModel ViewModel => (LoginViewModel)DataContext;
         private MainWindow? _mainWindow;
-        
+
         /// <summary>
         /// 登录是否成功
         /// </summary>
         public bool LoginSuccessful => ViewModel?.LoginSuccessful ?? false;
-        
+
         /// <summary>
         /// 设置数据库名称
         /// </summary>
@@ -34,7 +33,7 @@ namespace TA_WPF.Views
             if (ViewModel != null)
             {
                 ViewModel.DatabaseName = dbName;
-                
+
                 // 更新UI
                 if (DatabaseNameComboBox != null)
                 {
@@ -58,7 +57,7 @@ namespace TA_WPF.Views
                 LoginSnackbar.MessageQueue = new SnackbarMessageQueue(TimeSpan.FromMilliseconds(3000));
 
                 // 添加PasswordBox事件处理(因为无法直接绑定Password属性)
-                PasswordBox.PasswordChanged += (s, e) => 
+                PasswordBox.PasswordChanged += (s, e) =>
                 {
                     if (ViewModel != null)
                         ViewModel.Password = PasswordBox.Password;
@@ -68,7 +67,7 @@ namespace TA_WPF.Views
             {
                 Debug.WriteLine($"LoginWindow构造函数异常: {ex.Message}");
                 Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
-                MessageBoxHelper.ShowError($"初始化登录窗口时出错: {ex.Message}","错误");
+                MessageBoxHelper.ShowError($"初始化登录窗口时出错: {ex.Message}", "错误");
             }
         }
 
@@ -110,7 +109,7 @@ namespace TA_WPF.Views
                 Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
-        
+
         private void SetupViewModelEventHandlers()
         {
             // 错误信息处理
@@ -118,7 +117,7 @@ namespace TA_WPF.Views
             {
                 ShowError(message);
             };
-            
+
             // 登录成功处理
             ViewModel.LoginSuccess += (sender, connString) =>
             {
@@ -130,7 +129,7 @@ namespace TA_WPF.Views
             {
                 LoginSnackbar.MessageQueue?.Enqueue(message);
             };
-            
+
             // 数据库创建成功处理
             ViewModel.DatabaseCreated += (sender, dbName) =>
             {
@@ -140,7 +139,7 @@ namespace TA_WPF.Views
                     DatabaseNameComboBox.Items.Add(dbName);
                 }
                 DatabaseNameComboBox.SelectedItem = dbName;
-                
+
                 // 显示成功消息
                 LoginSnackbar.MessageQueue.Enqueue($"数据库 '{dbName}' 创建成功");
             };
@@ -215,7 +214,7 @@ namespace TA_WPF.Views
             // 字体大小更改由ViewModel处理，这里处理UI相关部分
             ApplyFontSizeToWindow(fontSize);
         }
-        
+
         // 处理窗口字体大小应用
         private void ApplyFontSizeToWindow(double fontSize)
         {
@@ -223,7 +222,7 @@ namespace TA_WPF.Views
             {
                 // 更新窗口字体大小
                 this.FontSize = fontSize;
-                
+
                 // 应用字体大小设置
                 var resources = Application.Current.Resources;
                 resources["MaterialDesignFontSize"] = fontSize;
@@ -483,7 +482,7 @@ namespace TA_WPF.Views
             else if (message.Contains("未检测到MySQL数据库服务器"))
             {
                 var infoPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 16) };
-                
+
                 infoPanel.Children.Add(new TextBlock
                 {
                     Text = "您可以从以下链接下载并安装MySQL：",

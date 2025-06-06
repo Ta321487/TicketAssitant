@@ -1,12 +1,11 @@
-using System;
+using MaterialDesignThemes.Wpf;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
-using MaterialDesignThemes.Wpf;
 
 namespace TA_WPF.Views
 {
@@ -42,7 +41,7 @@ namespace TA_WPF.Views
 
             // 窗口加载完成后加载数据
             Loaded += RouteDetailWindow_Loaded;
-            
+
             // 初始化页码提示工具提示
             InitializePageComponents();
 
@@ -56,13 +55,26 @@ namespace TA_WPF.Views
         private void RouteDetailWindow_Loaded(object sender, RoutedEventArgs e)
         {
             // 窗口加载完成后的初始化操作
-            // 暂时不执行数据加载，仅搭建UI框架
+            // 设置默认活动视图模型（车票标签页）
+            _viewModel.SetActiveViewModel(0);
         }
 
         private void ViewModel_CloseRequested(object sender, EventArgs e)
         {
             // 关闭窗口
             Close();
+        }
+
+        /// <summary>
+        /// 标签页选择变更事件处理程序
+        /// </summary>
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MainTabControl.SelectedIndex >= 0)
+            {
+                // 更新活动视图模型
+                _viewModel.SetActiveViewModel(MainTabControl.SelectedIndex);
+            }
         }
 
         /// <summary>
@@ -102,7 +114,7 @@ namespace TA_WPF.Views
             _themeService.ThemeChanged -= OnThemeChanged;
             base.OnClosed(e);
         }
-        
+
         /// <summary>
         /// 初始化页码相关组件
         /// </summary>
@@ -125,7 +137,7 @@ namespace TA_WPF.Views
                 AllowsTransparency = true
             };
         }
-        
+
         /// <summary>
         /// 处理页码信息面板的点击事件，切换到输入模式
         /// </summary>
@@ -139,16 +151,25 @@ namespace TA_WPF.Views
             PageNumberInput.Visibility = Visibility.Visible;
 
             // 设置当前页码为默认值
-            if (_viewModel != null && _viewModel.Tickets != null && _viewModel.Tickets.PaginationViewModel != null)
+            var activeViewModel = _viewModel.ActiveViewModel;
+            if (activeViewModel != null)
             {
-                PageNumberInput.Text = _viewModel.Tickets.PaginationViewModel.CurrentPage.ToString();
+                // 根据当前活动视图模型获取分页信息
+                if (activeViewModel is RouteTicketViewModel ticketViewModel)
+                {
+                    PageNumberInput.Text = ticketViewModel.PaginationViewModel.CurrentPage.ToString();
+                }
+                else if (activeViewModel is RouteStationViewModel stationViewModel)
+                {
+                    PageNumberInput.Text = stationViewModel.PaginationViewModel.CurrentPage.ToString();
+                }
             }
 
             // 聚焦并全选
             PageNumberInput.Focus();
             PageNumberInput.SelectAll();
         }
-        
+
         /// <summary>
         /// 处理页码输入框的键盘事件
         /// </summary>
@@ -170,7 +191,7 @@ namespace TA_WPF.Views
                 }
             }
         }
-        
+
         /// <summary>
         /// 处理页码输入框失去焦点事件
         /// </summary>
@@ -183,34 +204,60 @@ namespace TA_WPF.Views
                 PageNumberInput.Visibility = Visibility.Collapsed;
             }
         }
-        
+
         /// <summary>
         /// 尝试导航到指定页码
         /// </summary>
         private void TryNavigateToPage()
         {
-            if (PageInfoPanel == null || PageNumberInput == null || _viewModel == null || _viewModel.Tickets == null || _viewModel.Tickets.PaginationViewModel == null)
+            if (PageInfoPanel == null || PageNumberInput == null || _viewModel == null)
+                return;
+
+            var activeViewModel = _viewModel.ActiveViewModel;
+            if (activeViewModel == null)
+                return;
+
+            // 根据当前活动视图模型获取分页控制器
+            PaginationViewModel paginationViewModel = null;
+
+            if (activeViewModel is RouteTicketViewModel ticketViewModel)
+            {
+                paginationViewModel = ticketViewModel.PaginationViewModel;
+            }
+            else if (activeViewModel is RouteStationViewModel stationViewModel)
+            {
+                paginationViewModel = stationViewModel.PaginationViewModel;
+            }
+
+            if (paginationViewModel == null)
                 return;
 
             // 尝试解析页码
             if (int.TryParse(PageNumberInput.Text, out int pageNumber))
             {
                 // 确保页码在有效范围内
-                if (pageNumber > 0 && pageNumber <= _viewModel.Tickets.PaginationViewModel.TotalPages)
+                if (pageNumber > 0 && pageNumber <= paginationViewModel.TotalPages)
                 {
                     // 设置新的页码
-                    _viewModel.Tickets.PaginationViewModel.CurrentPage = pageNumber;
-                    
+                    paginationViewModel.CurrentPage = pageNumber;
+
                     // 确保页码变更后触发数据加载
-                    _viewModel.Tickets.PaginationViewModel.IsInitialized = true;
-                    
+                    paginationViewModel.IsInitialized = true;
+
                     // 直接调用加载方法确保数据刷新
-                    _ = _viewModel.Tickets.RefreshDataAsync();
+                    if (activeViewModel is RouteTicketViewModel ticket)
+                    {
+                        _ = ticket.RefreshDataAsync();
+                    }
+                    else if (activeViewModel is RouteStationViewModel station)
+                    {
+                        _ = station.RefreshDataAsync();
+                    }
                 }
                 else
                 {
                     // 显示错误提示
-                    _tooltipText.Text = $"页码必须在 1 到 {_viewModel.Tickets.PaginationViewModel.TotalPages} 之间";
+                    _tooltipText.Text = $"页码必须在 1 到 {paginationViewModel.TotalPages} 之间";
                     _pageNumberTooltip.PlacementTarget = PageNumberInput;
                     _pageNumberTooltip.IsOpen = true;
 
@@ -225,7 +272,7 @@ namespace TA_WPF.Views
                     timer.Start();
 
                     // 恢复原始页码
-                    PageNumberInput.Text = _viewModel.Tickets.PaginationViewModel.CurrentPage.ToString();
+                    PageNumberInput.Text = paginationViewModel.CurrentPage.ToString();
                     PageNumberInput.SelectAll();
                     return;
                 }
@@ -236,4 +283,4 @@ namespace TA_WPF.Views
             PageNumberInput.Visibility = Visibility.Collapsed;
         }
     }
-} 
+}

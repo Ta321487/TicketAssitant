@@ -23,17 +23,17 @@ namespace TA_WPF.Views
         public AddRouteWindow(DatabaseService databaseService = null, MainViewModel mainViewModel = null)
         {
             InitializeComponent();
-            
+
             // 创建视图模型
             _viewModel = new AddRouteViewModel(databaseService, mainViewModel);
-            
+
             // 设置DataContext
             DataContext = _viewModel;
-            
+
             // 注册Loaded事件，设置初始焦点
             this.Loaded += AddRouteWindow_Loaded;
         }
-        
+
         /// <summary>
         /// 窗口加载完成事件处理
         /// </summary>
@@ -46,7 +46,7 @@ namespace TA_WPF.Views
                 firstTextBox.Focus();
             }
         }
-        
+
         /// <summary>
         /// 查找第一个TextBox控件
         /// </summary>
@@ -55,7 +55,7 @@ namespace TA_WPF.Views
             // 寻找视觉树中的第一个TextBox
             return FindVisualChild<TextBox>(this);
         }
-        
+
         /// <summary>
         /// 在视觉树中查找指定类型的第一个子元素
         /// </summary>
@@ -64,19 +64,19 @@ namespace TA_WPF.Views
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
                 DependencyObject child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 if (child != null && child is T)
                 {
                     return (T)child;
                 }
-                
+
                 T childOfChild = FindVisualChild<T>(child);
                 if (childOfChild != null)
                 {
                     return childOfChild;
                 }
             }
-            
+
             return null;
         }
 
@@ -87,11 +87,11 @@ namespace TA_WPF.Views
         {
             // 判断输入是否为数字或小数点
             var regex = new Regex(@"^[0-9]+(\.[0-9]*)?$");
-            
+
             // 获取当前文本框
             TextBox textBox = sender as TextBox;
             string updatedText = textBox.Text.Insert(textBox.CaretIndex, e.Text);
-            
+
             // 如果输入的是中文句号"。"，自动转换为英文句号"."
             if (e.Text == "。")
             {
@@ -101,7 +101,7 @@ namespace TA_WPF.Views
                 textBox.CaretIndex = caretIndex + 1;
                 return;
             }
-            
+
             // 检查是否为有效数字格式（只允许一个小数点）
             if (!regex.IsMatch(updatedText))
             {
@@ -109,4 +109,4 @@ namespace TA_WPF.Views
             }
         }
     }
-} 
+}

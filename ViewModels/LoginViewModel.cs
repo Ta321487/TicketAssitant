@@ -1,26 +1,16 @@
-using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
 using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Configuration;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -358,7 +348,7 @@ namespace TA_WPF.ViewModels
                 {
                     Debug.WriteLine($"MySQL连接状态: {connectionStatus}");
                     LogHelper.LogWarning($"MySQL连接状态: {connectionStatus}，无法继续登录");
-                    
+
                     string errorMessage;
                     switch (connectionStatus)
                     {
@@ -372,7 +362,7 @@ namespace TA_WPF.ViewModels
                             errorMessage = $"无法连接到MySQL数据库服务器({ServerAddress})。\n\n请检查：\n1. 服务器地址是否正确\n2. 网络连接是否正常\n3. MySQL服务是否运行";
                             break;
                     }
-                    
+
                     ErrorOccurred?.Invoke(this, errorMessage);
                     IsLoginButtonEnabled = true;
                     IsLoading = false;
@@ -411,7 +401,7 @@ namespace TA_WPF.ViewModels
                         catch (MySqlException ex)
                         {
                             string errorMessage = ex.Message;
-                            
+
                             // 增强错误消息
                             if (ex.Message.Contains("Access denied"))
                             {
@@ -425,7 +415,7 @@ namespace TA_WPF.ViewModels
                             {
                                 errorMessage = $"认证方式不兼容: {ex.Message}\n\n这通常是因为MySQL 8.0+默认使用了新的认证插件(caching_sha2_password)，而当前连接库需要使用mysql_native_password\n\n您可以使用以下SQL命令修复此问题：";
                             }
-                            
+
                             connectionException = new Exception(errorMessage, ex);
                         }
                         catch (Exception ex)
@@ -456,7 +446,7 @@ namespace TA_WPF.ViewModels
                         // 设置标志位，让View知道需要创建表
                         ShowMessage?.Invoke(this, "数据库缺少必要表结构，需要导入表结构");
                     }
-                    
+
                     // 登录成功
                     LoginSuccessful = true;
                     _loginInfoService.SaveLastLoginTime();
@@ -470,7 +460,7 @@ namespace TA_WPF.ViewModels
                 LoginSuccessful = false;
                 Debug.WriteLine($"登录时出错: {ex.Message}");
                 LogHelper.LogError($"登录时出错: {ex.Message}", ex);
-                
+
                 // 触发错误事件，让View显示错误消息
                 ErrorOccurred?.Invoke(this, ex.Message);
             }
@@ -548,7 +538,7 @@ namespace TA_WPF.ViewModels
                 string createdDbName = NewDatabaseName;
                 DatabaseName = createdDbName;
                 SaveDatabaseNameToHistory(createdDbName);
-                
+
                 // 清空新数据库名称
                 NewDatabaseName = string.Empty;
 
@@ -562,7 +552,7 @@ namespace TA_WPF.ViewModels
             {
                 Debug.WriteLine($"创建数据库失败: {ex.Message}");
                 LogHelper.LogError($"创建数据库失败: {ex.Message}", ex);
-                
+
                 // 触发错误事件，让View显示错误消息
                 ErrorOccurred?.Invoke(this, $"创建数据库失败: {ex.Message}");
             }
@@ -678,13 +668,13 @@ namespace TA_WPF.ViewModels
             {
                 // 获取数据库中的所有表
                 DataTable tables = connection.GetSchema("Tables");
-                
+
                 // 将表名转为小写存入HashSet以便快速查找
                 HashSet<string> existingTables = new HashSet<string>(
                     tables.Rows.Cast<DataRow>()
                           .Select(row => row["TABLE_NAME"].ToString().ToLower())
                 );
-                
+
                 // 检测所有必要的表是否都存在
                 return RequiredTables.All(table => existingTables.Contains(table.ToLower()));
             }
@@ -700,10 +690,10 @@ namespace TA_WPF.ViewModels
             {
                 // 创建DatabaseService实例
                 var databaseService = new DatabaseService(connectionString);
-                
+
                 // 创建station_info表
                 await databaseService.CreateStationInfoTableAsync();
-                
+
                 // 创建train_ride_info表
                 await databaseService.CreateTrainRideInfoTableAsync();
 
@@ -712,19 +702,19 @@ namespace TA_WPF.ViewModels
 
                 // 创建collection_mapped_tickets_info表
                 await databaseService.CreateCollectionMappedTicketsInfoTableAsync();
-                
+
                 // 创建路线信息表
                 await databaseService.CreateRouteInfoTableAsync();
-                
+
                 // 创建路线与车票映射表
                 await databaseService.CreateRouteTicketMappingTableAsync();
-                
+
                 // 创建路线与车站映射表
                 await databaseService.CreateRouteStationMappingTableAsync();
-                
+
                 // 创建路线统计信息表
                 await databaseService.CreateRouteStatisticsTableAsync();
-                
+
                 Debug.WriteLine("使用DatabaseService创建表成功");
                 LogHelper.LogSystem("数据库", "使用DatabaseService创建必要的表成功");
             }
@@ -899,7 +889,7 @@ namespace TA_WPF.ViewModels
                         using (var client = new System.Net.Sockets.TcpClient())
                         {
                             var connectTask = client.ConnectAsync(
-                                isLocalConnection ? "127.0.0.1" : serverAddress, 
+                                isLocalConnection ? "127.0.0.1" : serverAddress,
                                 int.Parse(port));
                             var timeoutTask = Task.Delay(isLocalConnection ? 1000 : 2000);
                             var completedTask = Task.WhenAny(connectTask, timeoutTask).Result;
@@ -958,13 +948,14 @@ namespace TA_WPF.ViewModels
             {
                 // 方法1：检查是否有MySQL相关进程
                 bool processExists = false;
-                await Task.Run(() => {
+                await Task.Run(() =>
+                {
                     try
                     {
-                        processExists = Process.GetProcesses().Any(p => 
-                            p.ProcessName.ToLower().Contains("mysql") || 
+                        processExists = Process.GetProcesses().Any(p =>
+                            p.ProcessName.ToLower().Contains("mysql") ||
                             p.ProcessName.ToLower().Contains("mysqld"));
-                            
+
                         Debug.WriteLine($"检查MySQL进程: {(processExists ? "找到" : "未找到")}");
                     }
                     catch (Exception ex)
@@ -991,19 +982,21 @@ namespace TA_WPF.ViewModels
                 };
 
                 bool pathExists = false;
-                await Task.Run(() => {
+                await Task.Run(() =>
+                {
                     pathExists = possiblePaths.Any(path => Directory.Exists(path));
                     Debug.WriteLine($"检查MySQL安装路径: {(pathExists ? "找到" : "未找到")}");
                 });
-                
+
                 if (pathExists)
                 {
                     return true;
                 }
-                
+
                 // 方法3：检查注册表
                 bool registryEntryExists = false;
-                await Task.Run(() => {
+                await Task.Run(() =>
+                {
                     try
                     {
                         using (var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\MySQL"))
@@ -1016,7 +1009,7 @@ namespace TA_WPF.ViewModels
                     {
                         Debug.WriteLine($"检查MySQL注册表项时出错: {ex.Message}");
                     }
-                    
+
                     if (!registryEntryExists)
                     {
                         try
@@ -1033,7 +1026,7 @@ namespace TA_WPF.ViewModels
                         }
                     }
                 });
-                
+
                 if (registryEntryExists)
                 {
                     return true;
@@ -1041,7 +1034,8 @@ namespace TA_WPF.ViewModels
 
                 // 方法4：尝试在默认端口ping本地MySQL
                 bool canPing = false;
-                await Task.Run(() => {
+                await Task.Run(() =>
+                {
                     try
                     {
                         using (var client = new System.Net.Sockets.TcpClient())
@@ -1059,7 +1053,7 @@ namespace TA_WPF.ViewModels
                         Debug.WriteLine($"尝试连接本地MySQL默认端口时出错: {ex.Message}");
                     }
                 });
-                
+
                 if (canPing)
                 {
                     return true;
@@ -1090,4 +1084,4 @@ namespace TA_WPF.ViewModels
 
         #endregion
     }
-} 
+}

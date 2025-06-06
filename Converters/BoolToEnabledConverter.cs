@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Windows.Data;
 
@@ -24,7 +23,7 @@ namespace TA_WPF.Converters
 
             // 第一个值是环境就绪状态
             bool isEnvironmentReady = values[0] is bool ready && ready;
-            
+
             // 第二个值是加载状态
             bool isLoading = values[1] is bool loading && loading;
 
@@ -40,4 +39,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

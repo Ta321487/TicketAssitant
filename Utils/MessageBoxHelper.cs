@@ -63,11 +63,11 @@ namespace TA_WPF.Utils
 
         public static MessageBoxResult ShowConfirmation(string message, string title = "确认", MessageBoxButton buttons = MessageBoxButton.YesNo)
         {
-            bool? result = MessageDialog.Show(message, title, MessageType.Question, 
-                buttons == MessageBoxButton.OK ? MessageButtons.Ok : 
-                buttons == MessageBoxButton.YesNo ? MessageButtons.YesNo : 
+            bool? result = MessageDialog.Show(message, title, MessageType.Question,
+                buttons == MessageBoxButton.OK ? MessageButtons.Ok :
+                buttons == MessageBoxButton.YesNo ? MessageButtons.YesNo :
                 MessageButtons.YesNoCancel);
-            
+
             if (result == true)
             {
                 return buttons == MessageBoxButton.OK ? MessageBoxResult.OK : MessageBoxResult.Yes;

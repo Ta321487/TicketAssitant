@@ -19,7 +19,7 @@ namespace TA_WPF.Converters
                     return screenWidth < thresholdValue;
                 }
             }
-            
+
             // 默认返回false
             return false;
         }
@@ -29,4 +29,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

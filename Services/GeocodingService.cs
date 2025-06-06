@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 using TA_WPF.Models;
 using TA_WPF.Utils;
 
@@ -39,7 +36,7 @@ namespace TA_WPF.Services
             {
                 // 从配置服务获取API key
                 string apiKey = _configurationService.GetSettingValue("AmapWebServiceKey");
-                
+
                 // 检查API key是否存在
                 if (string.IsNullOrWhiteSpace(apiKey))
                 {
@@ -88,7 +85,7 @@ namespace TA_WPF.Services
                 {
                     string infocode = root.GetProperty("infocode").GetString();
                     string info = root.GetProperty("info").GetString();
-                    
+
                     // 根据错误码提供更友好的错误消息
                     string errorMessage;
                     switch (infocode)
@@ -139,7 +136,7 @@ namespace TA_WPF.Services
                             errorMessage = $"API错误 ({infocode}): {info}";
                             break;
                     }
-                    
+
                     LogHelper.LogError($"地理编码API错误: {errorMessage}");
                     throw new Exception(errorMessage);
                 }
@@ -164,7 +161,7 @@ namespace TA_WPF.Services
                         }
                     }
                 }
-                
+
                 if (count == 0)
                 {
                     return results;
@@ -186,14 +183,14 @@ namespace TA_WPF.Services
                     }
 
                     // 获取城市
-                    if (geocode.TryGetProperty("city", out var cityProperty) && 
+                    if (geocode.TryGetProperty("city", out var cityProperty) &&
                         !cityProperty.ValueKind.Equals(JsonValueKind.Array))
                     {
                         result.City = cityProperty.GetString();
                     }
 
                     // 获取区县
-                    if (geocode.TryGetProperty("district", out var districtProperty) && 
+                    if (geocode.TryGetProperty("district", out var districtProperty) &&
                         !districtProperty.ValueKind.Equals(JsonValueKind.Array))
                     {
                         result.District = districtProperty.GetString();
@@ -223,4 +220,4 @@ namespace TA_WPF.Services
             }
         }
     }
-} 
+}

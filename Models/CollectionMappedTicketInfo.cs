@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -92,4 +91,4 @@ namespace TA_WPF.Models
 
         #endregion
     }
-} 
+}

@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -25,12 +24,12 @@ namespace TA_WPF.Converters
                 // null值表示检测中状态
                 return new SolidColorBrush(Colors.Orange);
             }
-            
+
             if (value is bool boolValue)
             {
                 return boolValue ? new SolidColorBrush(Colors.Green) : new SolidColorBrush(Colors.Red);
             }
-            
+
             // 默认返回红色
             return new SolidColorBrush(Colors.Red);
         }
@@ -43,4 +42,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

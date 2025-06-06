@@ -62,7 +62,7 @@ namespace TA_WPF.ViewModels
 
             // 获取系统日志位置
             _systemLogLocation = LogHelper.GetSystemLogPath();
-            
+
             // 加载高德地图API配置信息
             LoadAmapApiSettings();
 
@@ -382,7 +382,7 @@ namespace TA_WPF.ViewModels
             NewConnectionString = $"server={ServerAddress};user={Username};password={Password};";
 
             // 记录日志
-            LogHelper.LogSystem("设置 - 数据库","用户请求修改数据库连接");
+            LogHelper.LogSystem("设置 - 数据库", "用户请求修改数据库连接");
         }
 
         /// <summary>
@@ -416,7 +416,7 @@ namespace TA_WPF.ViewModels
                         MessageBoxHelper.ShowInfo("已注销连接信息，请重新登录");
 
                         // 记录日志
-                        LogHelper.LogSystem("设置 - 数据库","用户更新了数据库连接信息");
+                        LogHelper.LogSystem("设置 - 数据库", "用户更新了数据库连接信息");
 
                         // 隐藏加载动画
                         IsLoading = false;
@@ -432,7 +432,7 @@ namespace TA_WPF.ViewModels
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"更新连接时出错: {ex.Message}");
-                LogHelper.LogSystemError("设置 - 数据库",$"更新连接时出错: {ex.Message}");
+                LogHelper.LogSystemError("设置 - 数据库", $"更新连接时出错: {ex.Message}");
                 IsLoading = false;
             }
         }
@@ -763,7 +763,7 @@ namespace TA_WPF.ViewModels
                         MessageBoxHelper.ShowInfo(message);
 
                         // 记录日志
-                        LogHelper.LogSystem("设置 - 日志",$"用户一键导出了所有日志到临时文件夹：{tempFolderPath}");
+                        LogHelper.LogSystem("设置 - 日志", $"用户一键导出了所有日志到临时文件夹：{tempFolderPath}");
 
                         // 打开临时文件夹
                         Process.Start("explorer.exe", tempFolderPath);
@@ -917,11 +917,11 @@ namespace TA_WPF.ViewModels
                 bool isWebKeyEmpty = string.IsNullOrWhiteSpace(AmapWebKey);
                 bool isSecurityKeyEmpty = string.IsNullOrWhiteSpace(AmapSecurityKey);
                 bool isMapApiIncomplete = (isWebKeyEmpty != isSecurityKeyEmpty); // 检查是否只填写了一个，没有成对出现
-                
+
                 // 验证API密钥格式是否正确
                 bool hasInvalidKeyFormat = false;
                 string warningMessage = "";
-                
+
                 // 检查Web服务API密钥格式
                 if (!isWebServiceKeyEmpty && AmapWebServiceKey.Length > 0)
                 {
@@ -933,7 +933,7 @@ namespace TA_WPF.ViewModels
                         LogHelper.LogSystemWarning("设置 - 高德地图API", "Web服务API Key长度不正确");
                     }
                 }
-                
+
                 // 检查Web端Key格式
                 if (!isWebKeyEmpty && AmapWebKey.Length > 0)
                 {
@@ -945,7 +945,7 @@ namespace TA_WPF.ViewModels
                         LogHelper.LogSystemWarning("设置 - 高德地图API", "Web端API Key长度不正确");
                     }
                 }
-                
+
                 // 检查安全密钥格式
                 if (!isSecurityKeyEmpty && AmapSecurityKey.Length > 0)
                 {
@@ -957,16 +957,16 @@ namespace TA_WPF.ViewModels
                         LogHelper.LogSystemWarning("设置 - 高德地图API", "安全密钥长度不正确");
                     }
                 }
-                
+
                 // 检查密钥是否可能放错位置
-                if (!isWebServiceKeyEmpty && !isWebKeyEmpty && 
-                    AmapWebServiceKey.Length == 32 && AmapWebKey.Length == 32 && 
+                if (!isWebServiceKeyEmpty && !isWebKeyEmpty &&
+                    AmapWebServiceKey.Length == 32 && AmapWebKey.Length == 32 &&
                     IsLikelyKeyTypeMismatch(AmapWebServiceKey, AmapWebKey))
                 {
                     warningMessage += "您可能将Web服务API Key与Web端Key填写位置混淆了，请检查并确保正确填写\n";
                     LogHelper.LogSystemWarning("设置 - 高德地图API", "可能存在API密钥类型混淆");
                 }
-                
+
                 // 无论是否为空，都保存到配置服务
                 _configurationService.SaveSettingValue("AmapWebServiceKey", AmapWebServiceKey);
                 _configurationService.SaveSettingValue("AmapWebKey", AmapWebKey);
@@ -979,7 +979,7 @@ namespace TA_WPF.ViewModels
                     {
                         warningMessage += "未设置Web服务API，车站信息功能将无法使用\n";
                     }
-                    
+
                     if (isMapApiIncomplete)
                     {
                         warningMessage += "Web端Key与安全密钥必须同时设置，路线地图功能将无法正常使用\n";
@@ -988,7 +988,7 @@ namespace TA_WPF.ViewModels
                     {
                         warningMessage += "未设置Web端Key和安全密钥，路线地图功能将无法使用\n";
                     }
-                    
+
                     // 显示警告信息
                     MessageBoxHelper.ShowWarning(warningMessage.TrimEnd('\n'));
                     LogHelper.LogSystemWarning("设置 - 高德地图API", warningMessage.TrimEnd('\n'));
@@ -998,7 +998,7 @@ namespace TA_WPF.ViewModels
                     // 如果所有API信息都已填写，显示成功消息
                     MessageBoxHelper.ShowInfo("高德地图API设置已保存");
                 }
-                
+
                 // 记录日志
                 LogHelper.LogSystem("设置 - 高德地图API", "用户更新了高德地图API配置信息");
             }
@@ -1025,18 +1025,18 @@ namespace TA_WPF.ViewModels
                 {
                     return false;
                 }
-                
+
                 // 检查是否都是32位字母数字
                 if (webServiceKey.Length != 32 || webKey.Length != 32)
                 {
                     return false;
                 }
-                
+
                 // 计算两个密钥的差异特征
                 // 例如Web服务密钥可能以特定字母开头，或者包含特定模式
                 bool webServiceKeyPattern = webServiceKey.StartsWith("5") || webServiceKey.StartsWith("6");
                 bool webKeyPattern = webKey.StartsWith("4") || webKey.StartsWith("8");
-                
+
                 // 如果两个密钥的特征与预期相反，可能是填错了
                 return (webKeyPattern && !webServiceKeyPattern) || (!webKeyPattern && webServiceKeyPattern);
             }

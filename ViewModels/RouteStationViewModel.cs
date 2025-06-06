@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
@@ -7,15 +6,15 @@ using TA_WPF.Utils;
 
 namespace TA_WPF.ViewModels
 {
-    public class RouteTicketViewModel : BaseViewModel
+    public class RouteStationViewModel : BaseViewModel
     {
         private readonly DatabaseService _databaseService;
         private readonly MainViewModel _mainViewModel;
         private PaginationViewModel _paginationViewModel;
         private RouteInfo _route;
-        private ObservableCollection<RouteTicketMapping> _tickets;
-        private ObservableCollection<RouteTicketMapping> _selectedTickets;
-        private RouteTicketMapping _selectedTicket;
+        private ObservableCollection<RouteStationMapping> _stations;
+        private ObservableCollection<RouteStationMapping> _selectedStations;
+        private RouteStationMapping _selectedStation;
         private bool _isLoading;
         private int _totalCount;
         private bool _hasSelectedItems;
@@ -24,7 +23,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 构造函数
         /// </summary>
-        public RouteTicketViewModel(RouteInfo route, DatabaseService databaseService, MainViewModel mainViewModel)
+        public RouteStationViewModel(RouteInfo route, DatabaseService databaseService, MainViewModel mainViewModel)
         {
             // 初始化服务和数据
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
@@ -36,7 +35,7 @@ namespace TA_WPF.ViewModels
             _paginationViewModel.PageChanged += async (s, e) =>
             {
                 // 页面变更时清空选择状态
-                _selectedTickets.Clear();
+                _selectedStations.Clear();
                 SelectedItemsCount = 0;
                 await RefreshDataAsync();
             };
@@ -44,22 +43,24 @@ namespace TA_WPF.ViewModels
             _paginationViewModel.PageSizeChanged += async (s, e) =>
             {
                 // 页面大小变更时清空选择状态
-                _selectedTickets.Clear();
+                _selectedStations.Clear();
                 SelectedItemsCount = 0;
                 await RefreshDataAsync();
             };
 
             // 初始化集合
-            _tickets = new ObservableCollection<RouteTicketMapping>();
-            _selectedTickets = new ObservableCollection<RouteTicketMapping>();
+            _stations = new ObservableCollection<RouteStationMapping>();
+            _selectedStations = new ObservableCollection<RouteStationMapping>();
 
             // 初始化命令
             RefreshCommand = new RelayCommand(async () => await RefreshDataAsync());
             SelectAllCommand = new RelayCommand(SelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll);
             InvertSelectionCommand = new RelayCommand(InvertSelection);
-            AddTicketsCommand = new RelayCommand(ShowAddTickets);
-            RemoveTicketsCommand = new RelayCommand(RemoveSelectedTickets, CanRemoveTickets);
+            AddStationCommand = new RelayCommand(ShowAddStation);
+            RemoveStationsCommand = new RelayCommand(RemoveSelectedStations, CanRemoveStations);
+            MoveUpCommand = new RelayCommand(MoveStationsUp, CanMoveUp);
+            MoveDownCommand = new RelayCommand(MoveStationsDown, CanMoveDown);
 
             // 初始加载数据
             _ = InitializeAsync();
@@ -80,7 +81,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"初始化路线车票数据失败: {ex.Message}", ex);
+                LogHelper.LogError($"初始化路线车站数据失败: {ex.Message}", ex);
             }
         }
 
@@ -108,50 +109,50 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 车票列表
+        /// 车站列表
         /// </summary>
-        public ObservableCollection<RouteTicketMapping> Tickets
+        public ObservableCollection<RouteStationMapping> Stations
         {
-            get => _tickets;
+            get => _stations;
             set
             {
-                if (_tickets != value)
+                if (_stations != value)
                 {
-                    _tickets = value;
-                    OnPropertyChanged(nameof(Tickets));
+                    _stations = value;
+                    OnPropertyChanged(nameof(Stations));
                 }
             }
         }
 
         /// <summary>
-        /// 选中的车票列表
+        /// 选中的车站列表
         /// </summary>
-        public ObservableCollection<RouteTicketMapping> SelectedTickets
+        public ObservableCollection<RouteStationMapping> SelectedStations
         {
-            get => _selectedTickets;
+            get => _selectedStations;
             set
             {
-                if (_selectedTickets != value)
+                if (_selectedStations != value)
                 {
-                    _selectedTickets = value;
-                    OnPropertyChanged(nameof(SelectedTickets));
+                    _selectedStations = value;
+                    OnPropertyChanged(nameof(SelectedStations));
                     OnPropertyChanged(nameof(HasSelectedItems));
                 }
             }
         }
 
         /// <summary>
-        /// 选中的车票
+        /// 选中的车站
         /// </summary>
-        public RouteTicketMapping SelectedTicket
+        public RouteStationMapping SelectedStation
         {
-            get => _selectedTicket;
+            get => _selectedStation;
             set
             {
-                if (_selectedTicket != value)
+                if (_selectedStation != value)
                 {
-                    _selectedTicket = value;
-                    OnPropertyChanged(nameof(SelectedTicket));
+                    _selectedStation = value;
+                    OnPropertyChanged(nameof(SelectedStation));
                 }
             }
         }
@@ -230,12 +231,12 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 是否有数据
         /// </summary>
-        public bool HasData => Tickets != null && Tickets.Count > 0;
+        public bool HasData => Stations != null && Stations.Count > 0;
 
         /// <summary>
         /// 是否没有数据
         /// </summary>
-        public bool HasNoData => Tickets == null || Tickets.Count == 0;
+        public bool HasNoData => Stations == null || Stations.Count == 0;
 
         #endregion
 
@@ -262,14 +263,24 @@ namespace TA_WPF.ViewModels
         public ICommand InvertSelectionCommand { get; }
 
         /// <summary>
-        /// 添加车票命令
+        /// 添加车站命令
         /// </summary>
-        public ICommand AddTicketsCommand { get; }
+        public ICommand AddStationCommand { get; }
 
         /// <summary>
-        /// 移除车票命令
+        /// 移除车站命令
         /// </summary>
-        public ICommand RemoveTicketsCommand { get; }
+        public ICommand RemoveStationsCommand { get; }
+
+        /// <summary>
+        /// 上移命令
+        /// </summary>
+        public ICommand MoveUpCommand { get; }
+
+        /// <summary>
+        /// 下移命令
+        /// </summary>
+        public ICommand MoveDownCommand { get; }
 
         #endregion
 
@@ -285,7 +296,7 @@ namespace TA_WPF.ViewModels
                 IsLoading = true;
 
                 // 获取总数
-                TotalCount = await _databaseService.GetRouteTicketsCountAsync(_route.Id);
+                TotalCount = await _databaseService.GetRouteStationsCountAsync(_route.Id);
 
                 System.Diagnostics.Debug.WriteLine($"刷新数据 - 总记录数: {TotalCount}，当前页: {PaginationViewModel.CurrentPage}，每页数量: {PaginationViewModel.PageSize}");
 
@@ -299,61 +310,61 @@ namespace TA_WPF.ViewModels
                 PaginationViewModel.TotalItems = TotalCount;
 
                 // 获取分页数据
-                var tickets = await _databaseService.GetRouteTicketsAsync(
+                var stations = await _databaseService.GetRouteStationsAsync(
                     _route.Id,
                     PaginationViewModel.CurrentPage,
                     PaginationViewModel.PageSize);
 
-                System.Diagnostics.Debug.WriteLine($"获取到分页数据 - 数量: {tickets.Count}");
+                System.Diagnostics.Debug.WriteLine($"获取到分页数据 - 数量: {stations.Count}");
 
                 // 如果获取的数据超过页面大小，进行截断
-                if (tickets.Count > PaginationViewModel.PageSize)
+                if (stations.Count > PaginationViewModel.PageSize)
                 {
-                    System.Diagnostics.Debug.WriteLine($"警告：获取的数据量({tickets.Count})超过页面大小({PaginationViewModel.PageSize})，将进行截断");
-                    tickets = tickets.Take(PaginationViewModel.PageSize).ToList();
+                    System.Diagnostics.Debug.WriteLine($"警告：获取的数据量({stations.Count})超过页面大小({PaginationViewModel.PageSize})，将进行截断");
+                    stations = stations.Take(PaginationViewModel.PageSize).ToList();
                 }
 
                 // 清空选中状态
-                _selectedTickets.Clear();
+                _selectedStations.Clear();
                 SelectedItemsCount = 0;
                 OnPropertyChanged(nameof(HasSelectedItems));
 
                 // 清空并重新加载数据
-                Tickets.Clear();
+                Stations.Clear();
 
                 // 使用HashSet跟踪已添加的项ID，防止重复
                 var addedIds = new HashSet<int>();
 
-                foreach (var ticket in tickets)
+                foreach (var station in stations)
                 {
                     // 确保IsSelected属性初始化为false
-                    ticket.IsSelected = false;
+                    station.IsSelected = false;
 
                     // 防止重复添加相同ID的项
-                    if (!addedIds.Contains(ticket.Id))
+                    if (!addedIds.Contains(station.Id))
                     {
-                        Tickets.Add(ticket);
-                        addedIds.Add(ticket.Id);
+                        Stations.Add(station);
+                        addedIds.Add(station.Id);
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"警告：检测到重复ID的数据项({ticket.Id})，已跳过");
+                        System.Diagnostics.Debug.WriteLine($"警告：检测到重复ID的数据项({station.Id})，已跳过");
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"数据加载完成 - Tickets集合大小: {Tickets.Count}");
+                System.Diagnostics.Debug.WriteLine($"数据加载完成 - Stations集合大小: {Stations.Count}");
 
                 // 更新UI状态
                 OnPropertyChanged(nameof(HasData));
                 OnPropertyChanged(nameof(HasNoData));
-                OnPropertyChanged(nameof(SelectedTickets));
+                OnPropertyChanged(nameof(SelectedStations));
 
                 // 强制更新分页状态
                 PaginationViewModel.NotifyCurrentPageChanged();
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"刷新路线车票数据失败: {ex.Message}", ex);
+                LogHelper.LogError($"刷新路线车站数据失败: {ex.Message}", ex);
                 MessageBoxHelper.ShowError($"刷新数据失败: {ex.Message}");
             }
             finally
@@ -368,7 +379,7 @@ namespace TA_WPF.ViewModels
         private void SelectAll()
         {
             // 获取当前页面的项数
-            int expectedCount = Tickets.Count;
+            int expectedCount = Stations.Count;
             System.Diagnostics.Debug.WriteLine($"开始全选操作 - 当前页数据项数量: {expectedCount}");
 
             try
@@ -384,25 +395,25 @@ namespace TA_WPF.ViewModels
 
                 // 如果无法获取DataGrid，则使用备用方法手动设置选择状态
                 // 清空选择集合，避免重复项
-                _selectedTickets.Clear();
+                _selectedStations.Clear();
 
                 // 防止重复添加的HashSet
                 var addedItems = new HashSet<int>();
 
                 // 为当前页所有项设置选中状态
-                foreach (var ticket in Tickets)
+                foreach (var station in Stations)
                 {
                     // 确保只将每个项添加一次（防止重复）
-                    if (!addedItems.Contains(ticket.Id))
+                    if (!addedItems.Contains(station.Id))
                     {
-                        ticket.IsSelected = true;
-                        _selectedTickets.Add(ticket);
-                        addedItems.Add(ticket.Id);
+                        station.IsSelected = true;
+                        _selectedStations.Add(station);
+                        addedItems.Add(station.Id);
                     }
                 }
 
                 // 更新UI和计数
-                SelectedItemsCount = _selectedTickets.Count;
+                SelectedItemsCount = _selectedStations.Count;
 
                 // 验证选择数量是否与当前页项数一致
                 if (SelectedItemsCount != expectedCount)
@@ -410,9 +421,9 @@ namespace TA_WPF.ViewModels
                     System.Diagnostics.Debug.WriteLine($"警告：选择数量与当前页项数不一致！");
                 }
 
-                OnPropertyChanged(nameof(SelectedTickets));
+                OnPropertyChanged(nameof(SelectedStations));
                 OnPropertyChanged(nameof(HasSelectedItems));
-                OnPropertyChanged(nameof(Tickets)); // 强制刷新整个列表
+                OnPropertyChanged(nameof(Stations)); // 强制刷新整个列表
             }
             catch (Exception ex)
             {
@@ -453,7 +464,7 @@ namespace TA_WPF.ViewModels
                 if (child is System.Windows.Controls.DataGrid dataGrid)
                 {
                     // 确认这是我们的DataGrid
-                    if (dataGrid.Name == "TicketsDataGrid")
+                    if (dataGrid.Name == "StationsDataGrid")
                     {
                         return dataGrid;
                     }
@@ -474,19 +485,19 @@ namespace TA_WPF.ViewModels
         private void UnselectAll()
         {
             // 为所有项设置未选中状态
-            foreach (var ticket in Tickets)
+            foreach (var station in Stations)
             {
-                ticket.IsSelected = false;
+                station.IsSelected = false;
             }
 
             // 清空选择集合
-            _selectedTickets.Clear();
+            _selectedStations.Clear();
             SelectedItemsCount = 0;
 
             // 更新UI
-            OnPropertyChanged(nameof(SelectedTickets));
+            OnPropertyChanged(nameof(SelectedStations));
             OnPropertyChanged(nameof(HasSelectedItems));
-            OnPropertyChanged(nameof(Tickets)); // 强制刷新整个列表
+            OnPropertyChanged(nameof(Stations)); // 强制刷新整个列表
         }
 
         /// <summary>
@@ -494,131 +505,99 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void InvertSelection()
         {
-            System.Diagnostics.Debug.WriteLine($"开始反选操作 - 当前选中项数量: {_selectedTickets.Count}, 当前页项数: {Tickets.Count}");
+            System.Diagnostics.Debug.WriteLine($"开始反选操作 - 当前选中项数量: {_selectedStations.Count}, 当前页项数: {Stations.Count}");
 
             // 新建临时集合存储将要选中的项
-            var newSelection = new List<RouteTicketMapping>();
+            var newSelection = new List<RouteStationMapping>();
             var addedIds = new HashSet<int>();
 
             // 反转每一项的选中状态（仅限当前页）
-            foreach (var ticket in Tickets)
+            foreach (var station in Stations)
             {
-                ticket.IsSelected = !ticket.IsSelected;
-                if (ticket.IsSelected && !addedIds.Contains(ticket.Id))
+                station.IsSelected = !station.IsSelected;
+                if (station.IsSelected && !addedIds.Contains(station.Id))
                 {
-                    newSelection.Add(ticket);
-                    addedIds.Add(ticket.Id);
+                    newSelection.Add(station);
+                    addedIds.Add(station.Id);
                 }
             }
 
             // 更新选中集合
-            _selectedTickets.Clear();
-            foreach (var ticket in newSelection)
+            _selectedStations.Clear();
+            foreach (var station in newSelection)
             {
-                _selectedTickets.Add(ticket);
+                _selectedStations.Add(station);
             }
 
             // 更新UI和计数
-            SelectedItemsCount = _selectedTickets.Count;
+            SelectedItemsCount = _selectedStations.Count;
             System.Diagnostics.Debug.WriteLine($"反选完成 - 新选中项数量: {SelectedItemsCount}");
 
-            OnPropertyChanged(nameof(SelectedTickets));
+            OnPropertyChanged(nameof(SelectedStations));
             OnPropertyChanged(nameof(HasSelectedItems));
-            OnPropertyChanged(nameof(Tickets)); // 强制刷新整个列表
+            OnPropertyChanged(nameof(Stations)); // 强制刷新整个列表
         }
 
         /// <summary>
-        /// 显示添加车票对话框
+        /// 显示添加车站对话框
         /// </summary>
-        private void ShowAddTickets()
+        private void ShowAddStation()
         {
-            try
-            {
-                // 创建添加车票窗口
-                var window = new Views.AddTicketsToRouteWindow(_route, _databaseService, _mainViewModel);
-
-                // 显示窗口并获取结果
-                bool? result = window.ShowDialog();
-
-                // 如果用户确认添加，刷新数据
-                if (result == true)
-                {
-                    _ = RefreshDataAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogError($"显示添加车票窗口失败: {ex.Message}", ex);
-                MessageBoxHelper.ShowError($"显示添加车票窗口失败: {ex.Message}");
-            }
+            // 添加车站功能暂未实现
+            MessageBoxHelper.ShowInfo("添加车站功能尚未实现");
         }
 
         /// <summary>
-        /// 是否可以移除车票
+        /// 是否可以移除车站
         /// </summary>
-        private bool CanRemoveTickets()
+        private bool CanRemoveStations()
         {
             return HasSelectedItems;
         }
 
         /// <summary>
-        /// 移除选中的车票
+        /// 移除选中的车站
         /// </summary>
-        private void RemoveSelectedTickets()
+        private void RemoveSelectedStations()
         {
-            // 获取选中的车票
-            var selectedTickets = _selectedTickets.ToList();
-            if (selectedTickets.Count == 0)
-                return;
-
-            // 显示确认对话框
-            string message = $"确定要从该路线中移除选中的 {selectedTickets.Count} 张车票吗？";
-            if (MessageBoxHelper.ShowConfirmation(message) != MessageBoxResult.Yes)
-                return;
-
-            // 执行删除操作
-            _ = RemoveTicketsAsync(selectedTickets);
+            // 移除车站功能暂未实现
+            MessageBoxHelper.ShowInfo("移除车站功能尚未实现");
         }
 
         /// <summary>
-        /// 异步执行删除车票操作
+        /// 是否可以上移车站
         /// </summary>
-        /// <param name="ticketsToRemove">要删除的车票列表</param>
-        private async Task RemoveTicketsAsync(List<RouteTicketMapping> ticketsToRemove)
+        private bool CanMoveUp()
         {
-            try
-            {
-                IsLoading = true;
+            // 暂未实现上移功能
+            return HasSelectedItems;
+        }
 
-                // 获取要删除的车票ID列表
-                var ticketIds = ticketsToRemove.Select(t => t.TicketId).ToList();
+        /// <summary>
+        /// 上移车站
+        /// </summary>
+        private void MoveStationsUp()
+        {
+            // 上移车站功能暂未实现
+            MessageBoxHelper.ShowInfo("上移车站功能尚未实现");
+        }
 
-                // 从数据库中删除车票与路线的映射关系
-                bool success = await _databaseService.RemoveTicketsFromRouteAsync(_route.Id, ticketIds);
+        /// <summary>
+        /// 是否可以下移车站
+        /// </summary>
+        private bool CanMoveDown()
+        {
+            // 暂未实现下移功能
+            return HasSelectedItems;
+        }
 
-                if (success)
-                {
-                    // 刷新数据
-                    await RefreshDataAsync();
-
-                    // 显示操作成功提示
-                    MessageBoxHelper.ShowInfo($"已从路线中移除{ticketIds.Count}张车票");
-                }
-                else
-                {
-                    // 显示删除失败提示
-                    MessageBoxHelper.ShowError("删除失败，请重试");
-                }
-            }
-            catch (Exception ex)
-            {
-                LogHelper.LogError($"从路线中移除车票失败: {ex.Message}", ex);
-                MessageBoxHelper.ShowError($"操作失败: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+        /// <summary>
+        /// 下移车站
+        /// </summary>
+        private void MoveStationsDown()
+        {
+            // 下移车站功能暂未实现
+            MessageBoxHelper.ShowInfo("下移车站功能尚未实现");
         }
 
         /// <summary>
@@ -626,10 +605,10 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public void SynchronizeSelectionStates()
         {
-            System.Diagnostics.Debug.WriteLine($"开始同步选择状态 - 当前SelectedTickets数量: {_selectedTickets.Count}");
+            System.Diagnostics.Debug.WriteLine($"开始同步选择状态 - 当前SelectedStations数量: {_selectedStations.Count}");
 
             // 清空并重建选择集合
-            _selectedTickets.Clear();
+            _selectedStations.Clear();
 
             // 记录当前页选中项
             int currentPageSelectedCount = 0;
@@ -638,35 +617,35 @@ namespace TA_WPF.ViewModels
             var addedIds = new HashSet<int>();
 
             // 从当前页数据项中收集选中的项
-            foreach (var ticket in Tickets)
+            foreach (var station in Stations)
             {
-                if (ticket.IsSelected && !addedIds.Contains(ticket.Id))
+                if (station.IsSelected && !addedIds.Contains(station.Id))
                 {
-                    _selectedTickets.Add(ticket);
-                    addedIds.Add(ticket.Id);
+                    _selectedStations.Add(station);
+                    addedIds.Add(station.Id);
                     currentPageSelectedCount++;
                 }
             }
 
             // 确保总数不超过当前页的项目数
-            if (_selectedTickets.Count > Tickets.Count)
+            if (_selectedStations.Count > Stations.Count)
             {
-                System.Diagnostics.Debug.WriteLine($"警告：选择数量({_selectedTickets.Count})超过当前页项目数({Tickets.Count})，将进行截断");
+                System.Diagnostics.Debug.WriteLine($"警告：选择数量({_selectedStations.Count})超过当前页项目数({Stations.Count})，将进行截断");
 
                 // 清空集合并重新添加
-                var tempList = _selectedTickets.Take(Tickets.Count).ToList();
-                _selectedTickets.Clear();
+                var tempList = _selectedStations.Take(Stations.Count).ToList();
+                _selectedStations.Clear();
 
-                foreach (var ticket in tempList)
+                foreach (var station in tempList)
                 {
-                    _selectedTickets.Add(ticket);
+                    _selectedStations.Add(station);
                 }
             }
 
             // 更新计数和UI
-            SelectedItemsCount = _selectedTickets.Count;
+            SelectedItemsCount = _selectedStations.Count;
 
-            System.Diagnostics.Debug.WriteLine($"同步选择状态完成 - 当前页选中项: {currentPageSelectedCount}, SelectedTickets: {_selectedTickets.Count}, SelectedItemsCount: {SelectedItemsCount}");
+            System.Diagnostics.Debug.WriteLine($"同步选择状态完成 - 当前页选中项: {currentPageSelectedCount}, SelectedStations: {_selectedStations.Count}, SelectedItemsCount: {SelectedItemsCount}");
 
             // 验证选择数量
             if (currentPageSelectedCount != SelectedItemsCount)
@@ -674,7 +653,7 @@ namespace TA_WPF.ViewModels
                 System.Diagnostics.Debug.WriteLine($"警告：选择数量不一致！当前页选中: {currentPageSelectedCount}, 选择集合: {SelectedItemsCount}");
             }
 
-            OnPropertyChanged(nameof(SelectedTickets));
+            OnPropertyChanged(nameof(SelectedStations));
             OnPropertyChanged(nameof(HasSelectedItems));
         }
 
@@ -683,7 +662,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public void UpdateSelectedItemsCount()
         {
-            SelectedItemsCount = _selectedTickets.Count;
+            SelectedItemsCount = _selectedStations.Count;
             HasSelectedItems = SelectedItemsCount > 0;
         }
 

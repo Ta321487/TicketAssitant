@@ -1,17 +1,11 @@
-using System;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows;
-using System.Windows.Controls;
-using System.Linq;
-using System.Collections.Generic;
-using System.Windows.Media;
 using TA_WPF.Views;
-using System.Diagnostics;
 
 namespace TA_WPF.ViewModels
 {
@@ -44,7 +38,7 @@ namespace TA_WPF.ViewModels
 
             _routes = new ObservableCollection<RouteInfo>();
             _selectedRoutes = new ObservableCollection<RouteInfo>();
-            
+
             _paginationViewModel.PageChanged += async (s, e) => await LoadRoutesAsync();
             _paginationViewModel.PageSizeChanged += async (s, e) => await LoadRoutesAsync();
 
@@ -55,15 +49,15 @@ namespace TA_WPF.ViewModels
             DeleteRouteCommand = new RelayCommand<RouteInfo>(DeleteRoute);
             DeleteRoutesCommand = new RelayCommand(DeleteSelectedRoutes);
             AdvancedQueryCommand = new RelayCommand(OpenAdvancedQuery);
-            
+
             // 添加选择相关命令
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll, CanUnselectAll);
             InvertSelectionCommand = new RelayCommand(InvertSelection, CanInvertSelection);
-            
+
             // 添加双击命令
             DoubleClickEditCommand = new RelayCommand<RouteInfo>(DoubleClickEditRoute);
-            
+
             // 添加路线详情命令
             ShowRouteDetailsCommand = new RelayCommand<RouteInfo>(ShowRouteDetails);
         }
@@ -78,17 +72,17 @@ namespace TA_WPF.ViewModels
             _currentIsAndCondition = e.IsAndCondition;
 
             // 检查是否所有条件都为空，此时应该查询所有数据
-            bool allConditionsEmpty = string.IsNullOrWhiteSpace(e.RouteName) && 
+            bool allConditionsEmpty = string.IsNullOrWhiteSpace(e.RouteName) &&
                                      e.DistanceRange == DistanceRangeType.None &&
                                      !e.IsFavorite;
-                                     
+
             // 重置到第一页
             _paginationViewModel.CurrentPage = 1;
-            
+
             // 加载符合条件的数据
             _ = LoadRoutesAsync();
         }
-        
+
         // 添加AdvancedQueryViewModel属性
         public AdvancedQueryRouteViewModel AdvancedQueryViewModel => _advancedQueryViewModel;
 
@@ -135,7 +129,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         // 添加多选支持
         public ObservableCollection<RouteInfo> SelectedRoutes
         {
@@ -153,20 +147,20 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         // 是否有选中的项
         public bool HasSelection => _selectedRoutes != null && _selectedRoutes.Count > 0;
-        
+
         // 是否选中了全部项
-        public bool IsAllSelected => _routes != null && _selectedRoutes != null && 
+        public bool IsAllSelected => _routes != null && _selectedRoutes != null &&
                                     _routes.Count > 0 && _routes.Count == _selectedRoutes.Count;
-                                    
+
         // 选中项的数量，用于控制修改按钮的显示与启用状态
         public int SelectedItemsCount => _selectedRoutes?.Count ?? 0;
 
         // 是否可以编辑选中的路线（仅当选中一个路线时可编辑）
         public bool CanEditSelectedRoute => SelectedItemsCount == 1;
-        
+
         // 是否可以显示路线详情（仅当选中一个路线时可显示）
         public bool CanShowRouteDetails => SelectedItemsCount == 1;
 
@@ -201,7 +195,7 @@ namespace TA_WPF.ViewModels
 
         // 是否有数据（用于控制UI显示）
         public bool HasData => _routes != null && _routes.Count > 0;
-        
+
         // 是否没有数据（用于控制"暂无数据"提示的显示）
         public bool HasNoData => _routes == null || _routes.Count == 0;
 
@@ -212,15 +206,15 @@ namespace TA_WPF.ViewModels
         public ICommand DeleteRouteCommand { get; }
         public ICommand DeleteRoutesCommand { get; }
         public ICommand AdvancedQueryCommand { get; }
-        
+
         // 选择相关命令
         public ICommand SelectAllCommand { get; }
         public ICommand UnselectAllCommand { get; }
         public ICommand InvertSelectionCommand { get; }
-        
+
         // 添加双击命令
         public ICommand DoubleClickEditCommand { get; }
-        
+
         // 添加路线详情命令
         public ICommand ShowRouteDetailsCommand { get; }
 
@@ -228,10 +222,10 @@ namespace TA_WPF.ViewModels
         {
             var addRouteWindow = new AddRouteWindow(_databaseService, _mainViewModel);
             addRouteWindow.Owner = Application.Current.MainWindow;
-            
+
             // 显示模态窗口
             var result = addRouteWindow.ShowDialog();
-            
+
             // 如果添加成功，刷新列表
             if (result == true)
             {
@@ -246,13 +240,13 @@ namespace TA_WPF.ViewModels
                 MessageBoxHelper.ShowInfo("请先选择一条路线");
                 return;
             }
-            
+
             var editRouteWindow = new EditRouteWindow(route, _databaseService, _mainViewModel);
             editRouteWindow.Owner = Application.Current.MainWindow;
-            
+
             // 显示模态窗口
             var result = editRouteWindow.ShowDialog();
-            
+
             // 如果编辑成功，刷新列表
             if (result == true)
             {
@@ -280,7 +274,7 @@ namespace TA_WPF.ViewModels
             {
                 return;
             }
-            
+
             string confirmMessage;
             if (SelectedRoutes.Count == 1)
             {
@@ -290,23 +284,23 @@ namespace TA_WPF.ViewModels
             {
                 confirmMessage = $"确定要删除选中的 {SelectedRoutes.Count} 条路线吗？此操作不可撤销。";
             }
-            
+
             // 显示确认对话框
             MessageBoxResult result = MessageBoxHelper.ShowConfirmation(confirmMessage);
-            
+
             // 如果用户确认删除
             if (result == MessageBoxResult.Yes)
             {
                 try
                 {
                     IsLoading = true;
-                    
+
                     // 收集要删除的路线ID
                     var routeIds = SelectedRoutes.Select(r => r.Id).ToList();
-                    
+
                     // 调用服务执行删除
                     bool success = await _databaseService.DeleteRoutesByIdsAsync(routeIds);
-                    
+
                     if (success)
                     {
                         // 刷新列表
@@ -335,13 +329,13 @@ namespace TA_WPF.ViewModels
             // 切换高级查询面板的可见性
             _advancedQueryViewModel.ToggleQueryPanelCommand.Execute(null);
         }
-        
+
         private void DoubleClickEditRoute(RouteInfo route)
         {
             // 调用编辑方法
             EditRoute(route);
         }
-        
+
         // 显示路线详情
         private void ShowRouteDetails(RouteInfo route)
         {
@@ -349,7 +343,7 @@ namespace TA_WPF.ViewModels
             {
                 route = SelectedRoute;
             }
-            
+
             if (route != null)
             {
                 var routeDetailWindow = new RouteDetailWindow(route, _databaseService, _mainViewModel);
@@ -357,55 +351,55 @@ namespace TA_WPF.ViewModels
                 routeDetailWindow.ShowDialog();
             }
         }
-        
+
         // --- 选择相关方法 ---
         public void SelectAll()
         {
             if (_routes == null || _routes.Count == 0)
                 return;
-                
+
             SelectedRoutes.Clear();
             foreach (var route in _routes)
             {
                 SelectedRoutes.Add(route);
             }
-            
+
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllSelected));
-            
+
             // 通知DataGrid更新选中状态
             SelectionChanged?.Invoke(this, new RouteSelectionChangedEventArgs(new List<RouteInfo>(), _routes.ToList()));
         }
-        
+
         public bool CanSelectAll() => HasData && !IsAllSelected;
-        
+
         public void UnselectAll()
         {
             if (_selectedRoutes == null || _selectedRoutes.Count == 0)
                 return;
-                
+
             // 备份当前选中项以便触发事件
             var previousSelected = new List<RouteInfo>(_selectedRoutes);
-            
+
             SelectedRoutes.Clear();
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllSelected));
-            
+
             // 通知DataGrid更新选中状态
             SelectionChanged?.Invoke(this, new RouteSelectionChangedEventArgs(previousSelected, new List<RouteInfo>()));
         }
-        
+
         public bool CanUnselectAll() => HasSelection;
-        
+
         public void InvertSelection()
         {
             if (_routes == null || _routes.Count == 0)
                 return;
-                
+
             var currentSelection = new HashSet<RouteInfo>(_selectedRoutes);
             var toAdd = new List<RouteInfo>();
             var toRemove = new List<RouteInfo>(_selectedRoutes);
-            
+
             foreach (var route in _routes)
             {
                 if (!currentSelection.Contains(route))
@@ -413,21 +407,21 @@ namespace TA_WPF.ViewModels
                     toAdd.Add(route);
                 }
             }
-            
+
             SelectedRoutes.Clear();
-            
+
             foreach (var route in toAdd)
             {
                 SelectedRoutes.Add(route);
             }
-            
+
             OnPropertyChanged(nameof(HasSelection));
             OnPropertyChanged(nameof(IsAllSelected));
-            
+
             // 通知DataGrid更新选中状态
             SelectionChanged?.Invoke(this, new RouteSelectionChangedEventArgs(toRemove, toAdd));
         }
-        
+
         public bool CanInvertSelection() => HasData;
 
         // 事件用于通知View更新DataGrid的选中状态
@@ -438,7 +432,7 @@ namespace TA_WPF.ViewModels
         {
             public List<RouteInfo> RemovedItems { get; }
             public List<RouteInfo> AddedItems { get; }
-            
+
             public RouteSelectionChangedEventArgs(List<RouteInfo> removedItems, List<RouteInfo> addedItems)
             {
                 RemovedItems = removedItems;
@@ -454,13 +448,13 @@ namespace TA_WPF.ViewModels
             _currentDistanceRange = DistanceRangeType.None;
             _currentIsFavorite = false;
             _currentIsAndCondition = true;
-            
+
             // 重置高级查询面板
             if (_advancedQueryViewModel != null)
             {
                 _advancedQueryViewModel.ResetFilter();
             }
-            
+
             _paginationViewModel.CurrentPage = 1; // Reset to first page
             await LoadRoutesAsync();
         }
@@ -472,15 +466,15 @@ namespace TA_WPF.ViewModels
             {
                 // 使用高级查询条件获取路线总数
                 TotalCount = await GetFilteredRouteCountAsync();
-                
+
                 // 使用高级查询条件加载路线数据
                 var routesData = await GetFilteredRoutesAsync();
 
                 Routes = new ObservableCollection<RouteInfo>(routesData);
-                
+
                 // 清除选择
                 SelectedRoutes.Clear();
-                
+
                 // 通知UI更新数据状态
                 OnPropertyChanged(nameof(HasData));
                 OnPropertyChanged(nameof(HasNoData));
@@ -505,7 +499,7 @@ namespace TA_WPF.ViewModels
                 IsLoading = false;
             }
         }
-        
+
         // 获取筛选的路线总数
         private async Task<int> GetFilteredRouteCountAsync()
         {
@@ -521,7 +515,7 @@ namespace TA_WPF.ViewModels
                 return 0;
             }
         }
-        
+
         // 获取筛选的路线数据
         private async Task<List<RouteInfo>> GetFilteredRoutesAsync()
         {
@@ -530,7 +524,7 @@ namespace TA_WPF.ViewModels
                 // 构建SQL查询
                 string query = BuildFilterQuerySQL(false);
                 return await _databaseService.GetRoutesByCustomQueryAsync(
-                    query, 
+                    query,
                     _paginationViewModel.CurrentPage,
                     _paginationViewModel.PageSize);
             }
@@ -540,25 +534,25 @@ namespace TA_WPF.ViewModels
                 return new List<RouteInfo>();
             }
         }
-        
+
         // 构建筛选SQL查询
         private string BuildFilterQuerySQL(bool isCountQuery)
         {
             // 所有非空条件列表
             var conditions = new List<string>();
-            
+
             // 检查是否所有查询条件都为空（查询全部数据的情况）
-            bool allConditionsEmpty = string.IsNullOrWhiteSpace(_currentRouteName) && 
+            bool allConditionsEmpty = string.IsNullOrWhiteSpace(_currentRouteName) &&
                                       _currentDistanceRange == DistanceRangeType.None &&
                                       !_currentIsFavorite;
-                                      
+
             // 如果要查询所有数据，就不添加任何条件
             if (!allConditionsEmpty)
             {
                 if (_currentIsAndCondition)
                 {
                     // AND条件模式 - 对未设置的条件使用IS NULL
-                    
+
                     // 处理路线名称条件
                     if (!string.IsNullOrWhiteSpace(_currentRouteName))
                     {
@@ -568,7 +562,7 @@ namespace TA_WPF.ViewModels
                     {
                         conditions.Add("route_name IS NULL");
                     }
-                    
+
                     // 处理总里程范围条件
                     if (_currentDistanceRange == DistanceRangeType.None)
                     {
@@ -596,7 +590,7 @@ namespace TA_WPF.ViewModels
                                 break;
                         }
                     }
-                    
+
                     // 处理收藏状态条件
                     if (_currentIsFavorite)
                     {
@@ -610,13 +604,13 @@ namespace TA_WPF.ViewModels
                 else
                 {
                     // OR条件模式 - 只有设置了的条件才添加
-                    
+
                     // 处理路线名称条件（模糊匹配）
                     if (!string.IsNullOrWhiteSpace(_currentRouteName))
                     {
                         conditions.Add($"route_name LIKE '%{_currentRouteName}%'");
                     }
-                    
+
                     // 处理总里程范围条件
                     switch (_currentDistanceRange)
                     {
@@ -636,7 +630,7 @@ namespace TA_WPF.ViewModels
                             conditions.Add("(total_distance > 2000)");
                             break;
                     }
-                    
+
                     // 处理收藏状态条件
                     if (_currentIsFavorite)
                     {
@@ -644,7 +638,7 @@ namespace TA_WPF.ViewModels
                     }
                 }
             }
-            
+
             // 构建完整SQL查询
             string sql;
             if (isCountQuery)
@@ -655,24 +649,24 @@ namespace TA_WPF.ViewModels
             {
                 sql = "SELECT * FROM route_info";
             }
-            
+
             // 添加WHERE子句
             if (conditions.Count > 0)
             {
                 sql += " WHERE ";
-                
+
                 // 根据条件组合方式连接条件
                 string connector = _currentIsAndCondition ? " AND " : " OR ";
                 sql += string.Join(connector, conditions);
             }
-            
+
             // 添加排序和分页（仅对数据查询）
             if (!isCountQuery)
             {
                 sql += " ORDER BY id DESC";
                 sql += $" LIMIT {(_paginationViewModel.CurrentPage - 1) * _paginationViewModel.PageSize}, {_paginationViewModel.PageSize}";
             }
-            
+
             Debug.WriteLine($"生成的SQL查询语句: {sql}");
             return sql;
         }
@@ -687,4 +681,4 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(CanShowRouteDetails));
         }
     }
-} 
+}

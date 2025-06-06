@@ -72,7 +72,7 @@ namespace TA_WPF.ViewModels
         private bool _showExpenseChart = true;
 
         private bool _showDetailedTicketTypes = false;
-        
+
         // 添加在类的字段声明区域
         private RouteMapViewModel _routeMapViewModel;
         private bool _isMapViewVisible = false;
@@ -90,12 +90,12 @@ namespace TA_WPF.ViewModels
                 {
                     _showDetailedTicketTypes = value;
                     OnPropertyChanged(nameof(ShowDetailedTicketTypes));
-                    
+
                     // 重新加载车票类型数据
                     if (_allTickets != null)
                     {
-                        LoadTicketTypeData(_allTickets.Where(t => t.DepartDate.HasValue && 
-                                                t.DepartDate.Value >= StartDate && 
+                        LoadTicketTypeData(_allTickets.Where(t => t.DepartDate.HasValue &&
+                                                t.DepartDate.Value >= StartDate &&
                                                 t.DepartDate.Value <= EndDate).ToList());
                     }
                 }
@@ -298,11 +298,11 @@ namespace TA_WPF.ViewModels
                         if (_startDate > _endDate)
                         {
                             MessageBoxHelper.ShowWarning("开始日期不能大于结束日期，请重新选择！", "日期范围错误");
-                            _startDate = _endDate; 
-                            OnPropertyChanged(nameof(StartDate)); 
+                            _startDate = _endDate;
+                            OnPropertyChanged(nameof(StartDate));
                         }
                         Debug.WriteLine($"手动更改StartDate: {_startDate:yyyy-MM-dd}，将刷新数据...");
-                        
+
                         // 将时间范围传递给地图视图模型
                         if (_routeMapViewModel != null)
                         {
@@ -345,11 +345,11 @@ namespace TA_WPF.ViewModels
                         if (_endDate < _startDate)
                         {
                             MessageBoxHelper.ShowWarning("结束日期不能小于开始日期，请重新选择！", "日期范围错误");
-                            _endDate = _startDate; 
-                            OnPropertyChanged(nameof(EndDate)); 
+                            _endDate = _startDate;
+                            OnPropertyChanged(nameof(EndDate));
                         }
                         Debug.WriteLine($"手动更改EndDate: {_endDate:yyyy-MM-dd}，将刷新数据...");
-                        
+
                         // 将时间范围传递给地图视图模型
                         if (_routeMapViewModel != null)
                         {
@@ -2359,13 +2359,13 @@ namespace TA_WPF.ViewModels
 
                 // 记录调试信息
                 Debug.WriteLine($"开始刷新数据，当前时间范围：{SelectedTimeRange}，开始日期：{StartDate:yyyy-MM-dd}，结束日期：{EndDate:yyyy-MM-dd}");
- 
+
                 // 强制更新UI上的时间范围属性，确保图表使用最新的时间范围
                 OnPropertyChanged(nameof(StartDate));
                 OnPropertyChanged(nameof(EndDate));
                 OnPropertyChanged(nameof(SelectedTimeRange));
                 OnPropertyChanged(nameof(MonthlyTicketXTitle));
- 
+
                 // 对于自定义时间范围，确保图表显示
                 if (SelectedTimeRange == "自定义")
                 {
@@ -2373,7 +2373,7 @@ namespace TA_WPF.ViewModels
                     _monthlyTicketChartMessage = "";
                     OnPropertyChanged(nameof(ShowMonthlyTicketChart));
                     OnPropertyChanged(nameof(MonthlyTicketChartMessage));
- 
+
                     Debug.WriteLine($"自定义时间范围刷新，时间范围：{StartDate:yyyy-MM-dd} 到 {EndDate:yyyy-MM-dd}，确保图表可见");
                 }
 
@@ -2386,18 +2386,21 @@ namespace TA_WPF.ViewModels
                     Debug.WriteLine("刷新地图数据");
                     // 确保地图视图模型使用当前的时间范围
                     _routeMapViewModel.SetTimeRange(SelectedTimeRange, StartDate, EndDate);
-                    
+
                     // 检查WebView是否可用
                     if (_routeMapViewModel.IsMapInitialized && _routeMapViewModel.CurrentWebView != null)
                     {
-                        try {
+                        try
+                        {
                             // 使用JavaScript接口调用前端刷新函数，避免重复的加载指示器逻辑
-                            await Application.Current.Dispatcher.InvokeAsync(async () => {
+                            await Application.Current.Dispatcher.InvokeAsync(async () =>
+                            {
                                 await _routeMapViewModel.CurrentWebView.ExecuteScriptAsync("refreshMapData();");
                                 Debug.WriteLine("已通过JavaScript接口请求刷新地图数据");
                             });
                         }
-                        catch (Exception ex) {
+                        catch (Exception ex)
+                        {
                             Debug.WriteLine($"通过JavaScript接口刷新地图数据时出错: {ex.Message}");
                             // 如果JavaScript调用失败，回退到原来的方法
                             await _routeMapViewModel.RefreshMapDataAsync();

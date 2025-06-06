@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Windows;
+using System.Diagnostics;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Diagnostics;
 
 
 namespace TA_WPF.ViewModels
@@ -59,38 +55,38 @@ namespace TA_WPF.ViewModels
             _collection = collection ?? throw new ArgumentNullException(nameof(collection));
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
-            
+
             // 初始化分页视图模型
             _paginationViewModel = new PaginationViewModel();
             _paginationViewModel.PageChanged += PageChanged;
             _paginationViewModel.PageSizeChanged += PageSizeChanged;
-            
+
             // 初始化集合
             _tickets = new ObservableCollection<TrainRideInfo>();
             _selectedTickets = new ObservableCollection<TrainRideInfo>();
             _departStationSuggestions = new ObservableCollection<StationInfo>();
             _arriveStationSuggestions = new ObservableCollection<StationInfo>();
-            
+
             // 初始化车站搜索服务
             _stationSearchService = new StationSearchService(_databaseService);
-            
+
             // 初始化车次前缀列表
             InitializeTrainPrefixes();
-            
+
             // 初始化命令
             SearchTicketsCommand = new RelayCommand(SearchTickets);
             ResetFiltersCommand = new RelayCommand(ResetFilters);
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll, CanUnselectAll);
             AddSelectedTicketsCommand = new RelayCommand(AddSelectedTickets, CanAddSelectedTickets);
-            
+
             // 初始化车站相关命令
             SelectDepartStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, true));
             SelectArriveStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, false));
-            
+
             // 初始加载数据
             LoadTickets();
-            
+
             // 异步初始化站点数据
             _ = _stationSearchService.LoadStationsAsync();
         }
@@ -209,7 +205,7 @@ namespace TA_WPF.ViewModels
                 {
                     _departStationSearchText = value;
                     OnPropertyChanged(nameof(DepartStationSearchText));
-                    
+
                     if (!_isUpdatingDepartStation)
                     {
                         SearchStations(value, true);
@@ -230,7 +226,7 @@ namespace TA_WPF.ViewModels
                 {
                     _arriveStationSearchText = value;
                     OnPropertyChanged(nameof(ArriveStationSearchText));
-                    
+
                     if (!_isUpdatingArriveStation)
                     {
                         SearchStations(value, false);
@@ -289,8 +285,8 @@ namespace TA_WPF.ViewModels
             try
             {
                 // 如果正在更新或搜索文本为空，不执行搜索
-                if ((isDepartStation && _isUpdatingDepartStation) || 
-                    (!isDepartStation && _isUpdatingArriveStation) || 
+                if ((isDepartStation && _isUpdatingDepartStation) ||
+                    (!isDepartStation && _isUpdatingArriveStation) ||
                     string.IsNullOrWhiteSpace(searchText))
                 {
                     // 清空搜索结果并关闭下拉框
@@ -324,11 +320,11 @@ namespace TA_WPF.ViewModels
                 // 从用户历史站点中筛选符合条件的
                 var userFilteredStations = userStations
                     .Where(s => s != null && s.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                    .Select(name => new StationInfo 
-                    { 
-                        StationName = name, 
+                    .Select(name => new StationInfo
+                    {
+                        StationName = name,
                         // 用更高的排序权重让历史站点排在前面
-                        StationLevel = 0 
+                        StationLevel = 0
                     })
                     .ToList();
 
@@ -723,7 +719,7 @@ namespace TA_WPF.ViewModels
             YearFilter = null;
             IsAndCondition = true;
             ExcludeExistingTickets = true;
-            
+
             // 重置到第一页并加载数据
             _paginationViewModel.CurrentPage = 1;
             LoadTickets();
@@ -742,11 +738,11 @@ namespace TA_WPF.ViewModels
                     SelectedTickets.Add(ticket);
                 }
             }
-            
+
             // 确保更新选中项计数
             SelectedItemsCount = Tickets.Count;
             HasSelectedItems = SelectedItemsCount > 0;
-            
+
             // 通知UI
             OnPropertyChanged(nameof(SelectedTickets));
             CommandManager.InvalidateRequerySuggested();
@@ -769,14 +765,14 @@ namespace TA_WPF.ViewModels
             {
                 ticket.IsSelected = false;
             }
-            
+
             // 清空选中项集合
             SelectedTickets.Clear();
-            
+
             // 确保更新选中项计数
             SelectedItemsCount = 0;
             HasSelectedItems = false;
-            
+
             // 通知UI
             OnPropertyChanged(nameof(SelectedTickets));
             CommandManager.InvalidateRequerySuggested();
@@ -798,33 +794,33 @@ namespace TA_WPF.ViewModels
             // 确保有选中的车票
             if (!HasSelectedItems)
             {
-                MessageBoxHelper.ShowError("请先选择要添加的车票",  "错误");
+                MessageBoxHelper.ShowError("请先选择要添加的车票", "错误");
                 return;
             }
-            
+
             IsLoading = true;
-            
+
             try
             {
                 // 获取选中的车票ID
                 var selectedTicketIds = SelectedTickets.Select(t => t.Id).ToList();
-                
+
                 // 获取收藏夹中已有的车票ID
                 var existingTicketIds = await GetExistingTicketIdsAsync();
-                
+
                 // 找出需要添加的车票ID（排除已存在的）
                 var ticketsToAdd = selectedTicketIds.Except(existingTicketIds).ToList();
-                
+
                 if (ticketsToAdd.Count == 0)
                 {
                     // 根据选择记录数量显示不同的提示文本
-                    string message = SelectedTickets.Count == 1 
-                        ? "所选车票已在收藏夹中，无需重复添加" 
+                    string message = SelectedTickets.Count == 1
+                        ? "所选车票已在收藏夹中，无需重复添加"
                         : "所选车票已全部在收藏夹中，无需重复添加";
                     MessageBoxHelper.ShowInfo(message, "提示");
                     return;
                 }
-                
+
                 // 构建映射记录
                 var mappings = ticketsToAdd.Select(ticketId => new CollectionMappedTicketInfo
                 {
@@ -832,22 +828,22 @@ namespace TA_WPF.ViewModels
                     TicketId = ticketId,
                     AddTime = DateTime.Now
                 }).ToList();
-                
+
                 // 批量添加映射记录
                 int addedCount = await AddMappingsAsync(mappings);
-                
+
                 // 更新收藏夹中的车票数量
                 Collection.TicketCount += addedCount;
-                
+
                 // 设置数据有变更
                 HasDataChanged = true;
-                
+
                 // 提示用户
                 MessageBoxHelper.ShowInfo($"成功添加 {addedCount} 张车票到收藏夹", "操作成功");
-                
+
                 // 记录调试信息
                 Debug.WriteLine($"已添加 {addedCount} 张车票到收藏夹 {Collection.CollectionName}，ID: {Collection.Id}");
-                
+
                 // 重新加载数据，展示最新状态
                 LoadTickets();
             }
@@ -877,36 +873,36 @@ namespace TA_WPF.ViewModels
         private async void LoadTickets()
         {
             IsLoading = true;
-            
+
             try
             {
                 // 如果排除已有车票，获取已存在的车票ID列表
                 List<int> existingTicketIds = ExcludeExistingTickets ? await GetExistingTicketIdsAsync() : null;
-                
+
                 // 获取总记录数
                 int totalCount = await GetFilteredTicketCountAsync(existingTicketIds);
                 _paginationViewModel.TotalItems = totalCount;
-                
+
                 // 获取分页数据
                 var tickets = await GetFilteredTicketsAsync(existingTicketIds);
-                
+
                 // 更新UI显示
                 Tickets.Clear();
                 foreach (var ticket in tickets)
                 {
                     Tickets.Add(ticket);
                 }
-                
+
                 // 清空选中状态
                 SelectedTickets.Clear();
-                
+
                 // 通知UI更新
                 OnPropertyChanged(nameof(HasData));
                 OnPropertyChanged(nameof(HasNoData));
-                
+
                 // 更新选中项计数
                 UpdateSelectedItemsCount();
-                
+
                 // 确保CanSelectAllProperty也被更新
                 CanSelectAllProperty = CanSelectAll();
 
@@ -917,11 +913,11 @@ namespace TA_WPF.ViewModels
                 if (Tickets.Count == 0 && _paginationViewModel.TotalPages > 0 && _paginationViewModel.TotalItems > 0)
                 {
                     Debug.WriteLine($"[AddTicketsToCollection] 当前页{_paginationViewModel.CurrentPage}无数据，开始查找有数据的页面");
-                    
+
                     // 记录当前页码，防止循环
                     int currentPage = _paginationViewModel.CurrentPage;
                     int checkedCount = 0;
-                    
+
                     // 从当前页开始向后查找
                     for (int page = currentPage + 1; page <= _paginationViewModel.TotalPages && checkedCount < _paginationViewModel.TotalPages; page++, checkedCount++)
                     {
@@ -930,7 +926,7 @@ namespace TA_WPF.ViewModels
                         LoadTickets();
                         return;
                     }
-                    
+
                     // 如果向后查找不到，从第一页开始向前查找，直到当前页
                     for (int page = 1; page < currentPage && checkedCount < _paginationViewModel.TotalPages; page++, checkedCount++)
                     {
@@ -939,7 +935,7 @@ namespace TA_WPF.ViewModels
                         LoadTickets();
                         return;
                     }
-                    
+
                     // 如果所有页面都没有数据，但总记录数不为0，说明分页计算可能有问题
                     Debug.WriteLine($"[AddTicketsToCollection] 警告：所有页面都无数据，但总记录数为{_paginationViewModel.TotalItems}");
                 }
@@ -984,28 +980,28 @@ namespace TA_WPF.ViewModels
                 // 根据筛选条件获取车票总数
                 // 使用对应的FilteredTrainRideInfoCount方法
                 int count = await _databaseService.GetFilteredTrainRideInfoCountAsync(
-                    DepartStationFilter, 
-                    TrainNoFilter, 
-                    YearFilter, 
+                    DepartStationFilter,
+                    TrainNoFilter,
+                    YearFilter,
                     SeatPositionType.None, // 添加座位位置参数，默认为None
                     IsAndCondition);
-                
+
                 // 如果需要排除已有车票，并且有需要排除的车票ID
                 if (ExcludeExistingTickets && excludeTicketIds != null && excludeTicketIds.Count > 0)
                 {
                     // 获取所有符合条件的车票ID，然后排除已有的
                     var allTickets = await _databaseService.GetFilteredTrainRideInfosAsync(
-                        1, int.MaxValue, 
+                        1, int.MaxValue,
                         DepartStationFilter,
                         TrainNoFilter,
                         YearFilter,
                         SeatPositionType.None, // 添加座位位置参数，默认为None
                         IsAndCondition);
-                    
+
                     // 计算排除后的数量
                     count = allTickets.Count(t => !excludeTicketIds.Contains(t.Id));
                 }
-                
+
                 return count;
             }
             catch (Exception ex)
@@ -1021,7 +1017,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private async Task<List<TrainRideInfo>> GetFilteredTicketsAsync(List<int> excludeTicketIds)
         {
-            try 
+            try
             {
                 // 获取符合条件的车票
                 var tickets = await _databaseService.GetFilteredTrainRideInfosAsync(
@@ -1032,62 +1028,62 @@ namespace TA_WPF.ViewModels
                     YearFilter,
                     SeatPositionType.None, // 添加座位位置参数，默认为None
                     IsAndCondition);
-                
+
                 // 如果需要排除已有车票
                 if (ExcludeExistingTickets && excludeTicketIds != null && excludeTicketIds.Count > 0)
                 {
                     // 过滤掉已有的车票
                     var filteredTickets = tickets.Where(t => !excludeTicketIds.Contains(t.Id)).ToList();
-                    
+
                     // 关键修复：如果当前页过滤后无数据，但总记录数不为0，重新获取所有未添加的车票并分页
                     if (filteredTickets.Count == 0 && _paginationViewModel.TotalItems > 0)
                     {
                         Debug.WriteLine($"[AddTicketsToCollection] 当前页过滤后无数据，正在获取所有未添加的车票");
-                        
+
                         // 获取所有符合条件的车票
                         var allTickets = await _databaseService.GetFilteredTrainRideInfosAsync(
-                            1, 
+                            1,
                             int.MaxValue,
                             DepartStationFilter,
                             TrainNoFilter,
                             YearFilter,
                             SeatPositionType.None,
                             IsAndCondition);
-                        
+
                         // 过滤掉已添加的车票
                         var allFilteredTickets = allTickets.Where(t => !excludeTicketIds.Contains(t.Id)).ToList();
-                        
+
                         // 获取正确的总条目数
                         int actualTotal = allFilteredTickets.Count;
                         _paginationViewModel.TotalItems = actualTotal;
-                        
+
                         Debug.WriteLine($"[AddTicketsToCollection] 过滤后实际总记录数: {actualTotal}");
-                        
+
                         // 重新计算总页数
                         int pageSize = _paginationViewModel.PageSize;
                         int totalPages = (actualTotal + pageSize - 1) / pageSize;
-                        
+
                         // 调整当前页码，确保不超过总页数
                         int currentPage = Math.Min(_paginationViewModel.CurrentPage, Math.Max(1, totalPages));
                         _paginationViewModel.CurrentPage = currentPage;
-                        
+
                         Debug.WriteLine($"[AddTicketsToCollection] 调整后 - 当前页:{currentPage}, 总页数:{totalPages}, 页大小:{pageSize}");
-                        
+
                         // 如果没有数据，直接返回空列表
                         if (actualTotal == 0)
                         {
                             Debug.WriteLine("[AddTicketsToCollection] 过滤后无数据可显示");
                             return new List<TrainRideInfo>();
                         }
-                        
+
                         // 手动分页获取当前页数据
                         int skipCount = (currentPage - 1) * pageSize;
                         return allFilteredTickets.Skip(skipCount).Take(pageSize).ToList();
                     }
-                    
+
                     return filteredTickets;
                 }
-                
+
                 return tickets;
             }
             catch (Exception ex)
@@ -1123,23 +1119,23 @@ namespace TA_WPF.ViewModels
         {
             // 计算当前选中的车票数量
             int count = Tickets?.Count(t => t.IsSelected) ?? 0;
-            
+
             // 更新选中项集合
             SelectedTickets.Clear();
             foreach (var ticket in Tickets?.Where(t => t.IsSelected) ?? Enumerable.Empty<TrainRideInfo>())
             {
                 SelectedTickets.Add(ticket);
             }
-            
+
             // 更新选中项数量
             SelectedItemsCount = count;
-            
+
             // 更新是否有选中项
             HasSelectedItems = count > 0;
-            
+
             // 更新是否可以全选的属性
             CanSelectAllProperty = CanSelectAll();
-            
+
             // 更新命令状态
             CommandManager.InvalidateRequerySuggested();
         }

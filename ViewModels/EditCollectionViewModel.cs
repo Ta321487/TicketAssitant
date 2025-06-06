@@ -1,13 +1,13 @@
+using Microsoft.Win32;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.Win32;
+using System.Windows.Media.Imaging;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.IO;
-using System.Diagnostics;
-using System.Windows.Media.Imaging;
 
 namespace TA_WPF.ViewModels
 {
@@ -37,18 +37,18 @@ namespace TA_WPF.ViewModels
             _databaseService = databaseService;
             _mainViewModel = mainViewModel;
             _originalCollection = collection;
-            
+
             // 初始化属性
             CollectionName = collection.CollectionName;
             Description = collection.Description;
             CoverImage = collection.CoverImage;
             Importance = collection.Importance;
-            
+
             // 初始化命令
             SaveCommand = new RelayCommand(SaveCollection, CanSaveCollection);
             CancelCommand = new RelayCommand(CancelOperation);
             BrowseImageCommand = new RelayCommand(BrowseImage);
-            
+
             Debug.WriteLine($"初始化编辑收藏夹视图模型，评分值: {collection.Importance}");
         }
 
@@ -129,8 +129,8 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 封面图片文件名
         /// </summary>
-        public string CoverImageFileName => !string.IsNullOrEmpty(CoverImagePath) 
-            ? Path.GetFileName(CoverImagePath) 
+        public string CoverImageFileName => !string.IsNullOrEmpty(CoverImagePath)
+            ? Path.GetFileName(CoverImagePath)
             : "暂未选择新图片";
 
         /// <summary>
@@ -151,7 +151,7 @@ namespace TA_WPF.ViewModels
                     Debug.WriteLine($"评分值从 {_importance} 改变为 {value}");
                     _importance = value;
                     OnPropertyChanged(nameof(Importance));
-                    
+
                     // 确保UI能感知到评分变更
                     CommandManager.InvalidateRequerySuggested();
                 }
@@ -208,7 +208,7 @@ namespace TA_WPF.ViewModels
                     MessageBoxHelper.ShowError("收藏夹名称不能为空");
                     return;
                 }
-                
+
                 if (!HasCoverImage || CoverImage == null || CoverImage.Length == 0)
                 {
                     MessageBoxHelper.ShowError("请选择封面图片");
@@ -233,7 +233,7 @@ namespace TA_WPF.ViewModels
                 // 检查收藏夹名称是否发生变更，若变更则检查是否有重名
                 string originalName = CollectionName.Trim();
                 string uniqueName = originalName;
-                
+
                 // 只有当名称变更时才需要检查重名
                 if (originalName != _originalCollection.CollectionName)
                 {
@@ -324,7 +324,7 @@ namespace TA_WPF.ViewModels
             {
                 Debug.WriteLine($"生成唯一收藏夹名称失败: {ex.Message}");
                 LogHelper.LogError($"生成唯一收藏夹名称失败: {ex.Message}", ex);
-                
+
                 // 发生错误时直接返回原名称
                 return baseName;
             }
@@ -364,16 +364,16 @@ namespace TA_WPF.ViewModels
                 {
                     // 读取文件路径
                     string filePath = openFileDialog.FileName;
-                    
+
                     // 处理图片：调整尺寸和压缩
                     byte[] processedImage = LoadAndResizeImage(filePath, 200, 100);
-                    
+
                     if (processedImage != null && processedImage.Length > 0)
                     {
                         // 保存路径和处理后的图片数据
                         CoverImagePath = filePath;
                         CoverImage = processedImage;
-                        
+
                         // 通知UI更新按钮状态
                         OnPropertyChanged(nameof(IsValid));
                         CommandManager.InvalidateRequerySuggested();
@@ -460,4 +460,4 @@ namespace TA_WPF.ViewModels
             }
         }
     }
-} 
+}

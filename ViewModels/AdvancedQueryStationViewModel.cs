@@ -1,8 +1,4 @@
-using System; 
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
@@ -83,7 +79,7 @@ namespace TA_WPF.ViewModels
 
             // 初始化地区数据
             LoadRegionDataAsync();
-            
+
             // 加载我的出发车站
             LoadMyDepartStationsAsync();
         }
@@ -115,7 +111,7 @@ namespace TA_WPF.ViewModels
 
                 // 获取所有省份列表
                 var stations = _stationSearchService.Stations;
-                
+
                 // 提取所有不同的省份
                 var provinces = stations
                     .Where(s => !string.IsNullOrEmpty(s.Province))
@@ -123,7 +119,7 @@ namespace TA_WPF.ViewModels
                     .Distinct()
                     .OrderBy(p => p)
                     .ToList();
-                
+
                 Provinces = provinces;
             }
             catch (Exception ex)
@@ -158,7 +154,7 @@ namespace TA_WPF.ViewModels
 
                 // 在列表开头添加一个空字符串，对应ComboBox中的空选项
                 cities.Insert(0, "");
-                
+
                 Cities = cities;
             }
             catch (Exception ex)
@@ -190,7 +186,7 @@ namespace TA_WPF.ViewModels
                     .Distinct()
                     .OrderBy(d => d)
                     .ToList();
-                
+
                 // 在列表开头添加一个空字符串，对应ComboBox中的空选项
                 districts.Insert(0, "");
 
@@ -211,17 +207,17 @@ namespace TA_WPF.ViewModels
             {
                 // 获取出发车站
                 var departStations = await _databaseService.GetDistinctDepartStationsAsync();
-                
+
                 // 获取到达车站
                 var arriveStations = await _databaseService.GetDistinctArriveStationsAsync();
-                
+
                 // 合并两个列表并去重
                 var allStations = new HashSet<string>(departStations);
                 foreach (var station in arriveStations)
                 {
                     allStations.Add(station);
                 }
-                
+
                 // 转换为列表并排序
                 MyDepartStations = allStations
                     .Where(s => !string.IsNullOrEmpty(s))
@@ -243,17 +239,17 @@ namespace TA_WPF.ViewModels
             {
                 // 获取出发车站
                 var departStations = await _databaseService.GetDistinctDepartStationsAsync();
-                
+
                 // 获取到达车站
                 var arriveStations = await _databaseService.GetDistinctArriveStationsAsync();
-                
+
                 // 合并两个列表并去重
                 var allStations = new HashSet<string>(departStations);
                 foreach (var station in arriveStations)
                 {
                     allStations.Add(station);
                 }
-                
+
                 // 转换为列表并排序
                 MyDepartStations = allStations
                     .Where(s => !string.IsNullOrEmpty(s))
@@ -299,21 +295,21 @@ namespace TA_WPF.ViewModels
                     _stationSearchText = value;
                     OnPropertyChanged(nameof(StationSearchText));
                     OnPropertyChanged(nameof(QueryButtonText));
-                    
+
                     // 如果是从选择触发的文本变更，不要再搜索
                     if (_isFromSelection)
                     {
                         _isFromSelection = false;
                         return;
                     }
-                    
+
                     if (string.IsNullOrWhiteSpace(value))
                     {
                         StationSuggestions.Clear();
                         IsStationDropdownOpen = false;
                         return;
                     }
-                    
+
                     // 判断输入是中文名称还是拼音
                     if (IsPinyin(value))
                     {
@@ -344,10 +340,10 @@ namespace TA_WPF.ViewModels
                     _selectedProvince = value;
                     OnPropertyChanged(nameof(SelectedProvince));
                     OnPropertyChanged(nameof(QueryButtonText));
-                    
+
                     // 当省份变化时，重新加载城市列表
                     LoadCitiesAsync(value);
-                    
+
                     // 清空城市和区县选择
                     SelectedCity = null;
                     SelectedDistrict = null;
@@ -368,10 +364,10 @@ namespace TA_WPF.ViewModels
                     _selectedCity = value;
                     OnPropertyChanged(nameof(SelectedCity));
                     OnPropertyChanged(nameof(QueryButtonText));
-                    
+
                     // 当城市变化时，重新加载区县列表
                     LoadDistrictsAsync(_selectedProvince, value);
-                    
+
                     // 清空区县选择
                     SelectedDistrict = null;
                 }
@@ -563,7 +559,7 @@ namespace TA_WPF.ViewModels
         {
             if (string.IsNullOrEmpty(text))
                 return false;
-            
+
             // 判断是否只包含字母
             return text.All(c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
         }
@@ -613,16 +609,16 @@ namespace TA_WPF.ViewModels
                 // 获取所有车站
                 await _stationSearchService.InitializeAsync();
                 var allStations = _stationSearchService.Stations;
-                
+
                 // 筛选拼音匹配的车站
                 var matchedStations = allStations
-                    .Where(s => !string.IsNullOrEmpty(s.StationPinyin) && 
+                    .Where(s => !string.IsNullOrEmpty(s.StationPinyin) &&
                                s.StationPinyin.StartsWith(pinyin, StringComparison.OrdinalIgnoreCase))
                     .OrderBy(s => s.StationPinyin.Length)
                     .ThenBy(s => s.StationPinyin)
                     .Take(10)
                     .ToList();
-                
+
                 StationSuggestions.Clear();
                 foreach (var station in matchedStations)
                 {
@@ -645,10 +641,10 @@ namespace TA_WPF.ViewModels
             {
                 // 设置标记，防止触发搜索
                 _isFromSelection = true;
-                
+
                 // 设置车站名称
                 StationSearchText = station.StationName;
-                
+
                 // 关闭下拉框并清空建议列表
                 IsStationDropdownOpen = false;
                 StationSuggestions.Clear();
@@ -685,10 +681,10 @@ namespace TA_WPF.ViewModels
             {
                 await LoadMyDepartStationsTaskAsync();
             }
-            
+
             // 更新是否有活动筛选条件
             HasActiveFilters = HasAnyActiveFilter();
-            
+
             // 通知查询条件变更
             FilterApplied?.Invoke(this, new StationQueryFilterEventArgs
             {
@@ -699,7 +695,7 @@ namespace TA_WPF.ViewModels
                 UseMyDepartStations = UseMyDepartStations,
                 MyDepartStations = UseMyDepartStations ? MyDepartStations : null
             });
-            
+
             // 不再关闭查询面板，让用户自己控制关闭
             // IsQueryPanelVisible = false;
         }
@@ -714,10 +710,10 @@ namespace TA_WPF.ViewModels
             SelectedCity = null;
             SelectedDistrict = null;
             UseMyDepartStations = false;
-            
+
             // 更新活动筛选状态
             HasActiveFilters = false;
-            
+
             // 清空下拉列表
             StationSuggestions.Clear();
             IsStationDropdownOpen = false;
@@ -759,4 +755,4 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public List<string> MyDepartStations { get; set; }
     }
-} 
+}

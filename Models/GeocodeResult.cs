@@ -1,5 +1,3 @@
-using System;
-
 namespace TA_WPF.Models
 {
     /// <summary>
@@ -46,4 +44,4 @@ namespace TA_WPF.Models
             return FormattedAddress;
         }
     }
-} 
+}

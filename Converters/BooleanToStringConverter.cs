@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Windows.Data;
 
@@ -13,13 +12,13 @@ namespace TA_WPF.Converters
         /// 当布尔值为true时返回的字符串
         /// </summary>
         public string TrueValue { get; set; }
-        
-        
+
+
         /// <summary>
         /// 当布尔值为false时返回的字符串
         /// </summary>
         public string FalseValue { get; set; }
-        
+
         /// <summary>
         /// 将布尔值转换为字符串
         /// </summary>
@@ -34,10 +33,10 @@ namespace TA_WPF.Converters
             {
                 return boolValue ? TrueValue : FalseValue;
             }
-            
+
             return FalseValue;
         }
-        
+
         /// <summary>
         /// 将字符串转换为布尔值
         /// </summary>

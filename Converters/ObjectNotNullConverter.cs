@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -13,7 +12,7 @@ namespace TA_WPF.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             bool isNotNull = false;
-            
+
             if (value is byte[] byteArray)
             {
                 isNotNull = byteArray != null && byteArray.Length > 0;
@@ -22,13 +21,13 @@ namespace TA_WPF.Converters
             {
                 isNotNull = value != null;
             }
-            
+
             // 如果指定了inverse参数，反转结果
             if (parameter != null && parameter.ToString().ToLower() == "inverse")
             {
                 isNotNull = !isNotNull;
             }
-            
+
             return isNotNull ? Visibility.Visible : Visibility.Collapsed;
         }
 
@@ -38,4 +37,4 @@ namespace TA_WPF.Converters
             return null;
         }
     }
-} 
+}

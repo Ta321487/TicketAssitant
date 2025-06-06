@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using TA_WPF.Utils;
 using TA_WPF.Views;
-using System.Diagnostics;
 
 namespace TA_WPF.Services
 {
@@ -33,7 +33,7 @@ namespace TA_WPF.Services
                 bool ticketTableExists = await _databaseService.TableExistsAsync("train_ride_info");
                 bool ticketCollectionsTableExists = await _databaseService.TableExistsAsync("ticket_collections_info");
                 bool collectionMappedTicketsTableExists = await _databaseService.TableExistsAsync("collection_mapped_tickets_info");
-                
+
                 // 检查路线相关表是否存在
                 bool routeInfoTableExists = await _databaseService.TableExistsAsync("route_info");
                 bool routeTicketMappingTableExists = await _databaseService.TableExistsAsync("route_ticket_mapping");
@@ -41,9 +41,9 @@ namespace TA_WPF.Services
                 bool routeStatisticsTableExists = await _databaseService.TableExistsAsync("route_statistics");
 
                 // 检查是否所有必要的表都存在
-                bool allTablesExist = stationTableExists && ticketTableExists && ticketCollectionsTableExists && 
-                                    collectionMappedTicketsTableExists && routeInfoTableExists && 
-                                    routeTicketMappingTableExists && routeStationMappingTableExists && 
+                bool allTablesExist = stationTableExists && ticketTableExists && ticketCollectionsTableExists &&
+                                    collectionMappedTicketsTableExists && routeInfoTableExists &&
+                                    routeTicketMappingTableExists && routeStationMappingTableExists &&
                                     routeStatisticsTableExists;
 
                 // 如果有表不存在，提示用户创建

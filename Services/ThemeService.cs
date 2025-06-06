@@ -237,10 +237,10 @@ namespace TA_WPF.Services
                             FrameworkElement.StyleProperty.OverrideMetadata(
                                 typeof(Window),
                                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
-                            
+
                             // 设置标志为true，避免重复重写
                             _hasOverriddenWindowMetadata = true;
-                            
+
                             Debug.WriteLine("已重写Window样式元数据");
                         }
                         catch (Exception ex)
@@ -352,13 +352,13 @@ namespace TA_WPF.Services
                 var paletteHelper = new PaletteHelper();
                 var theme = paletteHelper.GetTheme();
                 bool isDark = theme.GetBaseTheme() == BaseTheme.Dark;
-                    
+
                 LogHelper.LogSystem("主题", $"当前活动主题检测: {(isDark ? "深色" : "浅色")}");
 
                 return isDark;
             }
             catch (Exception ex)
-            {   
+            {
                 Debug.WriteLine($"检测当前主题时出错: {ex.Message}");
                 LogHelper.LogSystem("主题", $"检测当前主题时出错: {ex.Message}");
 

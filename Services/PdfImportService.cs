@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using TA_WPF.Models;
 using TA_WPF.Utils;
-using System.Diagnostics;
-using System.Linq;
 
 namespace TA_WPF.Services
 {
@@ -91,7 +87,7 @@ namespace TA_WPF.Services
                 // 如果未找到12306相关关键词，可能不是车票PDF
                 if (!is12306Ticket)
                 {
-                    MessageBoxHelper.ShowError("不是有效的12306车票PDF，请重新选择","错误");
+                    MessageBoxHelper.ShowError("不是有效的12306车票PDF，请重新选择", "错误");
                     Debug.WriteLine("[PdfImportService] 未找到12306相关关键词，可能不是车票PDF。");
                     return null;
                 }
@@ -127,9 +123,9 @@ namespace TA_WPF.Services
                         // **移除/注释掉 Pinyin 自动填充**
                         // EnrichStationInfo(ticket); 
                     }
-                    else 
-                    { 
-                        Debug.WriteLine($"[PdfImportService] 站点行(索引 {stationLineIndex})部分数量: {parts.Length}, 预期 >= 3。"); 
+                    else
+                    {
+                        Debug.WriteLine($"[PdfImportService] 站点行(索引 {stationLineIndex})部分数量: {parts.Length}, 预期 >= 3。");
                         // 添加关键信息缺失检查
                         if (string.IsNullOrEmpty(ticket.TrainNo) || string.IsNullOrEmpty(ticket.DepartStation) || string.IsNullOrEmpty(ticket.ArriveStation))
                         {
@@ -138,8 +134,8 @@ namespace TA_WPF.Services
                         }
                     }
                 }
-                else 
-                { 
+                else
+                {
                     Debug.WriteLine($"[PdfImportService] 没有足够的行来处理站点信息(索引 {stationLineIndex})。总行数: {lines.Length}。");
                     return null; // 行数不足，返回null
                 }
@@ -179,7 +175,7 @@ namespace TA_WPF.Services
                             ticket.DepartTime = new TimeSpan(hour, minute, 0);
                             Debug.WriteLine($"[PdfImportService] 提取到出发日期: {ticket.DepartDate:yyyy-MM-dd}, 出发时间: {ticket.DepartTime:hh\\:mm}");
                         }
-                                                catch (FormatException ex)                        { Debug.WriteLine($"[PdfImportService] 解析日期/时间部分时出错: {ex.Message}"); }
+                        catch (FormatException ex) { Debug.WriteLine($"[PdfImportService] 解析日期/时间部分时出错: {ex.Message}"); }
                     }
                     else { Debug.WriteLine("[PdfImportService] 日期时间正则表达式匹配到行，但分组提取失败。"); }
                 }
@@ -226,7 +222,7 @@ namespace TA_WPF.Services
                         // Build CoachNo string as expected by ViewModel
                         ticket.CoachNo = isExtra ? $"加{coachNum}车" : $"{coachNum}车";
                         // Assign SeatCode directly (ViewModel handles splitting A-F, etc.)
-                        ticket.SeatNo = seatCode; 
+                        ticket.SeatNo = seatCode;
                         // Map extracted text to the required SeatType value
                         ticket.SeatType = MapSeatType(seatTypeText);
                         Debug.WriteLine($"[PdfImportService] 提取到车厢号: '{ticket.CoachNo}', 座位号: '{ticket.SeatNo}', 座位类型: '{ticket.SeatType}' (原始文本: '{seatTypeText}')");
@@ -263,16 +259,16 @@ namespace TA_WPF.Services
                 else { Debug.WriteLine($"[PdfImportService] 没有足够的行来处理座位信息(索引 {seatLineIndex})。总行数: {lines.Length}。"); }
 
                 Debug.WriteLine("[PdfImportService] 完成解析尝试。");
-                
+
                 // 最终验证：确保至少有车次、出发站和到达站信息
-                if (string.IsNullOrEmpty(ticket.TrainNo) || 
-                    string.IsNullOrEmpty(ticket.DepartStation) || 
+                if (string.IsNullOrEmpty(ticket.TrainNo) ||
+                    string.IsNullOrEmpty(ticket.DepartStation) ||
                     string.IsNullOrEmpty(ticket.ArriveStation))
                 {
                     Debug.WriteLine("[PdfImportService] 最终验证失败：缺少关键信息。");
                     return null;
                 }
-                
+
                 return ticket;
             }
             catch (Exception ex)
@@ -335,7 +331,7 @@ namespace TA_WPF.Services
                 return false;
             }
         }
-        
+
         /// <summary>
         /// 丰富站点信息
         /// </summary>
@@ -378,4 +374,4 @@ namespace TA_WPF.Services
             }
         }
     }
-} 
+}

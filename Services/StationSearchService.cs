@@ -286,9 +286,9 @@ namespace TA_WPF.Services
             // 在站点列表中查找匹配的站点
             return ValidateStationName(stationName);
         }
-        
+
         #region 兼容旧版接口的同步方法（不推荐使用）
-        
+
         /// <summary>
         /// 处理站点输入框失去焦点事件 (同步版本，不推荐使用)
         /// </summary>
@@ -302,7 +302,7 @@ namespace TA_WPF.Services
             task.Wait();
             return task.Result;
         }
-        
+
         /// <summary>
         /// 检测是否为有效的车站名 (同步版本，不推荐使用)
         /// </summary>
@@ -315,7 +315,7 @@ namespace TA_WPF.Services
             task.Wait();
             return task.Result;
         }
-        
+
         /// <summary>
         /// 获取车站信息 (同步版本，不推荐使用)
         /// </summary>
@@ -328,7 +328,7 @@ namespace TA_WPF.Services
             task.Wait();
             return task.Result;
         }
-        
+
         #endregion
     }
 }

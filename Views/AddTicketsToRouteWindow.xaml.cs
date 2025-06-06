@@ -1,13 +1,11 @@
+using MaterialDesignThemes.Wpf;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
-using System.ComponentModel;
-using MaterialDesignThemes.Wpf;
-using System.Reflection;
 
 namespace TA_WPF.Views
 {
@@ -28,27 +26,27 @@ namespace TA_WPF.Views
         public AddTicketsToRouteWindow(RouteInfo route, DatabaseService databaseService, MainViewModel mainViewModel)
         {
             InitializeComponent();
-            
+
             // 获取主题服务
             _themeService = ThemeService.Instance;
-            
+
             // 创建视图模型
             _viewModel = new AddTicketsToRouteViewModel(route, databaseService, mainViewModel);
             DataContext = _viewModel;
-            
+
             // 应用当前主题
             ApplyTheme(_viewModel.MainViewModel.IsDarkMode);
-            
+
             // 订阅主题变更事件
             _themeService.ThemeChanged += OnThemeChanged;
-            
+
             // 窗口关闭时取消订阅事件
             this.Closed += (s, e) =>
             {
                 _themeService.ThemeChanged -= OnThemeChanged;
             };
         }
-        
+
         /// <summary>
         /// 应用主题
         /// </summary>
@@ -79,7 +77,7 @@ namespace TA_WPF.Views
             // 更新窗口主题
             ApplyTheme(isDarkMode);
         }
-        
+
         /// <summary>
         /// 数据表格选择变更事件
         /// </summary>
@@ -89,17 +87,17 @@ namespace TA_WPF.Views
             {
                 // 判断是否由SelectAll或UnselectAll触发的事件
                 // 如果SelectedTickets数量与滚动条位置无关，则说明是由VM全选/取消选择触发的
-                if ((_viewModel.SelectedTickets.Count == _viewModel.Tickets.Count && _viewModel.SelectedTickets.Count > 0 && 
+                if ((_viewModel.SelectedTickets.Count == _viewModel.Tickets.Count && _viewModel.SelectedTickets.Count > 0 &&
                     dataGrid.SelectedItems.Count == _viewModel.Tickets.Count) ||
                     (_viewModel.SelectedTickets.Count == 0 && dataGrid.SelectedItems.Count == 0))
                 {
                     // 由SelectAll或UnselectAll触发的，不需要更新ViewModel
                     return;
                 }
-                
+
                 // 清空已选中项集合
                 _viewModel.SelectedTickets.Clear();
-                
+
                 // 添加所有当前选中的项
                 foreach (TrainRideInfo item in dataGrid.SelectedItems)
                 {
@@ -115,7 +113,7 @@ namespace TA_WPF.Views
                         item.IsSelected = false;
                     }
                 }
-                
+
                 // 直接更新ViewModel属性
                 _viewModel.SelectedItemsCount = dataGrid.SelectedItems.Count;
                 _viewModel.HasSelectedItems = dataGrid.SelectedItems.Count > 0;
@@ -155,11 +153,11 @@ namespace TA_WPF.Views
             {
                 ValidateAndNavigateToPage(textBox.Text);
             }
-            
+
             // 恢复显示页码信息
             var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
             var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-            
+
             if (pageInfoPanel != null && pageNumberInput != null)
             {
                 pageInfoPanel.Visibility = Visibility.Visible;
@@ -187,7 +185,7 @@ namespace TA_WPF.Views
                 // 聚焦并全选
                 pageNumberInput.Focus();
                 pageNumberInput.SelectAll();
-                
+
                 e.Handled = true;
             }
         }
@@ -202,21 +200,21 @@ namespace TA_WPF.Views
                 if (sender is TextBox textBox)
                 {
                     ValidateAndNavigateToPage(textBox.Text);
-                    
+
                     // 恢复显示页码信息
                     var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
                     var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-                    
+
                     if (pageInfoPanel != null && pageNumberInput != null)
                     {
                         pageInfoPanel.Visibility = Visibility.Visible;
                         pageNumberInput.Visibility = Visibility.Collapsed;
                     }
-                    
+
                     // 回车后让输入框失去焦点
                     FocusManager.SetFocusedElement(FocusManager.GetFocusScope(textBox), null);
                     Keyboard.ClearFocus();
-                    
+
                     e.Handled = true;
                 }
             }
@@ -225,16 +223,16 @@ namespace TA_WPF.Views
                 // 取消输入，恢复显示页码信息
                 var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
                 var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-                
+
                 if (pageInfoPanel != null && pageNumberInput != null)
                 {
                     pageInfoPanel.Visibility = Visibility.Visible;
                     pageNumberInput.Visibility = Visibility.Collapsed;
-                    
+
                     // ESC后让输入框失去焦点
                     FocusManager.SetFocusedElement(FocusManager.GetFocusScope(pageNumberInput), null);
                     Keyboard.ClearFocus();
-                    
+
                     e.Handled = true;
                 }
             }
@@ -260,22 +258,22 @@ namespace TA_WPF.Views
             string currentText = textBox.Text;
             int selectionStart = textBox.SelectionStart;
             int selectionLength = textBox.SelectionLength;
-            
+
             // 计算输入后的新文本
             string newText;
             if (selectionLength > 0)
             {
                 // 如果有选中的文本，则替换
-                newText = currentText.Substring(0, selectionStart) + e.Text + 
+                newText = currentText.Substring(0, selectionStart) + e.Text +
                           currentText.Substring(selectionStart + selectionLength);
             }
             else
             {
                 // 如果没有选中的文本，则插入
-                newText = currentText.Substring(0, selectionStart) + e.Text + 
+                newText = currentText.Substring(0, selectionStart) + e.Text +
                           currentText.Substring(selectionStart);
             }
-            
+
             // 验证输入后的文本是否为有效页码
             // 在这里，我们只验证格式而不是范围，范围验证在失去焦点或按回车时进行
             if (!int.TryParse(newText, out _))
@@ -292,23 +290,23 @@ namespace TA_WPF.Views
             if (int.TryParse(pageText, out int pageNumber))
             {
                 int totalPages = _viewModel.PaginationViewModel.TotalPages;
-                
+
                 // 验证页码范围
                 if (pageNumber >= 1 && pageNumber <= totalPages)
                 {
                     // 记录修改前的页码
                     int oldPage = _viewModel.PaginationViewModel.CurrentPage;
-                    
+
                     // 导航到指定页码
                     _viewModel.PaginationViewModel.CurrentPage = pageNumber;
-                    
+
                     // 如果页码真的发生变化，确保手动触发数据加载
                     if (oldPage != pageNumber)
                     {
                         // 通过反射调用LoadTickets方法
-                        var loadTicketsMethod = _viewModel.GetType().GetMethod("LoadTickets", 
+                        var loadTicketsMethod = _viewModel.GetType().GetMethod("LoadTickets",
                             BindingFlags.NonPublic | BindingFlags.Instance);
-                        
+
                         if (loadTicketsMethod != null)
                         {
                             loadTicketsMethod.Invoke(_viewModel, null);
@@ -328,4 +326,4 @@ namespace TA_WPF.Views
             }
         }
     }
-} 
+}

@@ -1,7 +1,6 @@
-using System;
+using MaterialDesignThemes.Wpf;
 using System.Globalization;
 using System.Windows.Data;
-using MaterialDesignThemes.Wpf;
 
 namespace TA_WPF.Converters
 {
@@ -14,12 +13,12 @@ namespace TA_WPF.Converters
         /// 当布尔值为true时返回的PackIconKind
         /// </summary>
         public PackIconKind TrueValue { get; set; } = PackIconKind.FullscreenExit;
-        
+
         /// <summary>
         /// 当布尔值为false时返回的PackIconKind
         /// </summary>
         public PackIconKind FalseValue { get; set; } = PackIconKind.Fullscreen;
-        
+
         /// <summary>
         /// 将布尔值转换为PackIconKind
         /// </summary>
@@ -38,16 +37,16 @@ namespace TA_WPF.Converters
                 {
                     if (Enum.TryParse(parts[0], out PackIconKind trueKind))
                         TrueValue = trueKind;
-                    
+
                     if (Enum.TryParse(parts[1], out PackIconKind falseKind))
                         FalseValue = falseKind;
                 }
             }
-            
+
             // 根据布尔值返回对应的PackIconKind
             return value is bool bValue && bValue ? TrueValue : FalseValue;
         }
-        
+
         /// <summary>
         /// 将PackIconKind转换回布尔值（不实现）
         /// </summary>
@@ -56,4 +55,4 @@ namespace TA_WPF.Converters
             throw new NotImplementedException();
         }
     }
-} 
+}

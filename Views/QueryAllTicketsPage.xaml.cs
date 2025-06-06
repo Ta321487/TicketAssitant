@@ -35,7 +35,7 @@ namespace TA_WPF.Views
 
             // 添加DataGrid的单元格工具提示事件处理
             TicketsDataGrid.LoadingRow += TicketsDataGrid_LoadingRow;
-            
+
             // 添加DataGrid的键盘事件处理，支持Ctrl+A全选和Delete删除
             TicketsDataGrid.PreviewKeyDown += TicketsDataGrid_PreviewKeyDown;
         }
@@ -53,7 +53,7 @@ namespace TA_WPF.Views
                     viewModel.SelectAllCommand.Execute(null);
                     e.Handled = true;
                 }
-                
+
                 // 处理Delete键删除选中项
                 if (e.Key == Key.Delete && viewModel.HasSelectedItems)
                 {
@@ -349,29 +349,29 @@ namespace TA_WPF.Views
             // 检查是否按下了Ctrl键或Shift键
             bool isModifierKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl) ||
                                        Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-                               
+
             // 如果没有按下修饰键且当前是全选状态，则模拟单击行为
             if (!isModifierKeyPressed && DataContext is TicketBaseViewModel viewModel && viewModel.IsAllSelected)
             {
                 // 获取DataGrid引用
                 var dataGrid = sender as DataGrid;
                 if (dataGrid == null) return;
-                
+
                 // 获取点击位置下的行
                 DependencyObject dep = (DependencyObject)e.OriginalSource;
                 DataGridRow row = null;
-                
+
                 // 向上查找DataGridRow
                 while ((dep != null) && !(dep is DataGridRow))
                 {
                     dep = VisualTreeHelper.GetParent(dep);
                 }
-                
+
                 if (dep is DataGridRow clickedRow)
                 {
                     row = clickedRow;
                 }
-                
+
                 // 如果点击了有效行，则取消全选并仅选中此行
                 if (row != null && row.Item is TrainRideInfo clickedItem)
                 {
@@ -379,7 +379,7 @@ namespace TA_WPF.Views
                     dataGrid.SelectedItems.Clear();
                     dataGrid.SelectedItem = clickedItem;
                     clickedItem.IsSelected = true;
-                    
+
                     // 更新其他项的选择状态为false
                     foreach (var item in viewModel.TrainRideInfos)
                     {
@@ -388,11 +388,11 @@ namespace TA_WPF.Views
                             item.IsSelected = false;
                         }
                     }
-                    
+
                     // 更新ViewModel中的选中状态
                     viewModel.IsAllSelected = false;
                     viewModel.UpdateSelectedItemsCountExternal(1);
-                    
+
                     // 阻止默认的选择行为
                     e.Handled = true;
                 }
@@ -409,19 +409,19 @@ namespace TA_WPF.Views
 
             // 获取点击位置下的行
             DependencyObject dep = (DependencyObject)e.OriginalSource;
-            
+
             // 向上查找DataGridRow
             while ((dep != null) && !(dep is DataGridRow))
             {
                 dep = VisualTreeHelper.GetParent(dep);
             }
-            
+
             // 如果找到了行，处理该行
             if (dep is DataGridRow clickedRow && clickedRow.Item is TrainRideInfo clickedItem)
             {
                 // 阻止事件冒泡，防止触发其他处理
                 e.Handled = true;
-                
+
                 // 先选中该行
                 DataGrid dataGrid = sender as DataGrid;
                 if (dataGrid != null)
@@ -434,17 +434,17 @@ namespace TA_WPF.Views
                         {
                             // 清除当前DataGrid的所有选择
                             dataGrid.SelectedItems.Clear();
-                            
+
                             // 更新所有项的选择状态为false
                             foreach (var item in viewModel.TrainRideInfos)
                             {
                                 item.IsSelected = false;
                             }
-                            
+
                             // 选中当前行
                             dataGrid.SelectedItem = clickedItem;
                             clickedItem.IsSelected = true;
-                            
+
                             // 更新ViewModel中的选中状态
                             viewModel.UpdateSelectedItemsCountExternal(1);
                         }
@@ -454,7 +454,7 @@ namespace TA_WPF.Views
                         }
                     }
                 }
-                
+
                 // 直接执行预览车票命令
                 if (viewModel.PreviewTicketCommand.CanExecute(null))
                 {
@@ -474,7 +474,7 @@ namespace TA_WPF.Views
                 if (!item.IsSelected)
                 {
                     item.IsSelected = true;
-                    
+
                     // 获取ViewModel并更新选中状态
                     if (DataContext is TicketBaseViewModel viewModel)
                     {
@@ -496,13 +496,13 @@ namespace TA_WPF.Views
                 if (item.IsSelected)
                 {
                     item.IsSelected = false;
-                    
+
                     // 获取ViewModel并更新选中状态
                     if (DataContext is TicketBaseViewModel viewModel)
                     {
                         // 通知ViewModel更新选中状态
                         viewModel.UpdateSelectedItemsCountExternal(viewModel.TrainRideInfos.Count(t => t.IsSelected));
-                        
+
                         // 如果ViewModel的IsAllSelected为true但并非所有项都被选中，则更新IsAllSelected
                         if (viewModel.IsAllSelected && !Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl))
                         {
@@ -512,10 +512,10 @@ namespace TA_WPF.Views
                             {
                                 // 设置_isUpdatingAllSelected为true，避免循环调用
                                 field.SetValue(viewModel, true);
-                                
+
                                 // 更新全选状态
                                 viewModel.IsAllSelected = false;
-                                
+
                                 // 设置_isUpdatingAllSelected为false
                                 field.SetValue(viewModel, false);
                             }

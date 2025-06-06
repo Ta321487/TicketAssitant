@@ -164,7 +164,7 @@ namespace TA_WPF.ViewModels
                 // 触发属性更改通知以更新绑定
                 OnPropertyChanged(e.PropertyName);
             };
-            
+
             // 订阅环境检测完成事件，以便在环境检测完成后自动刷新命令状态
             _ocrEnvironmentService.EnvironmentCheckCompleted += OnEnvironmentCheckCompleted;
 
@@ -226,10 +226,10 @@ namespace TA_WPF.ViewModels
 
             // 重置表单状态
             ResetFormState();
-            
+
             // 初始化进度
             Progress = 0;
-            
+
             // 检查环境
             Task.Run(async () => await _ocrEnvironmentService.CheckEnvironment());
         }
@@ -717,7 +717,7 @@ namespace TA_WPF.ViewModels
                     _isNoSeat = value;
                     OnPropertyChanged(nameof(IsNoSeat));
                     OnPropertyChanged(nameof(IsSeatInputEnabled));
-                    
+
                     if (value) // 勾选了无座
                     {
                         // 无座时强制锁定座位号和座位位置
@@ -1211,7 +1211,8 @@ namespace TA_WPF.ViewModels
         public bool IsPSBCPayment
         {
             get => _isPSBCPayment;
-            set {
+            set
+            {
                 if (_isPSBCPayment != value)
                 {
                     _isPSBCPayment = value;
@@ -1222,8 +1223,9 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        public bool IsCMBPayment {
-            get=>_isCMBPayment;
+        public bool IsCMBPayment
+        {
+            get => _isCMBPayment;
             set
             {
                 // 修复私有字段名
@@ -1236,7 +1238,8 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        public bool IsBOCPayment {
+        public bool IsBOCPayment
+        {
             get => _isBOCPayment;
             set
             {
@@ -1254,7 +1257,7 @@ namespace TA_WPF.ViewModels
             get => _isCOMMPayment;
             set
             {
-                if(_isCOMMPayment != value)
+                if (_isCOMMPayment != value)
                 {
                     _isCOMMPayment = value;
                     OnPropertyChanged(nameof(IsCOMMPayment));
@@ -1768,12 +1771,12 @@ namespace TA_WPF.ViewModels
 
                     // 重置之前的表单状态和OCR结果
                     ResetFormState();
-                    
+
                     // 清除之前的OCR结果
                     OcrResults.Clear();
                     AverageConfidence = 0;
                     JsonResult = string.Empty;
-                    
+
                     // 设置新选择的图片路径
                     SelectedImagePath = dialog.FileName;
                     LogHelper.LogInfo($"已选择新图片: {SelectedImagePath}，已重置表单状态");
@@ -1967,7 +1970,7 @@ namespace TA_WPF.ViewModels
             {
                 // 保存当前选择的位置
                 string currentPosition = SelectedSeatPosition;
-                
+
                 // 重要：保存当前的锁定状态，防止更新时改变锁定状态
                 bool lockState = !IsSeatPositionEnabled;
 
@@ -2054,7 +2057,7 @@ namespace TA_WPF.ViewModels
                 string stationName = isDepartStation ? DepartStationSearchText : ArriveStationSearchText;
 
                 // 检测是否在下拉框上操作
-                if ((isDepartStation && IsDepartStationDropdownOpen) || 
+                if ((isDepartStation && IsDepartStationDropdownOpen) ||
                     (!isDepartStation && IsArriveStationDropdownOpen))
                 {
                     return;
@@ -2192,15 +2195,15 @@ namespace TA_WPF.ViewModels
                 case "SeatNo":
                     // 记录点击前状态
                     LogHelper.LogInfo($"点击前状态：无座复选框={IsNoSeatEnabled}，座位号={IsSeatNoEnabled}，座位位置={IsSeatPositionEnabled}，无座状态={IsNoSeat}");
-                    
+
                     // 切换无座复选框的可编辑状态
                     IsNoSeatEnabled = !IsNoSeatEnabled;
-                    
+
                     // 座位号和座位位置根据无座状态决定
                     if (!IsNoSeat) // 非无座状态
                     {
                         // 非无座状态下，座位号和座位位置跟随无座复选框一起切换
-                        IsSeatNoEnabled = IsNoSeatEnabled; 
+                        IsSeatNoEnabled = IsNoSeatEnabled;
                         IsSeatPositionEnabled = IsNoSeatEnabled;
                     }
                     else // 无座状态
@@ -2209,10 +2212,10 @@ namespace TA_WPF.ViewModels
                         IsSeatNoEnabled = false;
                         IsSeatPositionEnabled = false;
                     }
-                    
+
                     // 额外触发IsSeatInputEnabled的通知，确保UI更新
                     OnPropertyChanged(nameof(IsSeatInputEnabled));
-                    
+
                     LogHelper.LogInfo($"点击后状态：无座复选框={IsNoSeatEnabled}，座位号={IsSeatNoEnabled}，座位位置={IsSeatPositionEnabled}，无座状态={IsNoSeat}");
                     break;
                 case "SeatType":
@@ -2488,7 +2491,7 @@ namespace TA_WPF.ViewModels
                             _mainViewModel.TicketListCommand.Execute(null);
 
                             // 触发关闭窗口事件
-                            RequestCloseAction?.Invoke(); 
+                            RequestCloseAction?.Invoke();
                         }
                         else
                         {
@@ -2627,16 +2630,16 @@ namespace TA_WPF.ViewModels
                 for (int i = 0; i < ocrResults.Count; i++)
                 {
                     var result = ocrResults[i];
-                    
+
                     // 考虑不带"站"字的情况，且识别度高于0.7的结果
-                    if ((result.Text.EndsWith("站") || 
-                         _stationSearchService.IsValidStation(result.Text)) 
-                        && !result.Text.Contains("检票") 
-                        && !result.Text.Contains("候车") 
+                    if ((result.Text.EndsWith("站") ||
+                         _stationSearchService.IsValidStation(result.Text))
+                        && !result.Text.Contains("检票")
+                        && !result.Text.Contains("候车")
                         // 排除车次号被误识别为站名的情况
-                        && !(result.Text.StartsWith("K") || result.Text.StartsWith("G") || 
-                             result.Text.StartsWith("D") || result.Text.StartsWith("C") || 
-                             result.Text.StartsWith("Z") || result.Text.StartsWith("T") || 
+                        && !(result.Text.StartsWith("K") || result.Text.StartsWith("G") ||
+                             result.Text.StartsWith("D") || result.Text.StartsWith("C") ||
+                             result.Text.StartsWith("Z") || result.Text.StartsWith("T") ||
                              result.Text.StartsWith("Y") || result.Text.StartsWith("L"))
                         && result.Score > 0.7)
                     {
@@ -2647,7 +2650,7 @@ namespace TA_WPF.ViewModels
 
                 // 优先考虑带"站"字的文本，进一步过滤车次号等非站名文本
                 var stationWithSuffix = highConfidenceStations.Where(s => s.stationName.EndsWith("站")).ToList();
-                
+
                 // 如果找到带"站"字的文本，优先使用它们
                 if (stationWithSuffix.Count >= 2)
                 {
@@ -2660,7 +2663,7 @@ namespace TA_WPF.ViewModels
                 {
                     string departStationName = null;
                     string arriveStationName = null;
-                    
+
                     // 优先使用带"站"字的文本作为站名
                     var stationsWithSuffix = highConfidenceStations.Where(s => s.stationName.EndsWith("站")).OrderBy(s => s.index).ToList();
                     if (stationsWithSuffix.Count >= 2)
@@ -2670,7 +2673,7 @@ namespace TA_WPF.ViewModels
                         LogHelper.LogInfo($"使用带'站'字的文本作为站名：出发车站={departStationName}, 到达车站={arriveStationName}");
                     }
                     // 如果没有足够的带"站"字的文本，则回退到之前的逻辑
-                    else if (highConfidenceStations.Any(s => s.index == 2) && 
+                    else if (highConfidenceStations.Any(s => s.index == 2) &&
                              highConfidenceStations.Any(s => s.index == 3))
                     {
                         // 索引2作为出发车站，索引3作为到达车站
@@ -2685,21 +2688,21 @@ namespace TA_WPF.ViewModels
                         arriveStationName = highConfidenceStations[1].stationName;
                         LogHelper.LogInfo($"使用第一个高置信度项作为出发车站: {departStationName}, 第二个作为到达车站: {arriveStationName}");
                     }
-                    
+
                     // 检查是否有误识别车次号为站名的情况
-                    if (arriveStationName != null && 
-                        (arriveStationName.StartsWith("K") || arriveStationName.StartsWith("G") || 
-                         arriveStationName.StartsWith("D") || arriveStationName.StartsWith("C") || 
-                         arriveStationName.StartsWith("Z") || arriveStationName.StartsWith("T") || 
+                    if (arriveStationName != null &&
+                        (arriveStationName.StartsWith("K") || arriveStationName.StartsWith("G") ||
+                         arriveStationName.StartsWith("D") || arriveStationName.StartsWith("C") ||
+                         arriveStationName.StartsWith("Z") || arriveStationName.StartsWith("T") ||
                          arriveStationName.StartsWith("Y") || arriveStationName.StartsWith("L")))
                     {
                         LogHelper.LogInfo($"检测到车次号 {arriveStationName} 被错误填充到到达车站，清空到达车站字段以便正确识别");
                         arriveStationName = null;
-                        
+
                         // 尝试从所有OCR结果中查找带"站"字的文本作为到达车站
                         foreach (var text in allTexts)
                         {
-                            if (text != departStationName && text.EndsWith("站") && 
+                            if (text != departStationName && text.EndsWith("站") &&
                                 !addedStations.Contains(text) && !text.Contains("退票"))
                             {
                                 arriveStationName = text;
@@ -2708,38 +2711,38 @@ namespace TA_WPF.ViewModels
                             }
                         }
                     }
-                    
+
                     // 处理出发车站
                     if (departStationName != null)
                     {
                         string departStationNameWithoutStation = departStationName.EndsWith("站")
                             ? departStationName.Substring(0, departStationName.Length - 1)
                             : departStationName;
-                        
+
                         // 设置去掉站字的名称
                         DepartStation = departStationNameWithoutStation;
-                        
+
                         // 设置搜索文本，确保UI显示
                         _isUpdatingDepartStation = true;
                         DepartStationSearchText = departStationNameWithoutStation;
                         _isUpdatingDepartStation = false;
-                        
+
                         // 确保UI更新
                         OnPropertyChanged(nameof(DepartStation));
                         OnPropertyChanged(nameof(DepartStationSearchText));
-                        
+
                         // 尝试填充拼音和代码
                         var departStationInfo = _stationSearchService.GetStationInfo(departStationName);
                         if (departStationInfo != null)
                         {
                             LogHelper.LogInfo($"出发车站在数据库中找到: {departStationInfo.StationName}");
-                            
+
                             // 车站在数据库中存在
                             if (!string.IsNullOrEmpty(departStationInfo.StationPinyin))
                             {
                                 DepartStationPinyin = departStationInfo.StationPinyin;
                             }
-                            
+
                             if (!string.IsNullOrEmpty(departStationInfo.StationCode))
                             {
                                 DepartStationCode = departStationInfo.StationCode;
@@ -2752,55 +2755,55 @@ namespace TA_WPF.ViewModels
                             if (altStationInfo != null)
                             {
                                 LogHelper.LogInfo($"出发车站(不带站字)在数据库中找到: {altStationInfo.StationName}");
-                                
+
                                 if (!string.IsNullOrEmpty(altStationInfo.StationPinyin))
                                 {
                                     DepartStationPinyin = altStationInfo.StationPinyin;
                                 }
-                                
+
                                 if (!string.IsNullOrEmpty(altStationInfo.StationCode))
                                 {
                                     DepartStationCode = altStationInfo.StationCode;
                                 }
                             }
                         }
-                        
+
                         // 添加到已处理站点列表
                         addedStations.Add(departStationName);
                         stations.Add(departStationName);
                     }
-                    
+
                     // 处理到达车站
                     if (arriveStationName != null)
                     {
                         string arriveStationNameWithoutStation = arriveStationName.EndsWith("站")
                             ? arriveStationName.Substring(0, arriveStationName.Length - 1)
                             : arriveStationName;
-                        
+
                         // 设置去掉站字的名称
                         ArriveStation = arriveStationNameWithoutStation;
-                        
+
                         // 设置搜索文本，确保UI显示
                         _isUpdatingArriveStation = true;
                         ArriveStationSearchText = arriveStationNameWithoutStation;
                         _isUpdatingArriveStation = false;
-                        
+
                         // 确保UI更新
                         OnPropertyChanged(nameof(ArriveStation));
                         OnPropertyChanged(nameof(ArriveStationSearchText));
-                        
+
                         // 尝试填充拼音和代码
                         var arriveStationInfo = _stationSearchService.GetStationInfo(arriveStationName);
                         if (arriveStationInfo != null)
                         {
                             LogHelper.LogInfo($"到达车站在数据库中找到: {arriveStationInfo.StationName}");
-                            
+
                             // 车站在数据库中存在
                             if (!string.IsNullOrEmpty(arriveStationInfo.StationPinyin))
                             {
                                 ArriveStationPinyin = arriveStationInfo.StationPinyin;
                             }
-                            
+
                             if (!string.IsNullOrEmpty(arriveStationInfo.StationCode))
                             {
                                 ArriveStationCode = arriveStationInfo.StationCode;
@@ -2813,19 +2816,19 @@ namespace TA_WPF.ViewModels
                             if (altStationInfo != null)
                             {
                                 LogHelper.LogInfo($"到达车站(不带站字)在数据库中找到: {altStationInfo.StationName}");
-                                
+
                                 if (!string.IsNullOrEmpty(altStationInfo.StationPinyin))
                                 {
                                     ArriveStationPinyin = altStationInfo.StationPinyin;
                                 }
-                                
+
                                 if (!string.IsNullOrEmpty(altStationInfo.StationCode))
                                 {
                                     ArriveStationCode = altStationInfo.StationCode;
                                 }
                             }
                         }
-                        
+
                         // 添加到已处理站点列表
                         addedStations.Add(arriveStationName);
                         stations.Add(arriveStationName);
@@ -3037,7 +3040,7 @@ namespace TA_WPF.ViewModels
                     {
                         SelectedTrainType = match.Groups[1].Value; // 字母部分
                         TrainNumber = match.Groups[2].Value; // 数字部分
-                        
+
                         // 特殊处理：如果到达车站字段包含了车次号，说明是错误填充，需要修正
                         if (ArriveStation == text)
                         {
@@ -3047,14 +3050,14 @@ namespace TA_WPF.ViewModels
                             // 确保UI更新
                             OnPropertyChanged(nameof(ArriveStation));
                             OnPropertyChanged(nameof(ArriveStationSearchText));
-                            
+
                             // 重新检查其他OCR结果中是否包含正确的到达车站
                             foreach (var result in ocrResults)
                             {
-                                if (result.Text != text && 
+                                if (result.Text != text &&
                                     (result.Text.EndsWith("站") || _stationSearchService.IsValidStation(result.Text)) &&
-                                    !addedStations.Contains(result.Text) && 
-                                    result.Text != DepartStation && 
+                                    !addedStations.Contains(result.Text) &&
+                                    result.Text != DepartStation &&
                                     result.Text != DepartStation + "站")
                                 {
                                     string arriveStationName = result.Text;
@@ -3062,21 +3065,21 @@ namespace TA_WPF.ViewModels
                                     string arriveStationNameWithoutStation = arriveStationName.EndsWith("站")
                                         ? arriveStationName.Substring(0, arriveStationName.Length - 1)
                                         : arriveStationName;
-                                    
+
                                     LogHelper.LogInfo($"找到可能的正确到达车站: {arriveStationNameWithoutStation}");
-                                    
+
                                     // 设置去掉站字的名称
                                     ArriveStation = arriveStationNameWithoutStation;
-                                    
+
                                     // 设置搜索文本，确保UI显示
                                     _isUpdatingArriveStation = true;
                                     ArriveStationSearchText = arriveStationNameWithoutStation;
                                     _isUpdatingArriveStation = false;
-                                    
+
                                     // 确保UI更新
                                     OnPropertyChanged(nameof(ArriveStation));
                                     OnPropertyChanged(nameof(ArriveStationSearchText));
-                                    
+
                                     // 尝试填充拼音和代码
                                     var stationInfo = _stationSearchService.GetStationInfo(arriveStationName);
                                     if (stationInfo != null)
@@ -3085,13 +3088,13 @@ namespace TA_WPF.ViewModels
                                         {
                                             ArriveStationPinyin = stationInfo.StationPinyin;
                                         }
-                                        
+
                                         if (!string.IsNullOrEmpty(stationInfo.StationCode))
                                         {
                                             ArriveStationCode = stationInfo.StationCode;
                                         }
                                     }
-                                    
+
                                     break;
                                 }
                             }
@@ -3173,15 +3176,15 @@ namespace TA_WPF.ViewModels
                         {
                             IsNoSeat = true;
                             SelectedSeatType = "新空调硬座"; // 无座通常对应硬座
-                            
+
                             // 无座时，确保座位号和座位位置都是锁定的
                             IsSeatNoEnabled = false;
                             IsSeatPositionEnabled = false;
-                            
+
                             // 确保UI更新
                             OnPropertyChanged(nameof(IsSeatNoEnabled));
                             OnPropertyChanged(nameof(IsSeatPositionEnabled));
-                            
+
                             LogHelper.LogInfo("识别到无座，锁定座位号和座位位置输入框");
                         }
                         else
@@ -3876,7 +3879,7 @@ namespace TA_WPF.ViewModels
             // 根据默认座位类型更新座位位置选项
             UpdateSeatPositions();
 
-             // 通知所有值属性更改
+            // 通知所有值属性更改
             OnPropertyChanged(nameof(TicketNumber));
             OnPropertyChanged(nameof(CheckInLocation));
             OnPropertyChanged(nameof(DepartStation));
@@ -3949,7 +3952,7 @@ namespace TA_WPF.ViewModels
                 _ocrEnvironmentService.EnvironmentCheckCompleted -= OnEnvironmentCheckCompleted;
             }
         }
-        
+
         // 事件处理方法，避免在lambda表达式中使用事件订阅，以便取消订阅
         private void OnEnvironmentCheckCompleted(object sender, bool isReady)
         {
@@ -3961,7 +3964,7 @@ namespace TA_WPF.ViewModels
                 {
                     LogHelper.LogInfo("OCR环境检测完成，已启用导入按钮");
                 }
-                
+
                 // 无论环境是否准备就绪，都刷新命令状态，以便在UI上正确反映
                 CommandManager.InvalidateRequerySuggested();
             });
@@ -4133,7 +4136,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void SetStationProperties(string ocrStationName, bool isDepartStation)
         {
-             if (string.IsNullOrWhiteSpace(ocrStationName)) return;
+            if (string.IsNullOrWhiteSpace(ocrStationName)) return;
 
             // 尝试从数据库获取完整信息
             var stationInfo = _stationSearchService.GetStationInfo(ocrStationName);
@@ -4150,27 +4153,29 @@ namespace TA_WPF.ViewModels
             }
             else
             {
-                 // 如果带"站"字没找到，尝试去掉"站"字再找一次
-                 if (ocrStationName.EndsWith("站"))
-                 {
-                     string nameWithoutSuffix = ocrStationName.Substring(0, ocrStationName.Length - 1);
-                     stationInfo = _stationSearchService.GetStationInfo(nameWithoutSuffix);
-                     if (stationInfo != null)
-                     {
-                         LogHelper.LogInfo($"{(isDepartStation ? "出发" : "到达")}站(去后缀)在数据库中找到: {stationInfo.StationName}");
-                         stationName = stationInfo.StationName; // 使用数据库中的规范名称
-                         stationPinyin = stationInfo.StationPinyin;
-                         stationCode = stationInfo.StationCode;
-                     }
-                     else
-                     {
-                         LogHelper.LogInfo($"{(isDepartStation ? "出发" : "到达")}站 '{ocrStationName}' 在数据库中未找到");
-                         stationName = ocrStationName; // 保持原始名称
-                     }
-                 } else {
-                      LogHelper.LogInfo($"{(isDepartStation ? "出发" : "到达")}站 '{ocrStationName}' 在数据库中未找到");
-                      stationName = ocrStationName; // 保持原始名称
-                 }
+                // 如果带"站"字没找到，尝试去掉"站"字再找一次
+                if (ocrStationName.EndsWith("站"))
+                {
+                    string nameWithoutSuffix = ocrStationName.Substring(0, ocrStationName.Length - 1);
+                    stationInfo = _stationSearchService.GetStationInfo(nameWithoutSuffix);
+                    if (stationInfo != null)
+                    {
+                        LogHelper.LogInfo($"{(isDepartStation ? "出发" : "到达")}站(去后缀)在数据库中找到: {stationInfo.StationName}");
+                        stationName = stationInfo.StationName; // 使用数据库中的规范名称
+                        stationPinyin = stationInfo.StationPinyin;
+                        stationCode = stationInfo.StationCode;
+                    }
+                    else
+                    {
+                        LogHelper.LogInfo($"{(isDepartStation ? "出发" : "到达")}站 '{ocrStationName}' 在数据库中未找到");
+                        stationName = ocrStationName; // 保持原始名称
+                    }
+                }
+                else
+                {
+                    LogHelper.LogInfo($"{(isDepartStation ? "出发" : "到达")}站 '{ocrStationName}' 在数据库中未找到");
+                    stationName = ocrStationName; // 保持原始名称
+                }
             }
 
             SetStationPropertiesInternal(stationName, stationPinyin, stationCode, isDepartStation);
@@ -4182,14 +4187,14 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void SetStationPropertiesInternal(string stationName, string stationPinyin, string stationCode, bool isDepartStation)
         {
-             // 去掉站字用于显示和搜索框
+            // 去掉站字用于显示和搜索框
             string displayName = stationName.EndsWith("站")
                 ? stationName.Substring(0, stationName.Length - 1)
                 : stationName;
 
-             // 站名本身可以保留 "站" 字，也可以不保留，取决于 TrainRideInfo 的期望格式
-             // 当前保存逻辑会强制加"站"，所以这里可以直接用 displayName
-             // string stationValueToSet = stationName; // 或者用 displayName
+            // 站名本身可以保留 "站" 字，也可以不保留，取决于 TrainRideInfo 的期望格式
+            // 当前保存逻辑会强制加"站"，所以这里可以直接用 displayName
+            // string stationValueToSet = stationName; // 或者用 displayName
 
             if (isDepartStation)
             {
@@ -4243,8 +4248,8 @@ namespace TA_WPF.ViewModels
                 string currentValue = isDepartStation ? DepartStation : ArriveStation;
                 if (stationName == currentValue && !string.IsNullOrEmpty(currentValue))
                 {
-                     // 如果当前值已经是有效的，且与检查的站名一致，则不需要再次验证
-                     return;
+                    // 如果当前值已经是有效的，且与检查的站名一致，则不需要再次验证
+                    return;
                 }
 
                 // 使用StationSearchService检测是否是有效站点
@@ -4259,7 +4264,7 @@ namespace TA_WPF.ViewModels
                 {
                     // 展示提示时使用当前搜索框中的文本（用户看到的），而不是原始OCR结果
                     string displayText = currentSearchText;
-                    
+
                     // 不清空站点信息，保留无效站名并显示提示
                     LogHelper.LogInfo($"站点 \"{displayText}\" 不存在于数据库中，建议在车站表中完善该站信息");
                     MessageBoxHelper.ShowWarning($"{(isDepartStation ? "出发车站" : "到达车站")}【{displayText}】在车站中心不存在，请先添加该车站信息。");
@@ -4284,10 +4289,10 @@ namespace TA_WPF.ViewModels
             {
                 // 检查环境
                 await _ocrEnvironmentService.CheckEnvironment();
-                
+
                 // 添加提示：如果环境就绪但模型未安装，提示用户模型会在识别时自动下载
-                if (_ocrEnvironmentService.IsEnvironmentReady && 
-                    (_ocrEnvironmentService.IsOcrModelInstalled == null || 
+                if (_ocrEnvironmentService.IsEnvironmentReady &&
+                    (_ocrEnvironmentService.IsOcrModelInstalled == null ||
                      _ocrEnvironmentService.IsOcrModelInstalled == false))
                 {
                     // 提示用户模型会在识别时自动下载
@@ -4309,7 +4314,7 @@ namespace TA_WPF.ViewModels
                 IsLoading = true;
                 LoadingMessage = "正在准备下载Python...";
                 Progress = 0;
-                
+
                 // 开始下载Python
                 await _ocrEnvironmentService.DownloadPython();
             }
@@ -4325,17 +4330,17 @@ namespace TA_WPF.ViewModels
                 LoadingMessage = string.Empty;
             }
         }
-        
+
         private bool CanDownloadPython()
         {
             // 如果已经在进行其他操作，则不允许下载
             if (IsLoading || IsDownloadingModel)
                 return false;
-                
+
             // 如果Python已经安装，则不需要下载
             if (IsPythonInstalled == true)
                 return false;
-                
+
             return true;
         }
 
@@ -4352,7 +4357,7 @@ namespace TA_WPF.ViewModels
                     MessageBoxHelper.ShowWarning("请先安装Python再安装CNOCR");
                     return;
                 }
-                
+
                 // 调用环境服务下载并安装CNOCR
                 await _ocrEnvironmentService.DownloadInstallCnocr();
             }
@@ -4364,7 +4369,7 @@ namespace TA_WPF.ViewModels
                 SetStatusMessage($"下载CNOCR时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 检查是否可以下载CNOCR
         /// </summary>
@@ -4373,15 +4378,15 @@ namespace TA_WPF.ViewModels
             // 如果Python未安装，不能安装CNOCR
             if (!IsPythonInstalled.HasValue || !IsPythonInstalled.Value)
                 return false;
-                
+
             // 如果已经安装了CNOCR，不需要再次安装
             if (IsCnocrInstalled.HasValue && IsCnocrInstalled.Value)
                 return false;
-                
+
             // 如果正在加载中或下载中，不能开始新的下载
             if (IsLoading || _ocrEnvironmentService.IsDownloadingPython || _ocrEnvironmentService.IsDownloadingCnocr)
                 return false;
-                
+
             return true;
         }
 

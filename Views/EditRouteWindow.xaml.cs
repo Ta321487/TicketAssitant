@@ -1,12 +1,12 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
-using System.Diagnostics;
-using System.Windows.Media;
 
 namespace TA_WPF.Views
 {
@@ -26,27 +26,27 @@ namespace TA_WPF.Views
         public EditRouteWindow(RouteInfo route, DatabaseService databaseService = null, MainViewModel mainViewModel = null)
         {
             Debug.WriteLine("正在初始化EditRouteWindow");
-            
+
             // 记录路线数据
             if (route != null)
             {
                 Debug.WriteLine($"路线数据: ID={route.Id}, 名称={route.RouteName}");
                 Debug.WriteLine($"路线图片数据: {(route.CoverImage != null ? $"{route.CoverImage.Length}字节" : "无图片数据")}");
             }
-            
+
             InitializeComponent();
-            
+
             // 创建视图模型并传入路线对象
             _viewModel = new EditRouteViewModel(route, databaseService, mainViewModel);
-            
+
             // 设置DataContext
             DataContext = _viewModel;
             Debug.WriteLine("EditRouteWindow DataContext已设置");
-            
+
             // 注册Loaded事件，设置初始焦点
             this.Loaded += EditRouteWindow_Loaded;
         }
-        
+
         /// <summary>
         /// 窗口加载完成事件处理
         /// </summary>
@@ -58,7 +58,7 @@ namespace TA_WPF.Views
             {
                 Debug.WriteLine($"EditRouteWindow_Loaded: 图片数据长度={_viewModel.CoverImage.Length}字节");
             }
-            
+
             // 查找第一个TextBox控件并设置焦点
             TextBox firstTextBox = FindFirstTextBox();
             if (firstTextBox != null)
@@ -66,7 +66,7 @@ namespace TA_WPF.Views
                 firstTextBox.Focus();
             }
         }
-        
+
         /// <summary>
         /// 查找第一个TextBox控件
         /// </summary>
@@ -75,7 +75,7 @@ namespace TA_WPF.Views
             // 寻找视觉树中的第一个TextBox
             return FindVisualChild<TextBox>(this);
         }
-        
+
         /// <summary>
         /// 在视觉树中查找指定类型的第一个子元素
         /// </summary>
@@ -84,19 +84,19 @@ namespace TA_WPF.Views
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
                 DependencyObject child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 if (child != null && child is T)
                 {
                     return (T)child;
                 }
-                
+
                 T childOfChild = FindVisualChild<T>(child);
                 if (childOfChild != null)
                 {
                     return childOfChild;
                 }
             }
-            
+
             return null;
         }
 
@@ -107,11 +107,11 @@ namespace TA_WPF.Views
         {
             // 判断输入是否为数字或小数点
             var regex = new Regex(@"^[0-9]+(\.[0-9]*)?$");
-            
+
             // 获取当前文本框
             TextBox textBox = sender as TextBox;
             string updatedText = textBox.Text.Insert(textBox.CaretIndex, e.Text);
-            
+
             // 如果输入的是中文句号"。"，自动转换为英文句号"."
             if (e.Text == "。")
             {
@@ -121,7 +121,7 @@ namespace TA_WPF.Views
                 textBox.CaretIndex = caretIndex + 1;
                 return;
             }
-            
+
             // 检查是否为有效数字格式（只允许一个小数点）
             if (!regex.IsMatch(updatedText))
             {
@@ -129,4 +129,4 @@ namespace TA_WPF.Views
             }
         }
     }
-} 
+}

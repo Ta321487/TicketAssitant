@@ -1,13 +1,12 @@
-using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
-using TA_WPF.ViewModels;
-using System.ComponentModel;
 using TA_WPF.Utils; // 添加工具类引用
+using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
 {
@@ -33,25 +32,25 @@ namespace TA_WPF.Views
 
             // 获取主题服务实例
             _themeService = ThemeService.Instance;
-            
+
             // 创建配置服务和地理编码服务实例
             var configurationService = new ConfigurationService();
             var geocodingService = new GeocodingService(configurationService);
 
             // 初始化ViewModel
             _viewModel = new EditStationViewModel(
-                databaseService, 
-                stationSearchService, 
-                geocodingService, 
-                configurationService, 
-                stationToEdit, 
+                databaseService,
+                stationSearchService,
+                geocodingService,
+                configurationService,
+                stationToEdit,
                 refreshCallback);
-            
+
             // 设置DataContext
             DataContext = _viewModel;
 
             // 订阅关闭窗口事件
-            _viewModel.CloseWindow += (s, e) => 
+            _viewModel.CloseWindow += (s, e) =>
             {
                 this.DialogResult = true;
                 Close();
@@ -71,14 +70,15 @@ namespace TA_WPF.Views
             _themeService.ThemeChanged += ThemeService_ThemeChanged;
 
             // 窗口关闭时取消订阅事件
-            this.Closed += (s, e) => {
+            this.Closed += (s, e) =>
+            {
                 _themeService.ThemeChanged -= ThemeService_ThemeChanged;
             };
 
             // 更新字体大小
             UpdateFontSize();
         }
-        
+
         /// <summary>
         /// 窗口关闭前检查是否有未保存的修改
         /// </summary>
@@ -86,15 +86,15 @@ namespace TA_WPF.Views
         {
             // 标记窗口正在关闭
             _isClosing = true;
-            
+
             base.OnClosing(e);
-            
+
             try
             {
                 // 如果DialogResult已设置，说明是通过保存按钮关闭的，不需要提示
                 if (this.DialogResult.HasValue)
                     return;
-                    
+
                 // 检查是否有未保存的修改
                 if (_viewModel.HasUnsavedChanges())
                 {
@@ -105,14 +105,14 @@ namespace TA_WPF.Views
                         MessageType.Question,
                         MessageButtons.YesNoCancel,
                         this);
-                        
+
                     if (result == true) // 是
                     {
                         // 执行保存命令
                         if (_viewModel.SaveCommand.CanExecute(null))
                         {
                             _viewModel.SaveCommand.Execute(null);
-                            
+
                             // 如果保存命令执行后窗口仍然打开，说明保存失败，取消关闭
                             if (this.IsVisible)
                             {
@@ -165,7 +165,7 @@ namespace TA_WPF.Views
                 }
             }
         }
-        
+
         /// <summary>
         /// 处理铁路局建议列表选择改变事件
         /// </summary>
@@ -177,14 +177,14 @@ namespace TA_WPF.Views
                 {
                     string selectedValue = listBox.SelectedItem.ToString();
                     Debug.WriteLine($"[调试] 选择了铁路局: {selectedValue}");
-                    
+
                     _viewModel.RailwayBureau = selectedValue;
                     Debug.WriteLine($"[调试] 设置了RailwayBureau: {_viewModel.RailwayBureau}");
-                    
+
                     // 关闭下拉框
                     _viewModel.IsRailwayBureauDropdownOpen = false;
                     Debug.WriteLine("[调试] 关闭了下拉框");
-                    
+
                     // 清除选择，避免下次打开时仍然选中
                     listBox.SelectedItem = null;
                 }
@@ -195,7 +195,7 @@ namespace TA_WPF.Views
                 }
             }
         }
-        
+
         /// <summary>
         /// 处理铁路局建议项点击事件 (已废弃，使用SelectionChanged事件)
         /// </summary>
@@ -208,7 +208,7 @@ namespace TA_WPF.Views
                     // 获取选中的值
                     string selectedValue = textBlock.Text;
                     Debug.WriteLine($"[调试] 点击了铁路局选项: {selectedValue}");
-                    
+
                     // 直接设置文本框的值，通过在父控件中查找同名控件
                     TextBox railwayBureauTextBox = this.FindName("RailwayBureauTextBox") as TextBox;
                     if (railwayBureauTextBox != null)
@@ -216,7 +216,7 @@ namespace TA_WPF.Views
                         Debug.WriteLine($"[调试] 找到文本框控件，当前值: {railwayBureauTextBox.Text}");
                         railwayBureauTextBox.Text = selectedValue;
                         Debug.WriteLine($"[调试] 设置文本框新值: {selectedValue}");
-                        
+
                         // 通知数据绑定更新
                         var bindingExpression = railwayBureauTextBox.GetBindingExpression(TextBox.TextProperty);
                         if (bindingExpression != null)
@@ -233,30 +233,30 @@ namespace TA_WPF.Views
                     {
                         Debug.WriteLine("[调试] 未找到文本框控件");
                     }
-                    
+
                     // 通过ViewModel设置属性
                     Debug.WriteLine($"[调试] ViewModel.RailwayBureau之前的值: {_viewModel.RailwayBureau}");
                     Debug.WriteLine($"[调试] ViewModel.RailwayBureauInput之前的值: {_viewModel.RailwayBureauInput}");
-                    
+
                     _viewModel.RailwayBureau = selectedValue;
                     _viewModel.RailwayBureauInput = selectedValue;
-                    
+
                     Debug.WriteLine($"[调试] ViewModel.RailwayBureau设置后的值: {_viewModel.RailwayBureau}");
                     Debug.WriteLine($"[调试] ViewModel.RailwayBureauInput设置后的值: {_viewModel.RailwayBureauInput}");
-                    
+
                     // 关闭下拉框
                     _viewModel.IsRailwayBureauDropdownOpen = false;
                     Debug.WriteLine("[调试] 已关闭下拉框");
-                    
+
                     // 手动触发属性变更通知
-                    var propChangedMethod = _viewModel.GetType().GetMethod("OnPropertyChanged", 
+                    var propChangedMethod = _viewModel.GetType().GetMethod("OnPropertyChanged",
                         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                     if (propChangedMethod != null)
                     {
                         Debug.WriteLine("[调试] 手动触发属性变更通知");
                         propChangedMethod.Invoke(_viewModel, new object[] { "RailwayBureauInput" });
                     }
-                    
+
                     // 聚焦其他控件，清除当前焦点
                     this.Focus();
                     Debug.WriteLine("[调试] 窗口获得焦点");
@@ -267,9 +267,9 @@ namespace TA_WPF.Views
                     Debug.WriteLine($"[调试] 异常详情: {ex}");
                     MessageBoxHelper.ShowError($"选择铁路局时发生错误: {ex.Message}", "错误");
                 }
-                
+
                 e.Handled = true;
             }
         }
     }
-} 
+}

@@ -1,5 +1,4 @@
 using Microsoft.Web.WebView2.Core;
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -22,21 +21,21 @@ namespace TA_WPF.Views
         public RouteMapView()
         {
             InitializeComponent();
-            
+
             // 注册加载事件
             this.Loaded += RouteMapView_Loaded;
             this.Unloaded += RouteMapView_Unloaded;
             this.DataContextChanged += RouteMapView_DataContextChanged;
-            
+
             // 注册键盘事件，用于开发阶段的F12调试
             this.KeyDown += RouteMapView_KeyDown;
             this.Focusable = true;
             this.Focus();
-            
+
             // 注册视图可见性变化事件
             this.IsVisibleChanged += RouteMapView_IsVisibleChanged;
         }
-        
+
         /// <summary>
         /// 处理视图可见性变化事件
         /// </summary>
@@ -48,7 +47,7 @@ namespace TA_WPF.Views
                 {
                     // 视图变为可见时，重新初始化WebView
                     Debug.WriteLine("路线地图视图变为可见，准备初始化WebView");
-                    
+
                     // 在视图变为可见时，如果WebView未初始化或已被清理，则重新初始化
                     if (!_isWebViewInitialized || MapWebView.Source?.AbsoluteUri == "about:blank")
                     {
@@ -60,14 +59,14 @@ namespace TA_WPF.Views
                     {
                         // 如果WebView已初始化但可能需要刷新数据
                         Debug.WriteLine("WebView已初始化，尝试刷新地图数据");
-                        Dispatcher.BeginInvoke(new Action(async () => 
+                        Dispatcher.BeginInvoke(new Action(async () =>
                         {
-                            try 
+                            try
                             {
                                 // 确保应用了正确的主题
                                 await MapWebView.CoreWebView2.ExecuteScriptAsync($"setMapTheme({(_viewModel.IsDarkMode ? "true" : "false")});");
                                 Debug.WriteLine($"重新应用地图主题: {(_viewModel.IsDarkMode ? "深色" : "浅色")}");
-                                
+
                                 // 刷新地图数据
                                 await _viewModel.RefreshMapDataAsync(MapWebView.CoreWebView2);
                             }
@@ -86,7 +85,7 @@ namespace TA_WPF.Views
                 }
             }
         }
-        
+
         /// <summary>
         /// 处理视图卸载事件
         /// </summary>
@@ -94,7 +93,7 @@ namespace TA_WPF.Views
         {
             Debug.WriteLine("路线地图视图被卸载，释放WebView资源");
             ReleaseWebViewResources();
-            
+
             // 注销事件处理器，防止内存泄漏
             this.Loaded -= RouteMapView_Loaded;
             this.Unloaded -= RouteMapView_Unloaded;
@@ -102,7 +101,7 @@ namespace TA_WPF.Views
             this.KeyDown -= RouteMapView_KeyDown;
             this.IsVisibleChanged -= RouteMapView_IsVisibleChanged;
         }
-        
+
         /// <summary>
         /// 轻量级释放WebView资源，只做必要的清理以便于后续重新使用
         /// </summary>
@@ -114,7 +113,7 @@ namespace TA_WPF.Views
                 {
                     // 暂停地图动画和渲染，但不完全清空页面
                     MapWebView.CoreWebView2.ExecuteScriptAsync("if(loca && loca.animate) { loca.animate.pause(); }");
-                    
+
                     Debug.WriteLine("已暂停地图渲染，执行轻量级资源释放");
                     LogHelper.LogInfo("执行轻量级WebView资源释放以节省内存");
                 }
@@ -125,7 +124,7 @@ namespace TA_WPF.Views
                 LogHelper.LogError("轻量级释放WebView资源时出错", ex);
             }
         }
-        
+
         /// <summary>
         /// 释放WebView资源
         /// </summary>
@@ -140,23 +139,23 @@ namespace TA_WPF.Views
                     {
                         MapWebView.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
                     }
-                    
+
                     // 只有在完全卸载视图时才导航到空白页面
                     MapWebView.NavigateToString("about:blank");
-                    
+
                     // 通知ViewModel完全清理资源
                     if (_viewModel != null)
                     {
                         _viewModel.CompleteCleanupWebViewResources();
                     }
-                    
+
                     // 标记为未初始化，以便下次重新初始化
                     _isWebViewInitialized = false;
-                    
+
                     // 强制垃圾回收
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
-                    
+
                     Debug.WriteLine("WebView资源已完全释放");
                     LogHelper.LogInfo("WebView资源已完全释放以节省内存");
                 }
@@ -167,7 +166,7 @@ namespace TA_WPF.Views
                 LogHelper.LogError("释放WebView资源时出错", ex);
             }
         }
-        
+
         /// <summary>
         /// 处理键盘事件，支持F12打开开发者工具
         /// </summary>
@@ -177,7 +176,7 @@ namespace TA_WPF.Views
             if (e.Key == Key.F12)
             {
                 Debug.WriteLine("F12按下，打开开发者工具");
-                
+
                 if (_isWebViewInitialized && MapWebView?.CoreWebView2 != null)
                 {
                     // 打开开发者工具
@@ -194,19 +193,20 @@ namespace TA_WPF.Views
             {
                 return;
             }
-            
+
             // 确保DataContext有效
             if (DataContext is RouteMapViewModel viewModel)
             {
                 _viewModel = viewModel;
-                
+
                 // 初始化WebView2
                 InitializeWebView();
             }
             else
             {
                 // 延迟初始化，等待DataContext设置完成
-                Dispatcher.BeginInvoke(new Action(() => {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
                     if (DataContext is RouteMapViewModel delayedViewModel)
                     {
                         _viewModel = delayedViewModel;
@@ -238,28 +238,28 @@ namespace TA_WPF.Views
 
                 // 先标记为已初始化，防止重复调用
                 _isWebViewInitialized = true;
-                
+
                 // 取消订阅Loaded事件，防止重复初始化
                 this.Loaded -= RouteMapView_Loaded;
 
                 // 创建WebView2环境选项
                 var options = new CoreWebView2EnvironmentOptions();
-                
+
                 // 设置WebView2数据文件夹 - 使用程序目录下的WebView2Data文件夹
                 string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 string appDataPath = Path.Combine(baseDirectory, "WebView2Data");
-                
+
                 // 确保文件夹存在
                 Directory.CreateDirectory(appDataPath);
-                
+
                 try
                 {
                     // 初始化WebView2环境
                     var environment = await CoreWebView2Environment.CreateAsync(null, appDataPath, options);
-                    
+
                     // 初始化WebView2控件 - 使用await防止其他地方同时初始化
                     await MapWebView.EnsureCoreWebView2Async(environment);
-                    
+
                     // 确保HTML文件夹存在
                     string htmlFolderPath = Path.Combine(baseDirectory, "Assets", "html");
                     if (!Directory.Exists(htmlFolderPath))
@@ -267,7 +267,7 @@ namespace TA_WPF.Views
                         Directory.CreateDirectory(htmlFolderPath);
                         Debug.WriteLine($"创建目录: {htmlFolderPath}");
                     }
-                    
+
                     // 检查HTML文件是否存在
                     string htmlFilePath = Path.Combine(htmlFolderPath, "RouteMap.html");
                     if (!File.Exists(htmlFilePath) && _viewModel != null)
@@ -275,12 +275,12 @@ namespace TA_WPF.Views
                         // 从嵌入资源创建HTML文件
                         CreateHtmlFile(htmlFilePath);
                     }
-                    
+
                     // 获取HTML文件路径
                     if (_viewModel != null)
                     {
                         string mapFilePath = _viewModel.GetMapHtmlFilePath();
-                        
+
                         if (!string.IsNullOrEmpty(mapFilePath) && File.Exists(mapFilePath))
                         {
                             // 加载HTML文件
@@ -302,7 +302,7 @@ namespace TA_WPF.Views
                 {
                     Debug.WriteLine($"WebView2初始化失败: {ex.Message}");
                     MapErrorPanel.Visibility = Visibility.Visible;
-                    
+
                     // 重置初始化状态，以便可以重试
                     _isWebViewInitialized = false;
                 }
@@ -311,15 +311,15 @@ namespace TA_WPF.Views
             {
                 Debug.WriteLine($"初始化WebView2时出错: {ex.Message}");
                 MessageBoxHelper.ShowError($"初始化地图控件时发生错误: {ex.Message}", "错误");
-                
+
                 // 显示错误面板
                 MapErrorPanel.Visibility = Visibility.Visible;
-                
+
                 // 重置初始化状态，以便可以重试
                 _isWebViewInitialized = false;
             }
         }
-        
+
         /// <summary>
         /// 创建HTML文件
         /// </summary>
@@ -399,21 +399,21 @@ namespace TA_WPF.Views
                     // 配置WebView2
                     MapWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true; // 在开发阶段启用右键菜单
                     MapWebView.CoreWebView2.Settings.AreDevToolsEnabled = true; // 在开发阶段启用开发者工具
-                    
+
                     // 设置WebView2与WPF之间的通信
                     MapWebView.CoreWebView2.AddHostObjectToScript("hostObject", new WebViewHostObject(this));
-                    
+
                     // 引用本地HTML文件的脚本资源
                     string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
                     string htmlFolderPath = Path.Combine(baseDirectory, "Assets", "html");
-                    
+
                     // 配置虚拟主机文件夹映射
                     MapWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                         "local.resources", htmlFolderPath, CoreWebView2HostResourceAccessKind.Allow);
-                        
+
                     // 添加控制台消息处理
                     MapWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
-                    
+
                     // 注释：在开发阶段，可以通过F12打开开发者工具
                     Debug.WriteLine("WebView2初始化成功，可以按F12打开开发者工具");
                 }
@@ -431,7 +431,7 @@ namespace TA_WPF.Views
                 MapErrorPanel.Visibility = Visibility.Visible;
             }
         }
-        
+
         /// <summary>
         /// 处理WebView2发送的消息
         /// </summary>
@@ -459,10 +459,10 @@ namespace TA_WPF.Views
                 {
                     // 隐藏错误面板
                     MapErrorPanel.Visibility = Visibility.Collapsed;
-                    
+
                     // 初始化地图
                     await _viewModel.InitializeMapAsync(MapWebView.CoreWebView2);
-                    
+
                     // 注入控制台日志捕获脚本
                     await MapWebView.CoreWebView2.ExecuteScriptAsync(@"
                         console.defaultLog = console.log.bind(console);
@@ -511,7 +511,7 @@ namespace TA_WPF.Views
                 Debug.WriteLine($"刷新地图数据时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// IDisposable接口实现，释放资源
         /// </summary>
@@ -520,7 +520,7 @@ namespace TA_WPF.Views
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        
+
         /// <summary>
         /// 释放资源的实现
         /// </summary>
@@ -528,12 +528,12 @@ namespace TA_WPF.Views
         {
             if (_isDisposed)
                 return;
-            
+
             if (disposing)
             {
                 // 释放托管资源
                 ReleaseWebViewResources();
-                
+
                 // 注销所有事件处理器
                 this.Loaded -= RouteMapView_Loaded;
                 this.Unloaded -= RouteMapView_Unloaded;
@@ -541,12 +541,12 @@ namespace TA_WPF.Views
                 this.KeyDown -= RouteMapView_KeyDown;
                 this.IsVisibleChanged -= RouteMapView_IsVisibleChanged;
             }
-            
+
             // 释放非托管资源
-            
+
             _isDisposed = true;
         }
-        
+
         /// <summary>
         /// 析构函数
         /// </summary>
@@ -586,4 +586,4 @@ namespace TA_WPF.Views
             Debug.WriteLine($"WebView消息: {message}");
         }
     }
-} 
+}

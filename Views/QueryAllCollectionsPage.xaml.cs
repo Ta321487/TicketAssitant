@@ -1,14 +1,11 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using TA_WPF.Models;
-using TA_WPF.ViewModels;
 using TA_WPF.Utils;
-using System.Linq;
-using System.Collections.Generic;
+using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
 {
@@ -23,14 +20,14 @@ namespace TA_WPF.Views
         private bool _isDragging;
         private TicketCollectionInfo _draggedItem;
         private ListBoxItem _insertionIndicator;
-        
+
         public QueryAllCollectionsPage()
         {
             InitializeComponent();
-            
+
             // 初始化页码提示框
             InitializePageNumberTooltip();
-            
+
             // 初始化拖拽指示器
             InitializeDragInsertionIndicator();
 
@@ -45,7 +42,7 @@ namespace TA_WPF.Views
         {
             // 为整个UserControl添加键盘事件处理，确保无论焦点在哪里都能捕获按键
             this.PreviewKeyDown += Collections_PreviewKeyDown;
-            
+
             // 也为列表视图和网格视图单独添加事件，以确保优先捕获
             var children = FindVisualChildren<FrameworkElement>(this);
             foreach (var child in children)
@@ -74,7 +71,7 @@ namespace TA_WPF.Views
                     viewModel.SelectAllCommand.Execute(null);
                     e.Handled = true;
                 }
-                
+
                 // 处理Delete键删除选中项
                 else if (e.Key == Key.Delete && viewModel.HasSelection)
                 {
@@ -92,19 +89,19 @@ namespace TA_WPF.Views
         {
             List<T> results = new List<T>();
             int childCount = VisualTreeHelper.GetChildrenCount(parent);
-            
+
             for (int i = 0; i < childCount; i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 if (child is T typedChild)
                 {
                     results.Add(typedChild);
                 }
-                
+
                 results.AddRange(FindVisualChildren<T>(child));
             }
-            
+
             return results;
         }
 
@@ -129,7 +126,7 @@ namespace TA_WPF.Views
                 AllowsTransparency = true
             };
         }
-        
+
         /// <summary>
         /// 初始化拖拽指示器
         /// </summary>
@@ -147,7 +144,7 @@ namespace TA_WPF.Views
                 IsHitTestVisible = false,
                 MinHeight = 200 // 确保高度足够
             };
-            
+
             // 确保指示器在最前方显示
             Panel.SetZIndex(_insertionIndicator, 1000);
         }
@@ -194,7 +191,7 @@ namespace TA_WPF.Views
                 // 取消输入，恢复显示页码信息
                 var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
                 var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-                
+
                 if (pageInfoPanel != null && pageNumberInput != null)
                 {
                     pageInfoPanel.Visibility = Visibility.Visible;
@@ -212,7 +209,7 @@ namespace TA_WPF.Views
             // 恢复显示页码信息
             var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
             var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-            
+
             if (pageInfoPanel != null && pageNumberInput != null)
             {
                 pageInfoPanel.Visibility = Visibility.Visible;
@@ -242,7 +239,7 @@ namespace TA_WPF.Views
         {
             var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
             var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-            
+
             if (pageInfoPanel == null || pageNumberInput == null)
                 return;
 
@@ -337,34 +334,34 @@ namespace TA_WPF.Views
             if (sender is DataGrid dataGrid && dataGrid.SelectedItem is TicketCollectionInfo collection)
             {
                 // 设置批量操作标志(如有该字段)
-                var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                var field = viewModel.GetType().GetField("_isBatchSelectionOperation",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (field != null)
                     field.SetValue(viewModel, true);
-                
+
                 // 确保只有当前项被选中
                 foreach (var item in viewModel.Collections)
                 {
                     item.IsSelected = (item == collection);
                 }
-                
+
                 // 清空并重新设置选中集合
                 viewModel.SelectedCollections.Clear();
                 viewModel.SelectedCollections.Add(collection);
-                
+
                 // 重置批量操作标志
                 if (field != null)
                     field.SetValue(viewModel, false);
-                
+
                 // 设置当前选择项
                 viewModel.SelectedCollection = collection;
-                
+
                 // 执行编辑命令
                 if (viewModel.EditCollectionCommand.CanExecute(null))
                 {
                     viewModel.EditCollectionCommand.Execute(null);
                 }
-                
+
                 e.Handled = true;
             }
         }
@@ -381,38 +378,38 @@ namespace TA_WPF.Views
             if (e.OriginalSource is FrameworkElement element && element.DataContext is TicketCollectionInfo collection)
             {
                 // 设置批量操作标志(如有该字段)
-                var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                var field = viewModel.GetType().GetField("_isBatchSelectionOperation",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (field != null)
                     field.SetValue(viewModel, true);
-                    
+
                 // 确保只有当前项被选中
                 foreach (var item in viewModel.Collections)
                 {
                     item.IsSelected = (item == collection);
                 }
-                
+
                 // 清空并重新设置选中集合
                 viewModel.SelectedCollections.Clear();
                 viewModel.SelectedCollections.Add(collection);
-                
+
                 // 重置批量操作标志
                 if (field != null)
                     field.SetValue(viewModel, false);
-                
+
                 // 设置当前选择项
                 viewModel.SelectedCollection = collection;
-                
+
                 // 执行编辑命令
                 if (viewModel.EditCollectionCommand.CanExecute(null))
                 {
                     viewModel.EditCollectionCommand.Execute(null);
                 }
-                
+
                 e.Handled = true;
             }
         }
-        
+
         /// <summary>
         /// DataGrid右键点击事件处理
         /// </summary>
@@ -423,19 +420,19 @@ namespace TA_WPF.Views
 
             // 获取点击位置下的行
             DependencyObject dep = (DependencyObject)e.OriginalSource;
-            
+
             // 向上查找DataGridRow
             while ((dep != null) && !(dep is DataGridRow))
             {
                 dep = VisualTreeHelper.GetParent(dep);
             }
-            
+
             // 如果找到了行，处理该行
             if (dep is DataGridRow clickedRow && clickedRow.Item is TicketCollectionInfo collection)
             {
                 // 阻止事件冒泡，防止触发其他处理
                 e.Handled = true;
-                
+
                 // 先选中该行
                 DataGrid dataGrid = sender as DataGrid;
                 if (dataGrid != null)
@@ -447,25 +444,25 @@ namespace TA_WPF.Views
                         try
                         {
                             // 设置批量操作标志(如有该字段)
-                            var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                            var field = viewModel.GetType().GetField("_isBatchSelectionOperation",
                                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                             if (field != null)
                                 field.SetValue(viewModel, true);
-                            
+
                             // 确保只有当前项被选中
                             foreach (var item in viewModel.Collections)
                             {
                                 item.IsSelected = (item == collection);
                             }
-                            
+
                             // 清空并重新设置选中集合
                             viewModel.SelectedCollections.Clear();
                             viewModel.SelectedCollections.Add(collection);
-                            
+
                             // 重置批量操作标志
                             if (field != null)
                                 field.SetValue(viewModel, false);
-                            
+
                             // 设置当前选择项
                             viewModel.SelectedCollection = collection;
                         }
@@ -475,7 +472,7 @@ namespace TA_WPF.Views
                         }
                     }
                 }
-                
+
                 // 执行打开收藏夹车票命令
                 if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
                 {
@@ -494,10 +491,10 @@ namespace TA_WPF.Views
 
             // 从原始事件源获取数据上下文
             TicketCollectionInfo collection = null;
-            
+
             // 获取点击位置下的元素
             DependencyObject dep = (DependencyObject)e.OriginalSource;
-            
+
             // 向上查找包含数据上下文的元素
             while (dep != null && collection == null)
             {
@@ -508,12 +505,12 @@ namespace TA_WPF.Views
                 }
                 dep = VisualTreeHelper.GetParent(dep);
             }
-            
+
             if (collection != null)
             {
                 // 阻止事件冒泡，防止触发其他处理
                 e.Handled = true;
-                
+
                 // 如果没有按住Ctrl或Shift，则清除其他选择
                 if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl) &&
                     !Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightShift))
@@ -521,25 +518,25 @@ namespace TA_WPF.Views
                     try
                     {
                         // 设置批量操作标志(如有该字段)
-                        var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                        var field = viewModel.GetType().GetField("_isBatchSelectionOperation",
                             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                         if (field != null)
                             field.SetValue(viewModel, true);
-                        
+
                         // 确保只有当前项被选中
                         foreach (var item in viewModel.Collections)
                         {
                             item.IsSelected = (item == collection);
                         }
-                        
+
                         // 清空并重新设置选中集合
                         viewModel.SelectedCollections.Clear();
                         viewModel.SelectedCollections.Add(collection);
-                        
+
                         // 重置批量操作标志
                         if (field != null)
                             field.SetValue(viewModel, false);
-                        
+
                         // 设置当前选择项
                         viewModel.SelectedCollection = collection;
                     }
@@ -548,7 +545,7 @@ namespace TA_WPF.Views
                         LogHelper.LogError($"选择收藏夹时出错: {ex.Message}", ex);
                     }
                 }
-                
+
                 // 执行打开收藏夹车票命令
                 if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
                 {
@@ -556,7 +553,7 @@ namespace TA_WPF.Views
                 }
             }
         }
-        
+
         /// <summary>
         /// 处理遮罩层的右键点击事件
         /// </summary>
@@ -564,13 +561,13 @@ namespace TA_WPF.Views
         {
             var viewModel = DataContext as QueryAllCollectionsViewModel;
             if (viewModel == null) return;
-            
+
             // 获取Border的数据上下文，即收藏夹对象
             if (sender is Border border && border.DataContext is TicketCollectionInfo collection)
             {
                 // 阻止事件冒泡，防止触发其他处理
                 e.Handled = true;
-                
+
                 // 如果没有按住Ctrl或Shift，则清除其他选择
                 if (!Keyboard.IsKeyDown(Key.LeftCtrl) && !Keyboard.IsKeyDown(Key.RightCtrl) &&
                     !Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightShift))
@@ -578,25 +575,25 @@ namespace TA_WPF.Views
                     try
                     {
                         // 设置批量操作标志(如有该字段)
-                        var field = viewModel.GetType().GetField("_isBatchSelectionOperation", 
+                        var field = viewModel.GetType().GetField("_isBatchSelectionOperation",
                             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                         if (field != null)
                             field.SetValue(viewModel, true);
-                        
+
                         // 确保只有当前项被选中
                         foreach (var item in viewModel.Collections)
                         {
                             item.IsSelected = (item == collection);
                         }
-                        
+
                         // 清空并重新设置选中集合
                         viewModel.SelectedCollections.Clear();
                         viewModel.SelectedCollections.Add(collection);
-                        
+
                         // 重置批量操作标志
                         if (field != null)
                             field.SetValue(viewModel, false);
-                        
+
                         // 设置当前选择项
                         viewModel.SelectedCollection = collection;
                     }
@@ -605,7 +602,7 @@ namespace TA_WPF.Views
                         LogHelper.LogError($"选择收藏夹时出错: {ex.Message}", ex);
                     }
                 }
-                
+
                 // 执行打开收藏夹车票命令
                 if (viewModel.OpenCollectionTicketsCommand.CanExecute(null))
                 {
@@ -613,7 +610,7 @@ namespace TA_WPF.Views
                 }
             }
         }
-        
+
         #region 拖拽排序相关方法
 
         /// <summary>
@@ -636,10 +633,10 @@ namespace TA_WPF.Views
 
             _startPoint = e.GetPosition(null);
             _isDragging = false;
-            
+
             // 获取被点击的项数据
-            if (sender is ListBox listBox && 
-                FindVisualParent<ListBoxItem>(e.OriginalSource as DependencyObject) is ListBoxItem item && 
+            if (sender is ListBox listBox &&
+                FindVisualParent<ListBoxItem>(e.OriginalSource as DependencyObject) is ListBoxItem item &&
                 item.DataContext is TicketCollectionInfo collection)
             {
                 _draggedItem = collection;
@@ -654,13 +651,13 @@ namespace TA_WPF.Views
             if (e.LeftButton == MouseButtonState.Pressed && !_isDragging && _draggedItem != null)
             {
                 Point position = e.GetPosition(null);
-                
+
                 // 检查是否达到拖拽门槛距离
                 if (Math.Abs(position.X - _startPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
                     Math.Abs(position.Y - _startPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
                 {
                     _isDragging = true;
-                    
+
                     // 开始拖拽前清除所有存在的指示器
                     if (sender is ListBox listBox)
                     {
@@ -669,7 +666,7 @@ namespace TA_WPF.Views
                         {
                             listBox.Items.Remove(_insertionIndicator);
                         }
-                        
+
                         // 清除Panel中的边框指示器
                         var itemsPanel = FindVisualChild<Panel>(listBox);
                         if (itemsPanel != null)
@@ -682,7 +679,7 @@ namespace TA_WPF.Views
                             }
                         }
                     }
-                    
+
                     // 启动拖放操作
                     DragDrop.DoDragDrop(sender as ListBox, _draggedItem, DragDropEffects.Move);
                 }
@@ -698,13 +695,13 @@ namespace TA_WPF.Views
             {
                 // 获取当前鼠标位置相对于ListBox
                 Point point = e.GetPosition(listBox);
-                
+
                 // 隐藏之前的指示器
                 if (listBox.Items.Contains(_insertionIndicator))
                 {
                     listBox.Items.Remove(_insertionIndicator);
                 }
-                
+
                 // 找到鼠标下方的项
                 HitTestResult result = VisualTreeHelper.HitTest(listBox, point);
                 if (result != null)
@@ -726,15 +723,15 @@ namespace TA_WPF.Views
                                 {
                                     itemsPanel.Children.Remove(indicator);
                                 }
-                                
+
                                 // 获取目标项的位置信息
                                 Point targetPos = targetItem.TranslatePoint(new Point(0, 0), itemsPanel);
-                                
+
                                 // 计算鼠标与目标项的相对位置
                                 Point mousePos = e.GetPosition(itemsPanel);
-                                
+
                                 // 创建一个新的边框作为放置指示器
-                                var border = new Border 
+                                var border = new Border
                                 {
                                     Name = "DragInsertionIndicator",
                                     Width = 4,
@@ -744,18 +741,18 @@ namespace TA_WPF.Views
                                     VerticalAlignment = VerticalAlignment.Top,
                                     Margin = new Thickness(0)
                                 };
-                                
+
                                 // 添加边框到ItemsPanel
                                 itemsPanel.Children.Add(border);
-                                
+
                                 // 根据鼠标位置确定放置位置
                                 double itemWidth = targetItem.ActualWidth;
                                 double itemX = targetPos.X;
                                 double mouseX = mousePos.X;
-                                
+
                                 // 计算指示器的位置
                                 double indicatorX;
-                                
+
                                 // 如果鼠标在项的中点之前，则放在项的左侧
                                 // 否则放在项的右侧
                                 if (mouseX < itemX + itemWidth / 2)
@@ -766,27 +763,27 @@ namespace TA_WPF.Views
                                 {
                                     indicatorX = itemX + itemWidth;
                                 }
-                                
+
                                 // 设置边框位置 - 检查Panel类型并适当设置位置
                                 if (itemsPanel is Canvas)
                                 {
-                                Canvas.SetLeft(border, indicatorX);
-                                Canvas.SetTop(border, targetPos.Y);
+                                    Canvas.SetLeft(border, indicatorX);
+                                    Canvas.SetTop(border, targetPos.Y);
                                 }
                                 else
                                 {
                                     // 如果不是Canvas，使用Margin来定位
                                     border.Margin = new Thickness(indicatorX, targetPos.Y, 0, 0);
-                                    
+
                                     // 确保使用绝对定位
                                     border.HorizontalAlignment = HorizontalAlignment.Left;
                                     border.VerticalAlignment = VerticalAlignment.Top;
-                                    
+
                                     // 确保边框在正确的Z顺序上显示
                                     Panel.SetZIndex(border, 1000);
                                 }
                             }
-                            
+
                             e.Effects = DragDropEffects.Move;
                             e.Handled = true;
                         }
@@ -801,7 +798,7 @@ namespace TA_WPF.Views
         private void ListBox_Drop(object sender, DragEventArgs e)
         {
             if (_draggedItem == null) return;
-            
+
             if (sender is ListBox listBox)
             {
                 // 清理任何显示的指示器
@@ -816,20 +813,20 @@ namespace TA_WPF.Views
                         itemsPanel.Children.Remove(indicator);
                     }
                 }
-                
+
                 // 如果还存在插入指示器，也要移除
                 if (listBox.Items.Contains(_insertionIndicator))
                 {
                     listBox.Items.Remove(_insertionIndicator);
                 }
-                
+
                 // 获取当前鼠标位置相对于ListBox
                 Point point = e.GetPosition(listBox);
-                
+
                 // 尝试找到鼠标下方的项
                 HitTestResult result = VisualTreeHelper.HitTest(listBox, point);
                 TicketCollectionInfo targetCollection = null;
-                
+
                 if (result != null)
                 {
                     // 直接命中了某个项
@@ -839,19 +836,19 @@ namespace TA_WPF.Views
                         targetCollection = hitCollection;
                     }
                 }
-                
+
                 // 如果没有直接命中项（可能在项目之间），找到最近的项
                 if (targetCollection == null && itemsPanel != null)
                 {
                     double minDistance = double.MaxValue;
                     Point mousePos = e.GetPosition(itemsPanel);
-                    
+
                     // 获取所有可见的ListBoxItem
                     var visibleItems = listBox.Items.OfType<TicketCollectionInfo>()
                         .Select(item => listBox.ItemContainerGenerator.ContainerFromItem(item) as ListBoxItem)
                         .Where(container => container != null)
                         .ToList();
-                    
+
                     foreach (var container in visibleItems)
                     {
                         if (container.DataContext is TicketCollectionInfo itemCollection)
@@ -860,16 +857,16 @@ namespace TA_WPF.Views
                             Point containerPos = container.TranslatePoint(new Point(0, 0), itemsPanel);
                             double containerWidth = container.ActualWidth;
                             double containerHeight = container.ActualHeight;
-                            
+
                             // 计算鼠标与项边界的距离
                             double leftDist = Math.Abs(mousePos.X - containerPos.X);
                             double rightDist = Math.Abs(mousePos.X - (containerPos.X + containerWidth));
                             double topDist = Math.Abs(mousePos.Y - containerPos.Y);
                             double bottomDist = Math.Abs(mousePos.Y - (containerPos.Y + containerHeight));
-                            
+
                             // 找出最短距离
                             double minContainerDist = Math.Min(Math.Min(leftDist, rightDist), Math.Min(topDist, bottomDist));
-                            
+
                             if (minContainerDist < minDistance)
                             {
                                 minDistance = minContainerDist;
@@ -878,34 +875,34 @@ namespace TA_WPF.Views
                         }
                     }
                 }
-                
+
                 // 如果找到目标项，并且它不是被拖动的项自己
                 if (targetCollection != null && targetCollection != _draggedItem)
                 {
                     // 获取ViewModel
                     var viewModel = DataContext as QueryAllCollectionsViewModel;
                     if (viewModel == null) return;
-                    
+
                     // 更新排序顺序
                     viewModel.UpdateItemOrder(_draggedItem, targetCollection);
                 }
-                
+
                 // 清除拖拽状态
                 _isDragging = false;
                 _draggedItem = null;
             }
         }
-        
+
         /// <summary>
         /// 查找视觉树父级
         /// </summary>
         private static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
         {
             if (child == null) return null;
-            
+
             // 获取父级
             DependencyObject parentObject = VisualTreeHelper.GetParent(child);
-            
+
             // 检查是否是目标类型
             if (parentObject is T parent)
             {
@@ -917,24 +914,24 @@ namespace TA_WPF.Views
                 return FindVisualParent<T>(parentObject);
             }
         }
-        
+
         /// <summary>
         /// 查找视觉树子级
         /// </summary>
         private static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
             if (parent == null) return null;
-            
+
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
-                
+
                 // 检查是否是目标类型
                 if (child is T typedChild)
                 {
                     return typedChild;
                 }
-                
+
                 // 递归查找更下层的子级
                 var result = FindVisualChild<T>(child);
                 if (result != null)
@@ -942,10 +939,10 @@ namespace TA_WPF.Views
                     return result;
                 }
             }
-            
+
             return null;
         }
-        
+
         #endregion
     }
-} 
+}

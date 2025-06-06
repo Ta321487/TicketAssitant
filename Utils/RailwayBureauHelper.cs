@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace TA_WPF.Utils
 {
     /// <summary>
@@ -83,7 +79,7 @@ namespace TA_WPF.Utils
             }
 
             var matchedBureaus = GetMatchedRailwayBureaus(inputText);
-            
+
             // 如果有精确匹配项，直接返回
             var exactMatch = matchedBureaus.FirstOrDefault(b => b.Equals(inputText, StringComparison.OrdinalIgnoreCase));
             if (exactMatch != null)
@@ -102,4 +98,4 @@ namespace TA_WPF.Utils
             return matchedBureaus.FirstOrDefault();
         }
     }
-} 
+}

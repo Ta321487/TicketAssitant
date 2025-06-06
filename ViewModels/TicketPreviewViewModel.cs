@@ -1,7 +1,10 @@
 using Microsoft.Win32;
 using QRCoder;
 using System.Configuration;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -9,16 +12,13 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TA_WPF.Models;
+using TA_WPF.Utils;
 using TA_WPF.Views;
 using Bitmap = System.Drawing.Bitmap;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
-using System.Text.RegularExpressions;
-using System.Globalization;
-using TA_WPF.Utils;
-using System.Diagnostics;
 namespace TA_WPF.ViewModels
 {
     public class TicketPreviewViewModel : BaseViewModel
@@ -314,30 +314,30 @@ namespace TA_WPF.ViewModels
                 // 如果新值与旧值相同，则不处理
                 if (_identityInfo == value)
                     return;
-                
+
                 // 如果是空值，表示开始新的输入会话
                 if (string.IsNullOrEmpty(value))
                 {
                     _isNewInputSession = true;
                     IsIdCardValid = true;
                 }
-                
+
                 // 处理验证失败后的重新输入
                 if (!_isIdCardValid && !_isNewInputSession)
                 {
                     // 当验证状态为失败且不是新的输入会话时，阻止输入
                     return;
                 }
-                
+
                 _identityInfo = value;
                 _isNewInputSession = false; // 标记不再是新的输入会话
-                
+
                 // 验证身份证格式，但避免无限循环
                 if (!_isValidatingIdCard)
                 {
                     ValidateIdCard(value);
                 }
-                
+
                 OnPropertyChanged(nameof(IdentityInfo));
             }
         }
@@ -354,38 +354,41 @@ namespace TA_WPF.ViewModels
             try
             {
                 _isValidatingIdCard = true;
-                
+
                 // 跳过空字符串和长度不足的身份证号（用户可能正在输入）
                 if (string.IsNullOrWhiteSpace(id) || id.Length != 18)
                 {
                     return;
                 }
-                
+
                 // 验证基本格式：18位，前17位为数字，最后一位为数字或X/x
                 string pattern = @"^\d{17}[\dXx]$";
                 if (!Regex.IsMatch(id, pattern))
                 {
                     // 使用当前窗口作为对话框的Owner
                     MessageBoxHelper.ShowWarning("身份证号格式错误，应为18位！", "格式错误", _ownerWindow);
-                    
+
                     // 标记身份证验证失败
                     IsIdCardValid = false;
-                    
+
                     // 验证失败时设置一个空值
                     _identityInfo = string.Empty;
                     _isNewInputSession = true; // 重置为新的输入会话
-                    
+
                     // 确保属性通知生效
-                    Application.Current.Dispatcher.InvokeAsync(() => {
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
                         OnPropertyChanged(nameof(IdentityInfo));
                         // 给界面一点时间处理属性变更，然后重置验证状态
-                        Task.Delay(50).ContinueWith(_ => {
-                            Application.Current.Dispatcher.InvokeAsync(() => {
+                        Task.Delay(50).ContinueWith(_ =>
+                        {
+                            Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
                                 IsIdCardValid = true;
                             });
                         });
                     });
-                    
+
                     return;
                 }
 
@@ -395,25 +398,28 @@ namespace TA_WPF.ViewModels
                 if (!DateTime.TryParseExact(birthDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
                 {
                     MessageBoxHelper.ShowWarning("身份证中的出生日期无效！", "格式错误", _ownerWindow);
-                    
+
                     // 标记身份证验证失败
                     IsIdCardValid = false;
-                    
+
                     // 验证失败时设置一个空值
                     _identityInfo = string.Empty;
                     _isNewInputSession = true; // 重置为新的输入会话
-                    
+
                     // 确保属性通知生效
-                    Application.Current.Dispatcher.InvokeAsync(() => {
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
                         OnPropertyChanged(nameof(IdentityInfo));
                         // 给界面一点时间处理属性变更，然后重置验证状态
-                        Task.Delay(50).ContinueWith(_ => {
-                            Application.Current.Dispatcher.InvokeAsync(() => {
+                        Task.Delay(50).ContinueWith(_ =>
+                        {
+                            Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
                                 IsIdCardValid = true;
                             });
                         });
                     });
-                    
+
                     return;
                 }
 
@@ -431,48 +437,54 @@ namespace TA_WPF.ViewModels
                 if (actualCode.ToString() != expectedCode)
                 {
                     MessageBoxHelper.ShowWarning("身份证号最后一位校验码错误！", "格式错误", _ownerWindow);
-                    
+
                     // 标记身份证验证失败
                     IsIdCardValid = false;
-                    
+
                     // 验证失败时设置一个空值
                     _identityInfo = string.Empty;
                     _isNewInputSession = true; // 重置为新的输入会话
-                    
+
                     // 确保属性通知生效
-                    Application.Current.Dispatcher.InvokeAsync(() => {
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
                         OnPropertyChanged(nameof(IdentityInfo));
                         // 给界面一点时间处理属性变更，然后重置验证状态
-                        Task.Delay(50).ContinueWith(_ => {
-                            Application.Current.Dispatcher.InvokeAsync(() => {
+                        Task.Delay(50).ContinueWith(_ =>
+                        {
+                            Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
                                 IsIdCardValid = true;
                             });
                         });
                     });
-                    
+
                     return;
                 }
-                
+
                 // 所有验证都通过
                 IsIdCardValid = true;
             }
             catch (Exception ex)
             {
                 MessageBoxHelper.ShowError($"身份证验证过程中出现错误：{ex.Message}", "验证错误", _ownerWindow);
-                
+
                 // 标记身份证验证失败
                 IsIdCardValid = false;
-                
+
                 // 发生异常时设置一个空值
                 _identityInfo = string.Empty;
                 _isNewInputSession = true; // 重置为新的输入会话
-                
+
                 // 确保属性通知生效
-                Application.Current.Dispatcher.InvokeAsync(() => {
+                Application.Current.Dispatcher.InvokeAsync(() =>
+                {
                     OnPropertyChanged(nameof(IdentityInfo));
                     // 给界面一点时间处理属性变更，然后重置验证状态
-                    Task.Delay(50).ContinueWith(_ => {
-                        Application.Current.Dispatcher.InvokeAsync(() => {
+                    Task.Delay(50).ContinueWith(_ =>
+                    {
+                        Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
                             IsIdCardValid = true;
                         });
                     });
@@ -1860,13 +1872,13 @@ namespace TA_WPF.ViewModels
         }
 
         // 判断是否为卧铺座位
-        public bool IsBerthSeat => (_selectedTicket?.SeatType?.Contains("新空调硬卧") == true) || 
+        public bool IsBerthSeat => (_selectedTicket?.SeatType?.Contains("新空调硬卧") == true) ||
                                   (_selectedTicket?.SeatType?.Contains("新空调软卧") == true);
 
         // 判断座位号是否包含上中下
-        public bool HasBerthPosition => IsBerthSeat && 
-                                      ((_selectedTicket?.SeatNo?.Contains("上") == true) || 
-                                       (_selectedTicket?.SeatNo?.Contains("中") == true) || 
+        public bool HasBerthPosition => IsBerthSeat &&
+                                      ((_selectedTicket?.SeatNo?.Contains("上") == true) ||
+                                       (_selectedTicket?.SeatNo?.Contains("中") == true) ||
                                        (_selectedTicket?.SeatNo?.Contains("下") == true));
 
         // 获取修改后的座位号显示文本（只返回数字部分）
@@ -1876,7 +1888,7 @@ namespace TA_WPF.ViewModels
             {
                 if (!HasBerthPosition || _selectedTicket?.SeatNo == null)
                     return _selectedTicket?.SeatNo ?? string.Empty;
-                    
+
                 string seatNo = _selectedTicket.SeatNo;
                 // 提取数字部分
                 if (seatNo.Contains("上"))
@@ -1885,7 +1897,7 @@ namespace TA_WPF.ViewModels
                     return seatNo.Replace("中", "").Replace("号", "");
                 else if (seatNo.Contains("下"))
                     return seatNo.Replace("下", "").Replace("号", "");
-                    
+
                 return seatNo;
             }
         }
@@ -1897,7 +1909,7 @@ namespace TA_WPF.ViewModels
             {
                 if (!HasBerthPosition || _selectedTicket?.SeatNo == null)
                     return string.Empty;
-                    
+
                 string seatNo = _selectedTicket.SeatNo;
                 if (seatNo.Contains("上"))
                     return "上铺";
@@ -1905,7 +1917,7 @@ namespace TA_WPF.ViewModels
                     return "中铺";
                 else if (seatNo.Contains("下"))
                     return "下铺";
-                    
+
                 return string.Empty;
             }
         }
@@ -1920,14 +1932,14 @@ namespace TA_WPF.ViewModels
             {
                 // 获取基础座位号位置
                 Thickness baseMargin = (Thickness)_currentLayout["SeatNumberMargin"];
-                
+
                 // 计算数字部分宽度 (每个数字约14像素宽)
                 double digitWidth = BerthSeatDisplay.Length * 14;
-                
+
                 // 红蓝车票使用不同的间距和高度调整(正值向下移动，负值向上移动）
                 double extraSpacing; // 额外添加的间距值
                 double verticalAdjustment; // 垂直位置调整
-                
+
                 if (IsRedTicket)
                 {
                     // 红色车票参数
@@ -1940,7 +1952,7 @@ namespace TA_WPF.ViewModels
                     extraSpacing = 2;
                     verticalAdjustment = 4;
                 }
-                
+
                 // 调整左边距和上边距，让铺位类型显示在适当位置
                 return new Thickness(
                     baseMargin.Left + digitWidth + extraSpacing,

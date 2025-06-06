@@ -1,4 +1,3 @@
-using System;
 using System.Windows.Input;
 
 namespace TA_WPF.Utils
@@ -101,4 +100,4 @@ namespace TA_WPF.Utils
             _execute((T)parameter);
         }
     }
-} 
+}

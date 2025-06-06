@@ -243,7 +243,7 @@ namespace TA_WPF.ViewModels
                 {
                     HandlePaymentChannelMutualExclusion("Alipay");
                 }
-                else if (IsWeChatPayment) 
+                else if (IsWeChatPayment)
                 {
                     HandlePaymentChannelMutualExclusion("WeChat");
                 }
@@ -259,7 +259,8 @@ namespace TA_WPF.ViewModels
                 {
                     HandlePaymentChannelMutualExclusion("ICBC");
                 }
-                else if (IsCMBPayment) {
+                else if (IsCMBPayment)
+                {
                     HandlePaymentChannelMutualExclusion("CMB");
                 }
                 else if (IsPSBCPayment)
@@ -270,7 +271,8 @@ namespace TA_WPF.ViewModels
                 {
                     HandlePaymentChannelMutualExclusion("BOC");
                 }
-                else if (IsCOMMPayment){
+                else if (IsCOMMPayment)
+                {
                     HandlePaymentChannelMutualExclusion("COMM");
                 }
 
@@ -322,10 +324,12 @@ namespace TA_WPF.ViewModels
             {
                 if (_checkInLocation != value)
                 {
-                    if(!string.IsNullOrEmpty(value)){
-                        _checkInLocation = FormValidationHelper.EnsureFirstLetterUpperCase(value);  
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        _checkInLocation = FormValidationHelper.EnsureFirstLetterUpperCase(value);
                     }
-                    else{
+                    else
+                    {
                         _checkInLocation = value;
                     }
                     OnPropertyChanged(nameof(CheckInLocation));
@@ -1058,7 +1062,7 @@ namespace TA_WPF.ViewModels
             get => _isCOMMPayment;
             set
             {
-                if(_isCOMMPayment != value)
+                if (_isCOMMPayment != value)
                 {
                     _isCOMMPayment = value;
                     OnPropertyChanged(nameof(IsCOMMPayment));
@@ -1356,13 +1360,13 @@ namespace TA_WPF.ViewModels
                 // 准备异步验证任务
                 var departValidationTask = TryValidateAndSetStationInfoAsync(DepartStation?.Replace("站", "").Trim(), true, showWarning: false, errorMessages: errorMessages);
                 var arriveValidationTask = TryValidateAndSetStationInfoAsync(ArriveStation?.Replace("站", "").Trim(), false, showWarning: false, errorMessages: errorMessages);
-                
+
                 // 并行等待验证结果
                 await Task.WhenAll(departValidationTask, arriveValidationTask);
-                
+
                 var (departStatus, _) = departValidationTask.Result;
                 var (arriveStatus, _) = arriveValidationTask.Result;
-                
+
                 // 检查验证状态 (0=成功, 1=不存在, 2=不完整)
                 // 注意：TryValidateAndSetStationInfoAsync 内部已经将错误信息添加到 errorMessages
                 // 只需要检查状态码是否为0即可判断是否有新增错误
@@ -1620,27 +1624,27 @@ namespace TA_WPF.ViewModels
             if (isDepartStation)
             {
                 IsDepartStationDropdownOpen = false;
-                
+
                 // 设置出发车站文本 (标记为正在更新，避免触发重复搜索)
                 _isUpdatingDepartStation = true;
                 DepartStationSearchText = stationName;
-                DepartStation = stationName; 
+                DepartStation = stationName;
                 _isUpdatingDepartStation = false;
-                
+
                 // 使用新方法更新代码和拼音 (不需要显示警告，因为刚选择)
                 await TryValidateAndSetStationInfoAsync(stationName, true, showWarning: false);
             }
             else
             {
                 IsArriveStationDropdownOpen = false;
-                
+
                 // 设置到达车站文本 (标记为正在更新，避免触发重复搜索)
                 _isUpdatingArriveStation = true;
                 ArriveStationSearchText = stationName;
-                ArriveStation = stationName; 
+                ArriveStation = stationName;
                 _isUpdatingArriveStation = false;
-                
-                 // 使用新方法更新代码和拼音 (不需要显示警告，因为刚选择)
+
+                // 使用新方法更新代码和拼音 (不需要显示警告，因为刚选择)
                 await TryValidateAndSetStationInfoAsync(stationName, false, showWarning: false);
             }
 
@@ -1668,11 +1672,11 @@ namespace TA_WPF.ViewModels
         private bool CheckStationCompleteness(StationInfo station, string stationName, bool isDepartStation)
         {
             if (station == null) return false;
-            
+
             // 检测车站信息是否完整
             bool hasStationCode = !string.IsNullOrWhiteSpace(station.StationCode);
             bool hasStationPinyin = !string.IsNullOrWhiteSpace(station.StationPinyin);
-            
+
             if (!hasStationCode || !hasStationPinyin)
             {
                 // 构建缺失信息列表
@@ -1688,10 +1692,10 @@ namespace TA_WPF.ViewModels
 
                 // 将焦点设回文本框
                 OnFocusTextBox(isDepartStation ? "Depart" : "Arrive");
-                
+
                 return false;
             }
-            
+
             return true;
         }
 
@@ -1819,7 +1823,7 @@ namespace TA_WPF.ViewModels
                     if (button != null && (button.Command == ResetCommand || button.Name == "CloseButton")) // 增加CloseButton判断
                     {
                         _isResetting = (button.Command == ResetCommand); // 只有Reset才设置标志
-                        
+
                         // 清除校验标志
                         if (isDepartStation)
                             _isValidatingDepart = false;
@@ -1828,8 +1832,8 @@ namespace TA_WPF.ViewModels
                         return;
                     }
                 }
-                if (Mouse.DirectlyOver is Button clickedButton && 
-                    (clickedButton.Command == SaveCommand || clickedButton.Name == "MinimizeButton" ))
+                if (Mouse.DirectlyOver is Button clickedButton &&
+                    (clickedButton.Command == SaveCommand || clickedButton.Name == "MinimizeButton"))
                 {
                     // 清除校验标志
                     if (isDepartStation)
@@ -1838,8 +1842,8 @@ namespace TA_WPF.ViewModels
                         _isValidatingArrive = false;
                     return;
                 }
-                 // 检测是否在下拉框上操作或下拉框刚关闭
-                if (isDepartStation && IsDepartStationDropdownOpen) 
+                // 检测是否在下拉框上操作或下拉框刚关闭
+                if (isDepartStation && IsDepartStationDropdownOpen)
                 {
                     if (isDepartStation)
                         _isValidatingDepart = false;
@@ -1847,7 +1851,7 @@ namespace TA_WPF.ViewModels
                         _isValidatingArrive = false;
                     return;
                 }
-                if (!isDepartStation && IsArriveStationDropdownOpen) 
+                if (!isDepartStation && IsArriveStationDropdownOpen)
                 {
                     if (isDepartStation)
                         _isValidatingDepart = false;
@@ -1856,7 +1860,7 @@ namespace TA_WPF.ViewModels
                     return;
                 }
                 // 添加检测：如果焦点目标是下拉列表项，也暂时不校验
-                if (FocusManager.GetFocusedElement(Application.Current.MainWindow) is ListBoxItem) 
+                if (FocusManager.GetFocusedElement(Application.Current.MainWindow) is ListBoxItem)
                 {
                     if (isDepartStation)
                         _isValidatingDepart = false;
@@ -1864,7 +1868,7 @@ namespace TA_WPF.ViewModels
                         _isValidatingArrive = false;
                     return;
                 }
-                
+
 
                 string stationName = isDepartStation ? DepartStation?.Replace("站", "").Trim() : ArriveStation?.Replace("站", "").Trim();
                 string currentCode = isDepartStation ? DepartStationCode : ArriveStationCode;
@@ -1873,8 +1877,8 @@ namespace TA_WPF.ViewModels
                 // 如果站名、代码、拼音都为空，则不校验
                 if (string.IsNullOrWhiteSpace(stationName) && string.IsNullOrWhiteSpace(currentCode) && string.IsNullOrWhiteSpace(currentPinyin))
                 {
-                     Debug.WriteLine($"[OnStationLostFocus] {(isDepartStation ? "Depart" : "Arrive")} station info is all empty, skipping validation.");
-                    
+                    Debug.WriteLine($"[OnStationLostFocus] {(isDepartStation ? "Depart" : "Arrive")} station info is all empty, skipping validation.");
+
                     // 清除校验标志
                     if (isDepartStation)
                         _isValidatingDepart = false;
@@ -1882,7 +1886,7 @@ namespace TA_WPF.ViewModels
                         _isValidatingArrive = false;
                     return;
                 }
-                
+
                 try
                 {
                     // 获取当前的取消令牌
@@ -2183,13 +2187,13 @@ namespace TA_WPF.ViewModels
                     // 即使信息不完整，也尝试填充已知信息
                     if (isDepart)
                     {
-                         DepartStationPinyin = station.StationPinyin ?? string.Empty;
-                         DepartStationCode = station.StationCode ?? string.Empty;
+                        DepartStationPinyin = station.StationPinyin ?? string.Empty;
+                        DepartStationCode = station.StationCode ?? string.Empty;
                     }
                     else
                     {
-                         ArriveStationPinyin = station.StationPinyin ?? string.Empty;
-                         ArriveStationCode = station.StationCode ?? string.Empty;
+                        ArriveStationPinyin = station.StationPinyin ?? string.Empty;
+                        ArriveStationCode = station.StationCode ?? string.Empty;
                     }
                     break;
             }

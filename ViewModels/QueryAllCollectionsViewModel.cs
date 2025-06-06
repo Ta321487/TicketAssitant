@@ -1,19 +1,13 @@
-using System;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows;
-using System.Linq;
-using System.Collections.Generic;
-using System.Windows.Media;
-using System.IO;
-using System.Collections.Specialized;
-using System.ComponentModel;
 using TA_WPF.Views;
-using System.Diagnostics;
 
 namespace TA_WPF.ViewModels
 {
@@ -35,7 +29,7 @@ namespace TA_WPF.ViewModels
         private bool _isQueryPanelVisible = false;
         private string _currentSortField = "sort_order"; // 默认排序字段
         private bool _currentSortAscending = true; // 默认升序
-        
+
         // 添加静态字段保存排序状态
         private static string _savedSortField = "sort_order";
         private static bool _savedSortAscending = true;
@@ -66,7 +60,7 @@ namespace TA_WPF.ViewModels
             _collections = new ObservableCollection<TicketCollectionInfo>();
             _selectedCollections = new ObservableCollection<TicketCollectionInfo>();
             _collections.CollectionChanged += Collections_CollectionChanged; // 订阅集合自身的变化
-            
+
             // 订阅分页事件
             _paginationViewModel.PageChanged += async (s, e) => await LoadCollectionsAsync(false);
             _paginationViewModel.PageSizeChanged += async (s, e) => await LoadCollectionsAsync(false);
@@ -79,10 +73,10 @@ namespace TA_WPF.ViewModels
             CopyCollectionCommand = new RelayCommand(CopyCollection, CanCopyCollection);
             MoveCollectionCommand = new RelayCommand(MoveCollection, CanMoveCollection);
             SortCollectionsCommand = new RelayCommand<string>(SortCollections);
-            
+
             // 视图切换命令
             ToggleViewCommand = new RelayCommand(ToggleView);
-            
+
             // 选择相关命令
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
             UnselectAllCommand = new RelayCommand(UnselectAll, CanUnselectAll);
@@ -234,7 +228,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 是否选中了所有项
         /// </summary>
-        public bool IsAllSelected => _collections != null && _selectedCollections != null && 
+        public bool IsAllSelected => _collections != null && _selectedCollections != null &&
                                _collections.Count > 0 && _collections.Count == _selectedCollections.Count;
 
         /// <summary>
@@ -394,16 +388,16 @@ namespace TA_WPF.ViewModels
                 {
                     // 获取要删除的收藏夹ID列表
                     var idsToDelete = SelectedCollections.Select(c => c.Id).ToList();
-                    
+
                     // 调用数据库服务删除收藏夹
                     bool success = await _databaseService.DeleteCollectionsByIdsAsync(idsToDelete);
-                    
+
                     if (success)
                     {
-                        MessageBoxHelper.ShowInfo(SelectedCollections.Count == 1 
+                        MessageBoxHelper.ShowInfo(SelectedCollections.Count == 1
                             ? "收藏夹删除成功"
                             : $"{SelectedCollections.Count} 个收藏夹删除成功");
-                            
+
                         // 刷新收藏夹列表
                         await LoadCollectionsAsync(true);
                     }
@@ -501,7 +495,7 @@ namespace TA_WPF.ViewModels
                 // 解析排序方式
                 string sortField = sortBy.Split('_')[0];
                 bool isAscending = sortBy.EndsWith("_Asc");
-                
+
                 // 记住当前页中选中的项
                 Dictionary<int, bool> selectedStates = new Dictionary<int, bool>();
                 foreach (var collection in Collections)
@@ -529,7 +523,7 @@ namespace TA_WPF.ViewModels
                         break;
                 }
                 _currentSortAscending = isAscending;
-                
+
                 // 保存排序状态到静态变量
                 _savedSortField = _currentSortField;
                 _savedSortAscending = _currentSortAscending;
@@ -540,28 +534,28 @@ namespace TA_WPF.ViewModels
                 {
                     // 获取所有集合
                     var allCollections = await _databaseService.GetAllCollectionsAsync();
-                    
+
                     // 根据车票数量排序
-                    var sortedCollections = isAscending 
-                        ? allCollections.OrderBy(c => c.TicketCount) 
+                    var sortedCollections = isAscending
+                        ? allCollections.OrderBy(c => c.TicketCount)
                         : allCollections.OrderByDescending(c => c.TicketCount);
-                    
+
                     // 应用分页
                     int skipCount = (_paginationViewModel.CurrentPage - 1) * _paginationViewModel.PageSize;
                     var pagedCollections = sortedCollections
                         .Skip(skipCount)
                         .Take(_paginationViewModel.PageSize)
                         .ToList();
-                    
+
                     // 更新总数
                     TotalCount = allCollections.Count;
-                    
+
                     // 将排序后的集合设置到UI
                     _isBatchSelectionOperation = true;
-                    
+
                     // 将列表转换为ObservableCollection并更新UI
                     var newCollections = new ObservableCollection<TicketCollectionInfo>(pagedCollections);
-                    
+
                     // 恢复选中状态
                     foreach (var collection in newCollections)
                     {
@@ -570,10 +564,10 @@ namespace TA_WPF.ViewModels
                             collection.IsSelected = isSelected;
                         }
                     }
-                    
+
                     // 更新UI显示的集合
                     Collections = newCollections;
-                    
+
                     _isBatchSelectionOperation = false;
                 }
                 else
@@ -595,7 +589,7 @@ namespace TA_WPF.ViewModels
                             dbSortField = "id";
                             break;
                     }
-                    
+
                     // 直接使用DatabaseService按指定字段获取已排序的数据
                     TotalCount = await _databaseService.GetCollectionCountAsync();
                     var collectionsData = await _databaseService.GetCollectionsAsync(
@@ -603,12 +597,12 @@ namespace TA_WPF.ViewModels
                         _paginationViewModel.PageSize,
                         dbSortField,
                         isAscending);
-                    
+
                     _isBatchSelectionOperation = true;
-                    
+
                     // 将列表转换为ObservableCollection并更新UI
                     var newCollections = new ObservableCollection<TicketCollectionInfo>(collectionsData);
-                    
+
                     // 恢复选中状态
                     foreach (var collection in newCollections)
                     {
@@ -617,17 +611,17 @@ namespace TA_WPF.ViewModels
                             collection.IsSelected = isSelected;
                         }
                     }
-                    
+
                     // 更新UI显示的集合
                     Collections = newCollections;
-                    
+
                     _isBatchSelectionOperation = false;
                 }
-                
+
                 // 提示排序完成
                 string sortName = "";
                 string sortDirection = isAscending ? "升序" : "降序";
-                
+
                 switch (sortField)
                 {
                     case "TicketCount":
@@ -643,9 +637,9 @@ namespace TA_WPF.ViewModels
                         sortName = "评分";
                         break;
                 }
-                
+
                 Debug.WriteLine($"已按{sortName}({sortDirection})排序完成");
-                
+
                 // 通知UI更新
                 NotifySelectionChanged();
             }
@@ -674,13 +668,13 @@ namespace TA_WPF.ViewModels
         private void SelectAll()
         {
             _isBatchSelectionOperation = true;
-            
+
             // 只设置IsSelected状态，不手动添加到SelectedCollections
             foreach (var collection in Collections)
             {
                 collection.IsSelected = true;
             }
-            
+
             _isBatchSelectionOperation = false;
             NotifySelectionChanged();
         }
@@ -696,13 +690,13 @@ namespace TA_WPF.ViewModels
         private void UnselectAll()
         {
             _isBatchSelectionOperation = true;
-            
+
             foreach (var collection in Collections)
             {
                 collection.IsSelected = false;
             }
             // SelectedCollections在NotifySelectionChanged中会被重建
-            
+
             _isBatchSelectionOperation = false;
             NotifySelectionChanged();
         }
@@ -718,13 +712,13 @@ namespace TA_WPF.ViewModels
         private void InvertSelection()
         {
             _isBatchSelectionOperation = true;
-            
+
             // 只设置IsSelected状态，不手动添加到SelectedCollections
             foreach (var collection in Collections)
             {
                 collection.IsSelected = !collection.IsSelected;
             }
-            
+
             _isBatchSelectionOperation = false;
             NotifySelectionChanged();
         }
@@ -784,7 +778,7 @@ namespace TA_WPF.ViewModels
                 {
                     _currentSortField = "sort_order";
                     _currentSortAscending = true;
-                    
+
                     // 同时重置静态变量
                     _savedSortField = "sort_order";
                     _savedSortAscending = true;
@@ -798,12 +792,12 @@ namespace TA_WPF.ViewModels
                     _paginationViewModel.PageSize,
                     _currentSortField,
                     _currentSortAscending);
-                
+
                 _isBatchSelectionOperation = true;
-                
+
                 // 将列表转换为ObservableCollection并更新UI
                 Collections = new ObservableCollection<TicketCollectionInfo>(collectionsData);
-                
+
                 // 如果没有数据，且TotalCount显示应该有数据，则可能是最后一页没有数据了
                 // 返回到第一页重新加载
                 if (Collections.Count == 0 && TotalCount > 0 && _paginationViewModel.CurrentPage > 1)
@@ -813,12 +807,12 @@ namespace TA_WPF.ViewModels
                     await LoadCollectionsAsync(false);  // 不重置排序状态
                     return;
                 }
-                
+
                 // 清除选择
                 SelectedCollections.Clear();
-                
+
                 _isBatchSelectionOperation = false;
-                
+
                 // 通知UI更新
                 NotifySelectionChanged();
             }
@@ -828,7 +822,7 @@ namespace TA_WPF.ViewModels
                 Collections.Clear();
                 SelectedCollections.Clear();
                 TotalCount = 0;
-                
+
                 // 通知UI更新
                 NotifySelectionChanged();
             }
@@ -861,40 +855,40 @@ namespace TA_WPF.ViewModels
         {
             if (draggedItem == null || targetItem == null || draggedItem == targetItem)
                 return;
-                
+
             try
             {
                 IsLoading = true;
-                
+
                 // 获取当前所有收藏夹
                 var allCollections = await _databaseService.GetAllCollectionsAsync();
-                
+
                 // 排序按SortOrder字段
                 var sortedCollections = allCollections.OrderBy(c => c.SortOrder).ToList();
-                
+
                 // 找到拖拽项和目标项的索引
                 int draggedIndex = sortedCollections.FindIndex(c => c.Id == draggedItem.Id);
                 int targetIndex = sortedCollections.FindIndex(c => c.Id == targetItem.Id);
-                
+
                 if (draggedIndex < 0 || targetIndex < 0)
                     return;
-                
+
                 // 重新计算排序顺序值
                 Dictionary<int, int> newSortOrders = new Dictionary<int, int>();
-                
+
                 // 从列表中移除拖拽项
                 var itemToMove = sortedCollections[draggedIndex];
                 sortedCollections.RemoveAt(draggedIndex);
-                
+
                 // 插入到新位置
                 sortedCollections.Insert(targetIndex, itemToMove);
-                
+
                 // 重新分配排序值，以10为步长
                 for (int i = 0; i < sortedCollections.Count; i++)
                 {
                     var collection = sortedCollections[i];
                     int newSortOrder = (i + 1) * 10;
-                    
+
                     // 如果排序值有变化，加入到更新字典
                     if (collection.SortOrder != newSortOrder)
                     {
@@ -902,7 +896,7 @@ namespace TA_WPF.ViewModels
                         newSortOrders[collection.Id] = newSortOrder;
                     }
                 }
-                
+
                 // 更新数据库中的排序顺序
                 if (newSortOrders.Count > 0)
                 {
@@ -916,23 +910,23 @@ namespace TA_WPF.ViewModels
                         // 手动拖拽排序后，重置为默认的sort_order排序
                         _currentSortField = "sort_order";
                         _currentSortAscending = true;
-                        
+
                         // 更新静态变量
                         _savedSortField = "sort_order";
                         _savedSortAscending = true;
                         _hasCustomSorting = true;
                     }
                 }
-                
+
                 // 仅更新当前UI中的数据顺序，而不是重新加载数据
                 _isBatchSelectionOperation = true;
-                
+
                 // 获取当前视图中相同的对象引用
                 var currentItems = Collections.ToList();
-                
+
                 // 清空集合
                 Collections.Clear();
-                
+
                 // 按照新的顺序重新添加项目
                 foreach (var collection in sortedCollections)
                 {
@@ -944,19 +938,19 @@ namespace TA_WPF.ViewModels
                         Collections.Add(existingItem);
                     }
                 }
-                
+
                 _isBatchSelectionOperation = false;
-                
+
                 // 通知数据已改变
                 NotifySelectionChanged();
-                
+
                 Debug.WriteLine($"收藏夹拖拽排序完成：{draggedItem.CollectionName} 移动到 {targetItem.CollectionName} 位置");
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"更新排序顺序时出错: {ex.Message}", ex);
                 MessageBoxHelper.ShowError($"更新排序顺序失败: {ex.Message}");
-                
+
                 // 发生错误时重新加载数据
                 await LoadCollectionsAsync(false);  // 修改为不重置排序
             }
@@ -1029,7 +1023,7 @@ namespace TA_WPF.ViewModels
         }
 
         private bool _isBatchSelectionOperation = false;
-        
+
         private void CollectionItem_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(TicketCollectionInfo.IsSelected))
@@ -1050,7 +1044,7 @@ namespace TA_WPF.ViewModels
                             _selectedCollections.Remove(item);
                         }
                     }
-                    
+
                     // 只有在非批量操作时才立即通知属性更改
                     if (!_isBatchSelectionOperation)
                     {
@@ -1059,7 +1053,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         private void RefreshSelectedCollectionsFromSource()
         {
             if (_collections == null)
@@ -1069,17 +1063,17 @@ namespace TA_WPF.ViewModels
             }
 
             var currentlySelected = _collections.Where(item => item.IsSelected).ToList();
-            
+
             // 从_selectedCollections中移除不再被选中的项
             var toRemove = _selectedCollections.Where(sc => !currentlySelected.Contains(sc)).ToList();
-            foreach(var itemToRemove in toRemove) 
+            foreach (var itemToRemove in toRemove)
             {
                 _selectedCollections.Remove(itemToRemove);
             }
-            
+
             // 向_selectedCollections中添加新选中的项
             var toAdd = currentlySelected.Where(cs => !_selectedCollections.Contains(cs)).ToList();
-            foreach(var itemToAdd in toAdd) 
+            foreach (var itemToAdd in toAdd)
             {
                 _selectedCollections.Add(itemToAdd);
             }
@@ -1087,4 +1081,4 @@ namespace TA_WPF.ViewModels
 
         #endregion
     }
-} 
+}

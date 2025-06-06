@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
+using Microsoft.Web.WebView2.Core;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
-using Microsoft.Web.WebView2.Core;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
@@ -35,7 +30,7 @@ namespace TA_WPF.ViewModels
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
-            
+
             // 从配置中加载高德地图API密钥
             _amapWebKey = _configurationService.GetSettingValue("AmapWebKey") ?? "";
             _amapSecurityKey = _configurationService.GetSettingValue("AmapSecurityKey") ?? "";
@@ -43,16 +38,16 @@ namespace TA_WPF.ViewModels
             // 初始化时间范围为今日
             _startDate = DateTime.Today;
             _endDate = DateTime.Today.AddDays(1).AddSeconds(-1);
-            
+
             // 设置提示信息
             UpdateTimeRangeMessage();
 
             RefreshMapCommand = new RelayCommand(async () => await RefreshMapDataAsync());
-            
+
             // 订阅ConfigurationService的事件，在API密钥更新时刷新地图
             ConfigurationService.ApiKeyUpdated += OnApiKeyUpdated;
         }
-        
+
         /// <summary>
         /// 处理API密钥更新事件
         /// </summary>
@@ -64,7 +59,7 @@ namespace TA_WPF.ViewModels
                 if (e.KeyName == "AmapWebKey" || e.KeyName == "AmapSecurityKey")
                 {
                     Debug.WriteLine($"地图API密钥已更新: {e.KeyName}");
-                    
+
                     // 更新本地存储的密钥
                     if (e.KeyName == "AmapWebKey")
                     {
@@ -74,7 +69,7 @@ namespace TA_WPF.ViewModels
                     {
                         _amapSecurityKey = e.Value ?? "";
                     }
-                    
+
                     // 如果地图已初始化，则更新地图API密钥
                     if (_isMapInitialized && _currentWebView != null)
                     {
@@ -88,7 +83,7 @@ namespace TA_WPF.ViewModels
                 Debug.WriteLine($"处理API密钥更新事件时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 更新地图API密钥
         /// </summary>
@@ -100,17 +95,17 @@ namespace TA_WPF.ViewModels
                 {
                     // 显示加载状态
                     IsLoading = true;
-                    
+
                     // 设置高德地图API密钥
                     await webView.ExecuteScriptAsync($"setAmapKeys('{_amapWebKey}', '{_amapSecurityKey}');");
                     Debug.WriteLine("地图API密钥已更新");
-                    
+
                     // 等待一段时间确保地图初始化完成
                     await Task.Delay(1000);
-                    
+
                     // 刷新地图数据
                     await RefreshMapDataAsync(webView);
-                    
+
                     IsLoading = false;
                 }
             }
@@ -270,20 +265,20 @@ namespace TA_WPF.ViewModels
         public void SetTimeRange(string range, DateTime startDate, DateTime endDate)
         {
             Debug.WriteLine($"设置地图时间范围: {range}, 开始日期: {startDate:yyyy-MM-dd}, 结束日期: {endDate:yyyy-MM-dd}");
-            
+
             // 更新属性值
             _selectedTimeRange = range;
             _startDate = startDate;
             _endDate = endDate;
-            
+
             // 触发属性变更通知
             OnPropertyChanged(nameof(SelectedTimeRange));
             OnPropertyChanged(nameof(StartDate));
             OnPropertyChanged(nameof(EndDate));
-            
+
             // 更新提示信息
             UpdateTimeRangeMessage();
-            
+
             // 如果WebView已初始化，刷新地图数据
             if (_isMapInitialized && _currentWebView != null)
             {
@@ -298,7 +293,7 @@ namespace TA_WPF.ViewModels
                             // 先确保应用了正确的主题
                             await _currentWebView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
                             Debug.WriteLine($"在显示时间范围提示前设置地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
-                            
+
                             // 然后显示时间范围提示
                             await _currentWebView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
                             Debug.WriteLine("显示时间范围提示信息：" + TimeRangeMessage);
@@ -319,11 +314,11 @@ namespace TA_WPF.ViewModels
                             // 隐藏提示信息
                             await _currentWebView.ExecuteScriptAsync("hideTimeRangeMessage();");
                             Debug.WriteLine("隐藏时间范围提示信息，准备刷新地图数据");
-                            
+
                             // 确保应用了正确的主题
                             await _currentWebView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
                             Debug.WriteLine($"切换时间范围后重新设置地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
-                            
+
                             // 刷新地图数据 - 不使用ConfigureAwait(false)，确保在同一个上下文中继续执行
                             await RefreshMapDataAsync();
                         }
@@ -347,11 +342,11 @@ namespace TA_WPF.ViewModels
                 {
                     // 保存WebView2引用，以便后续更新API密钥
                     _currentWebView = webView;
-                    
+
                     // 设置高德地图API密钥
                     await webView.ExecuteScriptAsync($"setAmapKeys('{_amapWebKey}', '{_amapSecurityKey}');");
                     IsMapInitialized = true;
-                    
+
                     // 如果是今日视图，显示提示信息
                     if (SelectedTimeRange == "今日")
                     {
@@ -362,7 +357,7 @@ namespace TA_WPF.ViewModels
                         // 加载地图数据
                         await RefreshMapDataAsync(webView);
                     }
-                    
+
                     // 根据当前模式设置地图主题
                     await webView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
                     Debug.WriteLine($"初始化时设置地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
@@ -374,7 +369,7 @@ namespace TA_WPF.ViewModels
                 Debug.WriteLine($"初始化地图时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 刷新地图数据
         /// </summary>
@@ -391,12 +386,12 @@ namespace TA_WPF.ViewModels
 
                 _isRefreshing = true;
                 IsLoading = true;
-                
+
                 // 从配置服务重新获取最新的API密钥
                 bool apiKeyChanged = false;
                 var newWebKey = _configurationService.GetSettingValue("AmapWebKey") ?? "";
                 var newSecurityKey = _configurationService.GetSettingValue("AmapSecurityKey") ?? "";
-                
+
                 // 检查API密钥是否有变化
                 if (_amapWebKey != newWebKey || _amapSecurityKey != newSecurityKey)
                 {
@@ -405,7 +400,7 @@ namespace TA_WPF.ViewModels
                     _amapSecurityKey = newSecurityKey;
                     apiKeyChanged = true;
                 }
-                
+
                 // 如果WebView2引用可用，则刷新地图数据
                 if (_currentWebView != null)
                 {
@@ -419,7 +414,7 @@ namespace TA_WPF.ViewModels
                                 // 设置高德地图API密钥
                                 await _currentWebView.ExecuteScriptAsync($"setAmapKeys('{_amapWebKey}', '{_amapSecurityKey}');");
                                 Debug.WriteLine("地图API密钥已在刷新时更新");
-                                
+
                                 // 等待地图初始化完成
                                 await Task.Delay(1000);
                             }
@@ -430,7 +425,7 @@ namespace TA_WPF.ViewModels
                             }
                         });  // 移除ConfigureAwait(true)
                     }
-                    
+
                     // 检查是否是今日视图
                     if (SelectedTimeRange == "今日")
                     {
@@ -441,7 +436,7 @@ namespace TA_WPF.ViewModels
                             {
                                 await _currentWebView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
                                 Debug.WriteLine("显示今日视图提示信息，不加载路线数据");
-                                
+
                                 // 在显示提示信息后隐藏加载指示器
                                 await _currentWebView.ExecuteScriptAsync("hideLoading();");
                                 Debug.WriteLine("今日视图：地图加载指示器已隐藏");
@@ -452,7 +447,7 @@ namespace TA_WPF.ViewModels
                                 Debug.WriteLine($"显示今日视图提示信息时出错: {ex.Message}");
                             }
                         });
-                        
+
                         // 设置加载状态为false
                         IsLoading = false;
                         return;
@@ -460,7 +455,8 @@ namespace TA_WPF.ViewModels
                     else
                     {
                         // 刷新地图数据
-                        try {
+                        try
+                        {
                             // 直接调用，不使用ConfigureAwait
                             await RefreshMapDataAsync(_currentWebView);
                         }
@@ -490,7 +486,7 @@ namespace TA_WPF.ViewModels
                 Debug.WriteLine("地图数据刷新完成，已重置刷新状态");
             }
         }
-        
+
         /// <summary>
         /// 刷新地图数据（直接传入WebView）
         /// </summary>
@@ -536,7 +532,7 @@ namespace TA_WPF.ViewModels
                             // 确保应用了正确的主题
                             await webView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
                             Debug.WriteLine($"在显示今日视图提示前设置地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
-                            
+
                             await webView.ExecuteScriptAsync($"showTimeRangeMessage('{TimeRangeMessage}');");
                             Debug.WriteLine("显示今日视图提示信息，不加载路线数据");
                         }
@@ -567,10 +563,10 @@ namespace TA_WPF.ViewModels
 
                 // 1. 从数据库获取行程数据 (可以在后台线程执行)
                 var routeData = await GetRouteDataAsync().ConfigureAwait(false);
-                
+
                 // 记录获取到的数据
                 Debug.WriteLine($"获取到{routeData.Count}条路线数据");
-                
+
                 // 如果获取的数据量非常少，添加更详细的日志
                 if (routeData.Count < 10)
                 {
@@ -578,17 +574,17 @@ namespace TA_WPF.ViewModels
                     Debug.WriteLine("请确保数据库中的车站表包含完整的经纬度信息");
                     LogHelper.LogWarning($"路线数据数量较少({routeData.Count}条)，请检查车站经纬度信息完整性");
                 }
-                
+
                 // 2. 将数据转换为前端可使用的JSON格式 (可以在后台线程执行)
                 string jsonData = ConvertToJson(routeData);
-                
+
                 // 记录没有数据的情况
                 if (routeData.Count == 0)
                 {
                     Debug.WriteLine("没有可用的路线数据，地图将不显示任何路线");
                     LogHelper.LogWarning("没有可用的路线数据，请检查数据库中车站经纬度信息的完整性");
                 }
-                
+
                 // 3. 所有WebView2操作必须回到UI线程执行
                 // 使用Application.Current.Dispatcher确保在UI线程上执行WebView操作
                 await Application.Current.Dispatcher.InvokeAsync(async () =>
@@ -599,22 +595,22 @@ namespace TA_WPF.ViewModels
                         string checkScript = "typeof map !== 'undefined' && map !== null";
                         string result = await webView.ExecuteScriptAsync(checkScript);
                         bool isMapInitialized = result.Trim().ToLower() == "true";
-                        
+
                         if (!isMapInitialized && !string.IsNullOrEmpty(_amapWebKey))
                         {
                             // 如果地图未初始化但有API密钥，先重新设置API密钥
                             Debug.WriteLine("地图未初始化，重新设置API密钥");
                             await webView.ExecuteScriptAsync($"setAmapKeys('{_amapWebKey}', '{_amapSecurityKey}');");
-                            
+
                             // 等待地图初始化
                             await Task.Delay(1000);
                         }
-                        
+
                         // 加载路线数据
                         await webView.ExecuteScriptAsync($"loadRouteData({jsonData});");
                         LogHelper.LogInfo($"地图数据已刷新，加载了{routeData.Count}条路线，时间范围：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
                         Debug.WriteLine($"地图数据已刷新，加载了{routeData.Count}条路线，时间范围：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
-                        
+
                         // 确保在数据加载后应用正确的主题
                         await webView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
                         Debug.WriteLine($"刷新数据后重新应用地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
@@ -650,7 +646,7 @@ namespace TA_WPF.ViewModels
                         }
                     });
                 }
-                
+
                 IsLoading = false;
             }
         }
@@ -664,32 +660,32 @@ namespace TA_WPF.ViewModels
             {
                 var stopwatch = new System.Diagnostics.Stopwatch();
                 stopwatch.Start();
-                
+
                 var result = new List<RouteMapData>();
-                
+
                 // 获取所有车票
                 var tickets = await _databaseService.GetAllTrainRideInfosAsync().ConfigureAwait(false);
                 LogHelper.LogInfo($"从数据库获取到{tickets.Count}条车票记录");
                 Debug.WriteLine($"从数据库获取到{tickets.Count}条车票记录，耗时: {stopwatch.ElapsedMilliseconds}ms");
-                
+
                 if (tickets.Count == 0)
                 {
                     return result;
                 }
-                
+
                 // 根据时间范围筛选车票
-                var filteredTickets = tickets.Where(t => t.DepartDate.HasValue && 
-                                                      t.DepartDate.Value >= StartDate && 
+                var filteredTickets = tickets.Where(t => t.DepartDate.HasValue &&
+                                                      t.DepartDate.Value >= StartDate &&
                                                       t.DepartDate.Value <= EndDate).ToList();
-                
+
                 Debug.WriteLine($"根据时间范围筛选后剩余{filteredTickets.Count}条车票记录，时间范围：{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
-                
+
                 if (filteredTickets.Count == 0)
                 {
                     Debug.WriteLine($"当前时间范围内没有车票数据：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
                     return result;
                 }
-                
+
                 // 收集所有出发站和到达站的名称
                 var allStationNames = new HashSet<string>();
                 foreach (var ticket in filteredTickets)
@@ -703,15 +699,15 @@ namespace TA_WPF.ViewModels
                         allStationNames.Add(ticket.ArriveStation);
                     }
                 }
-                
+
                 // 创建站点信息查询任务字典
                 var stationQueryTasks = new Dictionary<string, Task<StationInfo>>();
-                
+
                 // 创建站名和站点信息的映射字典
                 var stationCache = new Dictionary<string, StationInfo>();
-                
+
                 Debug.WriteLine($"需要查询{allStationNames.Count}个站点信息");
-                
+
                 // 创建所有站点的查询任务
                 foreach (var stationName in allStationNames)
                 {
@@ -721,47 +717,47 @@ namespace TA_WPF.ViewModels
                         stationQueryTasks[stationName] = _databaseService.GetStationByNameAsync(stationName);
                     }
                 }
-                
+
                 // 等待所有查询任务完成
                 await Task.WhenAll(stationQueryTasks.Values).ConfigureAwait(false);
-                
+
                 // 将查询结果填充到缓存
                 foreach (var kvp in stationQueryTasks)
                 {
                     var stationName = kvp.Key;
                     var stationTask = kvp.Value;
-                    
+
                     var station = await stationTask;
                     if (station != null)
                     {
                         stationCache[stationName] = station;
                     }
                 }
-                
+
                 Debug.WriteLine($"站点信息查询完成，成功获取{stationCache.Count}/{allStationNames.Count}个站点，耗时: {stopwatch.ElapsedMilliseconds}ms");
-                
+
                 int missingDepartStationCount = 0;
                 int missingArriveStationCount = 0;
                 int missingDepartCoordinatesCount = 0;
                 int missingArriveCoordinatesCount = 0;
-                
+
                 // 处理车票数据，获取起始站和终点站的经纬度信息
                 foreach (var ticket in filteredTickets)
                 {
                     // 从缓存中获取站点信息
                     StationInfo departStation = null;
                     StationInfo arriveStation = null;
-                    
+
                     if (!string.IsNullOrWhiteSpace(ticket.DepartStation))
                     {
                         stationCache.TryGetValue(ticket.DepartStation, out departStation);
                     }
-                    
+
                     if (!string.IsNullOrWhiteSpace(ticket.ArriveStation))
                     {
                         stationCache.TryGetValue(ticket.ArriveStation, out arriveStation);
                     }
-                    
+
                     // 检查站点信息是否存在
                     if (departStation == null)
                     {
@@ -769,30 +765,30 @@ namespace TA_WPF.ViewModels
                         Debug.WriteLine($"车票 {ticket.TrainNo} ({ticket.DepartStation}-{ticket.ArriveStation}) 的出发站信息在数据库中不存在");
                         continue;
                     }
-                    
+
                     if (arriveStation == null)
                     {
                         missingArriveStationCount++;
                         Debug.WriteLine($"车票 {ticket.TrainNo} ({ticket.DepartStation}-{ticket.ArriveStation}) 的到达站信息在数据库中不存在");
                         continue;
                     }
-                    
+
                     // 检查经纬度信息是否完整
                     bool hasDepartCoordinates = !string.IsNullOrEmpty(departStation.Longitude) && !string.IsNullOrEmpty(departStation.Latitude);
                     bool hasArriveCoordinates = !string.IsNullOrEmpty(arriveStation.Longitude) && !string.IsNullOrEmpty(arriveStation.Latitude);
-                    
+
                     if (!hasDepartCoordinates)
                     {
                         missingDepartCoordinatesCount++;
                         Debug.WriteLine($"车票 {ticket.TrainNo} 的出发站 {ticket.DepartStation} 缺少经纬度信息");
                     }
-                    
+
                     if (!hasArriveCoordinates)
                     {
                         missingArriveCoordinatesCount++;
                         Debug.WriteLine($"车票 {ticket.TrainNo} 的到达站 {ticket.ArriveStation} 缺少经纬度信息");
                     }
-                    
+
                     // 确保两个站点都有经纬度信息
                     if (hasDepartCoordinates && hasArriveCoordinates)
                     {
@@ -809,24 +805,24 @@ namespace TA_WPF.ViewModels
                             DepartDate = ticket.DepartDate?.ToString("yyyy-MM-dd") ?? string.Empty,
                             Money = ticket.Money ?? 0
                         };
-                        
+
                         result.Add(routeData);
                     }
                 }
-                
+
                 // 记录过滤信息
                 int validCount = result.Count;
                 int totalCount = filteredTickets.Count;
                 int filteredCount = totalCount - validCount;
-                
+
                 stopwatch.Stop();
                 Debug.WriteLine($"路线数据获取总耗时: {stopwatch.ElapsedMilliseconds}ms");
                 Debug.WriteLine($"路线数据过滤统计: 总车票数={totalCount}, 有效数据={validCount}, 被过滤={filteredCount}");
                 Debug.WriteLine($"过滤原因: 出发站不存在={missingDepartStationCount}, 到达站不存在={missingArriveStationCount}");
                 Debug.WriteLine($"过滤原因: 出发站缺少经纬度={missingDepartCoordinatesCount}, 到达站缺少经纬度={missingArriveCoordinatesCount}");
-                
+
                 LogHelper.LogInfo($"路线数据过滤统计: 总车票数={totalCount}, 有效数据={validCount}, 被过滤={filteredCount}, 总耗时: {stopwatch.ElapsedMilliseconds}ms");
-                
+
                 return result;
             }
             catch (Exception ex)
@@ -836,7 +832,7 @@ namespace TA_WPF.ViewModels
                 return new List<RouteMapData>();
             }
         }
-        
+
         /// <summary>
         /// 将路线数据转换为JSON字符串
         /// </summary>
@@ -848,15 +844,15 @@ namespace TA_WPF.ViewModels
                 {
                     return "[]";
                 }
-                
+
                 // 创建JSON数组
                 var json = new System.Text.StringBuilder();
                 json.Append("[");
-                
+
                 for (int i = 0; i < routeData.Count; i++)
                 {
                     var data = routeData[i];
-                    
+
                     // 添加单个路线数据
                     json.Append("{");
                     json.Append($"\"departStation\":\"{data.DepartStation}\",");
@@ -869,14 +865,14 @@ namespace TA_WPF.ViewModels
                     json.Append($"\"departDate\":\"{data.DepartDate}\",");
                     json.Append($"\"money\":{data.Money}");
                     json.Append("}");
-                    
+
                     // 除最后一个元素外，添加逗号
                     if (i < routeData.Count - 1)
                     {
                         json.Append(",");
                     }
                 }
-                
+
                 json.Append("]");
                 return json.ToString();
             }
@@ -887,7 +883,7 @@ namespace TA_WPF.ViewModels
                 return "[]";
             }
         }
-        
+
         /// <summary>
         /// 获取地图HTML文件路径
         /// </summary>
@@ -899,14 +895,14 @@ namespace TA_WPF.ViewModels
                 string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 string htmlFolderPath = Path.Combine(baseDirectory, "Assets", "html");
                 string htmlFilePath = Path.Combine(htmlFolderPath, "RouteMap.html");
-                
+
                 // 先确保目录存在
                 if (!Directory.Exists(htmlFolderPath))
                 {
                     Directory.CreateDirectory(htmlFolderPath);
                     LogHelper.LogInfo($"创建地图HTML目录: {htmlFolderPath}");
                 }
-                
+
                 // 确保文件存在
                 if (File.Exists(htmlFilePath))
                 {
@@ -916,9 +912,9 @@ namespace TA_WPF.ViewModels
                 {
                     // 尝试从原始项目目录复制文件（如果存在）
                     string sourceFilePath = Path.Combine(
-                        Directory.GetParent(baseDirectory)?.Parent?.Parent?.FullName ?? "", 
+                        Directory.GetParent(baseDirectory)?.Parent?.Parent?.FullName ?? "",
                         "Assets", "html", "RouteMap.html");
-                    
+
                     if (File.Exists(sourceFilePath))
                     {
                         // 复制文件
@@ -926,7 +922,7 @@ namespace TA_WPF.ViewModels
                         LogHelper.LogInfo($"复制地图HTML文件: {sourceFilePath} -> {htmlFilePath}");
                         return htmlFilePath;
                     }
-                    
+
                     LogHelper.LogError($"地图HTML文件不存在: {htmlFilePath}");
                     Debug.WriteLine($"地图HTML文件不存在: {htmlFilePath}");
                     return string.Empty;
@@ -939,7 +935,7 @@ namespace TA_WPF.ViewModels
                 return string.Empty;
             }
         }
-        
+
         /// <summary>
         /// 清理WebView相关资源，当视图不可见或卸载时调用
         /// </summary>
@@ -949,14 +945,14 @@ namespace TA_WPF.ViewModels
             {
                 // 不完全清除WebView引用，只重置部分状态
                 // _currentWebView = null; // 注释掉，不再清除引用
-                
+
                 // 不完全重置地图初始化状态
                 // IsMapInitialized = false; // 注释掉，维持初始化状态
-                
+
                 // 执行一些清理工作
                 _isRefreshing = false;
                 IsLoading = false;
-                
+
                 // 记录日志
                 LogHelper.LogInfo("已轻量级清理WebView资源，保持地图初始化状态");
                 Debug.WriteLine("RouteMapViewModel: 已轻量级清理WebView资源");
@@ -967,7 +963,7 @@ namespace TA_WPF.ViewModels
                 Debug.WriteLine($"清理WebView资源时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 完全清理WebView资源，在视图被彻底卸载时调用
         /// </summary>
@@ -977,14 +973,14 @@ namespace TA_WPF.ViewModels
             {
                 // 将WebView引用置为null
                 _currentWebView = null;
-                
+
                 // 标记地图为未初始化状态
                 IsMapInitialized = false;
-                
+
                 // 执行一些清理工作
                 _isRefreshing = false;
                 IsLoading = false;
-                
+
                 // 记录日志
                 LogHelper.LogInfo("已完全清理WebView资源以节省内存");
                 Debug.WriteLine("RouteMapViewModel: 已完全清理WebView资源");
@@ -995,7 +991,7 @@ namespace TA_WPF.ViewModels
                 Debug.WriteLine($"完全清理WebView资源时出错: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         /// 析构函数，取消事件订阅
         /// </summary>
@@ -1004,7 +1000,7 @@ namespace TA_WPF.ViewModels
             // 取消订阅事件，避免内存泄漏
             ConfigurationService.ApiKeyUpdated -= OnApiKeyUpdated;
         }
-        
+
         /// <summary>
         /// 重写OnPropertyChanged方法，监听IsDarkMode的变化
         /// </summary>
@@ -1012,21 +1008,22 @@ namespace TA_WPF.ViewModels
         protected override void OnPropertyChanged(string propertyName)
         {
             base.OnPropertyChanged(propertyName);
-            
+
             // 当深色模式发生变化时，更新地图主题
             if (propertyName == nameof(IsDarkMode) && _isMapInitialized && _currentWebView != null)
             {
                 // 在UI线程上执行WebView操作
-                Application.Current.Dispatcher.InvokeAsync(async () => {
+                Application.Current.Dispatcher.InvokeAsync(async () =>
+                {
                     try
                     {
                         // 记录当前模式
                         string currentMode = IsDarkMode ? "深色" : "浅色";
                         Debug.WriteLine($"正在切换地图主题为{currentMode}模式，IsDarkMode={IsDarkMode}");
-                        
+
                         // 调用JavaScript函数设置地图主题
                         await _currentWebView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
-                        
+
                         // 验证切换结果
                         string result = await _currentWebView.ExecuteScriptAsync("map && map.getMapStyle ? map.getMapStyle() : 'unknown'");
                         Debug.WriteLine($"地图主题已更新为{currentMode}模式，当前地图样式={result}");
@@ -1035,7 +1032,7 @@ namespace TA_WPF.ViewModels
                     {
                         Debug.WriteLine($"更新地图主题时出错: {ex.Message}");
                         LogHelper.LogError($"更新地图主题时出错: {ex.Message}", ex);
-                        
+
                         // 尝试重新初始化地图主题
                         try
                         {
@@ -1064,14 +1061,15 @@ namespace TA_WPF.ViewModels
                 {
                     base.IsDarkMode = value;
                     Debug.WriteLine($"RouteMapViewModel.IsDarkMode 已变更为 {value}");
-                    
+
                     // 如果地图已初始化，则立即应用主题更改
                     if (_isMapInitialized && _currentWebView != null)
                     {
                         try
                         {
-                            Application.Current.Dispatcher.InvokeAsync(async () => {
-                                try 
+                            Application.Current.Dispatcher.InvokeAsync(async () =>
+                            {
+                                try
                                 {
                                     Debug.WriteLine($"通过IsDarkMode属性直接更新地图主题为{(value ? "深色" : "浅色")}模式");
                                     await _currentWebView.ExecuteScriptAsync($"setMapTheme({(value ? "true" : "false")});");
@@ -1101,45 +1099,45 @@ namespace TA_WPF.ViewModels
         /// 出发车站名称
         /// </summary>
         public string DepartStation { get; set; }
-        
+
         /// <summary>
         /// 出发车站经度
         /// </summary>
         public double DepartLongitude { get; set; }
-        
+
         /// <summary>
         /// 出发车站纬度
         /// </summary>
         public double DepartLatitude { get; set; }
-        
+
         /// <summary>
         /// 到达车站名称
         /// </summary>
         public string ArriveStation { get; set; }
-        
+
         /// <summary>
         /// 到达车站经度
         /// </summary>
         public double ArriveLongitude { get; set; }
-        
+
         /// <summary>
         /// 到达车站纬度
         /// </summary>
         public double ArriveLatitude { get; set; }
-        
+
         /// <summary>
         /// 车次
         /// </summary>
         public string TrainNo { get; set; }
-        
+
         /// <summary>
         /// 出发日期
         /// </summary>
         public string DepartDate { get; set; }
-        
+
         /// <summary>
         /// 票价
         /// </summary>
         public decimal Money { get; set; }
     }
-} 
+}

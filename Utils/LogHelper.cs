@@ -175,7 +175,7 @@ namespace TA_WPF.Utils
                                 string systemLogPath = Path.Combine(SystemLogPath, SystemLogFileName);
                                 File.AppendAllText(systemLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
                             }
-                            
+
                             if (logType == LogType.AppOnly || logType == LogType.AppAndSystem)
                             {
                                 string appLogPath = Path.Combine(LogFilePath, LogFileName);

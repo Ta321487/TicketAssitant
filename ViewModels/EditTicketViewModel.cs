@@ -372,11 +372,11 @@ namespace TA_WPF.ViewModels
                     // 检测拼音是否匹配或为空
                     if (string.IsNullOrWhiteSpace(stationPinyin))
                     {
-                         if (!validationErrors.Any(e => e.Contains($"未填写{stationLabel}拼音")))
-                         {
+                        if (!validationErrors.Any(e => e.Contains($"未填写{stationLabel}拼音")))
+                        {
                             validationErrors.Add($"未填写{stationLabel}拼音");
-                             // 拼音为空本身不标记为 major error (isValid = false)，只在 _validationErrors 中提示
-                         }
+                            // 拼音为空本身不标记为 major error (isValid = false)，只在 _validationErrors 中提示
+                        }
                     }
                     else if (stationPinyin != stationByName.StationPinyin)
                     {
@@ -420,10 +420,10 @@ namespace TA_WPF.ViewModels
             if (IsABCPayment) flags |= (int)PaymentChannelFlags.ABC;
             if (IsCCBPayment) flags |= (int)PaymentChannelFlags.CCB;
             if (IsICBCPayment) flags |= (int)PaymentChannelFlags.ICBC;
-            if(IsCMBPayment) flags |= (int)PaymentChannelFlags.CMB;
-            if(IsPSBCPayment) flags |= (int)PaymentChannelFlags.PSBC;
-            if(IsBOCPayment) flags |= (int)PaymentChannelFlags.BOC;
-            if(IsCOMMPayment) flags |= (int)PaymentChannelFlags.COMM;
+            if (IsCMBPayment) flags |= (int)PaymentChannelFlags.CMB;
+            if (IsPSBCPayment) flags |= (int)PaymentChannelFlags.PSBC;
+            if (IsBOCPayment) flags |= (int)PaymentChannelFlags.BOC;
+            if (IsCOMMPayment) flags |= (int)PaymentChannelFlags.COMM;
             return flags;
         }
 

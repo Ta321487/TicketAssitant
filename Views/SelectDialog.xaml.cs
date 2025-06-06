@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
+using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 using TA_WPF.Services;
-using MaterialDesignThemes.Wpf;
 using TA_WPF.Utils;
 
 namespace TA_WPF.Views
@@ -29,10 +26,10 @@ namespace TA_WPF.Views
         {
             InitializeComponent();
             DataContext = this;
-            
+
             Items = items ?? new List<string>();
             DialogTitle = title;
-            
+
             // 获取主题服务
             _themeService = ThemeService.Instance;
 
@@ -44,19 +41,20 @@ namespace TA_WPF.Views
             _themeService.ThemeChanged += OnThemeChanged;
 
             // 窗口关闭时取消订阅事件
-            this.Closed += (s, e) => {
+            this.Closed += (s, e) =>
+            {
                 _themeService.ThemeChanged -= OnThemeChanged;
             };
-            
+
             // 设置所有者窗口
             if (Application.Current?.MainWindow != null)
             {
                 Owner = Application.Current.MainWindow;
             }
-            
+
             // 添加键盘事件处理
             this.KeyDown += SelectDialog_KeyDown;
-            
+
             // 添加窗口加载事件处理
             this.Loaded += SelectDialog_Loaded;
         }
@@ -119,7 +117,7 @@ namespace TA_WPF.Views
             // 确保窗口处于激活状态并显示在前面
             this.Activate();
             this.Focus();
-            
+
             // 设置焦点到列表
             if (ItemsListView.Items.Count > 0)
             {
@@ -217,4 +215,4 @@ namespace TA_WPF.Views
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-} 
+}

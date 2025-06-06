@@ -12,7 +12,6 @@ using System.Windows.Threading;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.ViewModels;
-using System.Threading.Tasks;
 
 namespace TA_WPF
 {
@@ -103,7 +102,7 @@ namespace TA_WPF
                         Debug.WriteLine("忽略DialogHost相关异常：" + ex.Message);
                         return;
                     }
-                    
+
                     // 处理HwndSource相关的异常
                     if (ex is ArgumentException && ex.Message.Contains("Hwnd"))
                     {
@@ -111,7 +110,7 @@ namespace TA_WPF
                         // 这通常是Visual Studio设计器的问题，可以安全忽略
                         return;
                     }
-                    
+
                     // 处理其他未识别的异常
                     Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                     {
@@ -121,16 +120,16 @@ namespace TA_WPF
                             if (!System.ComponentModel.DesignerProperties.GetIsInDesignMode(new DependencyObject()))
                             {
                                 // 检查是否是Visual Studio设计器相关异常
-                                if (ex.StackTrace != null && 
-                                    (ex.StackTrace.Contains("Microsoft.VisualStudio") || 
+                                if (ex.StackTrace != null &&
+                                    (ex.StackTrace.Contains("Microsoft.VisualStudio") ||
                                     ex.StackTrace.Contains("DesignTools")))
                                 {
                                     Debug.WriteLine("忽略Visual Studio设计器相关异常");
                                     return;
                                 }
-                                
+
                                 // 显示通用错误消息
-                                MessageBoxHelper.ShowError($"发生了未处理的异常: {ex.Message}", 
+                                MessageBoxHelper.ShowError($"发生了未处理的异常: {ex.Message}",
                                     "错误");
                             }
                         }
@@ -181,7 +180,7 @@ namespace TA_WPF
                             Debug.WriteLine("警告：窗口句柄为零");
                         }
                     }
-                    else 
+                    else
                     {
                         Debug.WriteLine("警告：窗口尚未完全初始化，PresentationSource为空");
                     }
@@ -402,7 +401,7 @@ namespace TA_WPF
             {
                 // 取消注册未观察到的Task异常处理器
                 TaskScheduler.UnobservedTaskException -= TaskScheduler_UnobservedTaskException;
-                
+
                 // 检测是否是用户手动关闭窗口
                 if (Application.Current.MainWindow == this && Owner == null)
                 {
@@ -424,9 +423,9 @@ namespace TA_WPF
                             Debug.WriteLine($"尝试关闭已打开的对话框时出错: {ex.Message}");
                         }
                     }
-                    
+
                     // 短暂延迟后再显示确认对话框，确保之前的对话框已关闭
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() => 
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                     {
                         ShowExitConfirmationDialog();
                     }), DispatcherPriority.Background);
@@ -525,7 +524,7 @@ namespace TA_WPF
             {
                 Debug.WriteLine($"显示退出确认对话框时出错: {ex.Message}");
                 LogHelper.LogSystemError("主窗口", "显示退出确认对话框时出错", ex);
-                
+
                 // 发生异常时，直接关闭应用程序
                 Application.Current.Shutdown();
             }

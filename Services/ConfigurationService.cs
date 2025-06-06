@@ -14,12 +14,12 @@ namespace TA_WPF.Services
         /// API密钥名称
         /// </summary>
         public string KeyName { get; }
-        
+
         /// <summary>
         /// API密钥值
         /// </summary>
         public string Value { get; }
-        
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -41,7 +41,7 @@ namespace TA_WPF.Services
         /// API密钥更新事件
         /// </summary>
         public static event EventHandler<ApiKeyEventArgs> ApiKeyUpdated;
-        
+
         /// <summary>
         /// 触发API密钥更新事件
         /// </summary>
@@ -445,7 +445,7 @@ namespace TA_WPF.Services
                     return null;
 
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                
+
                 if (config.AppSettings.Settings[key] != null)
                 {
                     return config.AppSettings.Settings[key].Value;
@@ -485,9 +485,9 @@ namespace TA_WPF.Services
 
                 config.Save(ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection("appSettings");
-                
+
                 LogHelper.LogInfo($"已保存设置{key}");
-                
+
                 // 检查是否为API密钥相关设置，如果是则触发事件
                 if (key == "AmapWebKey" || key == "AmapWebServiceKey" || key == "AmapSecurityKey")
                 {

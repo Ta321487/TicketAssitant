@@ -1,5 +1,3 @@
-using System;
-
 namespace TA_WPF.Utils
 {
     /// <summary>
@@ -18,10 +16,10 @@ namespace TA_WPF.Utils
             {
                 return stationName;
             }
-            
+
             return stationName.Replace("站", "");
         }
-        
+
         /// <summary>
         /// 确保车站名称以"站"结尾
         /// </summary>
@@ -33,15 +31,15 @@ namespace TA_WPF.Utils
             {
                 return stationName;
             }
-            
+
             if (!stationName.EndsWith("站"))
             {
                 return stationName + "站";
             }
-            
+
             return stationName;
         }
-        
+
         /// <summary>
         /// 标准化车站名称（去除空格和其他无效字符）
         /// </summary>
@@ -53,11 +51,11 @@ namespace TA_WPF.Utils
             {
                 return stationName;
             }
-            
+
             // 移除首尾空格
             string normalized = stationName.Trim();
-            
+
             return normalized;
         }
     }
-} 
+}

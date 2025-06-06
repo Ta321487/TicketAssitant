@@ -1,8 +1,5 @@
-using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows.Media;
 
 namespace TA_WPF.Models
 {
@@ -25,9 +22,9 @@ namespace TA_WPF.Models
         /// <summary>
         /// 收藏夹ID
         /// </summary>
-        public int Id 
-        { 
-            get => _id; 
+        public int Id
+        {
+            get => _id;
             set
             {
                 if (_id != value)
@@ -41,9 +38,9 @@ namespace TA_WPF.Models
         /// <summary>
         /// 收藏夹名称
         /// </summary>
-        public string CollectionName 
-        { 
-            get => _collectionName; 
+        public string CollectionName
+        {
+            get => _collectionName;
             set
             {
                 if (_collectionName != value)
@@ -57,9 +54,9 @@ namespace TA_WPF.Models
         /// <summary>
         /// 收藏夹描述
         /// </summary>
-        public string Description 
-        { 
-            get => _description; 
+        public string Description
+        {
+            get => _description;
             set
             {
                 if (_description != value)
@@ -73,9 +70,9 @@ namespace TA_WPF.Models
         /// <summary>
         /// 封面图片 (Base64格式)
         /// </summary>
-        public byte[] CoverImage 
-        { 
-            get => _coverImage; 
+        public byte[] CoverImage
+        {
+            get => _coverImage;
             set
             {
                 if (_coverImage != value)
@@ -89,9 +86,9 @@ namespace TA_WPF.Models
         /// <summary>
         /// 创建时间
         /// </summary>
-        public DateTime CreateTime 
-        { 
-            get => _createTime; 
+        public DateTime CreateTime
+        {
+            get => _createTime;
             set
             {
                 if (_createTime != value)
@@ -105,9 +102,9 @@ namespace TA_WPF.Models
         /// <summary>
         /// 更新时间
         /// </summary>
-        public DateTime UpdateTime 
-        { 
-            get => _updateTime; 
+        public DateTime UpdateTime
+        {
+            get => _updateTime;
             set
             {
                 if (_updateTime != value)
@@ -121,9 +118,9 @@ namespace TA_WPF.Models
         /// <summary>
         /// 排序顺序
         /// </summary>
-        public int SortOrder 
-        { 
-            get => _sortOrder; 
+        public int SortOrder
+        {
+            get => _sortOrder;
             set
             {
                 if (_sortOrder != value)
@@ -193,4 +190,4 @@ namespace TA_WPF.Models
 
         #endregion
     }
-} 
+}

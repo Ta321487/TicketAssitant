@@ -1,14 +1,13 @@
-using System;
+using MaterialDesignThemes.Wpf;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using MaterialDesignThemes.Wpf;
+using System.Windows.Threading;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.ViewModels;
-using System.Windows.Threading;
 
 namespace TA_WPF.Views
 {
@@ -32,19 +31,19 @@ namespace TA_WPF.Views
         public CollectionTicketsWindow(TicketCollectionInfo collection, DatabaseService databaseService, MainViewModel mainViewModel)
         {
             InitializeComponent();
-            
+
             // 获取主题服务
             _themeService = ThemeService.Instance;
 
             // 创建视图模型
             _viewModel = new CollectionTicketsViewModel(collection, databaseService, mainViewModel);
-            
+
             // 设置DataContext
             DataContext = _viewModel;
-            
+
             // 初始化页码提示框
             InitializePageNumberTooltip();
-            
+
             // 窗口加载完成后加载车票数据
             this.Loaded += CollectionTicketsWindow_Loaded;
 
@@ -59,13 +58,13 @@ namespace TA_WPF.Views
             {
                 _themeService.ThemeChanged -= OnThemeChanged;
             };
-            
+
             // 添加DataGrid的键盘事件处理，支持Ctrl+A全选
             TicketsDataGrid.PreviewKeyDown += TicketsDataGrid_PreviewKeyDown;
-            
+
             // 添加订阅ViewModel的选择变更事件
             _viewModel.SelectionChanged += ViewModel_SelectionChanged;
-            
+
             // 窗口关闭时取消订阅事件
             this.Closed += (s, e) =>
             {
@@ -83,12 +82,12 @@ namespace TA_WPF.Views
             {
                 if (_viewModel != null && _viewModel.SelectAllCommand.CanExecute(null))
                 {
-                _viewModel.SelectAllCommand.Execute(null);
-                e.Handled = true;
+                    _viewModel.SelectAllCommand.Execute(null);
+                    e.Handled = true;
                 }
             }
         }
-        
+
         /// <summary>
         /// 处理DataGrid的选择变更事件
         /// </summary>
@@ -97,11 +96,11 @@ namespace TA_WPF.Views
             // 避免循环更新
             if (_isInternalSelectionChange)
                 return;
-            
+
             try
             {
                 _isInternalSelectionChange = true;
-                
+
                 // 当DataGrid的选择变更时，同步更新ViewModel中的选择状态
                 if (sender is DataGrid dataGrid && _viewModel != null)
                 {
@@ -128,7 +127,7 @@ namespace TA_WPF.Views
                             _viewModel.SelectedTickets.Add(item);
                         }
                     }
-                    
+
                     // 手动通知ViewModel选择状态已变更
                     _viewModel.NotifySelectionChanged();
                 }
@@ -242,7 +241,7 @@ namespace TA_WPF.Views
                 // 取消输入，恢复显示页码信息
                 var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
                 var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-                
+
                 if (pageInfoPanel != null && pageNumberInput != null)
                 {
                     pageInfoPanel.Visibility = Visibility.Visible;
@@ -260,7 +259,7 @@ namespace TA_WPF.Views
             // 恢复显示页码信息
             var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
             var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-            
+
             if (pageInfoPanel != null && pageNumberInput != null)
             {
                 pageInfoPanel.Visibility = Visibility.Visible;
@@ -275,7 +274,7 @@ namespace TA_WPF.Views
         {
             var pageInfoPanel = this.FindName("PageInfoPanel") as StackPanel;
             var pageNumberInput = this.FindName("PageNumberInput") as TextBox;
-            
+
             if (pageInfoPanel == null || pageNumberInput == null || _viewModel == null)
                 return;
 
@@ -325,7 +324,7 @@ namespace TA_WPF.Views
             try
             {
                 _isInternalSelectionChange = true;
-                
+
                 // 清除之前对应的选择项
                 foreach (var item in e.RemovedItems)
                 {
@@ -334,7 +333,7 @@ namespace TA_WPF.Views
                         TicketsDataGrid.SelectedItems.Remove(item);
                     }
                 }
-                
+
                 // 添加新的选择项
                 foreach (var item in e.AddedItems)
                 {

@@ -1,11 +1,11 @@
 using MySql.Data.MySqlClient;
 using System.Data.Common;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 using TA_WPF.Models;
 using TA_WPF.Utils;
-using System.IO;
 using TA_WPF.ViewModels; // 添加引用，以使用SeatPositionType枚举
-using System.Text;
 
 namespace TA_WPF.Services
 {
@@ -656,15 +656,15 @@ namespace TA_WPF.Services
         /// <param name="isAndCondition">是否使用AND条件</param>
         /// <returns>符合条件的车票总数</returns>
         public async Task<int> GetFilteredTrainRideInfoCountAsync(
-            string departStation, 
-            string trainNo, 
-            int? year, 
-            SeatPositionType seatPosition, 
+            string departStation,
+            string trainNo,
+            int? year,
+            SeatPositionType seatPosition,
             bool isAndCondition,
             DateTime? departDate = null)
         {
             int count = 0;
-            
+
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
@@ -672,19 +672,19 @@ namespace TA_WPF.Services
                     // 构建基本查询
                     var query = new StringBuilder();
                     query.Append("SELECT COUNT(*) FROM train_ride_info");
-                    
+
                     // 准备参数列表和有效条件列表
                     var parameters = new Dictionary<string, object>();
                     var conditions = new List<string>();
-                    
+
                     // 检查是否有任何筛选条件
-                    bool hasAnyCondition = 
+                    bool hasAnyCondition =
                         !string.IsNullOrWhiteSpace(departStation) ||
                         !string.IsNullOrWhiteSpace(trainNo) ||
                         year.HasValue ||
                         departDate.HasValue ||
                         seatPosition != SeatPositionType.None;
-                    
+
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
@@ -696,7 +696,7 @@ namespace TA_WPF.Services
                         // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
                         conditions.Add("depart_station IS NULL");
                     }
-                    
+
                     // 添加车次号筛选条件
                     if (!string.IsNullOrWhiteSpace(trainNo))
                     {
@@ -708,7 +708,7 @@ namespace TA_WPF.Services
                         // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
                         conditions.Add("train_no IS NULL");
                     }
-                    
+
                     // 添加年份筛选条件
                     if (year.HasValue)
                     {
@@ -720,14 +720,14 @@ namespace TA_WPF.Services
                         // 只有在AND模式且至少有一个条件且没有指定具体日期时，才添加IS NULL限制
                         conditions.Add("depart_date IS NULL");
                     }
-                    
+
                     // 添加出发日期筛选条件
                     if (departDate.HasValue)
                     {
                         conditions.Add("depart_date = @departDate");
                         parameters.Add("@departDate", departDate.Value.Date);
                     }
-                    
+
                     // 添加座位位置筛选条件
                     if (seatPosition != SeatPositionType.None)
                     {
@@ -749,7 +749,7 @@ namespace TA_WPF.Services
                         // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
                         conditions.Add("seat_no IS NULL");
                     }
-                    
+
                     // 构建WHERE子句（如果有条件）
                     if (conditions.Count > 0)
                     {
@@ -764,7 +764,7 @@ namespace TA_WPF.Services
                         debugSql = debugSql.Replace(param.Key, param.Value.ToString());
                     }
                     Debug.WriteLine($"SQL查询计数: {debugSql}");
-                    
+
                     // 创建命令
                     using (var command = new MySqlCommand(query.ToString(), connection))
                     {
@@ -773,7 +773,7 @@ namespace TA_WPF.Services
                         {
                             command.Parameters.AddWithValue(param.Key, param.Value);
                         }
-                        
+
                         // 执行查询并获取总数
                         count = Convert.ToInt32(await command.ExecuteScalarAsync());
                     }
@@ -784,7 +784,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"获取筛选车票总数失败: {ex.Message}", ex);
                 throw;
             }
-            
+
             return count;
         }
 
@@ -803,17 +803,17 @@ namespace TA_WPF.Services
         /// <param name="isAndCondition">是否使用AND条件</param>
         /// <returns>符合条件的车票列表</returns>
         public async Task<List<TrainRideInfo>> GetFilteredTrainRideInfosAsync(
-            int pageNumber, 
-            int pageSize, 
-            string departStation, 
-            string trainNo, 
-            int? year, 
-            SeatPositionType seatPosition, 
+            int pageNumber,
+            int pageSize,
+            string departStation,
+            string trainNo,
+            int? year,
+            SeatPositionType seatPosition,
             bool isAndCondition,
             DateTime? departDate = null)
         {
             var tickets = new List<TrainRideInfo>();
-            
+
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
@@ -821,19 +821,19 @@ namespace TA_WPF.Services
                     // 构建基本查询
                     var query = new StringBuilder();
                     query.Append("SELECT * FROM train_ride_info");
-                    
+
                     // 准备参数列表和有效条件列表
                     var parameters = new Dictionary<string, object>();
                     var conditions = new List<string>();
-                    
+
                     // 检查是否有任何筛选条件
-                    bool hasAnyCondition = 
+                    bool hasAnyCondition =
                         !string.IsNullOrWhiteSpace(departStation) ||
                         !string.IsNullOrWhiteSpace(trainNo) ||
                         year.HasValue ||
                         departDate.HasValue ||
                         seatPosition != SeatPositionType.None;
-                    
+
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
                     {
@@ -845,7 +845,7 @@ namespace TA_WPF.Services
                         // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
                         conditions.Add("depart_station IS NULL");
                     }
-                    
+
                     // 添加车次号筛选条件
                     if (!string.IsNullOrWhiteSpace(trainNo))
                     {
@@ -857,7 +857,7 @@ namespace TA_WPF.Services
                         // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
                         conditions.Add("train_no IS NULL");
                     }
-                    
+
                     // 添加年份筛选条件
                     if (year.HasValue)
                     {
@@ -869,14 +869,14 @@ namespace TA_WPF.Services
                         // 只有在AND模式且至少有一个条件且没有指定具体日期时，才添加IS NULL限制
                         conditions.Add("depart_date IS NULL");
                     }
-                    
+
                     // 添加出发日期筛选条件
                     if (departDate.HasValue)
                     {
                         conditions.Add("depart_date = @departDate");
                         parameters.Add("@departDate", departDate.Value.Date);
                     }
-                    
+
                     // 添加座位位置筛选条件
                     if (seatPosition != SeatPositionType.None)
                     {
@@ -898,14 +898,14 @@ namespace TA_WPF.Services
                         // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
                         conditions.Add("seat_no IS NULL");
                     }
-                    
+
                     // 构建WHERE子句（如果有条件）
                     if (conditions.Count > 0)
                     {
                         query.Append(" WHERE ");
                         query.Append(string.Join(isAndCondition ? " AND " : " OR ", conditions));
                     }
-                    
+
                     // 添加排序和分页
                     query.Append(" ORDER BY depart_date DESC, depart_time DESC LIMIT @offset, @limit");
                     parameters.Add("@offset", (pageNumber - 1) * pageSize);
@@ -926,7 +926,7 @@ namespace TA_WPF.Services
                         }
                     }
                     Debug.WriteLine($"SQL查询列表: {debugSql}");
-                    
+
                     // 创建命令
                     using (var command = new MySqlCommand(query.ToString(), connection))
                     {
@@ -935,7 +935,7 @@ namespace TA_WPF.Services
                         {
                             command.Parameters.AddWithValue(param.Key, param.Value);
                         }
-                        
+
                         // 执行查询
                         using (var reader = await command.ExecuteReaderAsync())
                         {
@@ -952,7 +952,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"获取筛选车票列表失败: {ex.Message}", ex);
                 throw;
             }
-            
+
             return tickets;
         }
 
@@ -3226,7 +3226,7 @@ namespace TA_WPF.Services
                                     TicketId = reader.GetInt32(reader.GetOrdinal("ticket_id")),
                                     OrderIndex = reader.GetInt32(reader.GetOrdinal("order_index")),
                                     AddTime = reader.GetDateTime(reader.GetOrdinal("add_time")),
-                                    
+
                                     // 映射车票信息
                                     Ticket = new TrainRideInfo
                                     {
@@ -3276,7 +3276,7 @@ namespace TA_WPF.Services
                                         Debug.WriteLine($"解析时间出错: {ex.Message}");
                                     }
                                 }
-                                
+
                                 items.Add(mapping);
                             }
                         }
@@ -3300,7 +3300,7 @@ namespace TA_WPF.Services
         public async Task<List<int>> GetRouteTicketIdsAsync(int routeId)
         {
             var ticketIds = new List<int>();
-            
+
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
@@ -3309,15 +3309,15 @@ namespace TA_WPF.Services
                         SELECT ticket_id 
                         FROM route_ticket_mapping 
                         WHERE route_id = @routeId";
-                    
+
                     // 输出完整的SQL查询（替换参数值）
                     string debugSql = query.Replace("@routeId", routeId.ToString());
                     Debug.WriteLine($"SQL查询路线车票IDs: {debugSql}");
-                        
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@routeId", routeId);
-                        
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             while (await reader.ReadAsync())
@@ -3326,7 +3326,7 @@ namespace TA_WPF.Services
                             }
                         }
                     }
-                    
+
                     Debug.WriteLine($"找到路线ID={routeId}的车票IDs: {string.Join(", ", ticketIds)}");
                 }
             }
@@ -3335,7 +3335,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"获取路线车票ID列表失败: {ex.Message}", ex);
                 throw;
             }
-            
+
             return ticketIds;
         }
 
@@ -3348,9 +3348,9 @@ namespace TA_WPF.Services
         {
             if (mappings == null || mappings.Count == 0)
                 return 0;
-                
+
             int addedCount = 0;
-            
+
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
@@ -3363,7 +3363,7 @@ namespace TA_WPF.Services
                             (route_id, ticket_id, order_index, add_time) 
                             VALUES 
                             (@routeId, @ticketId, @orderIndex, @addTime)";
-                            
+
                         using (var command = new MySqlCommand(query, connection, transaction))
                         {
                             // 添加参数，但不设置值（将在循环中设置）
@@ -3371,7 +3371,7 @@ namespace TA_WPF.Services
                             command.Parameters.Add("@ticketId", MySqlDbType.Int32);
                             command.Parameters.Add("@orderIndex", MySqlDbType.Int32);
                             command.Parameters.Add("@addTime", MySqlDbType.DateTime);
-                            
+
                             // 依次处理每个映射
                             foreach (var mapping in mappings)
                             {
@@ -3379,12 +3379,12 @@ namespace TA_WPF.Services
                                 command.Parameters["@ticketId"].Value = mapping.TicketId;
                                 command.Parameters["@orderIndex"].Value = mapping.OrderIndex;
                                 command.Parameters["@addTime"].Value = mapping.AddTime;
-                                
+
                                 // 执行插入
                                 addedCount += await command.ExecuteNonQueryAsync();
                             }
                         }
-                        
+
                         // 提交事务
                         await transaction.CommitAsync();
                     }
@@ -3402,7 +3402,7 @@ namespace TA_WPF.Services
                 LogHelper.LogError($"添加车票到路线失败: {ex.Message}", ex);
                 throw;
             }
-            
+
             return addedCount;
         }
 
@@ -3440,6 +3440,101 @@ namespace TA_WPF.Services
             {
                 LogHelper.LogError($"从路线中移除车票失败: {ex.Message}", ex);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// 获取路线车站映射数据总数
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <returns>映射数据总数</returns>
+        public async Task<int> GetRouteStationsCountAsync(int routeId)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string sql = @"SELECT COUNT(*) FROM route_station_mapping WHERE route_id = @RouteId";
+
+                    using (var command = new MySqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        return Convert.ToInt32(await command.ExecuteScalarAsync());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"获取路线车站数据总数失败: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 获取路线车站映射数据
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <param name="pageNumber">页码</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <returns>车站映射列表</returns>
+        public async Task<List<RouteStationMapping>> GetRouteStationsAsync(int routeId, int pageNumber = 1, int pageSize = 10)
+        {
+            try
+            {
+                var result = new List<RouteStationMapping>();
+
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 计算跳过的记录数
+                    int skip = (pageNumber - 1) * pageSize;
+
+                    string sql = @"
+                        SELECT rsm.*, si.* 
+                        FROM route_station_mapping rsm
+                        LEFT JOIN station_info si ON rsm.station_id = si.id
+                        WHERE rsm.route_id = @RouteId
+                        ORDER BY rsm.order_index ASC
+                        LIMIT @Skip, @PageSize";
+
+                    using (var command = new MySqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        command.Parameters.AddWithValue("@Skip", skip);
+                        command.Parameters.AddWithValue("@PageSize", pageSize);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                // 映射车站数据
+                                var mapping = new RouteStationMapping
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("id")),
+                                    RouteId = reader.GetInt32(reader.GetOrdinal("route_id")),
+                                    StationId = reader.GetInt32(reader.GetOrdinal("station_id")),
+                                    OrderIndex = reader.GetInt32(reader.GetOrdinal("order_index")),
+                                    StationRole = reader.IsDBNull(reader.GetOrdinal("station_role")) ? (byte)0 : reader.GetByte(reader.GetOrdinal("station_role")),
+                                    StayTime = reader.IsDBNull(reader.GetOrdinal("stay_time")) ? 0 : reader.GetInt32(reader.GetOrdinal("stay_time")),
+                                    Notes = reader.IsDBNull(reader.GetOrdinal("notes")) ? null : reader.GetString(reader.GetOrdinal("notes")),
+                                    AddTime = reader.IsDBNull(reader.GetOrdinal("add_time")) ? DateTime.Now : reader.GetDateTime(reader.GetOrdinal("add_time")),
+                                    DistanceFromPrev = reader.IsDBNull(reader.GetOrdinal("distance_from_prev")) ? 0m : reader.GetDecimal(reader.GetOrdinal("distance_from_prev")),
+                                    DistanceFromStart = reader.IsDBNull(reader.GetOrdinal("distance_from_start")) ? 0m : reader.GetDecimal(reader.GetOrdinal("distance_from_start")),
+                                    IsSelected = false
+                                };
+
+                                // 映射关联的车站数据
+                                mapping.Station = MapStationInfo(reader);
+
+                                result.Add(mapping);
+                            }
+                        }
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"获取路线车站数据失败: {ex.Message}", ex);
             }
         }
     }

@@ -1,11 +1,10 @@
 using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using TA_WPF.Services;
-using System;
-using System.Windows.Controls;
 
 namespace TA_WPF.Views
 {
@@ -282,16 +281,17 @@ namespace TA_WPF.Views
 
             return result;
         }
-        
+
         // 显示带有进度信息的对话框（用于模型下载等操作）
         private static Window _progressWindow = null;
         private static TextBlock _progressMessageBlock = null;
         private static ProgressBar _progressBar = null;
         private static TextBlock _progressTextBlock = null;
-        
+
         public static void ShowProgressInfo(string message, string title = "进度", int progress = 0)
         {
-            Application.Current.Dispatcher.Invoke(() => {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
                 try
                 {
                     // 如果进度为100%或消息为空，关闭窗口
@@ -307,7 +307,7 @@ namespace TA_WPF.Views
                         }
                         return;
                     }
-                    
+
                     // 如果窗口不存在或已关闭，创建新窗口
                     if (_progressWindow == null || !_progressWindow.IsVisible)
                     {
@@ -317,7 +317,7 @@ namespace TA_WPF.Views
                         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
                         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
                         grid.Margin = new Thickness(24);
-                        
+
                         // 消息文本
                         _progressMessageBlock = new TextBlock
                         {
@@ -329,7 +329,7 @@ namespace TA_WPF.Views
                         };
                         Grid.SetRow(_progressMessageBlock, 0);
                         grid.Children.Add(_progressMessageBlock);
-                        
+
                         // 进度条
                         _progressBar = new ProgressBar
                         {
@@ -342,7 +342,7 @@ namespace TA_WPF.Views
                         };
                         Grid.SetRow(_progressBar, 1);
                         grid.Children.Add(_progressBar);
-                        
+
                         // 进度文本
                         _progressTextBlock = new TextBlock
                         {
@@ -352,7 +352,7 @@ namespace TA_WPF.Views
                         };
                         Grid.SetRow(_progressTextBlock, 2);
                         grid.Children.Add(_progressTextBlock);
-                        
+
                         // 创建自定义窗口
                         _progressWindow = new Window
                         {
@@ -367,11 +367,11 @@ namespace TA_WPF.Views
                             MinHeight = 150,
                             Background = (Brush)Application.Current.Resources["MaterialDesignPaper"]
                         };
-                        
+
                         // 应用MaterialDesign主题
                         var isDarkMode = ThemeService.Instance.IsDarkThemeActive();
                         ThemeAssist.SetTheme(_progressWindow, isDarkMode ? BaseTheme.Dark : BaseTheme.Light);
-                        
+
                         _progressWindow.Show();
                     }
                     else
@@ -381,12 +381,12 @@ namespace TA_WPF.Views
                         {
                             _progressMessageBlock.Text = message;
                         }
-                        
+
                         if (_progressBar != null)
                         {
                             _progressBar.Value = progress;
                         }
-                        
+
                         if (_progressTextBlock != null)
                         {
                             _progressTextBlock.Text = $"{progress}%";

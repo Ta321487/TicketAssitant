@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Utils;
-using TA_WPF.ViewModels;
 
 namespace TA_WPF.Services
 {
