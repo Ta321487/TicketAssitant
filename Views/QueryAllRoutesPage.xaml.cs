@@ -6,7 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using TA_WPF.Models;
 using TA_WPF.ViewModels;
-
+using System.Reflection;
 namespace TA_WPF.Views
 {
     /// <summary>
@@ -925,8 +925,28 @@ namespace TA_WPF.Views
                     }
                 }
 
-                // 显示路线详情
-                viewModel.ShowRouteDetailsCommand.Execute(clickedItem);
+                try
+                {
+                    // 直接调用方法而不是通过Command
+                    if (viewModel.GetType().GetMethod("ShowRouteDetails", 
+                        BindingFlags.NonPublic | 
+                        BindingFlags.Instance) is MethodInfo methodInfo)
+                    {
+                        // 使用反射直接调用私有方法
+                        methodInfo.Invoke(viewModel, new object[] { clickedItem });
+                    }
+                    else
+                    {
+                        // 如果反射失败，使用命令方式
+                        viewModel.ShowRouteDetailsCommand.Execute(clickedItem);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"打开路线详情失败: {ex.Message}");
+                    // 失败后使用命令方式再次尝试
+                    viewModel.ShowRouteDetailsCommand.Execute(clickedItem);
+                }
             }
         }
 

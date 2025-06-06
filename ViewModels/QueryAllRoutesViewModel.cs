@@ -346,6 +346,7 @@ namespace TA_WPF.ViewModels
 
             if (route != null)
             {
+                // 每次都创建新的窗口实例，因为关闭后的窗口不能再次显示
                 var routeDetailWindow = new RouteDetailWindow(route, _databaseService, _mainViewModel);
                 routeDetailWindow.Owner = Application.Current.MainWindow;
                 routeDetailWindow.ShowDialog();

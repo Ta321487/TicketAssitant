@@ -2,6 +2,7 @@ using MaterialDesignThemes.Wpf;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
@@ -18,6 +19,7 @@ namespace TA_WPF.Views
         private Popup _pageNumberTooltip;
         private TextBlock _tooltipText;
         private readonly ThemeService _themeService;
+        private int _currentTabIndex = 0; // 当前选中的标签页索引，默认为车票列表
 
         public RouteDetailWindow(RouteInfo route, DatabaseService databaseService, MainViewModel mainViewModel)
         {
@@ -55,26 +57,22 @@ namespace TA_WPF.Views
         private void RouteDetailWindow_Loaded(object sender, RoutedEventArgs e)
         {
             // 窗口加载完成后的初始化操作
-            // 设置默认活动视图模型（车票标签页）
-            _viewModel.SetActiveViewModel(0);
+            
+            // 初始化分页控件数据绑定
+            UpdatePaginationBindings();
+            
+            // 确保ViewModel已完成数据加载
+            if (_viewModel != null)
+            {
+                // 刷新数据（如果需要）
+                // _ = _viewModel.RefreshDataAsync();
+            }
         }
 
         private void ViewModel_CloseRequested(object sender, EventArgs e)
         {
             // 关闭窗口
             Close();
-        }
-
-        /// <summary>
-        /// 标签页选择变更事件处理程序
-        /// </summary>
-        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (MainTabControl.SelectedIndex >= 0)
-            {
-                // 更新活动视图模型
-                _viewModel.SetActiveViewModel(MainTabControl.SelectedIndex);
-            }
         }
 
         /// <summary>
@@ -139,6 +137,151 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
+        /// 处理标签页切换事件
+        /// </summary>
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (MainTabControl == null || _viewModel == null)
+                return;
+
+            // 保存当前选中的标签页索引
+            _currentTabIndex = MainTabControl.SelectedIndex;
+
+            // 根据选中的标签页更新分页控件的数据绑定
+            UpdatePaginationBindings();
+        }
+
+        /// <summary>
+        /// 更新分页控件的数据绑定
+        /// </summary>
+        private void UpdatePaginationBindings()
+        {
+            if (_viewModel == null)
+                return;
+
+            // 清除旧的绑定
+            BindingOperations.ClearBinding(PageSizeComboBox, ComboBox.ItemsSourceProperty);
+            BindingOperations.ClearBinding(PageSizeComboBox, ComboBox.SelectedItemProperty);
+            BindingOperations.ClearBinding(TotalCountTextBlock, TextBlock.TextProperty);
+            BindingOperations.ClearBinding(SelectedItemsTextBlock, TextBlock.TextProperty);
+            BindingOperations.ClearBinding(SelectedItemsTextBlock, TextBlock.VisibilityProperty);
+            BindingOperations.ClearBinding(FirstPageButton, Button.CommandProperty);
+            BindingOperations.ClearBinding(FirstPageButton, Button.IsEnabledProperty);
+            BindingOperations.ClearBinding(PreviousPageButton, Button.CommandProperty);
+            BindingOperations.ClearBinding(PreviousPageButton, Button.IsEnabledProperty);
+            BindingOperations.ClearBinding(NextPageButton, Button.CommandProperty);
+            BindingOperations.ClearBinding(NextPageButton, Button.IsEnabledProperty);
+            BindingOperations.ClearBinding(LastPageButton, Button.CommandProperty);
+            BindingOperations.ClearBinding(LastPageButton, Button.IsEnabledProperty);
+            BindingOperations.ClearBinding(CurrentPageTextBlock, TextBlock.TextProperty);
+            BindingOperations.ClearBinding(TotalPagesTextBlock, TextBlock.TextProperty);
+
+            // 根据当前选中的标签页创建新的绑定
+            switch (_currentTabIndex)
+            {
+                case 0: // 车票列表
+                    SetTicketsBindings();
+                    break;
+                case 1: // 车站列表
+                    SetStationsBindings();
+                    break;
+                case 2: // 统计摘要（无分页功能）
+                default:
+                    // 隐藏分页控件或使用默认的车票绑定
+                    SetTicketsBindings();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 设置车票数据的绑定
+        /// </summary>
+        private void SetTicketsBindings()
+        {
+            // 页大小下拉框
+            PageSizeComboBox.SetBinding(ComboBox.ItemsSourceProperty, new Binding("Tickets.PaginationViewModel.PageSizeOptions"));
+            PageSizeComboBox.SetBinding(ComboBox.SelectedItemProperty, new Binding("Tickets.PaginationViewModel.PageSize") 
+            { 
+                Mode = BindingMode.TwoWay, 
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged 
+            });
+
+            // 总记录数
+            TotalCountTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Tickets.TotalCount") 
+            { 
+                StringFormat = "总记录数: {0}" 
+            });
+
+            // 选中项数量
+            SelectedItemsTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Tickets.SelectedItemsCount") 
+            { 
+                StringFormat = "已选择 {0} 项" 
+            });
+            SelectedItemsTextBlock.SetBinding(TextBlock.VisibilityProperty, new Binding("Tickets.HasSelectedItems") 
+            { 
+                Converter = (System.Windows.Data.IValueConverter)FindResource("BooleanToVisibilityConverter") 
+            });
+
+            // 分页按钮
+            FirstPageButton.SetBinding(Button.CommandProperty, new Binding("Tickets.PaginationViewModel.FirstPageCommand"));
+            FirstPageButton.SetBinding(Button.IsEnabledProperty, new Binding("Tickets.PaginationViewModel.CanNavigateToFirstPage"));
+            PreviousPageButton.SetBinding(Button.CommandProperty, new Binding("Tickets.PaginationViewModel.PreviousPageCommand"));
+            PreviousPageButton.SetBinding(Button.IsEnabledProperty, new Binding("Tickets.PaginationViewModel.CanNavigateToPreviousPage"));
+            NextPageButton.SetBinding(Button.CommandProperty, new Binding("Tickets.PaginationViewModel.NextPageCommand"));
+            NextPageButton.SetBinding(Button.IsEnabledProperty, new Binding("Tickets.PaginationViewModel.CanNavigateToNextPage"));
+            LastPageButton.SetBinding(Button.CommandProperty, new Binding("Tickets.PaginationViewModel.LastPageCommand"));
+            LastPageButton.SetBinding(Button.IsEnabledProperty, new Binding("Tickets.PaginationViewModel.CanNavigateToLastPage"));
+
+            // 页码显示
+            CurrentPageTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Tickets.PaginationViewModel.CurrentPage"));
+            TotalPagesTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Tickets.PaginationViewModel.TotalPages"));
+        }
+
+        /// <summary>
+        /// 设置车站数据的绑定
+        /// </summary>
+        private void SetStationsBindings()
+        {
+            // 页大小下拉框
+            PageSizeComboBox.SetBinding(ComboBox.ItemsSourceProperty, new Binding("Stations.PaginationViewModel.PageSizeOptions"));
+            PageSizeComboBox.SetBinding(ComboBox.SelectedItemProperty, new Binding("Stations.PaginationViewModel.PageSize") 
+            { 
+                Mode = BindingMode.TwoWay, 
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged 
+            });
+
+            // 总记录数
+            TotalCountTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Stations.TotalCount") 
+            { 
+                StringFormat = "总记录数: {0}" 
+            });
+
+            // 选中项数量
+            SelectedItemsTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Stations.SelectedItemsCount") 
+            { 
+                StringFormat = "已选择 {0} 项" 
+            });
+            SelectedItemsTextBlock.SetBinding(TextBlock.VisibilityProperty, new Binding("Stations.HasSelectedItems") 
+            { 
+                Converter = (System.Windows.Data.IValueConverter)FindResource("BooleanToVisibilityConverter") 
+            });
+
+            // 分页按钮
+            FirstPageButton.SetBinding(Button.CommandProperty, new Binding("Stations.PaginationViewModel.FirstPageCommand"));
+            FirstPageButton.SetBinding(Button.IsEnabledProperty, new Binding("Stations.PaginationViewModel.CanNavigateToFirstPage"));
+            PreviousPageButton.SetBinding(Button.CommandProperty, new Binding("Stations.PaginationViewModel.PreviousPageCommand"));
+            PreviousPageButton.SetBinding(Button.IsEnabledProperty, new Binding("Stations.PaginationViewModel.CanNavigateToPreviousPage"));
+            NextPageButton.SetBinding(Button.CommandProperty, new Binding("Stations.PaginationViewModel.NextPageCommand"));
+            NextPageButton.SetBinding(Button.IsEnabledProperty, new Binding("Stations.PaginationViewModel.CanNavigateToNextPage"));
+            LastPageButton.SetBinding(Button.CommandProperty, new Binding("Stations.PaginationViewModel.LastPageCommand"));
+            LastPageButton.SetBinding(Button.IsEnabledProperty, new Binding("Stations.PaginationViewModel.CanNavigateToLastPage"));
+
+            // 页码显示
+            CurrentPageTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Stations.PaginationViewModel.CurrentPage"));
+            TotalPagesTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Stations.PaginationViewModel.TotalPages"));
+        }
+
+        /// <summary>
         /// 处理页码信息面板的点击事件，切换到输入模式
         /// </summary>
         private void PageInfoPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -151,17 +294,15 @@ namespace TA_WPF.Views
             PageNumberInput.Visibility = Visibility.Visible;
 
             // 设置当前页码为默认值
-            var activeViewModel = _viewModel.ActiveViewModel;
-            if (activeViewModel != null)
+            if (_viewModel != null)
             {
-                // 根据当前活动视图模型获取分页信息
-                if (activeViewModel is RouteTicketViewModel ticketViewModel)
+                if (_currentTabIndex == 0 && _viewModel.Tickets != null && _viewModel.Tickets.PaginationViewModel != null)
                 {
-                    PageNumberInput.Text = ticketViewModel.PaginationViewModel.CurrentPage.ToString();
+                    PageNumberInput.Text = _viewModel.Tickets.PaginationViewModel.CurrentPage.ToString();
                 }
-                else if (activeViewModel is RouteStationViewModel stationViewModel)
+                else if (_currentTabIndex == 1 && _viewModel.Stations != null && _viewModel.Stations.PaginationViewModel != null)
                 {
-                    PageNumberInput.Text = stationViewModel.PaginationViewModel.CurrentPage.ToString();
+                    PageNumberInput.Text = _viewModel.Stations.PaginationViewModel.CurrentPage.ToString();
                 }
             }
 
@@ -213,21 +354,10 @@ namespace TA_WPF.Views
             if (PageInfoPanel == null || PageNumberInput == null || _viewModel == null)
                 return;
 
-            var activeViewModel = _viewModel.ActiveViewModel;
-            if (activeViewModel == null)
-                return;
-
-            // 根据当前活动视图模型获取分页控制器
-            PaginationViewModel paginationViewModel = null;
-
-            if (activeViewModel is RouteTicketViewModel ticketViewModel)
-            {
-                paginationViewModel = ticketViewModel.PaginationViewModel;
-            }
-            else if (activeViewModel is RouteStationViewModel stationViewModel)
-            {
-                paginationViewModel = stationViewModel.PaginationViewModel;
-            }
+            // 根据当前选中的标签页获取相应的PaginationViewModel
+            var paginationViewModel = _currentTabIndex == 0 ? 
+                _viewModel.Tickets?.PaginationViewModel : 
+                _viewModel.Stations?.PaginationViewModel;
 
             if (paginationViewModel == null)
                 return;
@@ -244,14 +374,14 @@ namespace TA_WPF.Views
                     // 确保页码变更后触发数据加载
                     paginationViewModel.IsInitialized = true;
 
-                    // 直接调用加载方法确保数据刷新
-                    if (activeViewModel is RouteTicketViewModel ticket)
+                    // 根据当前标签页刷新数据
+                    if (_currentTabIndex == 0)
                     {
-                        _ = ticket.RefreshDataAsync();
+                        _ = _viewModel.Tickets.RefreshDataAsync();
                     }
-                    else if (activeViewModel is RouteStationViewModel station)
+                    else if (_currentTabIndex == 1)
                     {
-                        _ = station.RefreshDataAsync();
+                        _ = _viewModel.Stations.RefreshDataAsync();
                     }
                 }
                 else

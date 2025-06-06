@@ -21,7 +21,6 @@ namespace TA_WPF.ViewModels
         private RouteTicketViewModel _tickets;
         private RouteStationViewModel _stations;
         private object _statistics;
-        private object _activeViewModel; // 当前活动的ViewModel
 
         public RouteDetailViewModel(RouteInfo route, DatabaseService databaseService, MainViewModel mainViewModel)
         {
@@ -38,9 +37,6 @@ namespace TA_WPF.ViewModels
             // 初始化数据集合
             _tickets = new RouteTicketViewModel(route, databaseService, mainViewModel);
             _stations = new RouteStationViewModel(route, databaseService, mainViewModel);
-
-            // 默认活动视图模型为车票视图模型
-            _activeViewModel = _tickets;
 
             // 设置分页控制器为已初始化状态，防止初次加载时不触发事件
             _tickets.PaginationViewModel.IsInitialized = true;
@@ -191,20 +187,6 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 当前活动的ViewModel（根据当前选中的标签页）
-        public object ActiveViewModel
-        {
-            get => _activeViewModel;
-            set
-            {
-                if (_activeViewModel != value)
-                {
-                    _activeViewModel = value;
-                    OnPropertyChanged(nameof(ActiveViewModel));
-                }
-            }
-        }
-
         // 是否有数据
         public bool HasData => _tickets != null;
 
@@ -226,26 +208,6 @@ namespace TA_WPF.ViewModels
         private void Close()
         {
             CloseRequested?.Invoke(this, EventArgs.Empty);
-        }
-
-        // 根据标签页索引设置活动视图模型
-        public void SetActiveViewModel(int tabIndex)
-        {
-            switch (tabIndex)
-            {
-                case 0: // 车票列表
-                    ActiveViewModel = Tickets;
-                    break;
-                case 1: // 车站列表
-                    ActiveViewModel = Stations;
-                    break;
-                case 2: // 统计摘要
-                    ActiveViewModel = Tickets; // 默认使用车票数据
-                    break;
-                default:
-                    ActiveViewModel = Tickets;
-                    break;
-            }
         }
 
         // 刷新数据 - 可以公开调用
