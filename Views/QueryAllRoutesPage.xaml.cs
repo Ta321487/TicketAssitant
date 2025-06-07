@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -6,7 +7,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using TA_WPF.Models;
 using TA_WPF.ViewModels;
-using System.Reflection;
 namespace TA_WPF.Views
 {
     /// <summary>
@@ -928,8 +928,8 @@ namespace TA_WPF.Views
                 try
                 {
                     // 直接调用方法而不是通过Command
-                    if (viewModel.GetType().GetMethod("ShowRouteDetails", 
-                        BindingFlags.NonPublic | 
+                    if (viewModel.GetType().GetMethod("ShowRouteDetails",
+                        BindingFlags.NonPublic |
                         BindingFlags.Instance) is MethodInfo methodInfo)
                     {
                         // 使用反射直接调用私有方法

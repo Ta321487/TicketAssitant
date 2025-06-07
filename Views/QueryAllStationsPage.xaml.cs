@@ -652,6 +652,35 @@ namespace TA_WPF.Views
 
             Debug.WriteLine($"StationsDataGrid_PreviewMouseDown - Ctrl: {isCtrlPressed}, Shift: {isShiftPressed}");
 
+            // 检测双击事件
+            if (e.ClickCount == 2 && e.ChangedButton == MouseButton.Left && !isModifierKeyPressed)
+            {
+                Debug.WriteLine("检测到双击事件");
+
+                // 获取点击位置下的行
+                DependencyObject depElement = (DependencyObject)e.OriginalSource;
+
+                // 向上查找DataGridRow
+                while ((depElement != null) && !(depElement is DataGridRow))
+                {
+                    depElement = VisualTreeHelper.GetParent(depElement);
+                }
+
+                if (depElement is DataGridRow doubleClickedRow && doubleClickedRow.Item is StationInfo doubleClickedItem)
+                {
+                    Debug.WriteLine($"双击编辑: {doubleClickedItem.StationName}");
+
+                    // 设置选中项并触发编辑命令
+                    viewModel.SelectedStation = doubleClickedItem;
+                    if (viewModel.DoubleClickEditCommand.CanExecute(doubleClickedItem))
+                    {
+                        viewModel.DoubleClickEditCommand.Execute(doubleClickedItem);
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+
             // 获取点击位置下的行
             DependencyObject dep = (DependencyObject)e.OriginalSource;
             DataGridRow row = null;

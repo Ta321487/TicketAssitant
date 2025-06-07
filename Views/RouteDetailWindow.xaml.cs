@@ -57,10 +57,10 @@ namespace TA_WPF.Views
         private void RouteDetailWindow_Loaded(object sender, RoutedEventArgs e)
         {
             // 窗口加载完成后的初始化操作
-            
+
             // 初始化分页控件数据绑定
             UpdatePaginationBindings();
-            
+
             // 确保ViewModel已完成数据加载
             if (_viewModel != null)
             {
@@ -200,26 +200,26 @@ namespace TA_WPF.Views
         {
             // 页大小下拉框
             PageSizeComboBox.SetBinding(ComboBox.ItemsSourceProperty, new Binding("Tickets.PaginationViewModel.PageSizeOptions"));
-            PageSizeComboBox.SetBinding(ComboBox.SelectedItemProperty, new Binding("Tickets.PaginationViewModel.PageSize") 
-            { 
-                Mode = BindingMode.TwoWay, 
-                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged 
+            PageSizeComboBox.SetBinding(ComboBox.SelectedItemProperty, new Binding("Tickets.PaginationViewModel.PageSize")
+            {
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
             });
 
             // 总记录数
-            TotalCountTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Tickets.TotalCount") 
-            { 
-                StringFormat = "总记录数: {0}" 
+            TotalCountTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Tickets.TotalCount")
+            {
+                StringFormat = "总记录数: {0}"
             });
 
             // 选中项数量
-            SelectedItemsTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Tickets.SelectedItemsCount") 
-            { 
-                StringFormat = "已选择 {0} 项" 
+            SelectedItemsTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Tickets.SelectedItemsCount")
+            {
+                StringFormat = "已选择 {0} 项"
             });
-            SelectedItemsTextBlock.SetBinding(TextBlock.VisibilityProperty, new Binding("Tickets.HasSelectedItems") 
-            { 
-                Converter = (System.Windows.Data.IValueConverter)FindResource("BooleanToVisibilityConverter") 
+            SelectedItemsTextBlock.SetBinding(TextBlock.VisibilityProperty, new Binding("Tickets.HasSelectedItems")
+            {
+                Converter = (System.Windows.Data.IValueConverter)FindResource("BooleanToVisibilityConverter")
             });
 
             // 分页按钮
@@ -244,26 +244,26 @@ namespace TA_WPF.Views
         {
             // 页大小下拉框
             PageSizeComboBox.SetBinding(ComboBox.ItemsSourceProperty, new Binding("Stations.PaginationViewModel.PageSizeOptions"));
-            PageSizeComboBox.SetBinding(ComboBox.SelectedItemProperty, new Binding("Stations.PaginationViewModel.PageSize") 
-            { 
-                Mode = BindingMode.TwoWay, 
-                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged 
+            PageSizeComboBox.SetBinding(ComboBox.SelectedItemProperty, new Binding("Stations.PaginationViewModel.PageSize")
+            {
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
             });
 
             // 总记录数
-            TotalCountTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Stations.TotalCount") 
-            { 
-                StringFormat = "总记录数: {0}" 
+            TotalCountTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Stations.TotalCount")
+            {
+                StringFormat = "总记录数: {0}"
             });
 
             // 选中项数量
-            SelectedItemsTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Stations.SelectedItemsCount") 
-            { 
-                StringFormat = "已选择 {0} 项" 
+            SelectedItemsTextBlock.SetBinding(TextBlock.TextProperty, new Binding("Stations.SelectedItemsCount")
+            {
+                StringFormat = "已选择 {0} 项"
             });
-            SelectedItemsTextBlock.SetBinding(TextBlock.VisibilityProperty, new Binding("Stations.HasSelectedItems") 
-            { 
-                Converter = (System.Windows.Data.IValueConverter)FindResource("BooleanToVisibilityConverter") 
+            SelectedItemsTextBlock.SetBinding(TextBlock.VisibilityProperty, new Binding("Stations.HasSelectedItems")
+            {
+                Converter = (System.Windows.Data.IValueConverter)FindResource("BooleanToVisibilityConverter")
             });
 
             // 分页按钮
@@ -355,8 +355,8 @@ namespace TA_WPF.Views
                 return;
 
             // 根据当前选中的标签页获取相应的PaginationViewModel
-            var paginationViewModel = _currentTabIndex == 0 ? 
-                _viewModel.Tickets?.PaginationViewModel : 
+            var paginationViewModel = _currentTabIndex == 0 ?
+                _viewModel.Tickets?.PaginationViewModel :
                 _viewModel.Stations?.PaginationViewModel;
 
             if (paginationViewModel == null)

@@ -3537,5 +3537,91 @@ namespace TA_WPF.Services
                 throw new Exception($"获取路线车站数据失败: {ex.Message}", ex);
             }
         }
+
+        /// <summary>
+        /// 向路线添加车站
+        /// </summary>
+        /// <param name="mapping">路线车站映射数据</param>
+        /// <returns>添加是否成功</returns>
+        public async Task<bool> AddStationToRouteAsync(RouteStationMapping mapping)
+        {
+            if (mapping == null) throw new ArgumentNullException(nameof(mapping));
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"INSERT INTO route_station_mapping 
+                                    (route_id, station_id, order_index, station_role, stay_time, notes, add_time, distance_from_prev, distance_from_start) 
+                                    VALUES 
+                                    (@RouteId, @StationId, @OrderIndex, @StationRole, @StayTime, @Notes, @AddTime, @DistanceFromPrev, @DistanceFromStart)";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", mapping.RouteId);
+                        command.Parameters.AddWithValue("@StationId", mapping.StationId);
+                        command.Parameters.AddWithValue("@OrderIndex", mapping.OrderIndex);
+                        command.Parameters.AddWithValue("@StationRole", mapping.StationRole);
+                        command.Parameters.AddWithValue("@StayTime", mapping.StayTime);
+                        command.Parameters.AddWithValue("@Notes", mapping.Notes ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@AddTime", mapping.AddTime);
+                        command.Parameters.AddWithValue("@DistanceFromPrev", mapping.DistanceFromPrev);
+                        command.Parameters.AddWithValue("@DistanceFromStart", mapping.DistanceFromStart);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"添加车站到路线失败: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 更新路线车站映射信息
+        /// </summary>
+        /// <param name="mapping">要更新的路线车站映射</param>
+        /// <returns>更新是否成功</returns>
+        public async Task<bool> UpdateRouteStationAsync(RouteStationMapping mapping)
+        {
+            if (mapping == null) throw new ArgumentNullException(nameof(mapping));
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"UPDATE route_station_mapping 
+                                    SET order_index = @OrderIndex,
+                                        station_role = @StationRole,
+                                        stay_time = @StayTime,
+                                        notes = @Notes,
+                                        distance_from_prev = @DistanceFromPrev,
+                                        distance_from_start = @DistanceFromStart
+                                    WHERE id = @Id";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Id", mapping.Id);
+                        command.Parameters.AddWithValue("@OrderIndex", mapping.OrderIndex);
+                        command.Parameters.AddWithValue("@StationRole", mapping.StationRole);
+                        command.Parameters.AddWithValue("@StayTime", mapping.StayTime);
+                        command.Parameters.AddWithValue("@Notes", mapping.Notes ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@DistanceFromPrev", mapping.DistanceFromPrev);
+                        command.Parameters.AddWithValue("@DistanceFromStart", mapping.DistanceFromStart);
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"更新路线车站映射失败: {ex.Message}", ex);
+                return false;
+            }
+        }
     }
 }

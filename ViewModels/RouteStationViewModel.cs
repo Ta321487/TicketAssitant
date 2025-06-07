@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
+using TA_WPF.Views;
 
 namespace TA_WPF.ViewModels
 {
@@ -543,8 +545,32 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void ShowAddStation()
         {
-            // 添加车站功能暂未实现
-            MessageBoxHelper.ShowInfo("添加车站功能尚未实现");
+            try
+            {
+                // 创建StationSearchService
+                var stationSearchService = new StationSearchService(_databaseService);
+
+                // 创建并显示AddStationsToRouteWindow
+                var addStationWindow = new AddStationsToRouteWindow(
+                    _route,
+                    _databaseService,
+                    stationSearchService,
+                    _mainViewModel,
+                    async () => await RefreshDataAsync()
+                );
+
+                if (Application.Current.MainWindow != null)
+                {
+                    addStationWindow.Owner = Application.Current.MainWindow;
+                }
+
+                addStationWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"打开添加车站窗口失败: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"打开添加车站窗口失败: {ex.Message}");
+            }
         }
 
         /// <summary>

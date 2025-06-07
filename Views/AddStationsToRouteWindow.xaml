@@ -1,0 +1,266 @@
+<Window x:Class="TA_WPF.Views.AddStationsToRouteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:local="clr-namespace:TA_WPF.Views"
+        xmlns:converters="clr-namespace:TA_WPF.Converters"
+        mc:Ignorable="d"
+        Title="{Binding WindowTitle}"
+        Width="600" Height="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        FontFamily="Microsoft YaHei UI"
+        FontSize="{Binding FontSize}"
+        Style="{StaticResource MaterialDesignWindow}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        materialDesign:ThemeAssist.Theme="{Binding IsDarkMode, Converter={StaticResource BooleanToThemeConverter}}">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <materialDesign:DialogHost>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- 标题 -->
+            <TextBlock Grid.Row="0" 
+                       Text="添加车站到路线" 
+                       FontSize="24" 
+                       Margin="0,0,0,20" 
+                       HorizontalAlignment="Center"
+                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"/>
+
+            <!-- 主内容 -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Orientation="Vertical" Margin="0,10">
+                    <!-- 选择车站（下拉框加输入框，支持联想） -->
+                    <Grid Margin="0,5,0,15">
+                        <TextBox
+                            x:Name="StationSearchTextBox"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            materialDesign:HintAssist.Hint="选择车站（输入可联想）"
+                            Text="{Binding StationSearchText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                            materialDesign:TextFieldAssist.HasClearButton="True"
+                            VerticalAlignment="Center"
+                            materialDesign:TextFieldAssist.TextBoxViewMargin="0,0,0,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" 
+                                            Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Popup 
+                            IsOpen="{Binding IsStationDropdownOpen}" 
+                            PlacementTarget="{Binding ElementName=StationSearchTextBox}" 
+                            Placement="Bottom" 
+                            Width="{Binding ActualWidth, ElementName=StationSearchTextBox}"
+                            VerticalOffset="5"
+                            StaysOpen="False">
+                            <materialDesign:Card UniformCornerRadius="4" Padding="0">
+                                <ListBox 
+                                    x:Name="StationSuggestionListBox"
+                                    ItemsSource="{Binding StationSuggestions}" 
+                                    MaxHeight="200"
+                                    Background="{DynamicResource MaterialDesignPaper}"
+                                    SelectionChanged="StationSuggestionListBox_SelectionChanged">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock 
+                                                Text="{Binding StationName}" 
+                                                Padding="8,4" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </materialDesign:Card>
+                        </Popup>
+                    </Grid>
+
+                    <!-- 添加位置选项（非第一个站点才显示） -->
+                    <GroupBox
+                        Header="添加位置"
+                        Margin="0,5,0,15"
+                        Style="{StaticResource MaterialDesignGroupBox}"
+                        BorderThickness="1"
+                        Visibility="{Binding ShowAddPositionOptions, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <RadioButton 
+                                Content="添加到开头" 
+                                IsChecked="{Binding AddToStart}"
+                                Style="{StaticResource MaterialDesignRadioButton}"
+                                Margin="0,0,16,0" />
+                                
+                            <RadioButton 
+                                Content="添加到结尾" 
+                                IsChecked="{Binding AddToEnd}"
+                                Style="{StaticResource MaterialDesignRadioButton}"
+                                Margin="0,0,0,0" />
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- 距离计算区域 -->
+                    <Grid Margin="0,5,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 距离上一个站点距离(公里) -->
+                        <TextBox 
+                            Grid.Column="0"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            materialDesign:HintAssist.Hint="距离上一站点距离(公里)"
+                            Text="{Binding DistanceFromPrev, UpdateSourceTrigger=PropertyChanged}"
+                            materialDesign:TextFieldAssist.HasClearButton="True"
+                            VerticalAlignment="Center" />
+
+                        <!-- 计算距离按钮 -->
+                        <Button 
+                            Grid.Column="1"
+                            Command="{Binding CalculateDistanceCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Foreground="{DynamicResource PrimaryHueMidBrush}"
+                            Margin="8,0,0,0"
+                            ToolTip="自动计算站间距离">
+                            <materialDesign:PackIcon Kind="Calculator" Width="24" Height="24" />
+                        </Button>
+                    </Grid>
+
+                    <!-- 距离起点累计距离(公里) -->
+                    <TextBox 
+                        Margin="0,5,0,15"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        materialDesign:HintAssist.Hint="距起点累计距离(公里)"
+                        Text="{Binding DistanceFromStart, UpdateSourceTrigger=PropertyChanged}"
+                        materialDesign:TextFieldAssist.HasClearButton="True"
+                        IsEnabled="{Binding AddToStart}"
+                        VerticalAlignment="Center" />
+
+                    <!-- 计划停留时间 -->
+                    <TextBox 
+                        Margin="0,5,0,15"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        materialDesign:HintAssist.Hint="计划停留时间(分钟)"
+                        Text="{Binding StayTime, UpdateSourceTrigger=PropertyChanged}"
+                        materialDesign:TextFieldAssist.HasClearButton="True"
+                        VerticalAlignment="Center" />
+
+                    <!-- 备注 -->
+                    <TextBox 
+                        Margin="0,5,0,15"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        materialDesign:HintAssist.Hint="备注"
+                        Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                        materialDesign:TextFieldAssist.HasClearButton="True"
+                        AcceptsReturn="True"
+                        TextWrapping="Wrap"
+                        MinHeight="80"
+                        VerticalAlignment="Center" />
+
+                    <!-- 角色复选框 -->
+                    <GroupBox
+                        Header="车站角色"
+                        Margin="0,5,0,15"
+                        Style="{StaticResource MaterialDesignGroupBox}"
+                        BorderThickness="1">
+                        <StackPanel Margin="5">
+                            <CheckBox 
+                                Content="起点" 
+                                IsChecked="{Binding IsStartStation}"
+                                Style="{StaticResource MaterialDesignCheckBox}"
+                                Margin="0,5" />
+                                
+                            <CheckBox 
+                                Content="经停" 
+                                IsChecked="{Binding IsPassingStation}"
+                                Style="{StaticResource MaterialDesignCheckBox}"
+                                Margin="0,5" />
+                                
+                            <CheckBox 
+                                Content="换乘" 
+                                IsChecked="{Binding IsTransferStation}"
+                                Style="{StaticResource MaterialDesignCheckBox}"
+                                Margin="0,5" />
+                                
+                            <CheckBox 
+                                Content="终点" 
+                                IsChecked="{Binding IsEndStation}"
+                                Style="{StaticResource MaterialDesignCheckBox}"
+                                Margin="0,5" />
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 底部按钮区域 -->
+            <Grid Grid.Row="2" Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 取消按钮 -->
+                <Button 
+                    Grid.Column="1"
+                    Command="{Binding CancelCommand}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Foreground="{DynamicResource PrimaryHueMidBrush}"
+                    Margin="0,0,10,0"
+                    Height="40"
+                    Width="100"
+                    ToolTip="取消添加并关闭窗口">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Close" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="取消"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- 保存按钮 -->
+                <Button 
+                    Grid.Column="2"
+                    Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding CanSave}"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Foreground="{DynamicResource PrimaryHueMidBrush}"
+                    Height="40"
+                    Width="100"
+                    ToolTip="保存车站信息">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ContentSave" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="保存"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- 加载指示器 -->
+            <Grid Grid.Row="0" Grid.RowSpan="3" 
+                  Background="#80000000"
+                  Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ProgressBar 
+                    Style="{StaticResource MaterialDesignCircularProgressBar}"
+                    IsIndeterminate="True"
+                    Value="0"
+                    Width="50"
+                    Height="50"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"/>
+            </Grid>
+        </Grid>
+    </materialDesign:DialogHost>
+</Window> 
