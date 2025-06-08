@@ -255,6 +255,34 @@ namespace TA_WPF.Services
         }
 
         /// <summary>
+        /// 计算两点之间的驾车距离（使用double类型的经纬度）
+        /// </summary>
+        /// <param name="originLon">起点经度</param>
+        /// <param name="originLat">起点纬度</param>
+        /// <param name="destLon">终点经度</param>
+        /// <param name="destLat">终点纬度</param>
+        /// <returns>距离（单位：公里），如果计算失败则返回null</returns>
+        public async Task<decimal?> CalculateDistanceAsync(double originLon, double originLat, double destLon, double destLat)
+        {
+            try
+            {
+                // 将double转换为string
+                string originLonStr = originLon.ToString("F6");
+                string originLatStr = originLat.ToString("F6");
+                string destLonStr = destLon.ToString("F6");
+                string destLatStr = destLat.ToString("F6");
+
+                // 调用现有方法
+                return await CalculateDistanceAsync(originLonStr, originLatStr, destLonStr, destLatStr);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"计算距离时出错: {ex.Message}", ex);
+                return null; // 出错时返回null
+            }
+        }
+
+        /// <summary>
         /// 处理API错误
         /// </summary>
         /// <param name="info">错误信息</param>

@@ -232,6 +232,86 @@ namespace TA_WPF.Models
             }
         }
 
+        /// <summary>
+        /// 是否为起点站
+        /// </summary>
+        public bool IsStartStation
+        {
+            get => (StationRole & 1) != 0;
+            set
+            {
+                if (value)
+                {
+                    StationRole = (byte)(StationRole | 1); // 设置起点标志位
+                }
+                else
+                {
+                    StationRole = (byte)(StationRole & ~1); // 清除起点标志位
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 是否为终点站
+        /// </summary>
+        public bool IsEndStation
+        {
+            get => (StationRole & 2) != 0;
+            set
+            {
+                if (value)
+                {
+                    StationRole = (byte)(StationRole | 2); // 设置终点标志位
+                }
+                else
+                {
+                    StationRole = (byte)(StationRole & ~2); // 清除终点标志位
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 是否为经停站
+        /// </summary>
+        public bool IsPassingStation
+        {
+            get => (StationRole & 4) != 0;
+            set
+            {
+                if (value)
+                {
+                    StationRole = (byte)(StationRole | 4); // 设置经停标志位
+                }
+                else
+                {
+                    StationRole = (byte)(StationRole & ~4); // 清除经停标志位
+                }
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 是否为换乘站
+        /// </summary>
+        public bool IsTransferStation
+        {
+            get => (StationRole & 8) != 0;
+            set
+            {
+                if (value)
+                {
+                    StationRole = (byte)(StationRole | 8); // 设置换乘标志位
+                }
+                else
+                {
+                    StationRole = (byte)(StationRole & ~8); // 清除换乘标志位
+                }
+                OnPropertyChanged();
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Windows.Controls;
+using TA_WPF.Models;
 using TA_WPF.ViewModels;
+using System.Windows.Input;
+using System.Windows;
 
 namespace TA_WPF.Views
 {
@@ -84,6 +87,49 @@ namespace TA_WPF.Views
                 viewModel.SynchronizeSelectionStates();
 
                 Debug.WriteLine($"SynchronizeSelectionStates后SelectedStations数量: {viewModel.SelectedStations.Count}, SelectedItemsCount: {viewModel.SelectedItemsCount}");
+            }
+        }
+
+        /// <summary>
+        /// 处理数据网格双击事件
+        /// </summary>
+        private void StationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (!(DataContext is RouteStationViewModel viewModel))
+                return;
+
+            // 获取点击位置下的行
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+
+            // 向上查找DataGridRow
+            while ((dep != null) && !(dep is DataGridRow))
+            {
+                dep = System.Windows.Media.VisualTreeHelper.GetParent(dep);
+            }
+
+            // 如果找到了行，处理该行
+            if (dep is DataGridRow clickedRow && clickedRow.Item is RouteStationMapping clickedItem)
+            {
+                Debug.WriteLine($"双击编辑车站: {clickedItem.Station.StationName}");
+
+                // 确保只有这一个车站被选中
+                foreach (var station in viewModel.Stations)
+                {
+                    station.IsSelected = (station == clickedItem);
+                }
+
+                // 清空之前的选择并添加当前选中项
+                viewModel.SelectedStations.Clear();
+                viewModel.SelectedStations.Add(clickedItem);
+                viewModel.SelectedStation = clickedItem;
+                viewModel.UpdateSelectedItemsCount();
+
+                // 触发编辑命令
+                if (viewModel.EditStationCommand.CanExecute(null))
+                {
+                    viewModel.EditStationCommand.Execute(null);
+                    e.Handled = true;
+                }
             }
         }
     }

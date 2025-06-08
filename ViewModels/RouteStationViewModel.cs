@@ -63,6 +63,7 @@ namespace TA_WPF.ViewModels
             RemoveStationsCommand = new RelayCommand(RemoveSelectedStations, CanRemoveStations);
             MoveUpCommand = new RelayCommand(MoveStationsUp, CanMoveUp);
             MoveDownCommand = new RelayCommand(MoveStationsDown, CanMoveDown);
+            EditStationCommand = new RelayCommand(EditSelectedStation, () => CanEditStation);
 
             // 初始加载数据
             _ = InitializeAsync();
@@ -240,6 +241,11 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public bool HasNoData => Stations == null || Stations.Count == 0;
 
+        /// <summary>
+        /// 是否可以编辑车站
+        /// </summary>
+        public bool CanEditStation => _selectedStations.Count == 1;
+
         #endregion
 
         #region 命令
@@ -283,6 +289,11 @@ namespace TA_WPF.ViewModels
         /// 下移命令
         /// </summary>
         public ICommand MoveDownCommand { get; }
+
+        /// <summary>
+        /// 编辑车站命令
+        /// </summary>
+        public ICommand EditStationCommand { get; }
 
         #endregion
 
@@ -681,6 +692,7 @@ namespace TA_WPF.ViewModels
 
             OnPropertyChanged(nameof(SelectedStations));
             OnPropertyChanged(nameof(HasSelectedItems));
+            OnPropertyChanged(nameof(CanEditStation));
         }
 
         /// <summary>
@@ -690,6 +702,51 @@ namespace TA_WPF.ViewModels
         {
             SelectedItemsCount = _selectedStations.Count;
             HasSelectedItems = SelectedItemsCount > 0;
+            OnPropertyChanged(nameof(CanEditStation));
+        }
+
+        /// <summary>
+        /// 编辑选中的车站
+        /// </summary>
+        private void EditSelectedStation()
+        {
+            try
+            {
+                // 确保只选择了一个车站
+                if (_selectedStations.Count != 1)
+                {
+                    MessageBoxHelper.ShowInfo("请选择一个车站进行编辑");
+                    return;
+                }
+
+                // 获取选中的车站
+                var selectedStation = _selectedStations.First();
+
+                // 创建StationSearchService
+                var stationSearchService = new StationSearchService(_databaseService);
+
+                // 创建并显示EditStationToRouteWindow
+                var editStationWindow = new EditStationToRouteWindow(
+                    _route,
+                    selectedStation,
+                    _databaseService,
+                    stationSearchService,
+                    _mainViewModel,
+                    async () => await RefreshDataAsync()
+                );
+
+                if (Application.Current.MainWindow != null)
+                {
+                    editStationWindow.Owner = Application.Current.MainWindow;
+                }
+
+                editStationWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"打开编辑车站窗口失败: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"打开编辑车站窗口失败: {ex.Message}");
+            }
         }
 
         #endregion

@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:TA_WPF.Converters"
         mc:Ignorable="d"
         Title="{Binding WindowTitle}"
-        Height="600" Width="900"
+        Height="600" Width="950"
         WindowStartupLocation="CenterOwner"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
@@ -134,7 +134,6 @@
                 <TextBlock Text="每页显示:" 
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
-                           FontSize="{Binding MainViewModel.FontSize}"
                            Margin="0,0,8,0"/>
                 <ComboBox x:Name="PageSizeComboBox"
                           ItemsSource="{Binding Tickets.PaginationViewModel.PageSizeOptions}"
@@ -151,7 +150,6 @@
                            Text="{Binding Tickets.TotalCount, StringFormat=总记录数: {0}}" 
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
-                           FontSize="{Binding MainViewModel.FontSize}"
                            Margin="16,0,0,0"/>
                 
                 <!-- 选择状态指示器 -->
@@ -159,7 +157,6 @@
                            Text="{Binding Tickets.SelectedItemsCount, StringFormat=已选择 {0} 项}"
                            Style="{StaticResource MaterialDesignBody1TextBlock}" 
                            VerticalAlignment="Center"
-                           FontSize="{Binding MainViewModel.FontSize}"
                            Margin="16,0,0,0"
                            Foreground="{DynamicResource MaterialDesignBodyLight}"
                            FontWeight="Medium"
@@ -199,17 +196,14 @@
                                        Text="{Binding Tickets.PaginationViewModel.CurrentPage}" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
                                        FontWeight="SemiBold"
-                                       FontSize="{Binding MainViewModel.FontSize}"
                                        Foreground="{DynamicResource PrimaryHueMidBrush}"
                                        VerticalAlignment="Center"/>
                             <TextBlock Text=" / " 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                       FontSize="{Binding MainViewModel.FontSize}"
                                        VerticalAlignment="Center"/>
                             <TextBlock x:Name="TotalPagesTextBlock"
                                        Text="{Binding Tickets.PaginationViewModel.TotalPages}" 
                                        Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                       FontSize="{Binding MainViewModel.FontSize}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -218,7 +212,6 @@
                              Height="36"
                              Margin="4,0"
                              Style="{StaticResource MaterialDesignTextBox}"
-                             FontSize="{Binding MainViewModel.FontSize}"
                              materialDesign:HintAssist.Hint="页码"
                              VerticalAlignment="Center"
                              HorizontalContentAlignment="Center"

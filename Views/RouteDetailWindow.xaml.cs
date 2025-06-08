@@ -124,7 +124,7 @@ namespace TA_WPF.Views
                 Padding = new Thickness(8),
                 Background = System.Windows.Media.Brushes.DarkSlateGray,
                 Foreground = System.Windows.Media.Brushes.White,
-                FontSize = 14
+                FontSize = _viewModel.MainViewModel.FontSize
             };
 
             _pageNumberTooltip = new Popup
@@ -134,6 +134,14 @@ namespace TA_WPF.Views
                 StaysOpen = false,
                 AllowsTransparency = true
             };
+            
+            // 绑定字体大小以便在更改时同步更新
+            var fontSizeBinding = new Binding("MainViewModel.FontSize")
+            {
+                Source = _viewModel,
+                Mode = BindingMode.OneWay
+            };
+            _tooltipText.SetBinding(TextBlock.FontSizeProperty, fontSizeBinding);
         }
 
         /// <summary>

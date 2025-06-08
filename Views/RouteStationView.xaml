@@ -140,6 +140,21 @@
                     </StackPanel>
                 </Button>
 
+                <!-- 编辑车站按钮 -->
+                <Button Command="{Binding EditStationCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        ToolTip="编辑车站"
+                        Margin="0,0,8,0"
+                        Visibility="{Binding CanEditStation, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Height="36">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Edit" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="编辑车站" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
                 <!-- 上移按钮 -->
                 <Button Command="{Binding MoveUpCommand}"
                         Style="{StaticResource MaterialDesignFlatButton}"
@@ -265,6 +280,7 @@
                       VirtualizingPanel.CacheLengthUnit="Page"
                       VirtualizingPanel.CacheLength="5,5"
                       VirtualizingPanel.ScrollUnit="Pixel"
+                      MouseDoubleClick="StationsDataGrid_MouseDoubleClick"
                       Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
                 
                 <DataGrid.Resources>

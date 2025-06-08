@@ -213,9 +213,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public bool IsValid =>
             !string.IsNullOrWhiteSpace(RouteName) &&
-            HasCoverImage &&
-            !string.IsNullOrWhiteSpace(TotalDistance) &&
-            decimal.TryParse(TotalDistance, out _);
+            HasCoverImage;
 
         /// <summary>
         /// 创建路线命令
@@ -252,16 +250,15 @@ namespace TA_WPF.ViewModels
                     return;
                 }
 
-                if (string.IsNullOrWhiteSpace(TotalDistance))
+                // 总里程处理：如果为空则默认为0
+                decimal totalDistanceValue = 0;
+                if (!string.IsNullOrWhiteSpace(TotalDistance))
                 {
-                    MessageBoxHelper.ShowError("请输入总里程");
-                    return;
-                }
-
-                if (!decimal.TryParse(TotalDistance, out decimal totalDistanceValue))
-                {
-                    MessageBoxHelper.ShowError("总里程必须是有效的数值");
-                    return;
+                    if (!decimal.TryParse(TotalDistance, out totalDistanceValue))
+                    {
+                        MessageBoxHelper.ShowError("总里程必须是有效的数值");
+                        return;
+                    }
                 }
 
                 IsLoading = true;

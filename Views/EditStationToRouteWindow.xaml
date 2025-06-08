@@ -1,4 +1,4 @@
-<Window x:Class="TA_WPF.Views.AddStationsToRouteWindow"
+<Window x:Class="TA_WPF.Views.EditStationToRouteWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -41,7 +41,7 @@
 
             <!-- 标题 -->
             <TextBlock Grid.Row="0" 
-                       Text="添加车站到路线" 
+                       Text="编辑路线中的车站" 
                        FontSize="24" 
                        Margin="0,0,0,20" 
                        HorizontalAlignment="Center"
@@ -50,45 +50,27 @@
             <!-- 主内容 -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel Orientation="Vertical" Margin="0,10">
-                    <!-- 选择车站（下拉框加输入框，支持联想） -->
+                    <!-- 选择车站（只读，显示当前车站名称） -->
                     <Grid Margin="0,5,0,15">
                         <TextBox
-                            x:Name="StationSearchTextBox"
+                            x:Name="StationNameTextBox"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                            materialDesign:HintAssist.Hint="选择车站"
-                            Text="{Binding StationSearchText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                            materialDesign:TextFieldAssist.HasClearButton="True"
-                            VerticalAlignment="Center"
-                            materialDesign:TextFieldAssist.TextBoxViewMargin="0,0,0,0">
-                            <TextBox.InputBindings>
-                                <KeyBinding Key="Return" 
-                                            Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" />
-                            </TextBox.InputBindings>
+                            materialDesign:HintAssist.Hint="当前车站（不可编辑）"
+                            Text="{Binding StationName, Mode=OneWay}"
+                            IsReadOnly="True"
+                            Background="{DynamicResource MaterialDesignTextFieldBoxBackground}"
+                            Foreground="{DynamicResource MaterialDesignBodyLight}"
+                            ToolTip="车站名称不可编辑，如需更换车站请删除此车站并添加新车站"
+                            VerticalAlignment="Center">
                         </TextBox>
-                        <Popup 
-                            IsOpen="{Binding IsStationDropdownOpen}" 
-                            PlacementTarget="{Binding ElementName=StationSearchTextBox}" 
-                            Placement="Bottom" 
-                            Width="{Binding ActualWidth, ElementName=StationSearchTextBox}"
-                            VerticalOffset="5"
-                            StaysOpen="False">
-                            <materialDesign:Card UniformCornerRadius="4" Padding="0">
-                                <ListBox 
-                                    x:Name="StationSuggestionListBox"
-                                    ItemsSource="{Binding StationSuggestions}" 
-                                    MaxHeight="200"
-                                    Background="{DynamicResource MaterialDesignPaper}"
-                                    SelectionChanged="StationSuggestionListBox_SelectionChanged">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock 
-                                                Text="{Binding StationName}" 
-                                                Padding="8,4" />
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </materialDesign:Card>
-                        </Popup>
+                        
+                        <!-- 站名不可编辑提示 -->
+                        <TextBlock 
+                            Text="{Binding StationNameReadOnlyTip}"
+                            Margin="0,65,0,0" 
+                            FontSize="12" 
+                            Foreground="{DynamicResource MaterialDesignBodyLight}"
+                            HorizontalAlignment="Left"/>
                     </Grid>
 
                     <!-- 距离计算区域 -->
@@ -126,7 +108,7 @@
                         materialDesign:HintAssist.Hint="距起点累计距离(公里)"
                         Text="{Binding DistanceFromStart, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
-                        IsEnabled="{Binding AddToStart}"
+                        IsEnabled="{Binding IsStartStation}"
                         VerticalAlignment="Center" />
 
                     <!-- 计划停留时间 -->
@@ -202,7 +184,7 @@
                     Margin="0,0,10,0"
                     Height="40"
                     Width="100"
-                    ToolTip="取消添加并关闭窗口">
+                    ToolTip="取消编辑并关闭窗口">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Close" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBlock Text="取消"/>
