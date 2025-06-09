@@ -5,6 +5,8 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.Views;
+using System.Diagnostics;
+using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -61,8 +63,6 @@ namespace TA_WPF.ViewModels
             InvertSelectionCommand = new RelayCommand(InvertSelection);
             AddStationCommand = new RelayCommand(ShowAddStation);
             RemoveStationsCommand = new RelayCommand(RemoveSelectedStations, CanRemoveStations);
-            MoveUpCommand = new RelayCommand(MoveStationsUp, CanMoveUp);
-            MoveDownCommand = new RelayCommand(MoveStationsDown, CanMoveDown);
             EditStationCommand = new RelayCommand(EditSelectedStation, () => CanEditStation);
 
             // 初始加载数据
@@ -281,16 +281,6 @@ namespace TA_WPF.ViewModels
         public ICommand RemoveStationsCommand { get; }
 
         /// <summary>
-        /// 上移命令
-        /// </summary>
-        public ICommand MoveUpCommand { get; }
-
-        /// <summary>
-        /// 下移命令
-        /// </summary>
-        public ICommand MoveDownCommand { get; }
-
-        /// <summary>
         /// 编辑车站命令
         /// </summary>
         public ICommand EditStationCommand { get; }
@@ -311,7 +301,7 @@ namespace TA_WPF.ViewModels
                 // 获取总数
                 TotalCount = await _databaseService.GetRouteStationsCountAsync(_route.Id);
 
-                System.Diagnostics.Debug.WriteLine($"刷新数据 - 总记录数: {TotalCount}，当前页: {PaginationViewModel.CurrentPage}，每页数量: {PaginationViewModel.PageSize}");
+                Debug.WriteLine($"刷新数据 - 总记录数: {TotalCount}，当前页: {PaginationViewModel.CurrentPage}，每页数量: {PaginationViewModel.PageSize}");
 
                 // 设置分页控制器状态
                 if (!PaginationViewModel.IsInitialized)
@@ -328,12 +318,12 @@ namespace TA_WPF.ViewModels
                     PaginationViewModel.CurrentPage,
                     PaginationViewModel.PageSize);
 
-                System.Diagnostics.Debug.WriteLine($"获取到分页数据 - 数量: {stations.Count}");
+                Debug.WriteLine($"获取到分页数据 - 数量: {stations.Count}");
 
                 // 如果获取的数据超过页面大小，进行截断
                 if (stations.Count > PaginationViewModel.PageSize)
                 {
-                    System.Diagnostics.Debug.WriteLine($"警告：获取的数据量({stations.Count})超过页面大小({PaginationViewModel.PageSize})，将进行截断");
+                    Debug.WriteLine($"警告：获取的数据量({stations.Count})超过页面大小({PaginationViewModel.PageSize})，将进行截断");
                     stations = stations.Take(PaginationViewModel.PageSize).ToList();
                 }
 
@@ -361,11 +351,11 @@ namespace TA_WPF.ViewModels
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"警告：检测到重复ID的数据项({station.Id})，已跳过");
+                        Debug.WriteLine($"警告：检测到重复ID的数据项({station.Id})，已跳过");
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"数据加载完成 - Stations集合大小: {Stations.Count}");
+                Debug.WriteLine($"数据加载完成 - Stations集合大小: {Stations.Count}");
 
                 // 更新UI状态
                 OnPropertyChanged(nameof(HasData));
@@ -393,7 +383,7 @@ namespace TA_WPF.ViewModels
         {
             // 获取当前页面的项数
             int expectedCount = Stations.Count;
-            System.Diagnostics.Debug.WriteLine($"开始全选操作 - 当前页数据项数量: {expectedCount}");
+            Debug.WriteLine($"开始全选操作 - 当前页数据项数量: {expectedCount}");
 
             try
             {
@@ -431,7 +421,7 @@ namespace TA_WPF.ViewModels
                 // 验证选择数量是否与当前页项数一致
                 if (SelectedItemsCount != expectedCount)
                 {
-                    System.Diagnostics.Debug.WriteLine($"警告：选择数量与当前页项数不一致！");
+                    Debug.WriteLine($"警告：选择数量与当前页项数不一致！");
                 }
 
                 OnPropertyChanged(nameof(SelectedStations));
@@ -440,7 +430,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"全选操作异常: {ex.Message}");
+                Debug.WriteLine($"全选操作异常: {ex.Message}");
             }
         }
 
@@ -460,7 +450,7 @@ namespace TA_WPF.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"获取DataGrid异常: {ex.Message}");
+                Debug.WriteLine($"获取DataGrid异常: {ex.Message}");
             }
             return null;
         }
@@ -518,7 +508,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private void InvertSelection()
         {
-            System.Diagnostics.Debug.WriteLine($"开始反选操作 - 当前选中项数量: {_selectedStations.Count}, 当前页项数: {Stations.Count}");
+            Debug.WriteLine($"开始反选操作 - 当前选中项数量: {_selectedStations.Count}, 当前页项数: {Stations.Count}");
 
             // 新建临时集合存储将要选中的项
             var newSelection = new List<RouteStationMapping>();
@@ -544,7 +534,7 @@ namespace TA_WPF.ViewModels
 
             // 更新UI和计数
             SelectedItemsCount = _selectedStations.Count;
-            System.Diagnostics.Debug.WriteLine($"反选完成 - 新选中项数量: {SelectedItemsCount}");
+            Debug.WriteLine($"反选完成 - 新选中项数量: {SelectedItemsCount}");
 
             OnPropertyChanged(nameof(SelectedStations));
             OnPropertyChanged(nameof(HasSelectedItems));
@@ -589,52 +579,128 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private bool CanRemoveStations()
         {
-            return HasSelectedItems;
+            // 没有选中项时不可删除
+            if (!HasSelectedItems)
+                return false;
+                
+            // 选中的项中包含起点站时不可删除
+            if (_selectedStations.Any(s => (s.StationRole & 1) == 1)) // 1代表起点站
+                return false;
+                
+            return true;
         }
 
         /// <summary>
         /// 移除选中的车站
         /// </summary>
-        private void RemoveSelectedStations()
+        private async void RemoveSelectedStations()
         {
-            // 移除车站功能暂未实现
-            MessageBoxHelper.ShowInfo("移除车站功能尚未实现");
-        }
+            if (_selectedStations == null || _selectedStations.Count == 0)
+            {
+                return;
+            }
 
-        /// <summary>
-        /// 是否可以上移车站
-        /// </summary>
-        private bool CanMoveUp()
-        {
-            // 暂未实现上移功能
-            return HasSelectedItems;
-        }
+            // 检查是否选中了起点站
+            if (_selectedStations.Any(s => (s.StationRole & 1) == 1)) // 1代表起点站
+            {
+                MessageBoxHelper.ShowWarning("起点站不能被删除，请取消选择起点站后再试");
+                return;
+            }
 
-        /// <summary>
-        /// 上移车站
-        /// </summary>
-        private void MoveStationsUp()
-        {
-            // 上移车站功能暂未实现
-            MessageBoxHelper.ShowInfo("上移车站功能尚未实现");
-        }
+            string confirmMessage;
+            
+            if (_selectedStations.Count == 1)
+            {
+                // 获取车站信息
+                var station = await _databaseService.GetStationByIdAsync(_selectedStations[0].StationId);
+                string stationName = station?.StationName ?? "未知车站";
+                
+                confirmMessage = $"确定要删除 {stationName} 吗？此操作不可撤销。";
+            }
+            else
+            {
+                confirmMessage = $"确定要删除选中的 {_selectedStations.Count} 个车站吗？此操作不可撤销。";
+            }
 
-        /// <summary>
-        /// 是否可以下移车站
-        /// </summary>
-        private bool CanMoveDown()
-        {
-            // 暂未实现下移功能
-            return HasSelectedItems;
-        }
+            // 显示确认对话框
+            MessageBoxResult result = MessageBoxHelper.ShowConfirmation(confirmMessage);
 
-        /// <summary>
-        /// 下移车站
-        /// </summary>
-        private void MoveStationsDown()
-        {
-            // 下移车站功能暂未实现
-            MessageBoxHelper.ShowInfo("下移车站功能尚未实现");
+            // 如果用户确认删除
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    IsLoading = true;
+
+                    // 收集要删除的车站映射ID
+                    var stationMappingIds = _selectedStations.Select(s => s.Id).ToList();
+
+                    // 调用服务执行删除
+                    bool success = await _databaseService.DeleteRouteStationsByIdsAsync(stationMappingIds);
+
+                    if (success)
+                    {
+                        // 刷新列表
+                        await RefreshDataAsync();
+                        MessageBoxHelper.ShowInfo("删除成功");
+                        
+                        // 检查删除后是否还有终点站
+                        bool hasEndStation = _stations.Any(s => (s.StationRole & 2) == 2); // 2代表终点站
+                        
+                        // 如果没有终点站但有车站，提示用户将最后一个车站设为终点
+                        if (!hasEndStation && _stations.Count > 0)
+                        {
+                            var lastStation = _stations.Last();
+                            string stationName = lastStation.Station?.StationName ?? "最后一个车站";
+                            
+                            MessageBoxResult endStationResult = MessageBoxHelper.ShowConfirmation(
+                                $"路线必须有一个终点站，是否将 {stationName} 设为终点站？");
+                                
+                            if (endStationResult == MessageBoxResult.Yes)
+                            {
+                                // 更新最后一个车站为终点站
+                                lastStation.StationRole |= 2; // 添加终点站角色
+                                
+                                // 确保IsEndStation属性也被正确设置
+                                lastStation.IsEndStation = true;
+                                
+                                // 更新StationRoleText属性
+                                lastStation.UpdateStationRoleText();
+                                
+                                // 保存变更
+                                bool updateSuccess = await _databaseService.UpdateRouteStationAsync(lastStation);
+                                
+                                if (updateSuccess)
+                                {
+                                    await RefreshDataAsync();
+                                    MessageBoxHelper.ShowInfo($"已将 {stationName} 设为终点站");
+                                }
+                                else
+                                {
+                                    MessageBoxHelper.ShowError("设置终点站失败，请手动编辑车站角色");
+                                }
+                            }
+                            else
+                            {
+                                MessageBoxHelper.ShowWarning("注意：路线必须有一个终点站，请手动设置一个终点站");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBoxHelper.ShowError("删除失败，请稍后重试");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.LogError($"删除车站失败: {ex.Message}", ex);
+                    MessageBoxHelper.ShowError($"删除失败: {ex.Message}");
+                }
+                finally
+                {
+                    IsLoading = false;
+                }
+            }
         }
 
         /// <summary>
@@ -642,7 +708,7 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public void SynchronizeSelectionStates()
         {
-            System.Diagnostics.Debug.WriteLine($"开始同步选择状态 - 当前SelectedStations数量: {_selectedStations.Count}");
+            Debug.WriteLine($"开始同步选择状态 - 当前SelectedStations数量: {_selectedStations.Count}");
 
             // 清空并重建选择集合
             _selectedStations.Clear();
@@ -667,7 +733,7 @@ namespace TA_WPF.ViewModels
             // 确保总数不超过当前页的项目数
             if (_selectedStations.Count > Stations.Count)
             {
-                System.Diagnostics.Debug.WriteLine($"警告：选择数量({_selectedStations.Count})超过当前页项目数({Stations.Count})，将进行截断");
+                Debug.WriteLine($"警告：选择数量({_selectedStations.Count})超过当前页项目数({Stations.Count})，将进行截断");
 
                 // 清空集合并重新添加
                 var tempList = _selectedStations.Take(Stations.Count).ToList();
@@ -682,17 +748,20 @@ namespace TA_WPF.ViewModels
             // 更新计数和UI
             SelectedItemsCount = _selectedStations.Count;
 
-            System.Diagnostics.Debug.WriteLine($"同步选择状态完成 - 当前页选中项: {currentPageSelectedCount}, SelectedStations: {_selectedStations.Count}, SelectedItemsCount: {SelectedItemsCount}");
+            Debug.WriteLine($"同步选择状态完成 - 当前页选中项: {currentPageSelectedCount}, SelectedStations: {_selectedStations.Count}, SelectedItemsCount: {SelectedItemsCount}");
 
             // 验证选择数量
             if (currentPageSelectedCount != SelectedItemsCount)
             {
-                System.Diagnostics.Debug.WriteLine($"警告：选择数量不一致！当前页选中: {currentPageSelectedCount}, 选择集合: {SelectedItemsCount}");
+                Debug.WriteLine($"警告：选择数量不一致！当前页选中: {currentPageSelectedCount}, 选择集合: {SelectedItemsCount}");
             }
 
             OnPropertyChanged(nameof(SelectedStations));
             OnPropertyChanged(nameof(HasSelectedItems));
             OnPropertyChanged(nameof(CanEditStation));
+            
+            // 刷新RemoveStationsCommand的CanExecute状态
+            (RemoveStationsCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         /// <summary>
@@ -703,6 +772,9 @@ namespace TA_WPF.ViewModels
             SelectedItemsCount = _selectedStations.Count;
             HasSelectedItems = SelectedItemsCount > 0;
             OnPropertyChanged(nameof(CanEditStation));
+            
+            // 刷新RemoveStationsCommand的CanExecute状态
+            (RemoveStationsCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         /// <summary>

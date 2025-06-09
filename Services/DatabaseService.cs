@@ -2622,7 +2622,7 @@ namespace TA_WPF.Services
         }
 
         /// <summary>
-        /// 创建路线与车票映射表
+        /// 创建路线车票映射表
         /// </summary>
         public async Task CreateRouteTicketMappingTableAsync()
         {
@@ -2640,7 +2640,6 @@ namespace TA_WPF.Services
                       `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
                       `route_id` int NOT NULL COMMENT '路线ID',
                       `ticket_id` int NOT NULL COMMENT '车票ID',
-                      `order_index` int NULL DEFAULT 0 COMMENT '在路线中的顺序',
                       `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
                       PRIMARY KEY (`id`) USING BTREE,
                       INDEX `idx_route`(`route_id` ASC) USING BTREE,
@@ -2681,7 +2680,6 @@ namespace TA_WPF.Services
                       `id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
                       `route_id` int NOT NULL COMMENT '路线ID',
                       `station_id` int NOT NULL COMMENT '车站ID',
-                      `order_index` int NULL DEFAULT 0 COMMENT '在路线中的顺序',
                       `station_role` tinyint NULL DEFAULT 0 COMMENT '车站角色：1=起点,2=终点,4=经停,8=换乘',
                       `stay_time` int NULL DEFAULT 0 COMMENT '计划停留时间(分钟)',
                       `notes` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
@@ -3196,7 +3194,7 @@ namespace TA_WPF.Services
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
                     // 使用JOIN联合查询获取车票详情和映射信息
-                    string query = @"SELECT m.id, m.route_id, m.ticket_id, m.order_index, m.add_time, 
+                    string query = @"SELECT m.id, m.route_id, m.ticket_id, m.add_time, 
                                     t.ticket_number, t.check_in_location, t.depart_station, t.train_no, t.arrive_station,
                                     t.depart_station_pinyin, t.arrive_station_pinyin, t.depart_date, t.depart_time, 
                                     t.coach_no, t.seat_no, t.money, t.seat_type, t.additional_info, t.ticket_purpose, 
@@ -3205,7 +3203,7 @@ namespace TA_WPF.Services
                                     FROM route_ticket_mapping m
                                     INNER JOIN train_ride_info t ON m.ticket_id = t.id
                                     WHERE m.route_id = @RouteId
-                                    ORDER BY m.order_index ASC, m.add_time DESC
+                                    ORDER BY m.add_time DESC
                                     LIMIT @Offset, @PageSize";
 
                     using (var command = new MySqlCommand(query, connection))
@@ -3224,7 +3222,6 @@ namespace TA_WPF.Services
                                     Id = reader.GetInt32(reader.GetOrdinal("id")),
                                     RouteId = reader.GetInt32(reader.GetOrdinal("route_id")),
                                     TicketId = reader.GetInt32(reader.GetOrdinal("ticket_id")),
-                                    OrderIndex = reader.GetInt32(reader.GetOrdinal("order_index")),
                                     AddTime = reader.GetDateTime(reader.GetOrdinal("add_time")),
 
                                     // 映射车票信息
@@ -3360,16 +3357,15 @@ namespace TA_WPF.Services
                     {
                         string query = @"
                             INSERT INTO route_ticket_mapping 
-                            (route_id, ticket_id, order_index, add_time) 
+                            (route_id, ticket_id, add_time) 
                             VALUES 
-                            (@routeId, @ticketId, @orderIndex, @addTime)";
+                            (@routeId, @ticketId, @addTime)";
 
                         using (var command = new MySqlCommand(query, connection, transaction))
                         {
                             // 添加参数，但不设置值（将在循环中设置）
                             command.Parameters.Add("@routeId", MySqlDbType.Int32);
                             command.Parameters.Add("@ticketId", MySqlDbType.Int32);
-                            command.Parameters.Add("@orderIndex", MySqlDbType.Int32);
                             command.Parameters.Add("@addTime", MySqlDbType.DateTime);
 
                             // 依次处理每个映射
@@ -3377,7 +3373,6 @@ namespace TA_WPF.Services
                             {
                                 command.Parameters["@routeId"].Value = mapping.RouteId;
                                 command.Parameters["@ticketId"].Value = mapping.TicketId;
-                                command.Parameters["@orderIndex"].Value = mapping.OrderIndex;
                                 command.Parameters["@addTime"].Value = mapping.AddTime;
 
                                 // 执行插入
@@ -3492,7 +3487,7 @@ namespace TA_WPF.Services
                         FROM route_station_mapping rsm
                         LEFT JOIN station_info si ON rsm.station_id = si.id
                         WHERE rsm.route_id = @RouteId
-                        ORDER BY rsm.order_index ASC
+                        ORDER BY rsm.add_time ASC
                         LIMIT @Skip, @PageSize";
 
                     using (var command = new MySqlCommand(sql, connection))
@@ -3511,7 +3506,6 @@ namespace TA_WPF.Services
                                     Id = reader.GetInt32(reader.GetOrdinal("id")),
                                     RouteId = reader.GetInt32(reader.GetOrdinal("route_id")),
                                     StationId = reader.GetInt32(reader.GetOrdinal("station_id")),
-                                    OrderIndex = reader.GetInt32(reader.GetOrdinal("order_index")),
                                     StationRole = reader.IsDBNull(reader.GetOrdinal("station_role")) ? (byte)0 : reader.GetByte(reader.GetOrdinal("station_role")),
                                     StayTime = reader.IsDBNull(reader.GetOrdinal("stay_time")) ? 0 : reader.GetInt32(reader.GetOrdinal("stay_time")),
                                     Notes = reader.IsDBNull(reader.GetOrdinal("notes")) ? null : reader.GetString(reader.GetOrdinal("notes")),
@@ -3552,15 +3546,14 @@ namespace TA_WPF.Services
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
                     string query = @"INSERT INTO route_station_mapping 
-                                    (route_id, station_id, order_index, station_role, stay_time, notes, add_time, distance_from_prev, distance_from_start) 
+                                    (route_id, station_id, station_role, stay_time, notes, add_time, distance_from_prev, distance_from_start) 
                                     VALUES 
-                                    (@RouteId, @StationId, @OrderIndex, @StationRole, @StayTime, @Notes, @AddTime, @DistanceFromPrev, @DistanceFromStart)";
+                                    (@RouteId, @StationId, @StationRole, @StayTime, @Notes, @AddTime, @DistanceFromPrev, @DistanceFromStart)";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@RouteId", mapping.RouteId);
                         command.Parameters.AddWithValue("@StationId", mapping.StationId);
-                        command.Parameters.AddWithValue("@OrderIndex", mapping.OrderIndex);
                         command.Parameters.AddWithValue("@StationRole", mapping.StationRole);
                         command.Parameters.AddWithValue("@StayTime", mapping.StayTime);
                         command.Parameters.AddWithValue("@Notes", mapping.Notes ?? (object)DBNull.Value);
@@ -3594,8 +3587,7 @@ namespace TA_WPF.Services
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
                     string query = @"UPDATE route_station_mapping 
-                                    SET order_index = @OrderIndex,
-                                        station_role = @StationRole,
+                                    SET station_role = @StationRole,
                                         stay_time = @StayTime,
                                         notes = @Notes,
                                         distance_from_prev = @DistanceFromPrev,
@@ -3605,7 +3597,6 @@ namespace TA_WPF.Services
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Id", mapping.Id);
-                        command.Parameters.AddWithValue("@OrderIndex", mapping.OrderIndex);
                         command.Parameters.AddWithValue("@StationRole", mapping.StationRole);
                         command.Parameters.AddWithValue("@StayTime", mapping.StayTime);
                         command.Parameters.AddWithValue("@Notes", mapping.Notes ?? (object)DBNull.Value);
@@ -3620,6 +3611,72 @@ namespace TA_WPF.Services
             catch (Exception ex)
             {
                 LogHelper.LogError($"更新路线车站映射失败: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 根据ID获取车站信息
+        /// </summary>
+        /// <param name="stationId">车站ID</param>
+        /// <returns>车站信息</returns>
+        public async Task<StationInfo> GetStationByIdAsync(int stationId)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = "SELECT * FROM station_info WHERE id = @stationId";
+                        command.Parameters.AddWithValue("@stationId", stationId);
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return MapStationInfo(reader);
+                            }
+                            return null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"根据ID获取车站信息失败: {ex.Message}", ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 删除指定ID的路线车站映射
+        /// </summary>
+        /// <param name="mappingIds">要删除的映射ID列表</param>
+        /// <returns>是否删除成功</returns>
+        public async Task<bool> DeleteRouteStationsByIdsAsync(List<int> mappingIds)
+        {
+            if (mappingIds == null || mappingIds.Count == 0)
+                return true;
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    using (var command = connection.CreateCommand())
+                    {
+                        // 构建IN查询语句
+                        string idList = string.Join(",", mappingIds);
+                        command.CommandText = $"DELETE FROM route_station_mapping WHERE id IN ({idList})";
+
+                        int affectedRows = await command.ExecuteNonQueryAsync();
+                        return affectedRows > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"删除路线车站映射失败: {ex.Message}", ex);
                 return false;
             }
         }

@@ -26,6 +26,8 @@ namespace TA_WPF.ViewModels
         private DistanceRangeType _currentDistanceRange = DistanceRangeType.None;
         private bool _currentIsFavorite = false;
         private bool _currentIsAndCondition = true;
+        // 添加DatabaseService属性，用于在页面中直接创建RouteDetailWindow
+        public DatabaseService DatabaseService => _databaseService;
 
         public QueryAllRoutesViewModel(DatabaseService databaseService, PaginationViewModel paginationViewModel, MainViewModel mainViewModel)
         {
@@ -681,5 +683,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(CanEditSelectedRoute));
             OnPropertyChanged(nameof(CanShowRouteDetails));
         }
+
+
     }
 }

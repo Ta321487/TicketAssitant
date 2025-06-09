@@ -33,6 +33,14 @@ namespace TA_WPF.Views
 
             // 添加加载完成事件，确保DataGrid获得焦点
             Loaded += QueryAllRoutesPage_Loaded;
+            
+            // 手动绑定PreviewMouseRightButtonDown事件，确保即使在窗口关闭后也能捕获右键点击
+            var dataGrid = this.FindName("RoutesDataGrid") as DataGrid;
+            if (dataGrid != null)
+            {
+                dataGrid.PreviewMouseRightButtonDown += RoutesDataGrid_PreviewMouseRightButtonDown;
+                Debug.WriteLine("已手动绑定PreviewMouseRightButtonDown事件到DataGrid");
+            }
         }
 
         /// <summary>
@@ -71,6 +79,11 @@ namespace TA_WPF.Views
             var dataGrid = GetRoutesDataGrid();
             if (dataGrid != null)
             {
+                // 确保绑定了预览右键点击事件，这对解决第二次及后续右键点击问题至关重要
+                dataGrid.PreviewMouseRightButtonDown -= RoutesDataGrid_PreviewMouseRightButtonDown; // 移除可能存在的重复订阅
+                dataGrid.PreviewMouseRightButtonDown += RoutesDataGrid_PreviewMouseRightButtonDown;
+                Debug.WriteLine("QueryAllRoutesPage_Loaded - 已确保绑定PreviewMouseRightButtonDown事件");
+                
                 dataGrid.Focus();
             }
         }
@@ -869,12 +882,17 @@ namespace TA_WPF.Views
         }
 
         /// <summary>
-        /// 处理DataGrid右键点击事件，直接打开路线详情
+        /// 处理DataGrid预览右键点击事件，确保每次右键都能被正确捕获
         /// </summary>
-        private void RoutesDataGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        private void RoutesDataGrid_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
+            Debug.WriteLine("RoutesDataGrid_PreviewMouseRightButtonDown - 预览右键点击事件触发");
+            
             if (!(DataContext is QueryAllRoutesViewModel viewModel))
+            {
+                Debug.WriteLine("RoutesDataGrid_PreviewMouseRightButtonDown - DataContext不是QueryAllRoutesViewModel类型");
                 return;
+            }
 
             // 获取点击位置下的行
             DependencyObject dep = (DependencyObject)e.OriginalSource;
@@ -888,6 +906,8 @@ namespace TA_WPF.Views
             // 如果找到了行，处理该行
             if (dep is DataGridRow clickedRow && clickedRow.Item is RouteInfo clickedItem)
             {
+                Debug.WriteLine($"RoutesDataGrid_PreviewMouseRightButtonDown - 右键点击行: {clickedItem.RouteName} (ID: {clickedItem.Id})");
+                
                 // 阻止事件冒泡，防止触发其他处理
                 e.Handled = true;
 
@@ -917,6 +937,8 @@ namespace TA_WPF.Views
 
                             // 手动触发属性更新
                             viewModel.NotifySelectionChanged();
+                            
+                            Debug.WriteLine("RoutesDataGrid_PreviewMouseRightButtonDown - 已选中右键点击的行");
                         }
                         finally
                         {
@@ -927,26 +949,38 @@ namespace TA_WPF.Views
 
                 try
                 {
-                    // 直接调用方法而不是通过Command
-                    if (viewModel.GetType().GetMethod("ShowRouteDetails",
-                        BindingFlags.NonPublic |
-                        BindingFlags.Instance) is MethodInfo methodInfo)
-                    {
-                        // 使用反射直接调用私有方法
-                        methodInfo.Invoke(viewModel, new object[] { clickedItem });
-                    }
-                    else
-                    {
-                        // 如果反射失败，使用命令方式
-                        viewModel.ShowRouteDetailsCommand.Execute(clickedItem);
-                    }
+                    Debug.WriteLine("RoutesDataGrid_PreviewMouseRightButtonDown - 尝试打开路线详情窗口");
+                    
+                    // 直接创建新窗口实例打开，这是最可靠的方式
+                    var routeDetailWindow = new RouteDetailWindow(clickedItem, viewModel.DatabaseService, viewModel.MainViewModel);
+                    routeDetailWindow.Owner = Application.Current.MainWindow;
+                    
+                    Debug.WriteLine("RoutesDataGrid_PreviewMouseRightButtonDown - 显示路线详情窗口");
+                    routeDetailWindow.ShowDialog();
+                    Debug.WriteLine("RoutesDataGrid_PreviewMouseRightButtonDown - 路线详情窗口已关闭");
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"打开路线详情失败: {ex.Message}");
-                    // 失败后使用命令方式再次尝试
-                    viewModel.ShowRouteDetailsCommand.Execute(clickedItem);
+                    Debug.WriteLine($"RoutesDataGrid_PreviewMouseRightButtonDown - 打开路线详情窗口失败: {ex.Message}");
+                    
+                    // 作为备选方案，尝试使用命令方式
+                    try
+                    {
+                        Debug.WriteLine("RoutesDataGrid_PreviewMouseRightButtonDown - 尝试使用命令方式打开");
+                        if (viewModel.ShowRouteDetailsCommand != null && viewModel.ShowRouteDetailsCommand.CanExecute(clickedItem))
+                        {
+                            viewModel.ShowRouteDetailsCommand.Execute(clickedItem);
+                        }
+                    }
+                    catch (Exception cmdEx)
+                    {
+                        Debug.WriteLine($"RoutesDataGrid_PreviewMouseRightButtonDown - 命令方式也失败: {cmdEx.Message}");
+                    }
                 }
+            }
+            else
+            {
+                Debug.WriteLine("RoutesDataGrid_PreviewMouseRightButtonDown - 没有找到点击的行");
             }
         }
 
@@ -1002,6 +1036,17 @@ namespace TA_WPF.Views
                     viewModel.NotifySelectionChanged();
                 }
             }
+        }
+
+        /// <summary>
+        /// 处理DataGrid右键点击事件，重定向到PreviewMouseRightButtonDown处理程序
+        /// 保留此方法以确保向后兼容，防止在XAML中直接设置此事件处理程序时发生异常
+        /// </summary>
+        private void RoutesDataGrid_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            Debug.WriteLine("RoutesDataGrid_MouseRightButtonDown - 调用被重定向到PreviewMouseRightButtonDown处理程序");
+            // 重定向到预览事件处理程序
+            RoutesDataGrid_PreviewMouseRightButtonDown(sender, e);
         }
     }
 }

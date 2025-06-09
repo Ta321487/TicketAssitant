@@ -455,15 +455,8 @@ namespace TA_WPF.ViewModels
                     _isTransferStation = value;
                     OnPropertyChanged(nameof(IsTransferStation));
 
-                    // 如果设置为换乘站，询问是否需要重新计算路径
-                    if (value)
-                    {
-                        bool recalculate = MessageBoxHelper.ShowQuestion("您已将该站点设置为换乘站，是否需要重新计算最优路径？", "换乘站") == true;
-                        if (recalculate)
-                        {
-                            // TODO: 实现路径重新计算逻辑
-                        }
-                    }
+                    // 如果设置为换乘站，不需要再询问是否重新计算路径
+                    // 直接勾选换乘角色
                 }
             }
         }
@@ -705,42 +698,11 @@ namespace TA_WPF.ViewModels
                 Debug.WriteLine($"保存前状态: 起点={IsStartStation}, 终点={IsEndStation}, 经停={IsPassingStation}, 换乘={IsTransferStation}");
                 Debug.WriteLine($"保存车站映射时的角色值: {stationRole}，解析: 起点={IsStartStation}, 终点={IsEndStation}, 经停={IsPassingStation}, 换乘={IsTransferStation}");
 
-                // 获取下一个排序索引
-                int orderIndex = 0;
-                if (_addToEnd)
-                {
-                    // 添加到结尾，获取最大排序索引+1
-                    var stations = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999);
-                    if (stations != null && stations.Count > 0)
-                    {
-                        orderIndex = stations.Max(s => s.OrderIndex) + 1;
-                    }
-                }
-                else
-                {
-                    // 添加到开头，所有现有站点的排序索引+1
-                    var updateTasks = new List<Task>();
-                    var stations = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999);
-                    if (stations != null && stations.Count > 0)
-                    {
-                        foreach (var station in stations)
-                        {
-                            station.OrderIndex++;
-                            // 这里需要数据库服务提供更新站点排序索引的方法
-                            // updateTasks.Add(_databaseService.UpdateRouteStationAsync(station));
-                        }
-                        await Task.WhenAll(updateTasks);
-                    }
-                    // 新站点的排序索引为0
-                    orderIndex = 0;
-                }
-
                 // 构建RouteStationMapping对象
                 var mapping = new RouteStationMapping
                 {
                     RouteId = _routeInfo.Id,
                     StationId = SelectedStation.Id,
-                    OrderIndex = orderIndex,
                     StationRole = stationRole,
                     StayTime = StayTime,
                     Notes = Notes,
@@ -938,8 +900,8 @@ namespace TA_WPF.ViewModels
                 if (stations == null || stations.Count <= 1)
                     return;
 
-                // 按顺序索引排序
-                stations = stations.OrderBy(s => s.OrderIndex).ToList();
+                // 按ID排序
+                stations = stations.OrderBy(s => s.Id).ToList();
 
                 decimal cumulativeDistance = 0;
 

@@ -155,36 +155,6 @@
                     </StackPanel>
                 </Button>
 
-                <!-- 上移按钮 -->
-                <Button Command="{Binding MoveUpCommand}"
-                        Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="上移"
-                        Margin="0,0,8,0"
-                        Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        Foreground="{DynamicResource PrimaryHueMidBrush}"
-                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        Height="36">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="ArrowUpBold" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="上移" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <!-- 下移按钮 -->
-                <Button Command="{Binding MoveDownCommand}"
-                        Style="{StaticResource MaterialDesignFlatButton}"
-                        ToolTip="下移"
-                        Margin="0,0,8,0"
-                        Visibility="{Binding HasSelectedItems, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        Foreground="{DynamicResource PrimaryHueMidBrush}"
-                        FontSize="{Binding DataContext.MainViewModel.FontSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        Height="36">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="ArrowDownBold" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <TextBlock Text="下移" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                
                 <!-- 全选按钮 -->
                 <Button Command="{Binding SelectAllCommand}"
                         Style="{StaticResource MaterialDesignFlatButton}"
@@ -267,6 +237,8 @@
                       SelectionMode="Extended"
                       SelectionUnit="FullRow"
                       SelectionChanged="StationsDataGrid_SelectionChanged"
+                      PreviewKeyDown="StationsDataGrid_PreviewKeyDown"
+                      MouseDoubleClick="StationsDataGrid_MouseDoubleClick"
                       HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
                       materialDesign:DataGridAssist.CellPadding="12 6 12 6"
                       materialDesign:DataGridAssist.ColumnHeaderPadding="12 8 12 8"
@@ -280,7 +252,6 @@
                       VirtualizingPanel.CacheLengthUnit="Page"
                       VirtualizingPanel.CacheLength="5,5"
                       VirtualizingPanel.ScrollUnit="Pixel"
-                      MouseDoubleClick="StationsDataGrid_MouseDoubleClick"
                       Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
                 
                 <DataGrid.Resources>

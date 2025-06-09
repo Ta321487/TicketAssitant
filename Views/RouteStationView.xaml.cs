@@ -4,6 +4,8 @@ using TA_WPF.Models;
 using TA_WPF.ViewModels;
 using System.Windows.Input;
 using System.Windows;
+using System.Linq;
+using TA_WPF.Utils;
 
 namespace TA_WPF.Views
 {
@@ -128,6 +130,30 @@ namespace TA_WPF.Views
                 if (viewModel.EditStationCommand.CanExecute(null))
                 {
                     viewModel.EditStationCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 处理键盘按下事件，支持Delete键删除
+        /// </summary>
+        private void StationsDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (DataContext is RouteStationViewModel viewModel && e.Key == Key.Delete && viewModel.HasSelectedItems)
+            {
+                // 检查是否选中了起点站
+                if (viewModel.SelectedStations.Any(s => (s.StationRole & 1) == 1)) // 1代表起点站
+                {
+                    MessageBoxHelper.ShowWarning("起点站不能被删除，请取消选择起点站后再试");
+                    e.Handled = true; // 阻止后续处理
+                    return;
+                }
+
+                // 使用已有的删除命令
+                if (viewModel.RemoveStationsCommand.CanExecute(null))
+                {
+                    viewModel.RemoveStationsCommand.Execute(null);
                     e.Handled = true;
                 }
             }

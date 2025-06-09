@@ -11,7 +11,6 @@ namespace TA_WPF.Models
         private int _id;
         private int _routeId;
         private int _stationId;
-        private int _orderIndex;
         private byte _stationRole;
         private int _stayTime;
         private string _notes;
@@ -70,22 +69,6 @@ namespace TA_WPF.Models
         }
 
         /// <summary>
-        /// 在路线中的顺序
-        /// </summary>
-        public int OrderIndex
-        {
-            get => _orderIndex;
-            set
-            {
-                if (_orderIndex != value)
-                {
-                    _orderIndex = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        /// <summary>
         /// 车站角色：1=起点,2=终点,4=经停,8=换乘
         /// </summary>
         public byte StationRole
@@ -109,13 +92,33 @@ namespace TA_WPF.Models
         {
             get
             {
+                if (StationRole == 0) return "未知";
+                
+                // 单一角色
                 if (StationRole == 1) return "起点";
                 if (StationRole == 2) return "终点";
                 if (StationRole == 4) return "经停";
                 if (StationRole == 8) return "换乘";
+                
+                // 两种角色组合
+                if ((StationRole & 1) != 0 && (StationRole & 2) != 0) return "起点/终点";
+                if ((StationRole & 1) != 0 && (StationRole & 4) != 0) return "起点/经停";
                 if ((StationRole & 1) != 0 && (StationRole & 8) != 0) return "起点/换乘";
+                if ((StationRole & 2) != 0 && (StationRole & 4) != 0) return "终点/经停";
                 if ((StationRole & 2) != 0 && (StationRole & 8) != 0) return "终点/换乘";
                 if ((StationRole & 4) != 0 && (StationRole & 8) != 0) return "经停/换乘";
+                
+                // 三种角色组合
+                if ((StationRole & 1) != 0 && (StationRole & 2) != 0 && (StationRole & 8) != 0) return "起点/终点/换乘";
+                if ((StationRole & 1) != 0 && (StationRole & 4) != 0 && (StationRole & 8) != 0) return "起点/经停/换乘";
+                if ((StationRole & 2) != 0 && (StationRole & 4) != 0 && (StationRole & 8) != 0) return "终点/经停/换乘";
+                if ((StationRole & 1) != 0 && (StationRole & 2) != 0 && (StationRole & 4) != 0) return "起点/终点/经停";
+                
+                // 四种角色组合
+                if ((StationRole & 1) != 0 && (StationRole & 2) != 0 && (StationRole & 4) != 0 && (StationRole & 8) != 0) 
+                    return "起点/终点/经停/换乘";
+                
+                // 未识别的组合
                 return "未知";
             }
         }
@@ -248,7 +251,6 @@ namespace TA_WPF.Models
                 {
                     StationRole = (byte)(StationRole & ~1); // 清除起点标志位
                 }
-                OnPropertyChanged();
             }
         }
 
@@ -268,7 +270,6 @@ namespace TA_WPF.Models
                 {
                     StationRole = (byte)(StationRole & ~2); // 清除终点标志位
                 }
-                OnPropertyChanged();
             }
         }
 
@@ -288,7 +289,6 @@ namespace TA_WPF.Models
                 {
                     StationRole = (byte)(StationRole & ~4); // 清除经停标志位
                 }
-                OnPropertyChanged();
             }
         }
 
@@ -308,8 +308,23 @@ namespace TA_WPF.Models
                 {
                     StationRole = (byte)(StationRole & ~8); // 清除换乘标志位
                 }
-                OnPropertyChanged();
             }
+        }
+
+        /// <summary>
+        /// 更新车站角色文本
+        /// </summary>
+        public void UpdateStationRoleText()
+        {
+            // 直接触发StationRole属性变更事件，这会间接触发StationRoleText的更新
+            OnPropertyChanged(nameof(StationRole));
+            // 显式触发StationRoleText属性变更事件，确保UI更新
+            OnPropertyChanged(nameof(StationRoleText));
+            // 同时更新所有相关的布尔属性
+            OnPropertyChanged(nameof(IsStartStation));
+            OnPropertyChanged(nameof(IsEndStation));
+            OnPropertyChanged(nameof(IsPassingStation));
+            OnPropertyChanged(nameof(IsTransferStation));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

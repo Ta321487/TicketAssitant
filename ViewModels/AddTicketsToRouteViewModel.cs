@@ -704,7 +704,6 @@ namespace TA_WPF.ViewModels
                 {
                     RouteId = Route.Id,
                     TicketId = ticketId,
-                    OrderIndex = 0, // 默认排序
                     AddTime = DateTime.Now
                 }).ToList();
 

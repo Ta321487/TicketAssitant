@@ -33,7 +33,7 @@ namespace TA_WPF.ViewModels
         // 车站映射属性
         private decimal? _distanceFromStart;
         private decimal? _distanceFromPrev;
-        private int _stayTime;
+        private int? _stayTime;
         private string _notes;
 
         // 角色属性
@@ -216,6 +216,13 @@ namespace TA_WPF.ViewModels
         /// 车站名称不可编辑的提示信息
         /// </summary>
         public string StationNameReadOnlyTip => "* 车站名称不可直接编辑，如需更换车站请删除此车站并添加新车站";
+        
+        /// <summary>
+        /// 起点站距离提示信息
+        /// </summary>
+        public string StartStationDistanceTip => IsStartStation 
+            ? "起点站的距离起点必须为0" 
+            : "更改距离上一站点的公里数会自动计算此值，你也可以手动调整";
 
         /// <summary>
         /// 距起点累计距离
@@ -245,14 +252,62 @@ namespace TA_WPF.ViewModels
                 {
                     _distanceFromPrev = value;
                     OnPropertyChanged(nameof(DistanceFromPrev));
+                    
+                    // 如果不是起点站，则根据上一站点距离的变更自动更新距离起点的累计距离
+                    if (!_isStartStation)
+                    {
+                        // 异步获取上一站的累计距离，并更新当前站的累计距离
+                        UpdateCumulativeDistance();
+                    }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 根据上一站点距离更新当前站的累计距离
+        /// </summary>
+        private async void UpdateCumulativeDistance()
+        {
+            try
+            {
+                // 获取所有车站
+                var stations = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999);
+                if (stations == null || stations.Count == 0)
+                    return;
+
+                // 找到当前车站的索引
+                int currentIndex = stations.FindIndex(s => s.Id == _stationMapping.Id);
+                if (currentIndex < 0)
+                    return;
+
+                // 如果是第一个站，累计距离应该为0
+                if (currentIndex == 0)
+                {
+                    DistanceFromStart = 0;
+                    return;
+                }
+
+                // 获取上一个站的累计距离
+                var prevStation = stations[currentIndex - 1];
+                decimal prevCumulativeDistance = prevStation.DistanceFromStart;
+                
+                // 当前站的累计距离 = 上一站的累计距离 + 当前站到上一站的距离
+                decimal newCumulativeDistance = prevCumulativeDistance + (_distanceFromPrev ?? 0);
+                
+                // 更新当前站的累计距离
+                DistanceFromStart = newCumulativeDistance;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"更新累计距离失败: {ex.Message}", ex);
+                // 静默失败，不显示错误消息，避免打断用户操作
             }
         }
 
         /// <summary>
         /// 计划停留时间
         /// </summary>
-        public int StayTime
+        public int? StayTime
         {
             get => _stayTime;
             set
@@ -293,22 +348,26 @@ namespace TA_WPF.ViewModels
                 {
                     _isStartStation = value;
                     OnPropertyChanged(nameof(IsStartStation));
-
-                    // 如果是起点，不能同时是终点
-                    if (value && _isEndStation)
-                    {
-                        _isEndStation = false;
-                        OnPropertyChanged(nameof(IsEndStation));
-                    }
-
-                    // 如果是起点，经停和换乘状态应为false
+                    // 更新距离提示信息
+                    OnPropertyChanged(nameof(StartStationDistanceTip));
+                    
+                    // 如果是起点，不能同时是终点或经停
                     if (value)
                     {
-                        _isPassingStation = false;
-                        _isTransferStation = false;
-                        OnPropertyChanged(nameof(IsPassingStation));
-                        OnPropertyChanged(nameof(IsTransferStation));
-                        
+                        if (_isEndStation)
+                        {
+                            _isEndStation = false;
+                            OnPropertyChanged(nameof(IsEndStation));
+                        }
+
+                        if (_isPassingStation)
+                        {
+                            _isPassingStation = false;
+                            OnPropertyChanged(nameof(IsPassingStation));
+                        }
+
+                        // 移除与换乘角色的互斥关系
+
                         // 如果是起点站，自动设置距离起点和距离上一站的距离为0
                         DistanceFromStart = 0;
                         DistanceFromPrev = 0;
@@ -330,20 +389,22 @@ namespace TA_WPF.ViewModels
                     _isEndStation = value;
                     OnPropertyChanged(nameof(IsEndStation));
 
-                    // 如果是终点，不能同时是起点
-                    if (value && _isStartStation)
-                    {
-                        _isStartStation = false;
-                        OnPropertyChanged(nameof(IsStartStation));
-                    }
-
-                    // 如果是终点，经停和换乘状态应为false
+                    // 如果是终点，不能同时是起点或经停
                     if (value)
                     {
-                        _isPassingStation = false;
-                        _isTransferStation = false;
-                        OnPropertyChanged(nameof(IsPassingStation));
-                        OnPropertyChanged(nameof(IsTransferStation));
+                        if (_isStartStation)
+                        {
+                            _isStartStation = false;
+                            OnPropertyChanged(nameof(IsStartStation));
+                        }
+
+                        if (_isPassingStation)
+                        {
+                            _isPassingStation = false;
+                            OnPropertyChanged(nameof(IsPassingStation));
+                        }
+
+                        // 移除与换乘角色的互斥关系
                     }
                 }
             }
@@ -362,7 +423,7 @@ namespace TA_WPF.ViewModels
                     _isPassingStation = value;
                     OnPropertyChanged(nameof(IsPassingStation));
 
-                    // 如果是经停，不能同时是起点、终点或换乘
+                    // 如果是经停站，不能同时是起点或终点
                     if (value)
                     {
                         if (_isStartStation)
@@ -377,11 +438,7 @@ namespace TA_WPF.ViewModels
                             OnPropertyChanged(nameof(IsEndStation));
                         }
 
-                        if (_isTransferStation)
-                        {
-                            _isTransferStation = false;
-                            OnPropertyChanged(nameof(IsTransferStation));
-                        }
+                        // 移除与换乘角色的互斥关系
                     }
                 }
             }
@@ -400,27 +457,7 @@ namespace TA_WPF.ViewModels
                     _isTransferStation = value;
                     OnPropertyChanged(nameof(IsTransferStation));
 
-                    // 如果是换乘，不能同时是起点、终点或经停
-                    if (value)
-                    {
-                        if (_isStartStation)
-                        {
-                            _isStartStation = false;
-                            OnPropertyChanged(nameof(IsStartStation));
-                        }
-
-                        if (_isEndStation)
-                        {
-                            _isEndStation = false;
-                            OnPropertyChanged(nameof(IsEndStation));
-                        }
-
-                        if (_isPassingStation)
-                        {
-                            _isPassingStation = false;
-                            OnPropertyChanged(nameof(IsPassingStation));
-                        }
-                    }
+                    // 移除互斥逻辑，换乘角色可以与其他角色共存
                 }
             }
         }
@@ -478,11 +515,20 @@ namespace TA_WPF.ViewModels
                     return;
                 }
 
-                // 更新车站映射信息
+                // 更新对象属性
+                _stationMapping.Notes = _notes;
                 _stationMapping.DistanceFromPrev = _distanceFromPrev ?? 0;
                 _stationMapping.DistanceFromStart = _distanceFromStart ?? 0;
-                _stationMapping.StayTime = _stayTime;
-                _stationMapping.Notes = _notes;
+                _stationMapping.StayTime = _stayTime ?? 0; // 确保StayTime为非空值
+                _stationMapping.StationRole = 0;
+
+                // 设置角色
+                if (_isStartStation) _stationMapping.StationRole |= 1;
+                if (_isEndStation) _stationMapping.StationRole |= 2;
+                if (_isPassingStation) _stationMapping.StationRole |= 4;
+                if (_isTransferStation) _stationMapping.StationRole |= 8;
+
+                // 更新角色文本（方便UI显示）
                 _stationMapping.IsStartStation = _isStartStation;
                 _stationMapping.IsEndStation = _isEndStation;
                 _stationMapping.IsPassingStation = _isPassingStation;
@@ -493,10 +539,12 @@ namespace TA_WPF.ViewModels
 
                 if (success)
                 {
-                    // 如果车站角色发生变更，可能需要更新其他车站
-                    if (_wasStartStation != _isStartStation || _wasEndStation != _isEndStation)
+                    // 如果车站角色发生变更，或者距离值发生变化，可能需要更新后续车站
+                    if (_wasStartStation != _isStartStation || _wasEndStation != _isEndStation || 
+                        _stationMapping.DistanceFromPrev != _distanceFromPrev ||
+                        _stationMapping.DistanceFromStart != _distanceFromStart)
                     {
-                        // 如果车站角色发生变更，可能需要更新后续车站的累计距离
+                        // 更新后续车站的累计距离
                         await UpdateSubsequentStationsDistanceAsync();
 
                         // 更新路线总距离
@@ -584,7 +632,7 @@ namespace TA_WPF.ViewModels
             }
 
             // 验证停留时间
-            if (_stayTime < 0)
+            if (_stayTime != null && _stayTime < 0)
             {
                 MessageBoxHelper.ShowError("计划停留时间必须是非负数");
                 return false;

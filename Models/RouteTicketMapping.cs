@@ -11,7 +11,6 @@ namespace TA_WPF.Models
         private int _id;
         private int _routeId;
         private int _ticketId;
-        private int _orderIndex;
         private DateTime _addTime;
         private TrainRideInfo _ticket;
         private bool _isSelected;
@@ -59,22 +58,6 @@ namespace TA_WPF.Models
                 if (_ticketId != value)
                 {
                     _ticketId = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        /// <summary>
-        /// 在路线中的顺序
-        /// </summary>
-        public int OrderIndex
-        {
-            get => _orderIndex;
-            set
-            {
-                if (_orderIndex != value)
-                {
-                    _orderIndex = value;
                     OnPropertyChanged();
                 }
             }

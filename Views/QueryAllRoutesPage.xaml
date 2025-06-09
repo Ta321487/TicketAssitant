@@ -324,7 +324,6 @@
                       IsManipulationEnabled="True"
                       PreviewKeyDown="RoutesDataGrid_PreviewKeyDown"
                       KeyDown="RoutesDataGrid_KeyDown"
-                      MouseRightButtonDown="RoutesDataGrid_MouseRightButtonDown"
                       FontSize="{Binding MainViewModel.FontSize}"
                       RowHeight="{Binding DataGridRowHeight}"
                       RowStyle="{StaticResource DataGridRowStyle}"

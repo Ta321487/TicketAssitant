@@ -53,6 +53,14 @@ namespace TA_WPF.Utils
         {
             _execute();
         }
+
+        /// <summary>
+        /// 手动触发命令可执行状态变化事件
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 
     /// <summary>
@@ -98,6 +106,14 @@ namespace TA_WPF.Utils
         public void Execute(object parameter)
         {
             _execute((T)parameter);
+        }
+
+        /// <summary>
+        /// 手动触发命令可执行状态变化事件
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 }
