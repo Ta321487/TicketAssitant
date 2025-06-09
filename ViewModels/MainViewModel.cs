@@ -33,6 +33,11 @@ namespace TA_WPF.ViewModels
         private bool _showRouteMap = false;
         private string _connectionString;
 
+        // 菜单展开状态
+        private bool _isTicketManagementExpanded = true;
+        private bool _isStationManagementExpanded = true;
+        private bool _isRouteManagementExpanded = true;
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -79,6 +84,20 @@ namespace TA_WPF.ViewModels
                 CollectionListCommand = new RelayCommand(async () => await QueryAllCollectionsAsync());
                 RouteCenterCommand = new RelayCommand(async () => await QueryAllRoutesAsync());
                 RouteMapCommand = new RelayCommand(ShowRouteMapView);
+
+                // 父菜单项命令
+                TicketManagementCommand = new RelayCommand(() =>
+                {
+                    IsTicketManagementExpanded = !IsTicketManagementExpanded;
+                });
+                StationManagementCommand = new RelayCommand(() =>
+                {
+                    IsStationManagementExpanded = !IsStationManagementExpanded;
+                });
+                RouteManagementCommand = new RelayCommand(() =>
+                {
+                    IsRouteManagementExpanded = !IsRouteManagementExpanded;
+                });
 
                 // 新增添加车票相关命令
                 OcrTicketCommand = new RelayCommand(ShowOcrTicketFeatureNotAvailable);
@@ -414,6 +433,21 @@ namespace TA_WPF.ViewModels
         public ICommand RouteMapCommand { get; }
 
         /// <summary>
+        /// 车票管理父菜单命令
+        /// </summary>
+        public ICommand TicketManagementCommand { get; }
+
+        /// <summary>
+        /// 车站管理父菜单命令
+        /// </summary>
+        public ICommand StationManagementCommand { get; }
+
+        /// <summary>
+        /// 路线管理父菜单命令
+        /// </summary>
+        public ICommand RouteManagementCommand { get; }
+
+        /// <summary>
         /// 修改连接命令
         /// </summary>
         public ICommand ModifyConnectionCommand => _settingsViewModel.ModifyConnectionCommand;
@@ -658,6 +692,54 @@ namespace TA_WPF.ViewModels
         private void ShowRouteMapView()
         {
             MessageBoxHelper.ShowInfo("此功能尚未实现", "路线图谱");
+        }
+
+        /// <summary>
+        /// 车票管理菜单是否展开
+        /// </summary>
+        public bool IsTicketManagementExpanded
+        {
+            get => _isTicketManagementExpanded;
+            set
+            {
+                if (_isTicketManagementExpanded != value)
+                {
+                    _isTicketManagementExpanded = value;
+                    OnPropertyChanged(nameof(IsTicketManagementExpanded));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 车站管理菜单是否展开
+        /// </summary>
+        public bool IsStationManagementExpanded
+        {
+            get => _isStationManagementExpanded;
+            set
+            {
+                if (_isStationManagementExpanded != value)
+                {
+                    _isStationManagementExpanded = value;
+                    OnPropertyChanged(nameof(IsStationManagementExpanded));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 路线管理菜单是否展开
+        /// </summary>
+        public bool IsRouteManagementExpanded
+        {
+            get => _isRouteManagementExpanded;
+            set
+            {
+                if (_isRouteManagementExpanded != value)
+                {
+                    _isRouteManagementExpanded = value;
+                    OnPropertyChanged(nameof(IsRouteManagementExpanded));
+                }
+            }
         }
     }
 }

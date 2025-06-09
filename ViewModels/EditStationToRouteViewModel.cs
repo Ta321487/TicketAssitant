@@ -1,6 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
@@ -216,12 +213,12 @@ namespace TA_WPF.ViewModels
         /// 车站名称不可编辑的提示信息
         /// </summary>
         public string StationNameReadOnlyTip => "* 车站名称不可直接编辑，如需更换车站请删除此车站并添加新车站";
-        
+
         /// <summary>
         /// 起点站距离提示信息
         /// </summary>
-        public string StartStationDistanceTip => IsStartStation 
-            ? "起点站的距离起点必须为0" 
+        public string StartStationDistanceTip => IsStartStation
+            ? "起点站的距离起点必须为0"
             : "更改距离上一站点的公里数会自动计算此值，你也可以手动调整";
 
         /// <summary>
@@ -252,7 +249,7 @@ namespace TA_WPF.ViewModels
                 {
                     _distanceFromPrev = value;
                     OnPropertyChanged(nameof(DistanceFromPrev));
-                    
+
                     // 如果不是起点站，则根据上一站点距离的变更自动更新距离起点的累计距离
                     if (!_isStartStation)
                     {
@@ -290,10 +287,10 @@ namespace TA_WPF.ViewModels
                 // 获取上一个站的累计距离
                 var prevStation = stations[currentIndex - 1];
                 decimal prevCumulativeDistance = prevStation.DistanceFromStart;
-                
+
                 // 当前站的累计距离 = 上一站的累计距离 + 当前站到上一站的距离
                 decimal newCumulativeDistance = prevCumulativeDistance + (_distanceFromPrev ?? 0);
-                
+
                 // 更新当前站的累计距离
                 DistanceFromStart = newCumulativeDistance;
             }
@@ -350,7 +347,7 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(IsStartStation));
                     // 更新距离提示信息
                     OnPropertyChanged(nameof(StartStationDistanceTip));
-                    
+
                     // 如果是起点，不能同时是终点或经停
                     if (value)
                     {
@@ -540,7 +537,7 @@ namespace TA_WPF.ViewModels
                 if (success)
                 {
                     // 如果车站角色发生变更，或者距离值发生变化，可能需要更新后续车站
-                    if (_wasStartStation != _isStartStation || _wasEndStation != _isEndStation || 
+                    if (_wasStartStation != _isStartStation || _wasEndStation != _isEndStation ||
                         _stationMapping.DistanceFromPrev != _distanceFromPrev ||
                         _stationMapping.DistanceFromStart != _distanceFromStart)
                     {
@@ -621,7 +618,7 @@ namespace TA_WPF.ViewModels
                 MessageBoxHelper.ShowError("距起点累计距离必须是非负数");
                 return false;
             }
-            
+
             // 起点站的距离起点和距离上一站必须为0
             if (_isStartStation && (_distanceFromStart != 0 || _distanceFromPrev != 0))
             {
@@ -792,7 +789,7 @@ namespace TA_WPF.ViewModels
                 if (currentIndex > 0)
                 {
                     var prevStation = stations[currentIndex - 1];
-                    
+
                     // 将字符串经纬度转换为double
                     if (double.TryParse(prevStation.Station.Longitude, out double prevLon) &&
                         double.TryParse(prevStation.Station.Latitude, out double prevLat) &&
@@ -850,4 +847,4 @@ namespace TA_WPF.ViewModels
 
         #endregion
     }
-} 
+}

@@ -163,11 +163,23 @@
                             <!-- 菜单列表 - 添加样式 -->
                             <TreeView Background="{DynamicResource MaterialDesignPaper}" 
                                      HorizontalAlignment="Stretch"
-                                     FontSize="{Binding FontSize}">
+                                     FontSize="{Binding FontSize}"
+                                     Focusable="False"
+                                     IsTabStop="False">
+                                <TreeView.ItemContainerStyle>
+                                    <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                                        <Setter Property="IsSelected" Value="False"/>
+                                        <Setter Property="Focusable" Value="False"/>
+                                        <Setter Property="IsTabStop" Value="False"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                    </Style>
+                                </TreeView.ItemContainerStyle>
                                 <TreeView.Resources>
                                     <!-- 为TreeViewItem添加字体大小绑定 -->
                                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
                                         <!-- <Setter Property="FontSize" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.FontSize}" /> -->
+                                        <Setter Property="IsSelected" Value="False" />
+                                        <Setter Property="Focusable" Value="False" />
                                     </Style>
                                     <!-- 为TreeView中的所有TextBlock添加字体大小绑定 -->
                                     <Style TargetType="TextBlock">
@@ -181,7 +193,7 @@
                                 </TreeView.Resources>
                                 
                                 <!-- 主页菜单项 -->
-                                <TreeViewItem>
+                                <TreeViewItem Focusable="False" IsTabStop="False">
                                     <TreeViewItem.Header>
                                         <Button Content="首页" 
                                                 Command="{Binding ShowHomeCommand}" 
@@ -203,7 +215,7 @@
                                 </TreeViewItem>
                                 
                                 <!-- 仪表盘菜单项 - 移动到主页下方 -->
-                                <TreeViewItem>
+                                <TreeViewItem Focusable="False" IsTabStop="False">
                                     <TreeViewItem.Header>
                                         <Button Content="仪表盘" 
                                                 Command="{Binding ShowDashboardCommand}" 
@@ -224,14 +236,29 @@
                                     </TreeViewItem.Header>
                                 </TreeViewItem>
                                 
-                                <TreeViewItem IsExpanded="True">
+                                <!-- 车票管理TreeViewItem -->
+                                <TreeViewItem IsExpanded="{Binding IsTicketManagementExpanded, Mode=TwoWay}" Focusable="False" IsTabStop="False">
                                     <TreeViewItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Train" Margin="0,0,8,0"/>
-                                            <TextBlock Text="车票管理"/>
-                                        </StackPanel>
+                                        <Grid Width="200" Background="Transparent" MouseDown="TicketManagement_MouseDown">
+                                            <Button Content="车票管理" 
+                                                Command="{Binding TicketManagementCommand}"
+                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                HorizontalContentAlignment="Left"
+                                                Width="200"
+                                                Margin="0"
+                                                Foreground="{DynamicResource GlobalAccentBrush}">
+                                                <Button.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="Train" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </Button.ContentTemplate>
+                                            </Button>
+                                        </Grid>
                                     </TreeViewItem.Header>
-                                    <TreeViewItem>
+                                    <TreeViewItem Focusable="False" IsTabStop="False">
                                         <TreeViewItem.Header>
                                             <Button Content="车票中心" 
                                                     Command="{Binding TicketListCommand}" 
@@ -251,7 +278,7 @@
                                             </Button>
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
-                                    <TreeViewItem>
+                                    <TreeViewItem Focusable="False" IsTabStop="False">
                                         <TreeViewItem.Header>
                                             <Button Content="车票收藏夹" 
                                                     Command="{Binding CollectionListCommand}" 
@@ -272,14 +299,30 @@
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
                                 </TreeViewItem>
-                                <TreeViewItem IsExpanded="True">
+                                
+                                <!-- 车站管理TreeViewItem -->
+                                <TreeViewItem IsExpanded="{Binding IsStationManagementExpanded, Mode=TwoWay}" Focusable="False" IsTabStop="False">
                                     <TreeViewItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="OfficeBuildingMarker" Margin="0,0,8,0"/>
-                                            <TextBlock Text="车站管理"/>
-                                        </StackPanel>
+                                        <Grid Width="200" Background="Transparent" MouseDown="StationManagement_MouseDown">
+                                            <Button Content="车站管理" 
+                                                Command="{Binding StationManagementCommand}"
+                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                HorizontalContentAlignment="Left"
+                                                Width="200"
+                                                Margin="0"
+                                                Foreground="{DynamicResource GlobalAccentBrush}">
+                                                <Button.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="OfficeBuildingMarker" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </Button.ContentTemplate>
+                                            </Button>
+                                        </Grid>
                                     </TreeViewItem.Header>
-                                    <TreeViewItem>
+                                    <TreeViewItem Focusable="False" IsTabStop="False">
                                         <TreeViewItem.Header>
                                             <Button Content="车站中心" 
                                                     Command="{Binding StationListCommand}"
@@ -300,15 +343,30 @@
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
                                 </TreeViewItem>
-                                <!-- 路线管理菜单项 -->
-                                <TreeViewItem IsExpanded="True">
+                                
+                                <!-- 路线管理TreeViewItem -->
+                                <TreeViewItem IsExpanded="{Binding IsRouteManagementExpanded, Mode=TwoWay}" Focusable="False" IsTabStop="False">
                                     <TreeViewItem.Header>
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="RoadVariant" Margin="0,0,8,0"/>
-                                            <TextBlock Text="路线管理"/>
-                                        </StackPanel>
+                                        <Grid Width="200" Background="Transparent" MouseDown="RouteManagement_MouseDown">
+                                            <Button Content="路线管理" 
+                                                Command="{Binding RouteManagementCommand}"
+                                                Style="{StaticResource MaterialDesignFlatButton}"
+                                                HorizontalContentAlignment="Left"
+                                                Width="200"
+                                                Margin="0"
+                                                Foreground="{DynamicResource GlobalAccentBrush}">
+                                                <Button.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="RoadVariant" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding}" FontSize="{Binding Path=FontSize, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </Button.ContentTemplate>
+                                            </Button>
+                                        </Grid>
                                     </TreeViewItem.Header>
-                                    <TreeViewItem>
+                                    <TreeViewItem Focusable="False" IsTabStop="False">
                                         <TreeViewItem.Header>
                                             <Button Content="路线中心" 
                                                     Command="{Binding RouteCenterCommand}"
@@ -328,7 +386,7 @@
                                             </Button>
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
-                                    <TreeViewItem>
+                                    <TreeViewItem Focusable="False" IsTabStop="False">
                                         <TreeViewItem.Header>
                                             <Button Content="路线图谱" 
                                                     Command="{Binding RouteMapCommand}"
@@ -349,7 +407,7 @@
                                         </TreeViewItem.Header>
                                     </TreeViewItem>
                                 </TreeViewItem>
-                                <TreeViewItem>
+                                <TreeViewItem Focusable="False" IsTabStop="False">
                                     <TreeViewItem.Header>
                                         <Button x:Name="SettingsButton"
                                                 Style="{StaticResource MaterialDesignFlatButton}"

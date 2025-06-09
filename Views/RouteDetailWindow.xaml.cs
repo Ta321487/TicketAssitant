@@ -134,7 +134,7 @@ namespace TA_WPF.Views
                 StaysOpen = false,
                 AllowsTransparency = true
             };
-            
+
             // 绑定字体大小以便在更改时同步更新
             var fontSizeBinding = new Binding("MainViewModel.FontSize")
             {

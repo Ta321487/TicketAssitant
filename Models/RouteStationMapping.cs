@@ -93,13 +93,13 @@ namespace TA_WPF.Models
             get
             {
                 if (StationRole == 0) return "未知";
-                
+
                 // 单一角色
                 if (StationRole == 1) return "起点";
                 if (StationRole == 2) return "终点";
                 if (StationRole == 4) return "经停";
                 if (StationRole == 8) return "换乘";
-                
+
                 // 两种角色组合
                 if ((StationRole & 1) != 0 && (StationRole & 2) != 0) return "起点/终点";
                 if ((StationRole & 1) != 0 && (StationRole & 4) != 0) return "起点/经停";
@@ -107,17 +107,17 @@ namespace TA_WPF.Models
                 if ((StationRole & 2) != 0 && (StationRole & 4) != 0) return "终点/经停";
                 if ((StationRole & 2) != 0 && (StationRole & 8) != 0) return "终点/换乘";
                 if ((StationRole & 4) != 0 && (StationRole & 8) != 0) return "经停/换乘";
-                
+
                 // 三种角色组合
                 if ((StationRole & 1) != 0 && (StationRole & 2) != 0 && (StationRole & 8) != 0) return "起点/终点/换乘";
                 if ((StationRole & 1) != 0 && (StationRole & 4) != 0 && (StationRole & 8) != 0) return "起点/经停/换乘";
                 if ((StationRole & 2) != 0 && (StationRole & 4) != 0 && (StationRole & 8) != 0) return "终点/经停/换乘";
                 if ((StationRole & 1) != 0 && (StationRole & 2) != 0 && (StationRole & 4) != 0) return "起点/终点/经停";
-                
+
                 // 四种角色组合
-                if ((StationRole & 1) != 0 && (StationRole & 2) != 0 && (StationRole & 4) != 0 && (StationRole & 8) != 0) 
+                if ((StationRole & 1) != 0 && (StationRole & 2) != 0 && (StationRole & 4) != 0 && (StationRole & 8) != 0)
                     return "起点/终点/经停/换乘";
-                
+
                 // 未识别的组合
                 return "未知";
             }

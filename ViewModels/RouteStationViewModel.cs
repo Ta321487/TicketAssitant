@@ -1,12 +1,11 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.Views;
-using System.Diagnostics;
-using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -582,11 +581,11 @@ namespace TA_WPF.ViewModels
             // 没有选中项时不可删除
             if (!HasSelectedItems)
                 return false;
-                
+
             // 选中的项中包含起点站时不可删除
             if (_selectedStations.Any(s => (s.StationRole & 1) == 1)) // 1代表起点站
                 return false;
-                
+
             return true;
         }
 
@@ -608,13 +607,13 @@ namespace TA_WPF.ViewModels
             }
 
             string confirmMessage;
-            
+
             if (_selectedStations.Count == 1)
             {
                 // 获取车站信息
                 var station = await _databaseService.GetStationByIdAsync(_selectedStations[0].StationId);
                 string stationName = station?.StationName ?? "未知车站";
-                
+
                 confirmMessage = $"确定要删除 {stationName} 吗？此操作不可撤销。";
             }
             else
@@ -643,33 +642,33 @@ namespace TA_WPF.ViewModels
                         // 刷新列表
                         await RefreshDataAsync();
                         MessageBoxHelper.ShowInfo("删除成功");
-                        
+
                         // 检查删除后是否还有终点站
                         bool hasEndStation = _stations.Any(s => (s.StationRole & 2) == 2); // 2代表终点站
-                        
+
                         // 如果没有终点站但有车站，提示用户将最后一个车站设为终点
                         if (!hasEndStation && _stations.Count > 0)
                         {
                             var lastStation = _stations.Last();
                             string stationName = lastStation.Station?.StationName ?? "最后一个车站";
-                            
+
                             MessageBoxResult endStationResult = MessageBoxHelper.ShowConfirmation(
                                 $"路线必须有一个终点站，是否将 {stationName} 设为终点站？");
-                                
+
                             if (endStationResult == MessageBoxResult.Yes)
                             {
                                 // 更新最后一个车站为终点站
                                 lastStation.StationRole |= 2; // 添加终点站角色
-                                
+
                                 // 确保IsEndStation属性也被正确设置
                                 lastStation.IsEndStation = true;
-                                
+
                                 // 更新StationRoleText属性
                                 lastStation.UpdateStationRoleText();
-                                
+
                                 // 保存变更
                                 bool updateSuccess = await _databaseService.UpdateRouteStationAsync(lastStation);
-                                
+
                                 if (updateSuccess)
                                 {
                                     await RefreshDataAsync();
@@ -759,7 +758,7 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(SelectedStations));
             OnPropertyChanged(nameof(HasSelectedItems));
             OnPropertyChanged(nameof(CanEditStation));
-            
+
             // 刷新RemoveStationsCommand的CanExecute状态
             (RemoveStationsCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
@@ -772,7 +771,7 @@ namespace TA_WPF.ViewModels
             SelectedItemsCount = _selectedStations.Count;
             HasSelectedItems = SelectedItemsCount > 0;
             OnPropertyChanged(nameof(CanEditStation));
-            
+
             // 刷新RemoveStationsCommand的CanExecute状态
             (RemoveStationsCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }

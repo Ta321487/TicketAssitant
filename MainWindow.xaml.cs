@@ -540,6 +540,42 @@ namespace TA_WPF
         }
 
         /// <summary>
+        /// 处理车票管理菜单点击
+        /// </summary>
+        private void TicketManagement_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.IsTicketManagementExpanded = !viewModel.IsTicketManagementExpanded;
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// 处理车站管理菜单点击
+        /// </summary>
+        private void StationManagement_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.IsStationManagementExpanded = !viewModel.IsStationManagementExpanded;
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// 处理路线管理菜单点击
+        /// </summary>
+        private void RouteManagement_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.IsRouteManagementExpanded = !viewModel.IsRouteManagementExpanded;
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
         /// 显示登录成功提示
         /// </summary>
         public void ShowLoginSuccessNotification()

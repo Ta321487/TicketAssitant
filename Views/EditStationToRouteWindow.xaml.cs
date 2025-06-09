@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Windows;
 using TA_WPF.Models;
 using TA_WPF.Services;
-using TA_WPF.Utils;
 using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
@@ -25,10 +24,10 @@ namespace TA_WPF.Views
         /// <param name="mainViewModel">主视图模型</param>
         /// <param name="refreshCallback">刷新回调</param>
         public EditStationToRouteWindow(
-            RouteInfo routeInfo, 
-            RouteStationMapping stationMapping, 
-            DatabaseService databaseService, 
-            StationSearchService stationSearchService, 
+            RouteInfo routeInfo,
+            RouteStationMapping stationMapping,
+            DatabaseService databaseService,
+            StationSearchService stationSearchService,
             MainViewModel mainViewModel,
             Action refreshCallback)
         {
@@ -102,4 +101,4 @@ namespace TA_WPF.Views
             _themeService.ApplyThemeToWindow(this, isDarkMode);
         }
     }
-} 
+}

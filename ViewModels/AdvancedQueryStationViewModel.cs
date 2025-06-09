@@ -717,6 +717,9 @@ namespace TA_WPF.ViewModels
             // 清空下拉列表
             StationSuggestions.Clear();
             IsStationDropdownOpen = false;
+
+            // 应用筛选条件（查询全部数据）
+            ApplyFilter();
         }
 
         /// <summary>

@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using System.Windows.Controls;
-using TA_WPF.Models;
-using TA_WPF.ViewModels;
-using System.Windows.Input;
 using System.Windows;
-using System.Linq;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using TA_WPF.Models;
 using TA_WPF.Utils;
+using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
 {
@@ -46,7 +46,7 @@ namespace TA_WPF.Views
                 // 处理新增选中项
                 foreach (var item in e.AddedItems.Cast<object>())
                 {
-                    if (item is Models.RouteStationMapping station)
+                    if (item is RouteStationMapping station)
                     {
                         station.IsSelected = true;
                     }
@@ -106,7 +106,7 @@ namespace TA_WPF.Views
             // 向上查找DataGridRow
             while ((dep != null) && !(dep is DataGridRow))
             {
-                dep = System.Windows.Media.VisualTreeHelper.GetParent(dep);
+                dep = VisualTreeHelper.GetParent(dep);
             }
 
             // 如果找到了行，处理该行
