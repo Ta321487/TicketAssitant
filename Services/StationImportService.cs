@@ -11,30 +11,143 @@ namespace TA_WPF.Services
     public class StationImportService
     {
         private readonly DatabaseService _databaseService;
+        private readonly ConfigurationService _configurationService;
         private readonly HttpClient _httpClient;
-        private const string Station12306Url = "https://www.12306.cn/index/script/core/common/station_name_new_v10079.js";
+        
+        // 基础URL，版本号将动态替换
+        private const string Station12306BaseUrl = "https://www.12306.cn/index/script/core/common/station_name_new_v{0}.js";
+        
+        // 配置键名
+        private const string Station12306VersionKey = "Station12306Version";
+        
+        // 默认版本号和最大尝试版本数
+        private const int DefaultVersion = 10080;
+        private const int MaxVersionAttempts = 5;
 
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="databaseService">数据库服务</param>
-        public StationImportService(DatabaseService databaseService)
+        /// <param name="configurationService">配置服务</param>
+        public StationImportService(DatabaseService databaseService, ConfigurationService configurationService)
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
+            _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(30); // 设置超时时间为30秒
         }
 
         /// <summary>
-        /// 从12306获取车站数据
+        /// 获取12306车站数据URL
+        /// </summary>
+        /// <param name="version">版本号</param>
+        /// <returns>完整URL</returns>
+        private string GetStation12306Url(int version)
+        {
+            return string.Format(Station12306BaseUrl, version);
+        }
+
+        /// <summary>
+        /// 从配置获取当前保存的版本号
+        /// </summary>
+        /// <returns>当前版本号</returns>
+        private int GetCurrentVersion()
+        {
+            string versionStr = _configurationService.GetSettingValue(Station12306VersionKey);
+            if (int.TryParse(versionStr, out int version))
+            {
+                return version;
+            }
+            return DefaultVersion; // 默认版本
+        }
+
+        /// <summary>
+        /// 保存版本号到配置
+        /// </summary>
+        /// <param name="version">版本号</param>
+        private void SaveCurrentVersion(int version)
+        {
+            _configurationService.SaveSettingValue(Station12306VersionKey, version.ToString());
+            LogHelper.LogInfo($"已更新12306车站数据版本号: v{version}");
+        }
+
+        /// <summary>
+        /// 尝试获取指定版本的车站数据
+        /// </summary>
+        /// <param name="version">版本号</param>
+        /// <returns>车站数据内容，获取失败则返回null</returns>
+        private async Task<string> TryFetchStationDataAsync(int version)
+        {
+            try
+            {
+                string url = GetStation12306Url(version);
+                LogHelper.LogInfo($"尝试获取12306车站数据: {url}");
+                var response = await _httpClient.GetStringAsync(url);
+                
+                // 验证返回的数据是否有效
+                if (!string.IsNullOrEmpty(response) && response.Contains("var station_names"))
+                {
+                    return response;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogWarning($"获取12306 v{version}车站数据失败: {ex.Message}");
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 从12306获取车站数据，自动检测并使用最新版本
         /// </summary>
         /// <returns>车站数据内容</returns>
         public async Task<string> FetchStationDataAsync()
         {
             try
             {
-                var response = await _httpClient.GetStringAsync(Station12306Url);
-                return response;
+                // 获取当前保存的版本号
+                int currentVersion = GetCurrentVersion();
+                string stationData = null;
+                
+                // 首先尝试使用当前版本
+                stationData = await TryFetchStationDataAsync(currentVersion);
+                if (!string.IsNullOrEmpty(stationData))
+                {
+                    return stationData;
+                }
+                
+                // 当前版本失败，尝试更高版本
+                for (int i = 1; i <= MaxVersionAttempts; i++)
+                {
+                    int newVersion = currentVersion + i;
+                    stationData = await TryFetchStationDataAsync(newVersion);
+                    
+                    if (!string.IsNullOrEmpty(stationData))
+                    {
+                        // 找到更高版本，保存并返回
+                        SaveCurrentVersion(newVersion);
+                        return stationData;
+                    }
+                }
+                
+                // 更高版本都失败，尝试更低版本
+                for (int i = 1; i <= MaxVersionAttempts; i++)
+                {
+                    int oldVersion = currentVersion - i;
+                    if (oldVersion <= 0) break; // 避免尝试负数或零版本
+                    
+                    stationData = await TryFetchStationDataAsync(oldVersion);
+                    
+                    if (!string.IsNullOrEmpty(stationData))
+                    {
+                        // 找到更低版本，保存并返回
+                        SaveCurrentVersion(oldVersion);
+                        return stationData;
+                    }
+                }
+                
+                // 所有尝试都失败，抛出异常
+                throw new Exception($"无法获取12306车站数据，尝试了v{currentVersion - MaxVersionAttempts}至v{currentVersion + MaxVersionAttempts}的版本");
             }
             catch (Exception ex)
             {
@@ -72,17 +185,18 @@ namespace TA_WPF.Services
                 {
                     // 按|符号分割车站属性
                     var parts = entry.Split('|');
-                    if (parts.Length < 2)
+                    if (parts.Length < 3)
                     {
                         continue;
                     }
 
-                    // 提取车站名和编码
+                    // 从12306数据中提取关键信息
+                    // 格式: @bjb|北京北|VAP|beijingbei|bjb|0|0357|北京|||
+                    // 索引: 0:拼音缩写, 1:站名, 2:车站代码, 3:拼音, 4:拼音缩写, 5:索引, 6:ID, 7:所在省...
                     string stationName = parts[1];
-                    string stationCode = parts.Length > 2 ? parts[2] : "";
+                    string stationCode = parts.Length > 2 ? parts[2] : "";  // 确保使用车站代码作为唯一标识
                     string stationPinyin = parts.Length > 3 ? parts[3] : "";
-                    string stationPinyinAbbr = parts.Length > 4 ? parts[4] : "";
-
+                    
                     // 确保站名以"站"结尾
                     string formattedStationName = StationNameHelper.EnsureStationSuffix(stationName);
 
@@ -120,10 +234,12 @@ namespace TA_WPF.Services
         /// </summary>
         /// <param name="stations">车站信息列表</param>
         /// <param name="progressCallback">进度回调</param>
+        /// <param name="cancellationToken">取消令牌</param>
         /// <returns>导入统计信息</returns>
         public async Task<(int total, int imported, int skipped, List<string> newStations, List<int> importedIds)> ImportStationsAsync(
             List<StationInfo> stations,
-            Action<int, int> progressCallback)
+            Action<int, int> progressCallback,
+            CancellationToken cancellationToken = default)
         {
             int total = stations.Count;
             int imported = 0;
@@ -135,17 +251,42 @@ namespace TA_WPF.Services
             {
                 // 获取数据库中现有的车站
                 var existingStations = await _databaseService.GetStationsAsync();
-                var existingStationNames = new HashSet<string>(
-                    existingStations.Select(s => StationNameHelper.RemoveStationSuffix(s.StationName)));
+                
+                // 使用station_code作为主键，存储已有车站的station_code
+                var existingStationCodes = new HashSet<string>(
+                    existingStations.Where(s => !string.IsNullOrEmpty(s.StationCode))
+                                   .Select(s => s.StationCode));
 
                 // 逐个导入车站
                 for (int i = 0; i < stations.Count; i++)
                 {
-                    var station = stations[i];
-                    string stationNameWithoutSuffix = StationNameHelper.RemoveStationSuffix(station.StationName);
+                    // 检查是否请求取消
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        LogHelper.LogInfo($"导入中断：已导入{imported}个车站，剩余{stations.Count - i}个车站未导入");
+                        // 如果已经导入了一些车站，需要回滚
+                        if (importedIds.Count > 0)
+                        {
+                            await RollbackImportedStationsAsync(importedIds);
+                            importedIds.Clear();
+                            newStations.Clear();
+                            imported = 0;
+                        }
+                        return (total, imported, skipped, newStations, importedIds);
+                    }
 
-                    // 检查车站是否已存在
-                    if (existingStationNames.Contains(stationNameWithoutSuffix))
+                    var station = stations[i];
+                    
+                    // 如果车站代码为空，跳过该车站
+                    if (string.IsNullOrEmpty(station.StationCode))
+                    {
+                        LogHelper.LogWarning($"车站 '{station.StationName}' 的代码为空，已跳过");
+                        skipped++;
+                        continue;
+                    }
+
+                    // 检查车站代码是否已存在
+                    if (existingStationCodes.Contains(station.StationCode))
                     {
                         skipped++;
                     }
@@ -156,10 +297,12 @@ namespace TA_WPF.Services
                         if (success)
                         {
                             // 获取插入的车站ID
-                            var insertedStation = await _databaseService.GetStationByNameAsync(station.StationName);
+                            var insertedStation = await _databaseService.GetStationByCodeAsync(station.StationCode);
                             if (insertedStation != null)
                             {
                                 importedIds.Add(insertedStation.Id);
+                                // 将新的车站代码添加到已存在列表中，防止重复导入
+                                existingStationCodes.Add(station.StationCode);
                             }
 
                             imported++;

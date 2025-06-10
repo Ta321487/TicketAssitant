@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Threading;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
@@ -19,6 +20,7 @@ namespace TA_WPF.ViewModels
         private bool _dataChanged = false; // 标记数据是否被修改
         private List<StationInfo> _importedStations; // 保存导入的车站信息
         private bool _shouldGuideToClose = false; // 引导用户点击关闭按钮
+        private CancellationTokenSource _cancellationTokenSource; // 添加取消令牌源
 
         // 添加导入完成后的刷新回调
         public Action DataRefreshCallback { get; set; }
@@ -180,6 +182,9 @@ namespace TA_WPF.ViewModels
         {
             try
             {
+                // 创建新的取消令牌源
+                _cancellationTokenSource = new CancellationTokenSource();
+                
                 // 重置状态
                 IsImporting = true;
                 ImportProgress = 0;
@@ -192,10 +197,26 @@ namespace TA_WPF.ViewModels
                 // 获取12306车站数据
                 string stationData = await _stationImportService.FetchStationDataAsync();
 
+                // 如果在获取数据后已经请求取消，则直接返回
+                if (_cancellationTokenSource.IsCancellationRequested)
+                {
+                    StatusMessage = "导入已取消";
+                    IsImporting = false;
+                    return;
+                }
+
                 // 解析车站数据
                 StatusMessage = "正在解析车站数据...";
                 List<StationInfo> stations = _stationImportService.ParseStationData(stationData);
                 TotalStations = stations.Count;
+
+                // 如果在解析数据后已经请求取消，则直接返回
+                if (_cancellationTokenSource.IsCancellationRequested)
+                {
+                    StatusMessage = "导入已取消";
+                    IsImporting = false;
+                    return;
+                }
 
                 // 确认导入
                 if (TotalStations > 0)
@@ -211,11 +232,20 @@ namespace TA_WPF.ViewModels
                         return;
                     }
 
+                    // 如果在确认导入后已经请求取消，则直接返回
+                    if (_cancellationTokenSource.IsCancellationRequested)
+                    {
+                        StatusMessage = "导入已取消";
+                        IsImporting = false;
+                        return;
+                    }
+
                     // 开始导入
                     StatusMessage = "正在导入车站数据...";
                     var (total, imported, skipped, newStations, importedIds) = await _stationImportService.ImportStationsAsync(
                         stations,
-                        UpdateProgress);
+                        UpdateProgress,
+                        _cancellationTokenSource.Token);
 
                     // 更新已导入的站点ID
                     _importedStationIds.Clear();
@@ -265,12 +295,24 @@ namespace TA_WPF.ViewModels
                     IsImporting = false;
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // 操作被取消
+                StatusMessage = "导入已取消";
+                IsImporting = false;
+            }
             catch (Exception ex)
             {
                 LogHelper.LogError($"导入车站时出错: {ex.Message}", ex);
                 MessageBoxHelper.ShowError($"导入车站失败: {ex.Message}", "导入错误");
                 StatusMessage = "导入过程中发生错误";
                 IsImporting = false;
+            }
+            finally
+            {
+                // 释放取消令牌源
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = null;
             }
         }
 
@@ -280,6 +322,29 @@ namespace TA_WPF.ViewModels
         /// <param name="window">要关闭的窗口</param>
         private void CloseWindow(Window window)
         {
+            if (window == null) return;
+            
+            // 检查是否正在导入（仅在实际导入过程中才提示，已完成但未重置状态的不提示）
+            if (IsImporting && !HasImportResult)
+            {
+                // 弹出确认对话框
+                var result = MessageBoxHelper.ShowConfirmation(
+                    "正在导入车站，关闭会导致导入中断，是否确认关闭？",
+                    "确认关闭");
+
+                if (result != MessageBoxResult.Yes)
+                {
+                    // 用户取消关闭，继续导入
+                    return;
+                }
+
+                // 用户确认关闭，取消并回滚已导入的数据
+                CancelAndRollbackImport();
+                
+                // 等待一小段时间确保取消操作被处理
+                System.Threading.Thread.Sleep(100);
+            }
+
             // 重置导入状态，确保下次打开窗口时按钮可用
             IsImporting = false;
 
@@ -289,7 +354,7 @@ namespace TA_WPF.ViewModels
                 DataRefreshCallback.Invoke();
             }
 
-            window?.Close();
+            window.Close();
         }
 
         /// <summary>
@@ -299,8 +364,14 @@ namespace TA_WPF.ViewModels
         {
             try
             {
+                // 请求取消导入
+                _cancellationTokenSource?.Cancel();
+                
                 // 标记为不再继续导入
                 IsImporting = false;
+
+                // 显示取消导入消息
+                StatusMessage = "正在取消导入...";
 
                 // 检查是否有需要回滚的数据
                 if (_importedStationIds.Count > 0)
@@ -318,6 +389,8 @@ namespace TA_WPF.ViewModels
 
                     LogHelper.LogInfo("已回滚导入的车站数据");
                 }
+                
+                StatusMessage = "导入已取消";
             }
             catch (Exception ex)
             {

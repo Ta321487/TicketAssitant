@@ -183,8 +183,9 @@ namespace TA_WPF.ViewModels
 
         private async void AddStation()
         {
-            // 创建StationImportService
-            var stationImportService = new StationImportService(_databaseService);
+            // 创建ConfigurationService和StationImportService
+            var configurationService = new ConfigurationService();
+            var stationImportService = new StationImportService(_databaseService, configurationService);
 
             // 创建并显示ImportStationFrom12306Window
             var importWindow = new ImportStationFrom12306Window(stationImportService, _mainViewModel);
@@ -425,6 +426,26 @@ namespace TA_WPF.ViewModels
                 // 保存最后一次的查询条件，用于分页时重新应用
                 _lastQueryFilter = e;
 
+                // 当使用常用车站筛选但常用车站列表为空时直接返回空结果
+                if (e.UseMyDepartStations && (e.MyDepartStations == null || e.MyDepartStations.Count == 0))
+                {
+                    TotalCount = 0;
+                    _paginationViewModel.TotalItems = 0;
+                    _paginationViewModel.CurrentPage = 1;
+                    Stations = new ObservableCollection<StationInfo>();
+                    
+                    // 清空选择
+                    SelectedStations.Clear();
+                    
+                    // 更新UI状态
+                    OnPropertyChanged(nameof(HasData));
+                    OnPropertyChanged(nameof(HasNoData));
+                    OnPropertyChanged(nameof(HasSelection));
+                    OnPropertyChanged(nameof(IsAllSelected));
+                    
+                    return;
+                }
+
                 // 使用新的数据库方法，直接在数据库层面应用查询条件
                 // 获取符合条件的车站总数
                 TotalCount = await _databaseService.GetStationCountAdvancedAsync(
@@ -582,17 +603,27 @@ namespace TA_WPF.ViewModels
                 if (_lastQueryFilter != null)
                 {
                     // 有高级查询条件，使用高级查询方法
-                    var stations = await _databaseService.QueryStationsAdvancedAsync(
-                        _paginationViewModel.CurrentPage,
-                        _paginationViewModel.PageSize,
-                        _lastQueryFilter.StationName,
-                        _lastQueryFilter.Province,
-                        _lastQueryFilter.City,
-                        _lastQueryFilter.District,
-                        _lastQueryFilter.UseMyDepartStations ? _lastQueryFilter.MyDepartStations : null
-                    );
+                    if (_lastQueryFilter.UseMyDepartStations && (_lastQueryFilter.MyDepartStations == null || _lastQueryFilter.MyDepartStations.Count == 0))
+                    {
+                        // 如果勾选了"使用我的常用车站"但列表为空，直接返回空结果
+                        TotalCount = 0;
+                        Stations = new ObservableCollection<StationInfo>();
+                        _paginationViewModel.TotalItems = 0;
+                    }
+                    else
+                    {
+                        var stations = await _databaseService.QueryStationsAdvancedAsync(
+                            _paginationViewModel.CurrentPage,
+                            _paginationViewModel.PageSize,
+                            _lastQueryFilter.StationName,
+                            _lastQueryFilter.Province,
+                            _lastQueryFilter.City,
+                            _lastQueryFilter.District,
+                            _lastQueryFilter.UseMyDepartStations ? _lastQueryFilter.MyDepartStations : null
+                        );
 
-                    Stations = new ObservableCollection<StationInfo>(stations);
+                        Stations = new ObservableCollection<StationInfo>(stations);
+                    }
                 }
                 else
                 {

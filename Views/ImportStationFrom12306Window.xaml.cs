@@ -49,8 +49,8 @@ namespace TA_WPF.Views
 
             if (DataContext is ImportStationFrom12306ViewModel viewModel)
             {
-                // 检查是否正在导入
-                if (viewModel.IsImporting)
+                // 检查是否正在导入（仅在实际导入过程中才提示，已完成但未重置状态的不提示）
+                if (viewModel.IsImporting && !viewModel.HasImportResult)
                 {
                     // 弹出确认对话框
                     var result = MessageBoxHelper.ShowConfirmation(
@@ -62,23 +62,15 @@ namespace TA_WPF.Views
                         // 用户确认关闭，撤销已导入的数据
                         _forceClose = true; // 设置强制关闭标志，避免再次触发确认
                         viewModel.CancelAndRollbackImport();
-
-                        // 如果有回调，触发数据刷新
-                        if (viewModel.DataRefreshCallback != null)
-                        {
-                            viewModel.DataRefreshCallback.Invoke();
-                        }
+                        
+                        // 等待一小段时间确保取消操作被处理
+                        System.Threading.Thread.Sleep(100);
                     }
                     else
                     {
                         // 用户取消关闭，继续导入
                         e.Cancel = true;
                     }
-                }
-                else if (!viewModel.IsImporting && viewModel.DataRefreshCallback != null)
-                {
-                    // 如果没有正在导入但有数据变更，触发刷新
-                    viewModel.DataRefreshCallback.Invoke();
                 }
             }
         }

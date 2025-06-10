@@ -20,7 +20,7 @@ CREATE TABLE `station_info`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `station_name`(`station_name` ASC) USING BTREE,
   UNIQUE INDEX `fk_arrive_code`(`station_code` ASC) USING BTREE,
-  UNIQUE INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
+  INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 4128 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 SET FOREIGN_KEY_CHECKS = 1;

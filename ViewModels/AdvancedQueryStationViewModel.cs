@@ -680,6 +680,12 @@ namespace TA_WPF.ViewModels
             if (UseMyDepartStations)
             {
                 await LoadMyDepartStationsTaskAsync();
+                
+                // 如果选择了使用常用车站，但常用车站列表为空，显示警告信息
+                if (MyDepartStations == null || MyDepartStations.Count == 0)
+                {
+                    LogHelper.LogInfo("用户选择了使用常用车站筛选，但常用车站列表为空");
+                }
             }
 
             // 更新是否有活动筛选条件

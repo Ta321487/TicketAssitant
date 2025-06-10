@@ -1067,7 +1067,7 @@ namespace TA_WPF.Services
                     PRIMARY KEY (`id`) USING BTREE,
                     INDEX `station_name`(`station_name` ASC) USING BTREE,
                     UNIQUE INDEX `fk_arrive_code`(`station_code` ASC) USING BTREE,
-                    UNIQUE INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
+                    INDEX `station_pinyin`(`station_pinyin` ASC) USING BTREE
                     ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
                     ALTER TABLE `station_info` AUTO_INCREMENT = 1;";
 
@@ -1130,8 +1130,6 @@ namespace TA_WPF.Services
                     INDEX `idx_train_no`(`train_no` ASC, `depart_date` ASC) USING BTREE,
                     INDEX `idx_depart_station`(`depart_station` ASC, `depart_date` ASC) USING BTREE,
                     CONSTRAINT `fc_dc_arrive` FOREIGN KEY (`arrive_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE,
-                    CONSTRAINT `fc_dp_arrive` FOREIGN KEY (`arrive_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
-                    CONSTRAINT `fc_sp_depart` FOREIGN KEY (`depart_station_pinyin`) REFERENCES `station_info` (`station_pinyin`) ON DELETE CASCADE ON UPDATE CASCADE,
                     CONSTRAINT `fk_sc_depart` FOREIGN KEY (`depart_station_code`) REFERENCES `station_info` (`station_code`) ON DELETE CASCADE ON UPDATE CASCADE
                     ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
                     ALTER TABLE `train_ride_info` AUTO_INCREMENT = 1;";
@@ -3678,6 +3676,41 @@ namespace TA_WPF.Services
             {
                 LogHelper.LogError($"删除路线车站映射失败: {ex.Message}", ex);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// 根据车站代码获取车站信息
+        /// </summary>
+        /// <param name="stationCode">车站代码</param>
+        /// <returns>车站信息，如果不存在则返回null</returns>
+        public async Task<StationInfo> GetStationByCodeAsync(string stationCode)
+        {
+            if (string.IsNullOrWhiteSpace(stationCode))
+            {
+                return null;
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    var parameters = new Dictionary<string, object>
+                    {
+                        { "@StationCode", stationCode }
+                    };
+
+                    using (var command = new MySqlCommand(null, connection))
+                    {
+                        var results = await QueryStationsAsync(command, "station_code = @StationCode", parameters);
+                        return results.FirstOrDefault();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"根据代码获取车站信息失败: {ex.Message}", ex);
+                return null;
             }
         }
     }
