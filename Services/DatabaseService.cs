@@ -659,7 +659,7 @@ namespace TA_WPF.Services
             string departStation,
             string trainNo,
             int? year,
-            SeatPositionType seatPosition,
+            SeatPositionType? seatPosition,
             bool isAndCondition,
             DateTime? departDate = null)
         {
@@ -683,7 +683,7 @@ namespace TA_WPF.Services
                         !string.IsNullOrWhiteSpace(trainNo) ||
                         year.HasValue ||
                         departDate.HasValue ||
-                        seatPosition != SeatPositionType.None;
+                        (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None);
 
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
@@ -691,9 +691,9 @@ namespace TA_WPF.Services
                         conditions.Add("depart_station LIKE @departStation");
                         parameters.Add("@departStation", $"%{departStation}%");
                     }
-                    else if (isAndCondition && hasAnyCondition)
+                    else if (isAndCondition && hasAnyCondition && (!string.IsNullOrWhiteSpace(trainNo) || year.HasValue || departDate.HasValue || (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
                     {
-                        // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
+                        // 只有在AND模式且至少有一个其他条件时，才添加IS NULL限制
                         conditions.Add("depart_station IS NULL");
                     }
 
@@ -703,9 +703,9 @@ namespace TA_WPF.Services
                         conditions.Add("train_no LIKE @trainNo");
                         parameters.Add("@trainNo", $"%{trainNo}%");
                     }
-                    else if (isAndCondition && hasAnyCondition)
+                    else if (isAndCondition && hasAnyCondition && (!string.IsNullOrWhiteSpace(departStation) || year.HasValue || departDate.HasValue || (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
                     {
-                        // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
+                        // 只有在AND模式且至少有一个其他条件时，才添加IS NULL限制
                         conditions.Add("train_no IS NULL");
                     }
 
@@ -715,9 +715,11 @@ namespace TA_WPF.Services
                         conditions.Add("YEAR(depart_date) = @year");
                         parameters.Add("@year", year.Value);
                     }
-                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue)
+                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue && 
+                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) || 
+                              (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
                     {
-                        // 只有在AND模式且至少有一个条件且没有指定具体日期时，才添加IS NULL限制
+                        // 只有在AND模式且至少有一个其他条件且没有指定具体日期时，才添加IS NULL限制
                         conditions.Add("depart_date IS NULL");
                     }
 
@@ -729,24 +731,25 @@ namespace TA_WPF.Services
                     }
 
                     // 添加座位位置筛选条件
-                    if (seatPosition != SeatPositionType.None)
+                    if (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)
                     {
-                        if (seatPosition == SeatPositionType.Window)
+                        if (seatPosition.Value == SeatPositionType.Window)
                         {
                             conditions.Add("(seat_no LIKE '%A' OR seat_no LIKE '%F' OR seat_no LIKE '%1' OR seat_no LIKE '%5')");
                         }
-                        else if (seatPosition == SeatPositionType.Aisle)
+                        else if (seatPosition.Value == SeatPositionType.Aisle)
                         {
                             conditions.Add("(seat_no LIKE '%C' OR seat_no LIKE '%D')");
                         }
-                        else if (seatPosition == SeatPositionType.Middle)
+                        else if (seatPosition.Value == SeatPositionType.Middle)
                         {
                             conditions.Add("(seat_no LIKE '%B' OR seat_no LIKE '%E')");
                         }
                     }
-                    else if (isAndCondition && hasAnyCondition)
+                    else if (isAndCondition && hasAnyCondition && seatPosition.HasValue && seatPosition.Value == SeatPositionType.None &&
+                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) || year.HasValue || departDate.HasValue))
                     {
-                        // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
+                        // 只有在AND模式且至少有一个其他条件且明确指定了None时，才添加IS NULL限制
                         conditions.Add("seat_no IS NULL");
                     }
 
@@ -808,7 +811,7 @@ namespace TA_WPF.Services
             string departStation,
             string trainNo,
             int? year,
-            SeatPositionType seatPosition,
+            SeatPositionType? seatPosition,
             bool isAndCondition,
             DateTime? departDate = null)
         {
@@ -832,7 +835,7 @@ namespace TA_WPF.Services
                         !string.IsNullOrWhiteSpace(trainNo) ||
                         year.HasValue ||
                         departDate.HasValue ||
-                        seatPosition != SeatPositionType.None;
+                        (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None);
 
                     // 添加出发站筛选条件
                     if (!string.IsNullOrWhiteSpace(departStation))
@@ -840,9 +843,9 @@ namespace TA_WPF.Services
                         conditions.Add("depart_station LIKE @departStation");
                         parameters.Add("@departStation", $"%{departStation}%");
                     }
-                    else if (isAndCondition && hasAnyCondition)
+                    else if (isAndCondition && hasAnyCondition && (!string.IsNullOrWhiteSpace(trainNo) || year.HasValue || departDate.HasValue || (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
                     {
-                        // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
+                        // 只有在AND模式且至少有一个其他条件时，才添加IS NULL限制
                         conditions.Add("depart_station IS NULL");
                     }
 
@@ -852,9 +855,9 @@ namespace TA_WPF.Services
                         conditions.Add("train_no LIKE @trainNo");
                         parameters.Add("@trainNo", $"%{trainNo}%");
                     }
-                    else if (isAndCondition && hasAnyCondition)
+                    else if (isAndCondition && hasAnyCondition && (!string.IsNullOrWhiteSpace(departStation) || year.HasValue || departDate.HasValue || (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
                     {
-                        // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
+                        // 只有在AND模式且至少有一个其他条件时，才添加IS NULL限制
                         conditions.Add("train_no IS NULL");
                     }
 
@@ -864,9 +867,11 @@ namespace TA_WPF.Services
                         conditions.Add("YEAR(depart_date) = @year");
                         parameters.Add("@year", year.Value);
                     }
-                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue)
+                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue && 
+                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) || 
+                              (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
                     {
-                        // 只有在AND模式且至少有一个条件且没有指定具体日期时，才添加IS NULL限制
+                        // 只有在AND模式且至少有一个其他条件且没有指定具体日期时，才添加IS NULL限制
                         conditions.Add("depart_date IS NULL");
                     }
 
@@ -878,24 +883,25 @@ namespace TA_WPF.Services
                     }
 
                     // 添加座位位置筛选条件
-                    if (seatPosition != SeatPositionType.None)
+                    if (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)
                     {
-                        if (seatPosition == SeatPositionType.Window)
+                        if (seatPosition.Value == SeatPositionType.Window)
                         {
                             conditions.Add("(seat_no LIKE '%A' OR seat_no LIKE '%F' OR seat_no LIKE '%1' OR seat_no LIKE '%5')");
                         }
-                        else if (seatPosition == SeatPositionType.Aisle)
+                        else if (seatPosition.Value == SeatPositionType.Aisle)
                         {
                             conditions.Add("(seat_no LIKE '%C' OR seat_no LIKE '%D')");
                         }
-                        else if (seatPosition == SeatPositionType.Middle)
+                        else if (seatPosition.Value == SeatPositionType.Middle)
                         {
                             conditions.Add("(seat_no LIKE '%B' OR seat_no LIKE '%E')");
                         }
                     }
-                    else if (isAndCondition && hasAnyCondition)
+                    else if (isAndCondition && hasAnyCondition && seatPosition.HasValue && seatPosition.Value == SeatPositionType.None &&
+                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) || year.HasValue || departDate.HasValue))
                     {
-                        // 只有在AND模式且至少有一个条件时，才添加IS NULL限制
+                        // 只有在AND模式且至少有一个其他条件且明确指定了None时，才添加IS NULL限制
                         conditions.Add("seat_no IS NULL");
                     }
 

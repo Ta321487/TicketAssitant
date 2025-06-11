@@ -208,7 +208,28 @@ namespace TA_WPF.ViewModels
 
                     if (!_isUpdatingDepartStation)
                     {
+                        // 搜索匹配的车站
                         SearchStations(value, true);
+                        
+                        // 当用户输入站名并移除焦点时，自动设置筛选条件
+                        // 检查输入值不为空且不全是空白字符
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            // 获取站名（自动添加"站"后缀如果没有）
+                            string stationName = value.Trim();
+                            if (!stationName.EndsWith("站"))
+                            {
+                                stationName += "站";
+                            }
+                            
+                            // 设置出发站筛选条件
+                            DepartStationFilter = stationName;
+                        }
+                        else
+                        {
+                            // 如果输入为空，清空筛选条件
+                            DepartStationFilter = string.Empty;
+                        }
                     }
                 }
             }
@@ -229,7 +250,28 @@ namespace TA_WPF.ViewModels
 
                     if (!_isUpdatingArriveStation)
                     {
+                        // 搜索匹配的车站
                         SearchStations(value, false);
+                        
+                        // 当用户输入站名并移除焦点时，自动设置筛选条件
+                        // 检查输入值不为空且不全是空白字符
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            // 获取站名（自动添加"站"后缀如果没有）
+                            string stationName = value.Trim();
+                            if (!stationName.EndsWith("站"))
+                            {
+                                stationName += "站";
+                            }
+                            
+                            // 设置到达站筛选条件
+                            ArriveStationFilter = stationName;
+                        }
+                        else
+                        {
+                            // 如果输入为空，清空筛选条件
+                            ArriveStationFilter = string.Empty;
+                        }
                     }
                 }
             }
@@ -714,8 +756,12 @@ namespace TA_WPF.ViewModels
         private void ResetFilters()
         {
             DepartStationFilter = string.Empty;
+            DepartStationSearchText = string.Empty;
             TrainNoFilter = string.Empty;
+            TrainNumberFilter = string.Empty;
+            SelectedTrainPrefix = "G";
             ArriveStationFilter = string.Empty;
+            ArriveStationSearchText = string.Empty;
             YearFilter = null;
             IsAndCondition = true;
             ExcludeExistingTickets = true;
@@ -983,7 +1029,7 @@ namespace TA_WPF.ViewModels
                     DepartStationFilter,
                     TrainNoFilter,
                     YearFilter,
-                    SeatPositionType.None, // 添加座位位置参数，默认为None
+                    null, // 传入null表示不考虑座位位置条件
                     IsAndCondition);
 
                 // 如果需要排除已有车票，并且有需要排除的车票ID
@@ -995,7 +1041,7 @@ namespace TA_WPF.ViewModels
                         DepartStationFilter,
                         TrainNoFilter,
                         YearFilter,
-                        SeatPositionType.None, // 添加座位位置参数，默认为None
+                        null, // 传入null表示不考虑座位位置条件
                         IsAndCondition);
 
                     // 计算排除后的数量
@@ -1026,7 +1072,7 @@ namespace TA_WPF.ViewModels
                     DepartStationFilter,
                     TrainNoFilter,
                     YearFilter,
-                    SeatPositionType.None, // 添加座位位置参数，默认为None
+                    null, // 传入null表示不考虑座位位置条件
                     IsAndCondition);
 
                 // 如果需要排除已有车票
@@ -1047,7 +1093,7 @@ namespace TA_WPF.ViewModels
                             DepartStationFilter,
                             TrainNoFilter,
                             YearFilter,
-                            SeatPositionType.None,
+                            null, // 传入null表示不考虑座位位置条件
                             IsAndCondition);
 
                         // 过滤掉已添加的车票

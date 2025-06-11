@@ -411,6 +411,19 @@ namespace TA_WPF.ViewModels
                     // 如果是通过选择项更新的，不触发搜索
                     if (!_isUpdatingDepartStation)
                     {
+                        // 如果直接输入了车站名称，自动创建DepartStationItem
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            // 移除"站"字后设置SelectedDepartStation
+                            string stationName = value.Replace("站", "").Trim();
+                            if (!string.IsNullOrWhiteSpace(stationName) && 
+                                (SelectedDepartStation == null || 
+                                 !string.Equals(SelectedDepartStation.DepartStation, stationName, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                SelectedDepartStation = new DepartStationItem(stationName);
+                            }
+                        }
+
                         // 移除"站"字后搜索
                         string searchText = value?.Replace("站", "").Trim() ?? string.Empty;
                         SearchStations(searchText);
@@ -766,6 +779,19 @@ namespace TA_WPF.ViewModels
         {
             try
             {
+                // 如果用户直接输入了站名但没有从下拉框选择（DepartStationSearchText有值但SelectedDepartStation为null）
+                // 则手动创建一个DepartStationItem并设置为SelectedDepartStation
+                if (!string.IsNullOrWhiteSpace(DepartStationSearchText) && 
+                    (SelectedDepartStation == null || string.IsNullOrWhiteSpace(SelectedDepartStation.DepartStation)))
+                {
+                    // 移除可能的"站"字
+                    string stationName = DepartStationSearchText.Replace("站", "").Trim();
+                    if (!string.IsNullOrWhiteSpace(stationName))
+                    {
+                        SelectedDepartStation = new DepartStationItem(stationName);
+                    }
+                }
+
                 // 检测是否有筛选条件
                 HasActiveFilters = HasAnyActiveFilter();
 

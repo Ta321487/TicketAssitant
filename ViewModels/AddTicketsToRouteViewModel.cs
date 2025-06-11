@@ -207,6 +207,17 @@ namespace TA_WPF.ViewModels
 
                     if (!_isUpdatingDepartStation)
                     {
+                        // 当用户直接输入车站名称时，也需要更新DepartStationFilter
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            // 确保车站名称末尾有"站"字
+                            DepartStationFilter = StationNameHelper.EnsureStationSuffix(value);
+                        }
+                        else
+                        {
+                            DepartStationFilter = string.Empty;
+                        }
+                        
                         SearchStations(value, true);
                     }
                 }
@@ -228,6 +239,17 @@ namespace TA_WPF.ViewModels
 
                     if (!_isUpdatingArriveStation)
                     {
+                        // 当用户直接输入车站名称时，也需要更新ArriveStationFilter
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            // 确保车站名称末尾有"站"字
+                            ArriveStationFilter = StationNameHelper.EnsureStationSuffix(value);
+                        }
+                        else
+                        {
+                            ArriveStationFilter = string.Empty;
+                        }
+                        
                         SearchStations(value, false);
                     }
                 }
@@ -986,7 +1008,7 @@ namespace TA_WPF.ViewModels
                     DepartStationFilter,
                     TrainNoFilter,
                     null, // 年份设置为null，因为我们使用日期筛选
-                    SeatPositionType.None,
+                    null, // 传入null而不是SeatPositionType.None，避免添加seat_no IS NULL条件
                     IsAndCondition,
                     DepartDateFilter); // 添加出发日期参数
 
@@ -1003,7 +1025,7 @@ namespace TA_WPF.ViewModels
                         DepartStationFilter,
                         TrainNoFilter,
                         null, // 年份设置为null
-                        SeatPositionType.None,
+                        null, // 传入null而不是SeatPositionType.None，避免添加seat_no IS NULL条件
                         IsAndCondition,
                         DepartDateFilter); // 添加出发日期参数
 
@@ -1054,7 +1076,7 @@ namespace TA_WPF.ViewModels
                     DepartStationFilter,
                     TrainNoFilter,
                     null, // 年份设置为null
-                    SeatPositionType.None,
+                    null, // 传入null而不是SeatPositionType.None，避免添加seat_no IS NULL条件
                     IsAndCondition,
                     DepartDateFilter); // 添加出发日期参数
 
@@ -1080,7 +1102,7 @@ namespace TA_WPF.ViewModels
                             DepartStationFilter,
                             TrainNoFilter,
                             null, // 年份设置为null
-                            SeatPositionType.None,
+                            null, // 传入null而不是SeatPositionType.None，避免添加seat_no IS NULL条件
                             IsAndCondition,
                             DepartDateFilter); // 添加出发日期参数
 
