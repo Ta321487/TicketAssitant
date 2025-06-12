@@ -13,7 +13,7 @@ CREATE TABLE `route_station_mapping` (
   `stay_time` int NULL DEFAULT 0 COMMENT '计划停留时间(分钟)',
   `notes` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
   `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
-		`distance_from_prev` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '距离上一站点距离(公里)',
+  `distance_from_prev` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '距离上一站点距离(公里)',
   `distance_from_start` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '距起点累计距离(公里)',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_route`(`route_id` ASC) USING BTREE,

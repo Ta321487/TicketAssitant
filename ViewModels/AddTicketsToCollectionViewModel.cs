@@ -348,7 +348,7 @@ namespace TA_WPF.ViewModels
                 // 确保车站数据已加载
                 await _stationSearchService.EnsureInitializedAsync();
 
-                // 先尝试加载用户已有的出发/到达站点
+                // 加载用户已有的出发/到达站点
                 List<string> userStations;
                 if (isDepartStation)
                 {
@@ -360,7 +360,7 @@ namespace TA_WPF.ViewModels
                 }
 
                 // 从用户历史站点中筛选符合条件的
-                var userFilteredStations = userStations
+                var filteredStations = userStations
                     .Where(s => s != null && s.Contains(searchText, StringComparison.OrdinalIgnoreCase))
                     .Select(name => new StationInfo
                     {
@@ -368,24 +368,14 @@ namespace TA_WPF.ViewModels
                         // 用更高的排序权重让历史站点排在前面
                         StationLevel = 0
                     })
+                    .Take(10)
                     .ToList();
-
-                // 从所有站点中搜索
-                var dbStations = await _databaseService.SearchStationsByNameAsync(searchText);
-
-                // 合并结果，去重
-                var mergedStations = userFilteredStations
-                    .Union(dbStations.Where(s => !userFilteredStations.Any(us => us.StationName == s.StationName)))
-                    .ToList();
-
-                // 限制结果数量
-                var suggestions = mergedStations.Take(10).ToList();
 
                 if (isDepartStation)
                 {
                     // 更新出发车站建议列表
                     DepartStationSuggestions.Clear();
-                    foreach (var station in suggestions)
+                    foreach (var station in filteredStations)
                     {
                         DepartStationSuggestions.Add(station);
                     }
@@ -395,7 +385,7 @@ namespace TA_WPF.ViewModels
                 {
                     // 更新到达车站建议列表
                     ArriveStationSuggestions.Clear();
-                    foreach (var station in suggestions)
+                    foreach (var station in filteredStations)
                     {
                         ArriveStationSuggestions.Add(station);
                     }

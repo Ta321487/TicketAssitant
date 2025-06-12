@@ -245,7 +245,7 @@
                 <!-- 年份 -->
                 <StackPanel Grid.Row="0" Grid.Column="3" Margin="5">
                     <TextBlock Text="年份" Margin="0,0,0,5" />
-                    <TextBox Text="{Binding YearFilter, UpdateSourceTrigger=PropertyChanged}" 
+                    <TextBox Text="{Binding YearFilter, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', FallbackValue=''}" 
                              Style="{StaticResource EnhancedMaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="请输入年份"
                              InputMethod.IsInputMethodEnabled="False"

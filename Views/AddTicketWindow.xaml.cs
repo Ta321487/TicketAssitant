@@ -168,6 +168,9 @@ namespace TA_WPF.Views
                 {
                     firstTextBox.Focus();
                 }
+
+                // 确保窗口居中
+                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
             catch (Exception ex)
             {

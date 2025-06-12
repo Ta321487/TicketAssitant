@@ -183,6 +183,9 @@ namespace TA_WPF.Views
         {
             try
             {
+                // 确保窗口居中
+                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
                 // 设置窗口初始大小
                 AdjustWindowSize();
 

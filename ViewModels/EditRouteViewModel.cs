@@ -525,5 +525,25 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
+
+        /// <summary>
+        /// 清理资源
+        /// </summary>
+        public void Cleanup()
+        {
+            try
+            {
+                // 释放较大的资源
+                _coverImage = null;
+                _coverImagePath = null;
+                _originalRoute = null;
+                
+                Debug.WriteLine("EditRouteViewModel - 资源已清理");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"EditRouteViewModel.Cleanup 异常: {ex.Message}");
+            }
+        }
     }
 }

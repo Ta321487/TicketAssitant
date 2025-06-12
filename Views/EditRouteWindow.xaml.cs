@@ -45,6 +45,50 @@ namespace TA_WPF.Views
 
             // 注册Loaded事件，设置初始焦点
             this.Loaded += EditRouteWindow_Loaded;
+            
+            // 注册Closing和Closed事件，确保资源正确释放
+            this.Closing += EditRouteWindow_Closing;
+            this.Closed += EditRouteWindow_Closed;
+        }
+
+        /// <summary>
+        /// 窗口即将关闭时的处理
+        /// </summary>
+        private void EditRouteWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Debug.WriteLine("EditRouteWindow_Closing - 窗口即将关闭");
+            
+            try
+            {
+                // 在这里执行任何必要的资源释放和清理
+                _viewModel?.Cleanup();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"EditRouteWindow_Closing 异常: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 窗口关闭后的处理
+        /// </summary>
+        private void EditRouteWindow_Closed(object sender, EventArgs e)
+        {
+            Debug.WriteLine("EditRouteWindow_Closed - 窗口已关闭");
+            
+            try
+            {
+                // 释放资源
+                DataContext = null;
+                
+                // 尝试强制GC收集一次，帮助释放资源
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"EditRouteWindow_Closed 异常: {ex.Message}");
+            }
         }
 
         /// <summary>

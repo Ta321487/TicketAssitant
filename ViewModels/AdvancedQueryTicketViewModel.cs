@@ -156,7 +156,7 @@ namespace TA_WPF.ViewModels
         {
             try
             {
-                // 获取已有的出发车站点
+                // 获取已有的出发车站点 (已经是从train_ride_info表获取)
                 var departStations = await _databaseService.GetDistinctDepartStationsAsync();
 
                 // 转换为DepartStationItem列表
@@ -622,13 +622,19 @@ namespace TA_WPF.ViewModels
                 if (string.IsNullOrWhiteSpace(searchText))
                     return;
 
-                // 搜索出发车站
-                var stations = await _databaseService.SearchStationsByNameAsync(searchText);
-
-                // 添加到建议列表
-                foreach (var station in stations)
+                // 从train_ride_info表中获取出发车站
+                var distinctStations = await _databaseService.GetDistinctDepartStationsAsync();
+                
+                // 筛选匹配的车站
+                var filteredStations = distinctStations
+                    .Where(s => !string.IsNullOrEmpty(s) && s.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                    .Take(10)
+                    .ToList();
+                    
+                // 将筛选结果转换为StationInfo对象
+                foreach (var stationName in filteredStations)
                 {
-                    DepartStationSuggestions.Add(station);
+                    DepartStationSuggestions.Add(new StationInfo { StationName = stationName });
                 }
 
                 // 如果有结果，显示下拉框

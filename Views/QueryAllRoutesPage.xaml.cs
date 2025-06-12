@@ -5,6 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using TA_WPF.Models;
+using TA_WPF.Utils;
 using TA_WPF.ViewModels;
 namespace TA_WPF.Views
 {
@@ -19,6 +20,7 @@ namespace TA_WPF.Views
         private TextBox _pageNumberInput;
         private Popup _pageNumberTooltip;
         private TextBlock _tooltipText;
+        private bool _isProcessingDoubleClick = false;
 
         public QueryAllRoutesPage()
         {
@@ -38,7 +40,8 @@ namespace TA_WPF.Views
             if (dataGrid != null)
             {
                 dataGrid.PreviewMouseRightButtonDown += RoutesDataGrid_PreviewMouseRightButtonDown;
-                Debug.WriteLine("已手动绑定PreviewMouseRightButtonDown事件到DataGrid");
+                dataGrid.MouseDoubleClick += RoutesDataGrid_MouseDoubleClick;
+                Debug.WriteLine("已手动绑定PreviewMouseRightButtonDown和MouseDoubleClick事件到DataGrid");
             }
         }
 
@@ -81,7 +84,12 @@ namespace TA_WPF.Views
                 // 确保绑定了预览右键点击事件，这对解决第二次及后续右键点击问题至关重要
                 dataGrid.PreviewMouseRightButtonDown -= RoutesDataGrid_PreviewMouseRightButtonDown; // 移除可能存在的重复订阅
                 dataGrid.PreviewMouseRightButtonDown += RoutesDataGrid_PreviewMouseRightButtonDown;
-                Debug.WriteLine("QueryAllRoutesPage_Loaded - 已确保绑定PreviewMouseRightButtonDown事件");
+                
+                // 确保绑定了双击事件
+                dataGrid.MouseDoubleClick -= RoutesDataGrid_MouseDoubleClick; // 移除可能存在的重复订阅
+                dataGrid.MouseDoubleClick += RoutesDataGrid_MouseDoubleClick;
+                
+                Debug.WriteLine("QueryAllRoutesPage_Loaded - 已确保绑定PreviewMouseRightButtonDown和MouseDoubleClick事件");
 
                 dataGrid.Focus();
             }
@@ -702,6 +710,14 @@ namespace TA_WPF.Views
             if (!(DataContext is QueryAllRoutesViewModel viewModel) || !(sender is DataGrid dataGrid))
                 return;
 
+            // 如果是左键双击，不拦截事件，让双击事件处理器处理
+            if (e.ClickCount == 2 && e.ChangedButton == MouseButton.Left)
+            {
+                Debug.WriteLine("RoutesDataGrid_PreviewMouseDown - 检测到左键双击，不拦截事件");
+                // 重要：不设置e.Handled = true，允许事件继续传播
+                return;
+            }
+
             // 获取修饰键状态
             bool isCtrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
             bool isShiftPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
@@ -1046,6 +1062,44 @@ namespace TA_WPF.Views
             Debug.WriteLine("RoutesDataGrid_MouseRightButtonDown - 调用被重定向到PreviewMouseRightButtonDown处理程序");
             // 重定向到预览事件处理程序
             RoutesDataGrid_PreviewMouseRightButtonDown(sender, e);
+        }
+
+        /// <summary>
+        /// 处理DataGrid双击事件
+        /// </summary>
+        private void RoutesDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            // 如果事件已处理，则不再处理
+            if (e.Handled)
+                return;
+
+            // 双击的是左键
+            if (e.ChangedButton != MouseButton.Left)
+                return;
+            
+            // 获取视图模型
+            var viewModel = DataContext as QueryAllRoutesViewModel;
+            if (viewModel == null || viewModel.SelectedRoute == null)
+                return;
+        
+            // 标记事件已处理
+            e.Handled = true;
+        
+            // 获取选中的路线
+            var selectedRoute = viewModel.SelectedRoute;
+        
+            // 延迟执行，确保其他UI事件完成
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.InvokeAsync(() => {
+                try
+                {
+                    Debug.WriteLine($"双击处理: 选中路线 {selectedRoute.RouteName}");
+                    viewModel.DoubleClickEditCommand.Execute(selectedRoute);
+                }
+                catch(Exception ex)
+                {
+                    LogHelper.LogError("双击处理异常", ex);
+                }
+            }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }
     }
 }
