@@ -23,6 +23,7 @@
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
             
             <!-- 增强的MaterialDesign输入框样式 - 改善深色模式下的可见性 -->
             <Style x:Key="EnhancedMaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
@@ -244,12 +245,27 @@
                 
                 <!-- 年份 -->
                 <StackPanel Grid.Row="0" Grid.Column="3" Margin="5">
-                    <TextBlock Text="年份" Margin="0,0,0,5" />
-                    <TextBox Text="{Binding YearFilter, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', FallbackValue=''}" 
-                             Style="{StaticResource EnhancedMaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="请输入年份"
-                             InputMethod.IsInputMethodEnabled="False"
-                             PreviewTextInput="Year_PreviewTextInput"/>
+                    <TextBlock Text="出发年份" Margin="0,0,0,5" />
+                    <Grid>
+                        <ComboBox ItemsSource="{Binding YearOptions}"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedItem="{Binding SelectedYearOption}"
+                                  materialDesign:HintAssist.Hint="选择年份"
+                                  Style="{StaticResource EnhancedMaterialDesignOutlinedComboBox}"/>
+                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                Command="{Binding ClearYearCommand}"
+                                ToolTip="清空年份"
+                                ToolTipService.ToolTip="清空年份"
+                                ToolTipService.InitialShowDelay="500"
+                                Width="32" Height="32"
+                                Padding="4"
+                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                HorizontalAlignment="Right"
+                                Margin="0,0,8,0"
+                                Visibility="{Binding SelectedYearOption, Converter={StaticResource NullToVisibilityConverter}}">
+                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                        </Button>
+                    </Grid>
                 </StackPanel>
                 
                 <!-- 搜索条件连接方式 -->

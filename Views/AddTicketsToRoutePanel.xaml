@@ -24,6 +24,7 @@
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
             
             <!-- 增强的MaterialDesign输入框样式 - 改善深色模式下的可见性 -->
             <Style x:Key="EnhancedMaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
@@ -265,13 +266,27 @@
                 
                 <!-- 出发日期 - 替换原来的年份输入框 -->
                 <StackPanel Grid.Row="0" Grid.Column="3" Margin="5">
-                    <TextBlock Text="出发日期" Margin="0,0,0,5" />
-                    <DatePicker SelectedDate="{Binding DepartDateFilter}"
-                                Style="{StaticResource EnhancedMaterialDesignDatePicker}"
-                                materialDesign:HintAssist.Hint="请选择出发日期"
-                                materialDesign:DatePickerAssist.OutlinedBorderActiveThickness="2"
-                                materialDesign:DatePickerAssist.OutlinedBorderInactiveThickness="1"
-                                Language="zh-CN" />
+                    <TextBlock Text="出发年份" Margin="0,0,0,5" />
+                    <Grid>
+                        <ComboBox ItemsSource="{Binding YearOptions}"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedItem="{Binding SelectedYearOption}"
+                                  materialDesign:HintAssist.Hint="选择年份"
+                                  Style="{StaticResource EnhancedMaterialDesignOutlinedComboBox}"/>
+                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                Command="{Binding ClearYearCommand}"
+                                ToolTip="清空年份"
+                                ToolTipService.ToolTip="清空年份"
+                                ToolTipService.InitialShowDelay="500"
+                                Width="32" Height="32"
+                                Padding="4"
+                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                HorizontalAlignment="Right"
+                                Margin="0,0,8,0"
+                                Visibility="{Binding SelectedYearOption, Converter={StaticResource NullToVisibilityConverter}}">
+                            <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                        </Button>
+                    </Grid>
                 </StackPanel>
                 
                 <!-- 搜索条件连接方式 -->

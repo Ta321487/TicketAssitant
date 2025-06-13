@@ -4,7 +4,8 @@ using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-
+using System.Windows;
+using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -43,6 +44,12 @@ namespace TA_WPF.ViewModels
         private bool _isUpdatingDepartStation;
         private bool _isUpdatingArriveStation;
         private StationSearchService _stationSearchService;
+        
+        // 添加年份选项相关字段
+        private YearOption? _selectedYearOption;
+        private List<YearOption> _yearOptions = new();
+        private int? _customYear;
+        private bool _isCustomYearSelected;
 
         /// <summary>
         /// 构造函数
@@ -72,6 +79,9 @@ namespace TA_WPF.ViewModels
 
             // 初始化车次前缀列表
             InitializeTrainPrefixes();
+            
+            // 初始化年份选项
+            InitializeYearOptions();
 
             // 初始化命令
             SearchTicketsCommand = new RelayCommand(SearchTickets);
@@ -83,12 +93,36 @@ namespace TA_WPF.ViewModels
             // 初始化车站相关命令
             SelectDepartStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, true));
             SelectArriveStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, false));
+            
+            // 初始化年份相关命令
+            CustomYearCommand = new RelayCommand(SelectCustomYear);
+            ClearYearCommand = new RelayCommand(ClearYear);
 
             // 初始加载数据
             LoadTickets();
 
             // 异步初始化站点数据
             _ = _stationSearchService.LoadStationsAsync();
+        }
+        
+        /// <summary>
+        /// 初始化年份选项
+        /// </summary>
+        private void InitializeYearOptions()
+        {
+            // 获取当前年份
+            int currentYear = DateTime.Now.Year;
+
+            // 创建年份选项列表
+            YearOptions = new List<YearOption>
+            {
+                null, // 不筛选年份
+                new YearOption(currentYear, $"{currentYear}年"),
+                new YearOption(currentYear - 1, $"{currentYear - 1}年"),
+                new YearOption(currentYear - 2, $"{currentYear - 2}年"),
+                new YearOption(currentYear - 3, $"{currentYear - 3}年"),
+                new YearOption(null, "自定义年份", true) // 自定义年份选项
+            };
         }
 
         /// <summary>
@@ -567,6 +601,107 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 选中的年份选项
+        /// </summary>
+        public YearOption? SelectedYearOption
+        {
+            get => _selectedYearOption;
+            set
+            {
+                if (_selectedYearOption != value)
+                {
+                    _selectedYearOption = value;
+                    IsCustomYearSelected = value?.IsCustom ?? false;
+
+                    // 同步更新YearFilter
+                    YearFilter = value?.Year;
+
+                    // 如果选择了自定义年份选项，直接弹出对话框
+                    if (value?.IsCustom == true)
+                    {
+                        SelectCustomYear();
+                    }
+
+                    OnPropertyChanged(nameof(SelectedYearOption));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 自定义年份是否被选中
+        /// </summary>
+        public bool IsCustomYearSelected
+        {
+            get => _isCustomYearSelected;
+            set
+            {
+                if (_isCustomYearSelected != value)
+                {
+                    _isCustomYearSelected = value;
+                    OnPropertyChanged(nameof(IsCustomYearSelected));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 自定义年份
+        /// </summary>
+        public int? CustomYear
+        {
+            get => _customYear;
+            set
+            {
+                if (_customYear != value)
+                {
+                    _customYear = value;
+                    OnPropertyChanged(nameof(CustomYear));
+
+                    // 如果已经选择了自定义年份选项，更新它的值
+                    if (SelectedYearOption?.IsCustom == true && _yearOptions != null && _yearOptions.Count > 0)
+                    {
+                        var customOption = _yearOptions.FirstOrDefault(y => y != null && y.IsCustom);
+                        if (customOption != null)
+                        {
+                            customOption.Year = value;
+                            customOption.DisplayName = value.HasValue ? $"自定义: {value}" : "自定义年份";
+                            
+                            // 同步更新YearFilter
+                            YearFilter = value;
+                            
+                            OnPropertyChanged(nameof(YearOptions));
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 年份选项列表
+        /// </summary>
+        public List<YearOption> YearOptions
+        {
+            get => _yearOptions;
+            set
+            {
+                if (_yearOptions != value)
+                {
+                    _yearOptions = value;
+                    OnPropertyChanged(nameof(YearOptions));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 选择自定义年份命令
+        /// </summary>
+        public ICommand CustomYearCommand { get; }
+        
+        /// <summary>
+        /// 清空年份命令
+        /// </summary>
+        public ICommand ClearYearCommand { get; }
+
+        /// <summary>
         /// 年份筛选
         /// </summary>
         public int? YearFilter
@@ -578,6 +713,38 @@ namespace TA_WPF.ViewModels
                 {
                     _yearFilter = value;
                     OnPropertyChanged(nameof(YearFilter));
+                    
+                    // 当YearFilter直接被设置时，同步更新SelectedYearOption
+                    if (value.HasValue)
+                    {
+                        // 检查是否与现有年份选项匹配
+                        var matchingOption = YearOptions?.FirstOrDefault(y => y != null && y.Year == value);
+                        if (matchingOption != null)
+                        {
+                            // 如果找到匹配的选项，选择它
+                            _selectedYearOption = matchingOption;
+                            OnPropertyChanged(nameof(SelectedYearOption));
+                        }
+                        else
+                        {
+                            // 如果没有匹配的选项，创建一个自定义年份选项
+                            var customOption = YearOptions?.FirstOrDefault(y => y != null && y.IsCustom);
+                            if (customOption != null)
+                            {
+                                customOption.Year = value;
+                                customOption.DisplayName = $"自定义: {value}";
+                                _selectedYearOption = customOption;
+                                OnPropertyChanged(nameof(SelectedYearOption));
+                                OnPropertyChanged(nameof(YearOptions));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // 如果YearFilter被设置为null，清空SelectedYearOption
+                        _selectedYearOption = null;
+                        OnPropertyChanged(nameof(SelectedYearOption));
+                    }
                 }
             }
         }
@@ -753,6 +920,8 @@ namespace TA_WPF.ViewModels
             ArriveStationFilter = string.Empty;
             ArriveStationSearchText = string.Empty;
             YearFilter = null;
+            SelectedYearOption = null;
+            CustomYear = null;
             IsAndCondition = true;
             ExcludeExistingTickets = true;
 
@@ -1018,7 +1187,7 @@ namespace TA_WPF.ViewModels
                 int count = await _databaseService.GetFilteredTrainRideInfoCountAsync(
                     DepartStationFilter,
                     TrainNoFilter,
-                    YearFilter,
+                    SelectedYearOption?.Year,  // 使用SelectedYearOption中的Year属性
                     null, // 传入null表示不考虑座位位置条件
                     IsAndCondition);
 
@@ -1030,7 +1199,7 @@ namespace TA_WPF.ViewModels
                         1, int.MaxValue,
                         DepartStationFilter,
                         TrainNoFilter,
-                        YearFilter,
+                        SelectedYearOption?.Year,  // 使用SelectedYearOption中的Year属性
                         null, // 传入null表示不考虑座位位置条件
                         IsAndCondition);
 
@@ -1061,7 +1230,7 @@ namespace TA_WPF.ViewModels
                     _paginationViewModel.PageSize,
                     DepartStationFilter,
                     TrainNoFilter,
-                    YearFilter,
+                    SelectedYearOption?.Year,  // 使用SelectedYearOption中的Year属性
                     null, // 传入null表示不考虑座位位置条件
                     IsAndCondition);
 
@@ -1082,7 +1251,7 @@ namespace TA_WPF.ViewModels
                             int.MaxValue,
                             DepartStationFilter,
                             TrainNoFilter,
-                            YearFilter,
+                            SelectedYearOption?.Year,  // 使用SelectedYearOption中的Year属性
                             null, // 传入null表示不考虑座位位置条件
                             IsAndCondition);
 
@@ -1174,6 +1343,104 @@ namespace TA_WPF.ViewModels
 
             // 更新命令状态
             CommandManager.InvalidateRequerySuggested();
+        }
+
+        /// <summary>
+        /// 选择自定义年份
+        /// </summary>
+        private void SelectCustomYear()
+        {
+            // 创建一个对话框获取用户输入的年份
+            string title = "输入自定义年份";
+            string prompt = "请输入年份 (1900-2099):";
+            string initialValue = CustomYear?.ToString() ?? DateTime.Now.Year.ToString();
+
+            // 获取当前活动窗口作为对话框的所有者
+            Window currentWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
+            
+            var result = MessageBoxHelper.ShowInputDialog(title, prompt, initialValue, currentWindow);
+
+            if (result.IsConfirmed)
+            {
+                // 验证年份输入
+                if (int.TryParse(result.InputText, out int year) && year >= 1900 && year <= 2099)
+                {
+                    CustomYear = year;
+
+                    // 更新自定义年份选项
+                    if (YearOptions != null && YearOptions.Count > 0)
+                    {
+                        var customOption = YearOptions.FirstOrDefault(y => y != null && y.IsCustom);
+                        if (customOption != null)
+                        {
+                            customOption.Year = year;
+                            customOption.DisplayName = $"自定义: {year}";
+                            
+                            // 同步更新YearFilter
+                            YearFilter = year;
+                            
+                            OnPropertyChanged(nameof(YearOptions));
+                        }
+                        else
+                        {
+                            // 如果没有找到自定义选项，创建一个新的
+                            var newCustomOption = new YearOption(year, $"自定义: {year}", true);
+                            YearOptions.Add(newCustomOption);
+                            SelectedYearOption = newCustomOption;
+                            
+                            // 同步更新YearFilter
+                            YearFilter = year;
+                            
+                            OnPropertyChanged(nameof(YearOptions));
+                        }
+                    }
+                    else
+                    {
+                        // 如果YearOptions为空，初始化它
+                        InitializeYearOptions();
+                        // 重新尝试设置自定义年份
+                        var customOption = YearOptions.FirstOrDefault(y => y != null && y.IsCustom);
+                        if (customOption != null)
+                        {
+                            customOption.Year = year;
+                            customOption.DisplayName = $"自定义: {year}";
+                            SelectedYearOption = customOption;
+                            
+                            // 同步更新YearFilter
+                            YearFilter = year;
+                            
+                            OnPropertyChanged(nameof(YearOptions));
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBoxHelper.ShowError("年份必须是1900-2099之间的整数。", "错误", currentWindow);
+                    // 恢复选择非自定义年份，确保YearOptions不为空
+                    if (YearOptions != null && YearOptions.Count > 0)
+                    {
+                        SelectedYearOption = YearOptions.FirstOrDefault(y => y != null && !y.IsCustom);
+                    }
+                }
+            }
+            else
+            {
+                // 用户取消，恢复选择非自定义年份，确保YearOptions不为空
+                if (YearOptions != null && YearOptions.Count > 0)
+                {
+                    SelectedYearOption = YearOptions.FirstOrDefault(y => y != null && !y.IsCustom);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 清空年份条件
+        /// </summary>
+        private void ClearYear()
+        {
+            SelectedYearOption = null;
+            CustomYear = null;
+            YearFilter = null;
         }
     }
 }

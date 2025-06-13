@@ -104,15 +104,5 @@ namespace TA_WPF.Views
                 return;
             }
         }
-
-        /// <summary>
-        /// 验证年份输入
-        /// </summary>
-        private void Year_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            // 仅允许输入数字
-            Regex regex = new Regex("[^0-9]+");
-            e.Handled = regex.IsMatch(e.Text);
-        }
     }
 }
