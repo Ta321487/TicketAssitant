@@ -157,6 +157,12 @@ namespace TA_WPF.Views
 
             // 根据选中的标签页更新分页控件的数据绑定
             UpdatePaginationBindings();
+            
+            // 如果选中了统计摘要标签页，则触发相应处理
+            if (_currentTabIndex == 2) // 统计摘要标签页
+            {
+                _ = _viewModel.OnStatisticsTabSelectedAsync();
+            }
         }
 
         /// <summary>
@@ -165,6 +171,10 @@ namespace TA_WPF.Views
         private void UpdatePaginationBindings()
         {
             if (_viewModel == null)
+                return;
+
+            // 如果是统计摘要标签页，则不需要进行分页控件的数据绑定
+            if (_currentTabIndex == 2)
                 return;
 
             // 清除旧的绑定
@@ -193,10 +203,8 @@ namespace TA_WPF.Views
                 case 1: // 车站列表
                     SetStationsBindings();
                     break;
-                case 2: // 统计摘要（无分页功能）
                 default:
-                    // 隐藏分页控件或使用默认的车票绑定
-                    SetTicketsBindings();
+                    // 其他标签页不处理分页
                     break;
             }
         }

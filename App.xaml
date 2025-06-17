@@ -29,6 +29,7 @@
             <converters:BooleanToVisibilityHiddenConverter x:Key="BooleanToVisibilityHiddenConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:ByteArrayToImageConverter x:Key="ByteArrayToImageConverter" />
             
             <!-- 主题相关资源 -->
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />

@@ -3719,5 +3719,116 @@ namespace TA_WPF.Services
                 return null;
             }
         }
+
+        /// <summary>
+        /// 获取路线的统计信息
+        /// </summary>
+        public async Task<RouteStatisticsInfo> GetRouteStatisticsAsync(int routeId)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    var command = new MySqlCommand("SELECT * FROM route_statistics WHERE route_id = @routeId LIMIT 1", connection);
+                    command.Parameters.AddWithValue("@routeId", routeId);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return MapRouteStatisticsInfo(reader);
+                        }
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取路线统计信息失败: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 创建或更新路线统计信息
+        /// </summary>
+        public async Task<bool> CreateOrUpdateRouteStatisticsAsync(RouteStatisticsInfo statistics)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 检查是否已存在记录
+                    var checkCommand = new MySqlCommand("SELECT id FROM route_statistics WHERE route_id = @routeId LIMIT 1", connection);
+                    checkCommand.Parameters.AddWithValue("@routeId", statistics.RouteId);
+                    var existingId = await checkCommand.ExecuteScalarAsync();
+
+                    if (existingId != null)
+                    {
+                        // 更新现有记录
+                        var updateCommand = new MySqlCommand(
+                            "UPDATE route_statistics SET " +
+                            "total_cost = @totalCost, " +
+                            "provinces_passed = @provincesPassed, " +
+                            "cities_passed = @citiesPassed, " +
+                            "seat_type_stats = @seatTypeStats, " +
+                            "railway_bureau_stats = @railwayBureauStats, " +
+                            "update_time = CURRENT_TIMESTAMP " +
+                            "WHERE id = @id", connection);
+
+                        updateCommand.Parameters.AddWithValue("@id", existingId);
+                        updateCommand.Parameters.AddWithValue("@totalCost", statistics.TotalCost);
+                        updateCommand.Parameters.AddWithValue("@provincesPassed", statistics.ProvincesPassed ?? "");
+                        updateCommand.Parameters.AddWithValue("@citiesPassed", statistics.CitiesPassed ?? "");
+                        updateCommand.Parameters.AddWithValue("@seatTypeStats", statistics.SeatTypeStats ?? "{}");
+                        updateCommand.Parameters.AddWithValue("@railwayBureauStats", statistics.RailwayBureauStats ?? "{}");
+
+                        return await updateCommand.ExecuteNonQueryAsync() > 0;
+                    }
+                    else
+                    {
+                        // 创建新记录
+                        var insertCommand = new MySqlCommand(
+                            "INSERT INTO route_statistics " +
+                            "(route_id, total_cost, provinces_passed, cities_passed, seat_type_stats, railway_bureau_stats) " +
+                            "VALUES (@routeId, @totalCost, @provincesPassed, @citiesPassed, @seatTypeStats, @railwayBureauStats)", 
+                            connection);
+
+                        insertCommand.Parameters.AddWithValue("@routeId", statistics.RouteId);
+                        insertCommand.Parameters.AddWithValue("@totalCost", statistics.TotalCost);
+                        insertCommand.Parameters.AddWithValue("@provincesPassed", statistics.ProvincesPassed ?? "");
+                        insertCommand.Parameters.AddWithValue("@citiesPassed", statistics.CitiesPassed ?? "");
+                        insertCommand.Parameters.AddWithValue("@seatTypeStats", statistics.SeatTypeStats ?? "{}");
+                        insertCommand.Parameters.AddWithValue("@railwayBureauStats", statistics.RailwayBureauStats ?? "{}");
+
+                        return await insertCommand.ExecuteNonQueryAsync() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"创建或更新路线统计信息失败: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 将数据库记录映射为路线统计信息对象
+        /// </summary>
+        private RouteStatisticsInfo MapRouteStatisticsInfo(DbDataReader reader)
+        {
+            return new RouteStatisticsInfo
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("id")),
+                RouteId = reader.GetInt32(reader.GetOrdinal("route_id")),
+                TotalCost = reader.GetDecimal(reader.GetOrdinal("total_cost")),
+                ProvincesPassed = reader.IsDBNull(reader.GetOrdinal("provinces_passed")) ? null : reader.GetString(reader.GetOrdinal("provinces_passed")),
+                CitiesPassed = reader.IsDBNull(reader.GetOrdinal("cities_passed")) ? null : reader.GetString(reader.GetOrdinal("cities_passed")),
+                SeatTypeStats = reader.IsDBNull(reader.GetOrdinal("seat_type_stats")) ? null : reader.GetString(reader.GetOrdinal("seat_type_stats")),
+                RailwayBureauStats = reader.IsDBNull(reader.GetOrdinal("railway_bureau_stats")) ? null : reader.GetString(reader.GetOrdinal("railway_bureau_stats")),
+                UpdateTime = reader.GetDateTime(reader.GetOrdinal("update_time"))
+            };
+        }
     }
 }

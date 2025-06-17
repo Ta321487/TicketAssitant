@@ -58,6 +58,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- 内容区域 -->
@@ -85,44 +86,22 @@
             <!-- 统计摘要标签页 -->
             <TabItem Header="统计摘要"
                      FontSize="{Binding MainViewModel.FontSize}">
-                <Grid Margin="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <!-- 统计摘要操作栏 -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Style="{StaticResource MaterialDesignFlatButton}"
-                                ToolTip="刷新统计"
-                                Margin="0,0,8,0"
-                                FontSize="{Binding MainViewModel.FontSize}"
-                                Foreground="{DynamicResource PrimaryHueMidBrush}">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                <TextBlock Text="刷新统计" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                    
-                    <!-- 统计摘要内容 - 目前不实现具体内容 -->
-                    <Border Grid.Row="1" 
-                            BorderBrush="{DynamicResource MaterialDesignDivider}" 
-                            BorderThickness="1"
-                            Background="{DynamicResource MaterialDesignBackground}">
-                        <TextBlock Text="此处将显示统计摘要" 
-                                   HorizontalAlignment="Center" 
-                                   VerticalAlignment="Center"
-                                   FontSize="{Binding MainViewModel.FontSize}"
-                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
-                                   Style="{StaticResource MaterialDesignBody1TextBlock}"/>
-                    </Border>
-                </Grid>
+                <local:RouteStatisticalAbstractView DataContext="{Binding Statistics}" Margin="8" />
             </TabItem>
         </TabControl>
 
         <!-- 分页控件 -->
-        <Grid Grid.Row="1" Margin="10,0,10,10">
+        <Grid Grid.Row="2" Margin="10,0,10,10">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ElementName=MainTabControl, Path=SelectedIndex}" Value="2">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -242,7 +221,7 @@
         </Grid>
         
         <!-- 加载指示器 -->
-        <Grid Grid.Row="0" Grid.RowSpan="2"
+        <Grid Grid.Row="0" Grid.RowSpan="3"
               Background="#80000000" 
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">

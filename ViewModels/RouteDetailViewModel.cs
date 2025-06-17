@@ -17,10 +17,10 @@ namespace TA_WPF.ViewModels
         private bool _hasSelectedItems;
         private double _dataGridRowHeight = 45; // 默认行高为45
 
-        // 标签页数据集合 - 为后续实现准备
+        // 标签页数据集合
         private RouteTicketViewModel _tickets;
         private RouteStationViewModel _stations;
-        private object _statistics;
+        private RouteStatisticalAbstractViewModel _statistics;
 
         public RouteDetailViewModel(RouteInfo route, DatabaseService databaseService, MainViewModel mainViewModel)
         {
@@ -37,6 +37,7 @@ namespace TA_WPF.ViewModels
             // 初始化数据集合
             _tickets = new RouteTicketViewModel(route, databaseService, mainViewModel);
             _stations = new RouteStationViewModel(route, databaseService, mainViewModel);
+            _statistics = new RouteStatisticalAbstractViewModel(route, databaseService, mainViewModel);
 
             // 设置分页控制器为已初始化状态，防止初次加载时不触发事件
             _tickets.PaginationViewModel.IsInitialized = true;
@@ -173,8 +174,8 @@ namespace TA_WPF.ViewModels
             }
         }
 
-        // 统计摘要
-        public object Statistics
+        // 统计摘要视图模型
+        public RouteStatisticalAbstractViewModel Statistics
         {
             get => _statistics;
             set
@@ -225,6 +226,9 @@ namespace TA_WPF.ViewModels
 
                 // 加载车站数据
                 await _stations.RefreshDataAsync();
+                
+                // 加载统计数据
+                await _statistics.RefreshDataAsync();
 
                 // 更新UI状态
                 OnPropertyChanged(nameof(HasData));
@@ -238,6 +242,25 @@ namespace TA_WPF.ViewModels
             finally
             {
                 IsLoading = false;
+            }
+        }
+        
+        /// <summary>
+        /// 当切换到统计摘要标签页时调用
+        /// </summary>
+        public async Task OnStatisticsTabSelectedAsync()
+        {
+            try
+            {
+                // 刷新统计数据
+                await _statistics.RefreshDataAsync();
+                
+                // 此处可以添加在数据库中创建或更新路线统计记录的逻辑
+                // 注意：根据要求，暂时不实现实际的逻辑
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"加载统计摘要数据失败: {ex.Message}", ex);
             }
         }
 
