@@ -16,6 +16,7 @@ namespace TA_WPF.ViewModels
         private string _selectedCity;
         private string _selectedDistrict;
         private bool _useMyDepartStations;
+        private bool _useRouteStations;
         private bool _hasActiveFilters;
         private ObservableCollection<StationInfo> _stationSuggestions = new();
         private bool _isStationDropdownOpen;
@@ -25,6 +26,9 @@ namespace TA_WPF.ViewModels
         private List<string> _cities = new();
         private List<string> _districts = new();
         private List<string> _myDepartStations = new();
+        private List<int> _routeStationIds = new();
+        private List<RouteInfo> _routes = new();
+        private RouteInfo _selectedRoute;
 
         // 标记是否来自手动选择
         private bool _isFromSelection = false;
@@ -82,6 +86,9 @@ namespace TA_WPF.ViewModels
 
             // 加载我的出发车站
             LoadMyDepartStationsAsync();
+
+            // 加载路线数据
+            LoadRoutesAsync();
         }
 
         #endregion
@@ -262,6 +269,116 @@ namespace TA_WPF.ViewModels
             }
         }
 
+        /// <summary>
+        /// 加载所有路线信息
+        /// </summary>
+        private async void LoadRoutesAsync()
+        {
+            try
+            {
+                var routes = await _databaseService.GetRoutesAsync();
+                Routes = routes;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"加载路线数据失败: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 加载选中路线中的车站
+        /// </summary>
+        private async Task LoadRouteStationsAsync(int routeId)
+        {
+            try
+            {
+                if (routeId <= 0)
+                {
+                    RouteStationIds = new List<int>();
+                    return;
+                }
+
+                // 获取路线中的所有车站
+                var routeStations = await _databaseService.GetRouteStationsAsync(routeId, 1, int.MaxValue);
+
+                // 提取站点ID
+                RouteStationIds = routeStations
+                    .Where(rs => (rs.StationRole & 0x04) != 0) // 只选择经停站(0x04=4)
+                    .Select(rs => rs.StationId)
+                    .ToList();
+
+                // 通知属性变更
+                OnPropertyChanged(nameof(RouteStationIds));
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"加载路线车站数据失败: {ex.Message}", ex);
+                RouteStationIds = new List<int>();
+            }
+        }
+
+        /// <summary>
+        /// 加载所有路线中的经停站
+        /// </summary>
+        private async Task LoadAllRouteStationsAsync()
+        {
+            try
+            {
+                // 存储所有经停站的ID
+                var allStationIds = new HashSet<int>();
+
+                // 先获取所有路线
+                if (_routes == null || _routes.Count == 0)
+                {
+                    await LoadRoutesTaskAsync();
+                }
+
+                // 遍历每个路线，获取经停站
+                foreach (var route in _routes)
+                {
+                    var routeStations = await _databaseService.GetRouteStationsAsync(route.Id, 1, int.MaxValue);
+
+                    // 添加经停站ID
+                    foreach (var station in routeStations)
+                    {
+                        // 只选择经停站(0x04=4)
+                        if ((station.StationRole & 0x04) != 0)
+                        {
+                            allStationIds.Add(station.StationId);
+                        }
+                    }
+                }
+
+                // 更新路线车站ID列表
+                RouteStationIds = allStationIds.ToList();
+
+                // 通知属性变更
+                OnPropertyChanged(nameof(RouteStationIds));
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"加载所有路线车站数据失败: {ex.Message}", ex);
+                RouteStationIds = new List<int>();
+            }
+        }
+
+        /// <summary>
+        /// 异步加载路线
+        /// </summary>
+        private async Task LoadRoutesTaskAsync()
+        {
+            try
+            {
+                var routes = await _databaseService.GetRoutesAsync();
+                Routes = routes;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"加载路线数据失败: {ex.Message}", ex);
+                Routes = new List<RouteInfo>();
+            }
+        }
+
         #endregion
 
         #region 属性
@@ -409,6 +526,29 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
+        /// 是否使用路线中的车站
+        /// </summary>
+        public bool UseRouteStations
+        {
+            get => _useRouteStations;
+            set
+            {
+                if (_useRouteStations != value)
+                {
+                    _useRouteStations = value;
+                    OnPropertyChanged(nameof(UseRouteStations));
+                    OnPropertyChanged(nameof(QueryButtonText));
+
+                    // 当取消选中时，清空选中的路线
+                    if (!value && _selectedRoute != null)
+                    {
+                        SelectedRoute = null;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// 我的常用车站列表
         /// </summary>
         public List<string> MyDepartStations
@@ -529,6 +669,64 @@ namespace TA_WPF.ViewModels
             get
             {
                 return HasAnyActiveFilter() ? "查询" : "查询全部";
+            }
+        }
+
+        /// <summary>
+        /// 可用的路线列表
+        /// </summary>
+        public List<RouteInfo> Routes
+        {
+            get => _routes;
+            set
+            {
+                if (_routes != value)
+                {
+                    _routes = value;
+                    OnPropertyChanged(nameof(Routes));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 选中的路线
+        /// </summary>
+        public RouteInfo SelectedRoute
+        {
+            get => _selectedRoute;
+            set
+            {
+                if (_selectedRoute != value)
+                {
+                    _selectedRoute = value;
+                    OnPropertyChanged(nameof(SelectedRoute));
+
+                    // 异步加载路线中的车站
+                    if (value != null)
+                    {
+                        LoadRouteStationsAsync(value.Id).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        RouteStationIds = new List<int>();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 路线包含的车站ID列表
+        /// </summary>
+        public List<int> RouteStationIds
+        {
+            get => _routeStationIds;
+            private set
+            {
+                if (_routeStationIds != value)
+                {
+                    _routeStationIds = value;
+                    OnPropertyChanged(nameof(RouteStationIds));
+                }
             }
         }
 
@@ -664,11 +862,15 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private bool HasAnyActiveFilter()
         {
-            return !string.IsNullOrEmpty(StationSearchText) ||
-                   !string.IsNullOrEmpty(SelectedProvince) ||
-                   !string.IsNullOrEmpty(SelectedCity) ||
-                   !string.IsNullOrEmpty(SelectedDistrict) ||
-                   UseMyDepartStations;
+            // 添加路线车站筛选条件检查
+            bool hasRouteStationFilter = UseRouteStations;
+
+            return !string.IsNullOrWhiteSpace(StationSearchText) ||
+                   !string.IsNullOrWhiteSpace(SelectedProvince) ||
+                   !string.IsNullOrWhiteSpace(SelectedCity) ||
+                   !string.IsNullOrWhiteSpace(SelectedDistrict) ||
+                   UseMyDepartStations ||
+                   hasRouteStationFilter;
         }
 
         /// <summary>
@@ -676,11 +878,13 @@ namespace TA_WPF.ViewModels
         /// </summary>
         private async void ApplyFilter()
         {
+            HasActiveFilters = HasAnyActiveFilter();
+
             // 如果选择了使用我的常用车站，先重新加载最新的车站列表
             if (UseMyDepartStations)
             {
                 await LoadMyDepartStationsTaskAsync();
-                
+
                 // 如果选择了使用常用车站，但常用车站列表为空，显示警告信息
                 if (MyDepartStations == null || MyDepartStations.Count == 0)
                 {
@@ -688,22 +892,33 @@ namespace TA_WPF.ViewModels
                 }
             }
 
-            // 更新是否有活动筛选条件
-            HasActiveFilters = HasAnyActiveFilter();
+            // 如果选择了使用路线中的车站，但未选择具体路线，则加载所有路线的经停站
+            if (UseRouteStations && SelectedRoute == null)
+            {
+                await LoadAllRouteStationsAsync();
+            }
+            // 如果选择了使用路线中的车站，并且选择了特定路线，则加载该路线的经停站
+            else if (UseRouteStations && SelectedRoute != null)
+            {
+                await LoadRouteStationsAsync(SelectedRoute.Id);
+            }
 
-            // 通知查询条件变更
-            FilterApplied?.Invoke(this, new StationQueryFilterEventArgs
+            // 创建筛选条件
+            var filter = new StationQueryFilterEventArgs
             {
                 StationName = StationSearchText,
                 Province = SelectedProvince,
                 City = SelectedCity,
                 District = SelectedDistrict,
                 UseMyDepartStations = UseMyDepartStations,
-                MyDepartStations = UseMyDepartStations ? MyDepartStations : null
-            });
+                MyDepartStations = UseMyDepartStations ? MyDepartStations : null,
+                UseRouteStations = UseRouteStations,
+                SelectedRoute = SelectedRoute,
+                RouteStationIds = UseRouteStations ? RouteStationIds : null
+            };
 
-            // 不再关闭查询面板，让用户自己控制关闭
-            // IsQueryPanelVisible = false;
+            // 触发筛选应用事件
+            FilterApplied?.Invoke(this, filter);
         }
 
         /// <summary>
@@ -716,16 +931,13 @@ namespace TA_WPF.ViewModels
             SelectedCity = null;
             SelectedDistrict = null;
             UseMyDepartStations = false;
+            UseRouteStations = false;
+            SelectedRoute = null;
 
-            // 更新活动筛选状态
             HasActiveFilters = false;
 
-            // 清空下拉列表
-            StationSuggestions.Clear();
-            IsStationDropdownOpen = false;
-
-            // 应用筛选条件（查询全部数据）
-            ApplyFilter();
+            // 基于空条件触发筛选应用事件
+            FilterApplied?.Invoke(this, new StationQueryFilterEventArgs());
         }
 
         /// <summary>
@@ -763,5 +975,17 @@ namespace TA_WPF.ViewModels
         /// 我的常用车站列表（包含出发站和到达站）
         /// </summary>
         public List<string> MyDepartStations { get; set; }
+        /// <summary>
+        /// 是否使用路线中的车站
+        /// </summary>
+        public bool UseRouteStations { get; set; }
+        /// <summary>
+        /// 选中的路线
+        /// </summary>
+        public RouteInfo SelectedRoute { get; set; }
+        /// <summary>
+        /// 路线中的车站ID列表
+        /// </summary>
+        public List<int> RouteStationIds { get; set; }
     }
 }

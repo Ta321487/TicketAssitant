@@ -157,7 +157,7 @@ namespace TA_WPF.Views
 
             // 根据选中的标签页更新分页控件的数据绑定
             UpdatePaginationBindings();
-            
+
             // 如果选中了统计摘要标签页，则触发相应处理
             if (_currentTabIndex == 2) // 统计摘要标签页
             {

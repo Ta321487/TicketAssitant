@@ -13,13 +13,13 @@ namespace TA_WPF.Services
         private readonly DatabaseService _databaseService;
         private readonly ConfigurationService _configurationService;
         private readonly HttpClient _httpClient;
-        
+
         // 基础URL，版本号将动态替换
         private const string Station12306BaseUrl = "https://www.12306.cn/index/script/core/common/station_name_new_v{0}.js";
-        
+
         // 配置键名
         private const string Station12306VersionKey = "Station12306Version";
-        
+
         // 默认版本号和最大尝试版本数
         private const int DefaultVersion = 10080;
         private const int MaxVersionAttempts = 5;
@@ -83,7 +83,7 @@ namespace TA_WPF.Services
                 string url = GetStation12306Url(version);
                 LogHelper.LogInfo($"尝试获取12306车站数据: {url}");
                 var response = await _httpClient.GetStringAsync(url);
-                
+
                 // 验证返回的数据是否有效
                 if (!string.IsNullOrEmpty(response) && response.Contains("var station_names"))
                 {
@@ -108,20 +108,20 @@ namespace TA_WPF.Services
                 // 获取当前保存的版本号
                 int currentVersion = GetCurrentVersion();
                 string stationData = null;
-                
+
                 // 首先尝试使用当前版本
                 stationData = await TryFetchStationDataAsync(currentVersion);
                 if (!string.IsNullOrEmpty(stationData))
                 {
                     return stationData;
                 }
-                
+
                 // 当前版本失败，尝试更高版本
                 for (int i = 1; i <= MaxVersionAttempts; i++)
                 {
                     int newVersion = currentVersion + i;
                     stationData = await TryFetchStationDataAsync(newVersion);
-                    
+
                     if (!string.IsNullOrEmpty(stationData))
                     {
                         // 找到更高版本，保存并返回
@@ -129,15 +129,15 @@ namespace TA_WPF.Services
                         return stationData;
                     }
                 }
-                
+
                 // 更高版本都失败，尝试更低版本
                 for (int i = 1; i <= MaxVersionAttempts; i++)
                 {
                     int oldVersion = currentVersion - i;
                     if (oldVersion <= 0) break; // 避免尝试负数或零版本
-                    
+
                     stationData = await TryFetchStationDataAsync(oldVersion);
-                    
+
                     if (!string.IsNullOrEmpty(stationData))
                     {
                         // 找到更低版本，保存并返回
@@ -145,7 +145,7 @@ namespace TA_WPF.Services
                         return stationData;
                     }
                 }
-                
+
                 // 所有尝试都失败，抛出异常
                 throw new Exception($"无法获取12306车站数据，尝试了v{currentVersion - MaxVersionAttempts}至v{currentVersion + MaxVersionAttempts}的版本");
             }
@@ -196,7 +196,7 @@ namespace TA_WPF.Services
                     string stationName = parts[1];
                     string stationCode = parts.Length > 2 ? parts[2] : "";  // 确保使用车站代码作为唯一标识
                     string stationPinyin = parts.Length > 3 ? parts[3] : "";
-                    
+
                     // 确保站名以"站"结尾
                     string formattedStationName = StationNameHelper.EnsureStationSuffix(stationName);
 
@@ -251,7 +251,7 @@ namespace TA_WPF.Services
             {
                 // 获取数据库中现有的车站
                 var existingStations = await _databaseService.GetStationsAsync();
-                
+
                 // 使用station_code作为主键，存储已有车站的station_code
                 var existingStationCodes = new HashSet<string>(
                     existingStations.Where(s => !string.IsNullOrEmpty(s.StationCode))
@@ -276,7 +276,7 @@ namespace TA_WPF.Services
                     }
 
                     var station = stations[i];
-                    
+
                     // 如果车站代码为空，跳过该车站
                     if (string.IsNullOrEmpty(station.StationCode))
                     {

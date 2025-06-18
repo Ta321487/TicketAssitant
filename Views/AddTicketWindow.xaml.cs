@@ -66,6 +66,7 @@ namespace TA_WPF.Views
                 this.Closed += (s, e) =>
                 {
                     _themeService.ThemeChanged -= OnThemeChanged;
+                    this.KeyDown -= AddTicketWindow_KeyDown;
                 };
             }
             catch (Exception ex)
@@ -162,6 +163,9 @@ namespace TA_WPF.Views
                 // 设置窗口初始大小
                 AdjustWindowSize();
 
+                // 添加键盘事件处理
+                this.KeyDown += AddTicketWindow_KeyDown;
+
                 // 自动设置焦点到第一个文本框
                 var firstTextBox = FindVisualChildren<TextBox>(this).FirstOrDefault();
                 if (firstTextBox != null)
@@ -171,11 +175,84 @@ namespace TA_WPF.Views
 
                 // 确保窗口居中
                 this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+                // 创建PreviewKeyDown事件处理程序
+                KeyEventHandler previewKeyDownHandler = (s, args) =>
+                {
+                    if (args.Key == Key.Enter && !(Keyboard.FocusedElement is TextBox) && !(Keyboard.FocusedElement is ComboBox && ((ComboBox)Keyboard.FocusedElement).IsDropDownOpen))
+                    {
+                        // 模拟点击保存按钮
+                        if (_viewModel.SaveCommand.CanExecute(null))
+                        {
+                            _viewModel.SaveCommand.Execute(null);
+                            args.Handled = true;
+                        }
+                    }
+                };
+
+                // 注册全局键盘钩子，确保回车键能正确触发保存按钮
+                this.PreviewKeyDown += previewKeyDownHandler;
+
+                // 在窗口关闭时取消订阅事件
+                this.Closed += (s, args) =>
+                {
+                    this.PreviewKeyDown -= previewKeyDownHandler;
+                };
             }
             catch (Exception ex)
             {
                 LogHelper.LogError("加载添加车票窗口时出错", ex);
                 MessageBoxHelper.ShowError("加载窗口时出错: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 处理键盘按键事件
+        /// </summary>
+        private void AddTicketWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                // 如果按下回车键，执行保存操作
+                if (e.Key == Key.Enter)
+                {
+                    // 获取当前焦点元素
+                    var focusedElement = Keyboard.FocusedElement;
+
+                    // 如果当前焦点是TextBox且在编辑状态，不触发保存，除非是最后一个文本框
+                    if (focusedElement is TextBox textBox && textBox.IsKeyboardFocused)
+                    {
+                        // 允许在特定情况下触发保存
+                        if (e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+                        {
+                            // 使用Ctrl+Enter强制触发保存
+                            if (_viewModel.SaveCommand.CanExecute(null))
+                            {
+                                _viewModel.SaveCommand.Execute(null);
+                                e.Handled = true;
+                                return;
+                            }
+                        }
+                        return; // 普通回车键不触发保存
+                    }
+
+                    // 如果当前焦点是ComboBox且下拉列表打开，不触发保存
+                    if (focusedElement is ComboBox comboBox && comboBox.IsDropDownOpen)
+                    {
+                        return;
+                    }
+
+                    // 执行保存命令
+                    if (_viewModel.SaveCommand.CanExecute(null))
+                    {
+                        _viewModel.SaveCommand.Execute(null);
+                        e.Handled = true;  // 标记事件已处理
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理键盘事件时出错", ex);
             }
         }
 
@@ -200,6 +277,10 @@ namespace TA_WPF.Views
                 var screenHeight = SystemParameters.PrimaryScreenHeight;
                 var screenWidth = SystemParameters.PrimaryScreenWidth;
 
+                // 检查父窗口是否最大化
+                var parentWindow = Window.GetWindow(this.Owner);
+                bool isParentMaximized = parentWindow != null && parentWindow.WindowState == WindowState.Maximized;
+
                 // 设置窗口最大尺寸为屏幕的90%
                 this.MaxHeight = screenHeight * 0.9;
                 this.MaxWidth = screenWidth * 0.9;
@@ -212,15 +293,28 @@ namespace TA_WPF.Views
                 this.Height = Math.Min(850, screenHeight * 0.8);
                 this.Width = Math.Min(900, screenWidth * 0.8);
 
-                // 确保窗口在屏幕内
-                if (this.Top + this.Height > screenHeight)
+                // 调整窗口位置，确保标题栏可见
+                // 如果父窗口最大化，则将窗口位置调整为屏幕中心位置的偏上位置
+                if (isParentMaximized)
                 {
-                    this.Top = Math.Max(0, screenHeight - this.Height);
+                    this.Top = Math.Max(20, screenHeight * 0.1); // 确保顶部有足够空间显示标题栏
+                    this.Left = (screenWidth - this.Width) / 2;
                 }
-
-                if (this.Left + this.Width > screenWidth)
+                else
                 {
-                    this.Left = Math.Max(0, screenWidth - this.Width);
+                    // 常规居中逻辑
+                    this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+                    // 确保窗口在屏幕内
+                    if (this.Top + this.Height > screenHeight)
+                    {
+                        this.Top = Math.Max(0, screenHeight - this.Height);
+                    }
+
+                    if (this.Left + this.Width > screenWidth)
+                    {
+                        this.Left = Math.Max(0, screenWidth - this.Width);
+                    }
                 }
             }
             catch (Exception ex)
@@ -289,6 +383,94 @@ namespace TA_WPF.Views
             {
                 LogHelper.LogError("处理金额输入时出错", ex);
                 e.Handled = true;
+            }
+        }
+
+        private void MoneyTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                TextBox textBox = sender as TextBox;
+                if (textBox != null)
+                {
+                    // 判断是否所有文本都被选中
+                    bool allTextSelected = textBox.SelectionLength == textBox.Text.Length && textBox.SelectionLength > 0;
+
+                    // 处理全选后按Delete或Backspace的情况
+                    if (allTextSelected && (e.Key == Key.Delete || e.Key == Key.Back))
+                    {
+                        // 替换为"0.00"而不是空字符串
+                        textBox.Text = "0.00";
+                        textBox.SelectAll();
+                        e.Handled = true;
+                        System.Diagnostics.Debug.WriteLine("金额框全选删除: 已替换为0.00");
+                        return;
+                    }
+
+                    if (e.Key == Key.Back)
+                    {
+                        int caretIndex = textBox.CaretIndex;
+                        string text = textBox.Text;
+
+                        // 光标在小数点后面时
+                        if (caretIndex > 0 && caretIndex < text.Length && text[caretIndex - 1] == '.')
+                        {
+                            // 记录当前光标位置的前后部分
+                            string textBeforeCaret = text.Substring(0, caretIndex - 1);
+                            string textAfterCaret = text.Substring(caretIndex);
+
+                            // 构建新值，确保小数部分仍然是小数
+                            decimal newValue;
+                            bool parseSuccess = false;
+
+                            // 尝试解析小数点前的部分
+                            if (decimal.TryParse(textBeforeCaret, out decimal beforePart))
+                            {
+                                // 尝试解析小数点后的部分作为小数
+                                if (decimal.TryParse("0." + textAfterCaret, out decimal afterPart))
+                                {
+                                    // 合并两个部分
+                                    newValue = beforePart + afterPart;
+                                    parseSuccess = true;
+
+                                    // 转换为字符串，保持格式
+                                    string newText = newValue.ToString("F" + textAfterCaret.Length);
+
+                                    // 日志输出
+                                    System.Diagnostics.Debug.WriteLine($"金额框移除小数点: 原值={text}, 光标位置={caretIndex}, 修改后={newText}");
+
+                                    // 更新文本内容
+                                    textBox.Text = newText;
+
+                                    // 设置光标位置在原来小数点的位置
+                                    textBox.CaretIndex = caretIndex - 1;
+
+                                    // 标记事件已处理
+                                    e.Handled = true;
+                                }
+                            }
+
+                            if (!parseSuccess)
+                            {
+                                // 如果解析失败，使用原始的方式处理
+                                System.Diagnostics.Debug.WriteLine($"金额框移除小数点(解析失败): 原值={text}, 光标位置={caretIndex}, 尝试简单拼接");
+
+                                // 更新文本内容，移除小数点
+                                textBox.Text = textBeforeCaret + textAfterCaret;
+
+                                // 设置光标位置在原来小数点的位置
+                                textBox.CaretIndex = caretIndex - 1;
+
+                                // 标记事件已处理
+                                e.Handled = true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("处理金额键盘按键事件时出错", ex);
             }
         }
 

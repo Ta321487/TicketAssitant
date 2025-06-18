@@ -246,16 +246,16 @@ namespace TA_WPF.ViewModels
             try
             {
                 Debug.WriteLine($"EditRoute - 创建编辑窗口，路线ID: {route.Id}");
-                
+
                 // 创建编辑窗口实例
                 var editRouteWindow = new EditRouteWindow(route, _databaseService, _mainViewModel);
                 editRouteWindow.Owner = Application.Current.MainWindow;
 
                 Debug.WriteLine("EditRoute - 显示编辑窗口");
-                
+
                 // 显示模态窗口
                 var result = editRouteWindow.ShowDialog();
-                
+
                 Debug.WriteLine($"EditRoute - 编辑窗口已关闭，结果: {result}");
 
                 // 如果编辑成功，刷新列表
@@ -357,11 +357,12 @@ namespace TA_WPF.ViewModels
                     Debug.WriteLine("DoubleClickEditRoute: 路线对象为null，取消操作");
                     return;
                 }
-                
+
                 Debug.WriteLine($"DoubleClickEditRoute: 准备编辑路线 - ID={route.Id}, 名称={route.RouteName}");
-                
+
                 // 直接创建一个新的编辑窗口实例 - 使用更明确的方式避免重复打开
-                Application.Current.Dispatcher.Invoke(() => {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
                     try
                     {
                         // 确保使用新的路线对象副本
@@ -376,14 +377,15 @@ namespace TA_WPF.ViewModels
                             CreateTime = route.CreateTime,
                             UpdateTime = route.UpdateTime
                         };
-                        
+
                         Debug.WriteLine($"DoubleClickEditRoute: 创建编辑窗口，路线ID: {routeCopy.Id}");
                         var window = new EditRouteWindow(routeCopy, _databaseService, _mainViewModel);
                         window.Owner = Application.Current.MainWindow;
                         window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                        
+
                         // 设置结果处理
-                        window.Closed += (sender, args) => {
+                        window.Closed += (sender, args) =>
+                        {
                             Debug.WriteLine("DoubleClickEditRoute: 编辑窗口已关闭");
                             if (window.DialogResult == true)
                             {
@@ -391,7 +393,7 @@ namespace TA_WPF.ViewModels
                                 _ = LoadRoutesAsync();
                             }
                         };
-                        
+
                         // 显示为对话框
                         Debug.WriteLine("DoubleClickEditRoute: 显示编辑窗口");
                         window.ShowDialog();

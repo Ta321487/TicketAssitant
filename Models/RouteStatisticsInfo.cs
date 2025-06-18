@@ -190,4 +190,4 @@ namespace TA_WPF.Models
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-} 
+}

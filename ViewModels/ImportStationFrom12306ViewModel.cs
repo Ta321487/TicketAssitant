@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Input;
-using System.Threading;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
@@ -184,7 +183,7 @@ namespace TA_WPF.ViewModels
             {
                 // 创建新的取消令牌源
                 _cancellationTokenSource = new CancellationTokenSource();
-                
+
                 // 重置状态
                 IsImporting = true;
                 ImportProgress = 0;
@@ -323,7 +322,7 @@ namespace TA_WPF.ViewModels
         private void CloseWindow(Window window)
         {
             if (window == null) return;
-            
+
             // 检查是否正在导入（仅在实际导入过程中才提示，已完成但未重置状态的不提示）
             if (IsImporting && !HasImportResult)
             {
@@ -340,7 +339,7 @@ namespace TA_WPF.ViewModels
 
                 // 用户确认关闭，取消并回滚已导入的数据
                 CancelAndRollbackImport();
-                
+
                 // 等待一小段时间确保取消操作被处理
                 System.Threading.Thread.Sleep(100);
             }
@@ -366,7 +365,7 @@ namespace TA_WPF.ViewModels
             {
                 // 请求取消导入
                 _cancellationTokenSource?.Cancel();
-                
+
                 // 标记为不再继续导入
                 IsImporting = false;
 
@@ -389,7 +388,7 @@ namespace TA_WPF.ViewModels
 
                     LogHelper.LogInfo("已回滚导入的车站数据");
                 }
-                
+
                 StatusMessage = "导入已取消";
             }
             catch (Exception ex)

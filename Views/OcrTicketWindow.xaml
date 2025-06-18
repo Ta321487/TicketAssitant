@@ -800,6 +800,7 @@
                                  Style="{StaticResource FormNumberTextBoxStyle}"
                                  materialDesign:HintAssist.Hint="金额"
                                  PreviewTextInput="MoneyTextBox_PreviewTextInput"
+                                 PreviewKeyDown="MoneyTextBox_PreviewKeyDown"
                                  LostFocus="MoneyTextBox_LostFocus"
                                  materialDesign:TextFieldAssist.HasClearButton="False"
                                  materialDesign:TextFieldAssist.RippleOnFocusEnabled="True"

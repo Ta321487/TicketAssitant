@@ -1,11 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows;
-using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -44,7 +43,7 @@ namespace TA_WPF.ViewModels
         private bool _isUpdatingDepartStation;
         private bool _isUpdatingArriveStation;
         private StationSearchService _stationSearchService;
-        
+
         // 添加年份选项相关字段
         private YearOption? _selectedYearOption;
         private List<YearOption> _yearOptions = new();
@@ -79,7 +78,7 @@ namespace TA_WPF.ViewModels
 
             // 初始化车次前缀列表
             InitializeTrainPrefixes();
-            
+
             // 初始化年份选项
             InitializeYearOptions();
 
@@ -93,7 +92,7 @@ namespace TA_WPF.ViewModels
             // 初始化车站相关命令
             SelectDepartStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, true));
             SelectArriveStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, false));
-            
+
             // 初始化年份相关命令
             CustomYearCommand = new RelayCommand(SelectCustomYear);
             ClearYearCommand = new RelayCommand(ClearYear);
@@ -104,7 +103,7 @@ namespace TA_WPF.ViewModels
             // 异步初始化站点数据
             _ = _stationSearchService.LoadStationsAsync();
         }
-        
+
         /// <summary>
         /// 初始化年份选项
         /// </summary>
@@ -252,7 +251,7 @@ namespace TA_WPF.ViewModels
                         {
                             DepartStationFilter = string.Empty;
                         }
-                        
+
                         SearchStations(value, true);
                     }
                 }
@@ -284,7 +283,7 @@ namespace TA_WPF.ViewModels
                         {
                             ArriveStationFilter = string.Empty;
                         }
-                        
+
                         SearchStations(value, false);
                     }
                 }
@@ -696,17 +695,17 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 选择自定义年份命令
         /// </summary>
         public ICommand CustomYearCommand { get; }
-        
+
         /// <summary>
         /// 清空年份命令
         /// </summary>
         public ICommand ClearYearCommand { get; }
-        
+
         /// <summary>
         /// 选择自定义年份
         /// </summary>
@@ -719,7 +718,7 @@ namespace TA_WPF.ViewModels
 
             // 获取当前活动窗口作为对话框的所有者
             Window currentWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
-            
+
             var result = MessageBoxHelper.ShowInputDialog(title, prompt, initialValue, currentWindow);
 
             if (result.IsConfirmed)
@@ -782,7 +781,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 清空年份条件
         /// </summary>

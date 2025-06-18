@@ -715,8 +715,8 @@ namespace TA_WPF.Services
                         conditions.Add("YEAR(depart_date) = @year");
                         parameters.Add("@year", year.Value);
                     }
-                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue && 
-                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) || 
+                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue &&
+                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) ||
                               (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
                     {
                         // 只有在AND模式且至少有一个其他条件且没有指定具体日期时，才添加IS NULL限制
@@ -867,8 +867,8 @@ namespace TA_WPF.Services
                         conditions.Add("YEAR(depart_date) = @year");
                         parameters.Add("@year", year.Value);
                     }
-                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue && 
-                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) || 
+                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue &&
+                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) ||
                               (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
                     {
                         // 只有在AND模式且至少有一个其他条件且没有指定具体日期时，才添加IS NULL限制
@@ -1485,6 +1485,7 @@ namespace TA_WPF.Services
         /// <param name="city">城市</param>
         /// <param name="district">区/县</param>
         /// <param name="myDepartStations">我的常用车站列表（包含出发站和到达站）</param>
+        /// <param name="routeStationIds">路线车站ID列表</param>
         /// <returns>符合条件的车站列表</returns>
         public async Task<List<StationInfo>> QueryStationsAdvancedAsync(
             int pageNumber,
@@ -1493,7 +1494,8 @@ namespace TA_WPF.Services
             string province = null,
             string city = null,
             string district = null,
-            List<string> myDepartStations = null)
+            List<string> myDepartStations = null,
+            List<int> routeStationIds = null) // 添加路线车站ID参数
         {
             if (pageNumber <= 0) pageNumber = 1;
             if (pageSize <= 0) pageSize = 10;
@@ -1502,90 +1504,106 @@ namespace TA_WPF.Services
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
-                    // 构建基础查询
-                    var queryBuilder = new System.Text.StringBuilder("SELECT * FROM station_info");
-                    var parameters = new Dictionary<string, object>();
+                    // 构建查询条件
                     var conditions = new List<string>();
+                    var orConditions = new List<string>();
+                    var parameters = new Dictionary<string, object>();
 
-                    // 添加条件
+                    // 添加车站名称条件
                     if (!string.IsNullOrWhiteSpace(stationName))
                     {
-                        conditions.Add("station_name LIKE @StationName");
+                        conditions.Add("(station_name LIKE @StationName OR station_pinyin LIKE @StationPinyin)");
                         parameters["@StationName"] = $"%{stationName}%";
+                        parameters["@StationPinyin"] = $"%{stationName}%";
                     }
 
+                    // 添加省份条件
                     if (!string.IsNullOrWhiteSpace(province))
                     {
                         conditions.Add("province = @Province");
                         parameters["@Province"] = province;
                     }
 
+                    // 添加城市条件
                     if (!string.IsNullOrWhiteSpace(city))
                     {
                         conditions.Add("city = @City");
                         parameters["@City"] = city;
                     }
 
+                    // 添加区县条件
                     if (!string.IsNullOrWhiteSpace(district))
                     {
                         conditions.Add("district = @District");
                         parameters["@District"] = district;
                     }
 
-                    // 处理我的出发车站列表
+                    // 添加常用车站条件
                     if (myDepartStations != null && myDepartStations.Count > 0)
                     {
-                        var stationPlaceholders = new List<string>();
-                        for (int i = 0; i < myDepartStations.Count; i++)
-                        {
-                            string paramName = $"@DepartStation{i}";
-                            stationPlaceholders.Add(paramName);
-                            parameters[paramName] = myDepartStations[i];
-                        }
-
-                        conditions.Add($"station_name IN ({string.Join(", ", stationPlaceholders)})");
+                        // 构建IN子句
+                        var stationNames = string.Join(",", myDepartStations.Select(s => $"'{s.Replace("'", "''")}'"));
+                        orConditions.Add($"station_name IN ({stationNames})");
                     }
 
-                    // 添加WHERE子句
-                    if (conditions.Count > 0)
+                    // 添加路线车站条件
+                    if (routeStationIds != null && routeStationIds.Count > 0)
                     {
-                        queryBuilder.Append(" WHERE ");
-
-                        // 使用AND连接条件，实现级联筛选
-                        string connector = " AND ";
-                        queryBuilder.Append(string.Join(connector, conditions));
+                        var stationIds = string.Join(",", routeStationIds);
+                        orConditions.Add($"id IN ({stationIds})");
                     }
 
-                    // 添加排序和分页
-                    queryBuilder.Append(" ORDER BY id");
-                    queryBuilder.Append(" LIMIT @Offset, @PageSize");
-                    parameters["@Offset"] = (pageNumber - 1) * pageSize;
-                    parameters["@PageSize"] = pageSize;
-
-                    using (var command = new MySqlCommand(queryBuilder.ToString(), connection))
+                    // 处理OR条件（常用车站和路线车站的并集）
+                    if (orConditions.Count > 0)
                     {
-                        // 添加参数
+                        conditions.Add($"({string.Join(" OR ", orConditions)})");
+                    }
+
+                    // 构建完整的查询条件
+                    string whereClause = conditions.Count > 0 ? $"WHERE {string.Join(" AND ", conditions)}" : "";
+
+                    // 构建完整查询语句
+                    string query = @"
+                        SELECT id, station_name, province, city, district, 
+                               longitude, latitude, station_code, station_pinyin,
+                               station_level, railway_bureau
+                        FROM station_info
+                        {0}
+                        ORDER BY id ASC
+                        LIMIT @Offset, @PageSize";
+
+                    // 格式化完整SQL
+                    string sql = string.Format(query, whereClause);
+
+                    using (var command = new MySqlCommand(sql, connection))
+                    {
+                        // 添加分页参数
+                        command.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                        command.Parameters.AddWithValue("@PageSize", pageSize);
+
+                        // 添加其他参数
                         foreach (var param in parameters)
                         {
                             command.Parameters.AddWithValue(param.Key, param.Value);
                         }
 
                         // 执行查询
+                        var stations = new List<StationInfo>();
                         using (var reader = await command.ExecuteReaderAsync())
                         {
-                            var results = new List<StationInfo>();
                             while (await reader.ReadAsync())
                             {
-                                results.Add(MapStationInfo(reader));
+                                stations.Add(MapStationInfo(reader));
                             }
-                            return results;
                         }
+
+                        return stations;
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"高级查询车站失败: {ex.Message}", ex);
+                LogHelper.LogError($"高级查询车站数据失败: {ex.Message}", ex);
                 throw;
             }
         }
@@ -1593,78 +1611,80 @@ namespace TA_WPF.Services
         /// <summary>
         /// 获取高级查询的车站总数
         /// </summary>
-        /// <param name="stationName">车站名称</param>
-        /// <param name="province">省份</param>
-        /// <param name="city">城市</param>
-        /// <param name="district">区/县</param>
-        /// <param name="myDepartStations">我的常用车站列表（包含出发站和到达站）</param>
-        /// <returns>符合条件的车站总数</returns>
         public async Task<int> GetStationCountAdvancedAsync(
             string stationName = null,
             string province = null,
             string city = null,
             string district = null,
-            List<string> myDepartStations = null)
+            List<string> myDepartStations = null,
+            List<int> routeStationIds = null) // 添加路线车站ID参数
         {
             try
             {
                 using (var connection = await GetOpenConnectionWithRetryAsync())
                 {
-                    // 构建基础查询
-                    var queryBuilder = new System.Text.StringBuilder("SELECT COUNT(*) FROM station_info");
-                    var parameters = new Dictionary<string, object>();
+                    // 构建查询条件
                     var conditions = new List<string>();
+                    var orConditions = new List<string>();
+                    var parameters = new Dictionary<string, object>();
 
-                    // 添加条件
+                    // 添加车站名称条件
                     if (!string.IsNullOrWhiteSpace(stationName))
                     {
-                        conditions.Add("station_name LIKE @StationName");
+                        conditions.Add("(station_name LIKE @StationName OR station_pinyin LIKE @StationPinyin)");
                         parameters["@StationName"] = $"%{stationName}%";
+                        parameters["@StationPinyin"] = $"%{stationName}%";
                     }
 
+                    // 添加省份条件
                     if (!string.IsNullOrWhiteSpace(province))
                     {
                         conditions.Add("province = @Province");
                         parameters["@Province"] = province;
                     }
 
+                    // 添加城市条件
                     if (!string.IsNullOrWhiteSpace(city))
                     {
                         conditions.Add("city = @City");
                         parameters["@City"] = city;
                     }
 
+                    // 添加区县条件
                     if (!string.IsNullOrWhiteSpace(district))
                     {
                         conditions.Add("district = @District");
                         parameters["@District"] = district;
                     }
 
-                    // 处理我的出发车站列表
+                    // 添加常用车站条件
                     if (myDepartStations != null && myDepartStations.Count > 0)
                     {
-                        var stationPlaceholders = new List<string>();
-                        for (int i = 0; i < myDepartStations.Count; i++)
-                        {
-                            string paramName = $"@DepartStation{i}";
-                            stationPlaceholders.Add(paramName);
-                            parameters[paramName] = myDepartStations[i];
-                        }
-
-                        conditions.Add($"station_name IN ({string.Join(", ", stationPlaceholders)})");
+                        // 构建IN子句
+                        var stationNames = string.Join(",", myDepartStations.Select(s => $"'{s.Replace("'", "''")}'"));
+                        orConditions.Add($"station_name IN ({stationNames})");
                     }
 
-                    // 添加WHERE子句
-                    if (conditions.Count > 0)
+                    // 添加路线车站条件
+                    if (routeStationIds != null && routeStationIds.Count > 0)
                     {
-                        queryBuilder.Append(" WHERE ");
-
-                        // 使用AND连接条件，实现级联筛选
-                        string connector = " AND ";
-                        queryBuilder.Append(string.Join(connector, conditions));
+                        var stationIds = string.Join(",", routeStationIds);
+                        orConditions.Add($"id IN ({stationIds})");
                     }
 
-                    using (var command = new MySqlCommand(queryBuilder.ToString(), connection))
+                    // 处理OR条件（常用车站和路线车站的并集）
+                    if (orConditions.Count > 0)
+                    {
+                        conditions.Add($"({string.Join(" OR ", orConditions)})");
+                    }
+
+                    // 构建完整的查询条件
+                    string whereClause = conditions.Count > 0 ? $"WHERE {string.Join(" AND ", conditions)}" : "";
+
+                    // 构建完整查询语句
+                    string query = $"SELECT COUNT(*) FROM station_info {whereClause}";
+
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         // 添加参数
                         foreach (var param in parameters)
@@ -1673,7 +1693,8 @@ namespace TA_WPF.Services
                         }
 
                         // 执行查询
-                        return Convert.ToInt32(await command.ExecuteScalarAsync());
+                        object result = await command.ExecuteScalarAsync();
+                        return Convert.ToInt32(result);
                     }
                 }
             }
@@ -3792,7 +3813,7 @@ namespace TA_WPF.Services
                         var insertCommand = new MySqlCommand(
                             "INSERT INTO route_statistics " +
                             "(route_id, total_cost, provinces_passed, cities_passed, seat_type_stats, railway_bureau_stats) " +
-                            "VALUES (@routeId, @totalCost, @provincesPassed, @citiesPassed, @seatTypeStats, @railwayBureauStats)", 
+                            "VALUES (@routeId, @totalCost, @provincesPassed, @citiesPassed, @seatTypeStats, @railwayBureauStats)",
                             connection);
 
                         insertCommand.Parameters.AddWithValue("@routeId", statistics.RouteId);
@@ -3829,6 +3850,269 @@ namespace TA_WPF.Services
                 RailwayBureauStats = reader.IsDBNull(reader.GetOrdinal("railway_bureau_stats")) ? null : reader.GetString(reader.GetOrdinal("railway_bureau_stats")),
                 UpdateTime = reader.GetDateTime(reader.GetOrdinal("update_time"))
             };
+        }
+
+        /// <summary>
+        /// 获取路线总花费
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <returns>总花费（元）</returns>
+        public async Task<decimal> GetRouteTotalCostAsync(int routeId)
+        {
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"
+                        SELECT SUM(tri.money) AS total_cost
+                        FROM train_ride_info tri
+                        JOIN route_ticket_mapping rtm ON tri.id = rtm.ticket_id
+                        WHERE rtm.route_id = @RouteId";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        object result = await command.ExecuteScalarAsync();
+                        return result == DBNull.Value ? 0 : Convert.ToDecimal(result);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取路线总花费失败: {ex.Message}", ex);
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// 获取席别统计数据
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <returns>席别统计字典(键为席别名称，值为{里程,百分比}元组)</returns>
+        public async Task<Dictionary<string, (decimal Distance, decimal Percentage)>> GetSeatTypeStatisticsAsync(int routeId)
+        {
+            var result = new Dictionary<string, (decimal Distance, decimal Percentage)>();
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"
+                        SELECT
+                            tri.seat_type AS seat_type,
+                            SUM(
+                                CASE
+                                    WHEN rsm1.distance_from_start <= rsm2.distance_from_start 
+                                    THEN rsm2.distance_from_start - rsm1.distance_from_start
+                                    ELSE 0
+                                END
+                            ) AS total_distance,
+                            ROUND(
+                                SUM(
+                                    CASE
+                                        WHEN rsm1.distance_from_start <= rsm2.distance_from_start 
+                                        THEN rsm2.distance_from_start - rsm1.distance_from_start
+                                        ELSE 0
+                                    END
+                                ) / (
+                                    SELECT total_distance 
+                                    FROM route_info 
+                                    WHERE id = @RouteId
+                                ) * 100, 
+                                1
+                            ) AS percentage
+                        FROM
+                            train_ride_info tri
+                        JOIN
+                            route_ticket_mapping rtm ON tri.id = rtm.ticket_id
+                        JOIN
+                            station_info si_depart ON tri.depart_station_code = si_depart.station_code
+                        JOIN
+                            station_info si_arrive ON tri.arrive_station_code = si_arrive.station_code
+                        JOIN
+                            route_station_mapping rsm1 ON rtm.route_id = rsm1.route_id AND si_depart.id = rsm1.station_id
+                        JOIN
+                            route_station_mapping rsm2 ON rtm.route_id = rsm2.route_id AND si_arrive.id = rsm2.station_id
+                        WHERE
+                            rtm.route_id = @RouteId
+                            AND tri.seat_type IS NOT NULL
+                        GROUP BY
+                            tri.seat_type
+                        ORDER BY
+                            total_distance DESC";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                string seatType = reader.IsDBNull(0) ? "未知" : reader.GetString(0);
+                                decimal distance = reader.IsDBNull(1) ? 0 : reader.GetDecimal(1);
+                                decimal percentage = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2);
+
+                                result[seatType] = (distance, percentage);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取席别统计数据失败: {ex.Message}", ex);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 获取路线经过的省份列表
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <returns>省份列表</returns>
+        public async Task<List<string>> GetRouteProvinceListAsync(int routeId)
+        {
+            var provinces = new List<string>();
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"
+                        SELECT DISTINCT si.province
+                        FROM route_station_mapping rsm
+                        JOIN station_info si ON rsm.station_id = si.id
+                        WHERE rsm.route_id = @RouteId
+                        AND si.province IS NOT NULL
+                        AND si.province <> ''
+                        ORDER BY si.province";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                if (!reader.IsDBNull(0))
+                                {
+                                    provinces.Add(reader.GetString(0));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取路线经过的省份列表失败: {ex.Message}", ex);
+            }
+
+            return provinces;
+        }
+
+        /// <summary>
+        /// 获取路线经过的城市列表
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <returns>城市列表</returns>
+        public async Task<List<string>> GetRouteCityListAsync(int routeId)
+        {
+            var cities = new List<string>();
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"
+                        SELECT DISTINCT si.province, si.city
+                        FROM route_station_mapping rsm
+                        JOIN station_info si ON rsm.station_id = si.id
+                        WHERE rsm.route_id = @RouteId
+                        AND si.city IS NOT NULL
+                        AND si.city <> ''
+                        ORDER BY si.province, si.city";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                if (!reader.IsDBNull(0) && !reader.IsDBNull(1))
+                                {
+                                    string province = reader.GetString(0);
+                                    string city = reader.GetString(1);
+                                    cities.Add($"{city}");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取路线经过的城市列表失败: {ex.Message}", ex);
+            }
+
+            return cities;
+        }
+
+        /// <summary>
+        /// 获取铁路局统计数据
+        /// </summary>
+        /// <param name="routeId">路线ID</param>
+        /// <returns>铁路局统计字典(键为铁路局名称，值为{里程,百分比}元组)</returns>
+        public async Task<Dictionary<string, (decimal Distance, decimal Percentage)>> GetRailwayBureauStatisticsAsync(int routeId)
+        {
+            var result = new Dictionary<string, (decimal Distance, decimal Percentage)>();
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    string query = @"
+                        SELECT 
+                            si.railway_bureau AS bureau,
+                            SUM(rsm.distance_from_prev) AS total_distance,
+                            ROUND(SUM(rsm.distance_from_prev) / (
+                                SELECT total_distance 
+                                FROM route_info 
+                                WHERE id = @RouteId
+                            ) * 100, 2) AS percentage
+                        FROM route_station_mapping rsm
+                        JOIN station_info si ON rsm.station_id = si.id
+                        WHERE rsm.route_id = @RouteId
+                        AND si.railway_bureau IS NOT NULL
+                        AND si.railway_bureau <> ''
+                        GROUP BY si.railway_bureau
+                        ORDER BY SUM(rsm.distance_from_prev) DESC";
+
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@RouteId", routeId);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                string bureau = reader.IsDBNull(0) ? "未知" : reader.GetString(0);
+                                decimal distance = reader.IsDBNull(1) ? 0 : reader.GetDecimal(1);
+                                decimal percentage = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2);
+
+                                result[bureau] = (distance, percentage);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"获取铁路局统计数据失败: {ex.Message}", ex);
+            }
+
+            return result;
         }
     }
 }

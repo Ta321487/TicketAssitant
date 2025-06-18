@@ -537,7 +537,7 @@ namespace TA_WPF.ViewModels
                 _coverImage = null;
                 _coverImagePath = null;
                 _originalRoute = null;
-                
+
                 Debug.WriteLine("EditRouteViewModel - 资源已清理");
             }
             catch (Exception ex)

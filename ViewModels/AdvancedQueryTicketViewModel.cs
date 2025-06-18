@@ -416,8 +416,8 @@ namespace TA_WPF.ViewModels
                         {
                             // 移除"站"字后设置SelectedDepartStation
                             string stationName = value.Replace("站", "").Trim();
-                            if (!string.IsNullOrWhiteSpace(stationName) && 
-                                (SelectedDepartStation == null || 
+                            if (!string.IsNullOrWhiteSpace(stationName) &&
+                                (SelectedDepartStation == null ||
                                  !string.Equals(SelectedDepartStation.DepartStation, stationName, StringComparison.OrdinalIgnoreCase)))
                             {
                                 SelectedDepartStation = new DepartStationItem(stationName);
@@ -624,13 +624,13 @@ namespace TA_WPF.ViewModels
 
                 // 从train_ride_info表中获取出发车站
                 var distinctStations = await _databaseService.GetDistinctDepartStationsAsync();
-                
+
                 // 筛选匹配的车站
                 var filteredStations = distinctStations
                     .Where(s => !string.IsNullOrEmpty(s) && s.Contains(searchText, StringComparison.OrdinalIgnoreCase))
                     .Take(10)
                     .ToList();
-                    
+
                 // 将筛选结果转换为StationInfo对象
                 foreach (var stationName in filteredStations)
                 {
@@ -787,7 +787,7 @@ namespace TA_WPF.ViewModels
             {
                 // 如果用户直接输入了站名但没有从下拉框选择（DepartStationSearchText有值但SelectedDepartStation为null）
                 // 则手动创建一个DepartStationItem并设置为SelectedDepartStation
-                if (!string.IsNullOrWhiteSpace(DepartStationSearchText) && 
+                if (!string.IsNullOrWhiteSpace(DepartStationSearchText) &&
                     (SelectedDepartStation == null || string.IsNullOrWhiteSpace(SelectedDepartStation.DepartStation)))
                 {
                     // 移除可能的"站"字

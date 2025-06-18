@@ -226,7 +226,7 @@ namespace TA_WPF.ViewModels
 
                 // 加载车站数据
                 await _stations.RefreshDataAsync();
-                
+
                 // 加载统计数据
                 await _statistics.RefreshDataAsync();
 
@@ -244,7 +244,7 @@ namespace TA_WPF.ViewModels
                 IsLoading = false;
             }
         }
-        
+
         /// <summary>
         /// 当切换到统计摘要标签页时调用
         /// </summary>
@@ -254,7 +254,7 @@ namespace TA_WPF.ViewModels
             {
                 // 刷新统计数据
                 await _statistics.RefreshDataAsync();
-                
+
                 // 此处可以添加在数据库中创建或更新路线统计记录的逻辑
                 // 注意：根据要求，暂时不实现实际的逻辑
             }

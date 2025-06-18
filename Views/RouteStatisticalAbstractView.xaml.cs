@@ -1,9 +1,4 @@
-using System.IO;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using TA_WPF.Models;
 using TA_WPF.ViewModels;
 
 namespace TA_WPF.Views
@@ -18,14 +13,14 @@ namespace TA_WPF.Views
         public RouteStatisticalAbstractView()
         {
             InitializeComponent();
-            
+
             // 数据上下文改变时加载数据
             this.DataContextChanged += (s, e) =>
             {
                 if (DataContext is RouteStatisticalAbstractViewModel vm)
                 {
                     _viewModel = vm;
-                    
+
                     // 加载数据
                     LoadDataAsync();
                 }
@@ -43,4 +38,4 @@ namespace TA_WPF.Views
             }
         }
     }
-} 
+}

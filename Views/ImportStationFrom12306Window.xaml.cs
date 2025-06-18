@@ -62,7 +62,7 @@ namespace TA_WPF.Views
                         // 用户确认关闭，撤销已导入的数据
                         _forceClose = true; // 设置强制关闭标志，避免再次触发确认
                         viewModel.CancelAndRollbackImport();
-                        
+
                         // 等待一小段时间确保取消操作被处理
                         System.Threading.Thread.Sleep(100);
                     }

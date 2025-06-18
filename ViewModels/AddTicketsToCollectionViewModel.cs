@@ -1,11 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Input;
 using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
-using System.Windows;
-using System.Linq;
 
 namespace TA_WPF.ViewModels
 {
@@ -44,7 +43,7 @@ namespace TA_WPF.ViewModels
         private bool _isUpdatingDepartStation;
         private bool _isUpdatingArriveStation;
         private StationSearchService _stationSearchService;
-        
+
         // 添加年份选项相关字段
         private YearOption? _selectedYearOption;
         private List<YearOption> _yearOptions = new();
@@ -79,7 +78,7 @@ namespace TA_WPF.ViewModels
 
             // 初始化车次前缀列表
             InitializeTrainPrefixes();
-            
+
             // 初始化年份选项
             InitializeYearOptions();
 
@@ -93,7 +92,7 @@ namespace TA_WPF.ViewModels
             // 初始化车站相关命令
             SelectDepartStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, true));
             SelectArriveStationCommand = new RelayCommand<StationInfo>(station => SelectStation(station, false));
-            
+
             // 初始化年份相关命令
             CustomYearCommand = new RelayCommand(SelectCustomYear);
             ClearYearCommand = new RelayCommand(ClearYear);
@@ -104,7 +103,7 @@ namespace TA_WPF.ViewModels
             // 异步初始化站点数据
             _ = _stationSearchService.LoadStationsAsync();
         }
-        
+
         /// <summary>
         /// 初始化年份选项
         /// </summary>
@@ -244,7 +243,7 @@ namespace TA_WPF.ViewModels
                     {
                         // 搜索匹配的车站
                         SearchStations(value, true);
-                        
+
                         // 当用户输入站名并移除焦点时，自动设置筛选条件
                         // 检查输入值不为空且不全是空白字符
                         if (!string.IsNullOrWhiteSpace(value))
@@ -255,7 +254,7 @@ namespace TA_WPF.ViewModels
                             {
                                 stationName += "站";
                             }
-                            
+
                             // 设置出发站筛选条件
                             DepartStationFilter = stationName;
                         }
@@ -286,7 +285,7 @@ namespace TA_WPF.ViewModels
                     {
                         // 搜索匹配的车站
                         SearchStations(value, false);
-                        
+
                         // 当用户输入站名并移除焦点时，自动设置筛选条件
                         // 检查输入值不为空且不全是空白字符
                         if (!string.IsNullOrWhiteSpace(value))
@@ -297,7 +296,7 @@ namespace TA_WPF.ViewModels
                             {
                                 stationName += "站";
                             }
-                            
+
                             // 设置到达站筛选条件
                             ArriveStationFilter = stationName;
                         }
@@ -664,10 +663,10 @@ namespace TA_WPF.ViewModels
                         {
                             customOption.Year = value;
                             customOption.DisplayName = value.HasValue ? $"自定义: {value}" : "自定义年份";
-                            
+
                             // 同步更新YearFilter
                             YearFilter = value;
-                            
+
                             OnPropertyChanged(nameof(YearOptions));
                         }
                     }
@@ -690,12 +689,12 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 选择自定义年份命令
         /// </summary>
         public ICommand CustomYearCommand { get; }
-        
+
         /// <summary>
         /// 清空年份命令
         /// </summary>
@@ -713,7 +712,7 @@ namespace TA_WPF.ViewModels
                 {
                     _yearFilter = value;
                     OnPropertyChanged(nameof(YearFilter));
-                    
+
                     // 当YearFilter直接被设置时，同步更新SelectedYearOption
                     if (value.HasValue)
                     {
@@ -1357,7 +1356,7 @@ namespace TA_WPF.ViewModels
 
             // 获取当前活动窗口作为对话框的所有者
             Window currentWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
-            
+
             var result = MessageBoxHelper.ShowInputDialog(title, prompt, initialValue, currentWindow);
 
             if (result.IsConfirmed)
@@ -1375,10 +1374,10 @@ namespace TA_WPF.ViewModels
                         {
                             customOption.Year = year;
                             customOption.DisplayName = $"自定义: {year}";
-                            
+
                             // 同步更新YearFilter
                             YearFilter = year;
-                            
+
                             OnPropertyChanged(nameof(YearOptions));
                         }
                         else
@@ -1387,10 +1386,10 @@ namespace TA_WPF.ViewModels
                             var newCustomOption = new YearOption(year, $"自定义: {year}", true);
                             YearOptions.Add(newCustomOption);
                             SelectedYearOption = newCustomOption;
-                            
+
                             // 同步更新YearFilter
                             YearFilter = year;
-                            
+
                             OnPropertyChanged(nameof(YearOptions));
                         }
                     }
@@ -1405,10 +1404,10 @@ namespace TA_WPF.ViewModels
                             customOption.Year = year;
                             customOption.DisplayName = $"自定义: {year}";
                             SelectedYearOption = customOption;
-                            
+
                             // 同步更新YearFilter
                             YearFilter = year;
-                            
+
                             OnPropertyChanged(nameof(YearOptions));
                         }
                     }
@@ -1432,7 +1431,7 @@ namespace TA_WPF.ViewModels
                 }
             }
         }
-        
+
         /// <summary>
         /// 清空年份条件
         /// </summary>

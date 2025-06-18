@@ -104,7 +104,7 @@
                     
                     <!-- 卡片标题 -->
                     <TextBlock Grid.Row="0"
-                               Text="路线统计摘要"
+                               Text=""
                                Style="{StaticResource MaterialDesignHeadline6TextBlock}"
                                Margin="16,16,16,8"
                                FontSize="{Binding MainViewModel.FontSize}"
@@ -134,7 +134,7 @@
                                            FontSize="{Binding MainViewModel.FontSize}"
                                            Foreground="{DynamicResource MaterialDesignBody}"
                                            Margin="0,0,8,0"/>
-                                <TextBlock Text="{Binding Statistics.TotalCost, StringFormat={}{0:C2}}"
+                                <TextBlock Text="{Binding Statistics.TotalCost, StringFormat=¥{0:N2} 元}"
                                            FontSize="{Binding MainViewModel.FontSize}"
                                            Foreground="{DynamicResource MaterialDesignBody}"/>
                             </DockPanel>
@@ -145,6 +145,11 @@
                                        FontSize="{Binding MainViewModel.FontSize}"
                                        Foreground="{DynamicResource MaterialDesignBody}"
                                        Margin="0,16,0,8"/>
+                            <TextBlock Text="{Binding SeatTypeStatistics}"
+                                       FontSize="{Binding MainViewModel.FontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       TextWrapping="Wrap"
+                                       Margin="16,0,0,8"/>
                             
                             <!-- 经过省份 -->
                             <TextBlock Text="经过省份："
@@ -152,6 +157,11 @@
                                        FontSize="{Binding MainViewModel.FontSize}"
                                        Foreground="{DynamicResource MaterialDesignBody}"
                                        Margin="0,16,0,8"/>
+                            <TextBlock Text="{Binding ProvincesList}"
+                                       FontSize="{Binding MainViewModel.FontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       TextWrapping="Wrap"
+                                       Margin="16,0,0,8"/>
                             
                             <!-- 经过城市 -->
                             <TextBlock Text="经过城市："
@@ -159,6 +169,11 @@
                                        FontSize="{Binding MainViewModel.FontSize}"
                                        Foreground="{DynamicResource MaterialDesignBody}"
                                        Margin="0,16,0,8"/>
+                            <TextBlock Text="{Binding CitiesList}"
+                                       FontSize="{Binding MainViewModel.FontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       TextWrapping="Wrap"
+                                       Margin="16,0,0,8"/>
                             
                             <!-- 铁路局统计 -->
                             <TextBlock Text="铁路局统计："
@@ -166,6 +181,11 @@
                                        FontSize="{Binding MainViewModel.FontSize}"
                                        Foreground="{DynamicResource MaterialDesignBody}"
                                        Margin="0,16,0,8"/>
+                            <TextBlock Text="{Binding RailwayBureauStatistics}"
+                                       FontSize="{Binding MainViewModel.FontSize}"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       TextWrapping="Wrap"
+                                       Margin="16,0,0,8"/>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

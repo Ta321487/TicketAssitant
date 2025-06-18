@@ -602,6 +602,9 @@
                                                 Text="{Binding Money, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}"
                                                 Style="{StaticResource FormNumberTextBoxStyle}"
                                                 materialDesign:HintAssist.Hint="金额"
+                                                PreviewTextInput="MoneyTextBox_PreviewTextInput"
+                                                PreviewKeyDown="MoneyTextBox_PreviewKeyDown"
+                                                LostFocus="MoneyTextBox_LostFocus"
                                                 HorizontalContentAlignment="Left"
                                                 Padding="8,8,4,8"
                                                 IsEnabled="{Binding IsMoneyEnabled}" />

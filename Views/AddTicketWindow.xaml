@@ -313,6 +313,7 @@
                          Style="{StaticResource FormNumberTextBoxStyle}"
                          materialDesign:HintAssist.Hint="金额"
                          PreviewTextInput="MoneyTextBox_PreviewTextInput"
+                         PreviewKeyDown="MoneyTextBox_PreviewKeyDown"
                          LostFocus="MoneyTextBox_LostFocus"
                          materialDesign:TextFieldAssist.HasClearButton="False"
                          materialDesign:TextFieldAssist.RippleOnFocusEnabled="True"
@@ -665,6 +666,7 @@
                     MinHeight="36"
                     FontSize="{DynamicResource MaterialDesignFontSize}"
                     Padding="16,8"
+                    Name="SaveButton"
                     IsDefault="True">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0" VerticalAlignment="Center"/>

@@ -427,22 +427,65 @@ namespace TA_WPF.ViewModels
                 _lastQueryFilter = e;
 
                 // 当使用常用车站筛选但常用车站列表为空时直接返回空结果
-                if (e.UseMyDepartStations && (e.MyDepartStations == null || e.MyDepartStations.Count == 0))
+                if (e.UseMyDepartStations && !e.UseRouteStations && (e.MyDepartStations == null || e.MyDepartStations.Count == 0))
                 {
                     TotalCount = 0;
                     _paginationViewModel.TotalItems = 0;
                     _paginationViewModel.CurrentPage = 1;
                     Stations = new ObservableCollection<StationInfo>();
-                    
+
                     // 清空选择
                     SelectedStations.Clear();
-                    
+
                     // 更新UI状态
                     OnPropertyChanged(nameof(HasData));
                     OnPropertyChanged(nameof(HasNoData));
                     OnPropertyChanged(nameof(HasSelection));
                     OnPropertyChanged(nameof(IsAllSelected));
-                    
+
+                    return;
+                }
+
+                // 当使用路线中的车站筛选但路线车站ID列表为空时直接返回空结果
+                // 注意：如果同时勾选了常用车站和路线车站，且其中一个为空，应该继续查询另一个条件
+                if (e.UseRouteStations && !e.UseMyDepartStations && (e.RouteStationIds == null || e.RouteStationIds.Count == 0))
+                {
+                    TotalCount = 0;
+                    _paginationViewModel.TotalItems = 0;
+                    _paginationViewModel.CurrentPage = 1;
+                    Stations = new ObservableCollection<StationInfo>();
+
+                    // 清空选择
+                    SelectedStations.Clear();
+
+                    // 更新UI状态
+                    OnPropertyChanged(nameof(HasData));
+                    OnPropertyChanged(nameof(HasNoData));
+                    OnPropertyChanged(nameof(HasSelection));
+                    OnPropertyChanged(nameof(IsAllSelected));
+
+                    return;
+                }
+
+                // 两者同时勾选且都为空的情况
+                if (e.UseMyDepartStations && e.UseRouteStations &&
+                    (e.MyDepartStations == null || e.MyDepartStations.Count == 0) &&
+                    (e.RouteStationIds == null || e.RouteStationIds.Count == 0))
+                {
+                    TotalCount = 0;
+                    _paginationViewModel.TotalItems = 0;
+                    _paginationViewModel.CurrentPage = 1;
+                    Stations = new ObservableCollection<StationInfo>();
+
+                    // 清空选择
+                    SelectedStations.Clear();
+
+                    // 更新UI状态
+                    OnPropertyChanged(nameof(HasData));
+                    OnPropertyChanged(nameof(HasNoData));
+                    OnPropertyChanged(nameof(HasSelection));
+                    OnPropertyChanged(nameof(IsAllSelected));
+
                     return;
                 }
 
@@ -453,7 +496,8 @@ namespace TA_WPF.ViewModels
                     e.Province,
                     e.City,
                     e.District,
-                    e.UseMyDepartStations ? e.MyDepartStations : null
+                    e.UseMyDepartStations ? e.MyDepartStations : null,
+                    e.UseRouteStations ? e.RouteStationIds : null
                 );
 
                 // 更新分页信息
@@ -468,7 +512,8 @@ namespace TA_WPF.ViewModels
                     e.Province,
                     e.City,
                     e.District,
-                    e.UseMyDepartStations ? e.MyDepartStations : null
+                    e.UseMyDepartStations ? e.MyDepartStations : null,
+                    e.UseRouteStations ? e.RouteStationIds : null
                 );
 
                 // 更新UI数据
@@ -603,9 +648,34 @@ namespace TA_WPF.ViewModels
                 if (_lastQueryFilter != null)
                 {
                     // 有高级查询条件，使用高级查询方法
-                    if (_lastQueryFilter.UseMyDepartStations && (_lastQueryFilter.MyDepartStations == null || _lastQueryFilter.MyDepartStations.Count == 0))
+
+                    // 只选择常用车站且列表为空
+                    if (_lastQueryFilter.UseMyDepartStations &&
+                        !_lastQueryFilter.UseRouteStations &&
+                        (_lastQueryFilter.MyDepartStations == null || _lastQueryFilter.MyDepartStations.Count == 0))
                     {
                         // 如果勾选了"使用我的常用车站"但列表为空，直接返回空结果
+                        TotalCount = 0;
+                        Stations = new ObservableCollection<StationInfo>();
+                        _paginationViewModel.TotalItems = 0;
+                    }
+                    // 只选择路线车站且列表为空
+                    else if (_lastQueryFilter.UseRouteStations &&
+                             !_lastQueryFilter.UseMyDepartStations &&
+                             (_lastQueryFilter.RouteStationIds == null || _lastQueryFilter.RouteStationIds.Count == 0))
+                    {
+                        // 如果勾选了"使用路线中的车站"但列表为空，直接返回空结果
+                        TotalCount = 0;
+                        Stations = new ObservableCollection<StationInfo>();
+                        _paginationViewModel.TotalItems = 0;
+                    }
+                    // 两者同时勾选且都为空
+                    else if (_lastQueryFilter.UseMyDepartStations &&
+                             _lastQueryFilter.UseRouteStations &&
+                             (_lastQueryFilter.MyDepartStations == null || _lastQueryFilter.MyDepartStations.Count == 0) &&
+                             (_lastQueryFilter.RouteStationIds == null || _lastQueryFilter.RouteStationIds.Count == 0))
+                    {
+                        // 如果同时勾选两个选项但都为空，直接返回空结果
                         TotalCount = 0;
                         Stations = new ObservableCollection<StationInfo>();
                         _paginationViewModel.TotalItems = 0;
@@ -619,7 +689,8 @@ namespace TA_WPF.ViewModels
                             _lastQueryFilter.Province,
                             _lastQueryFilter.City,
                             _lastQueryFilter.District,
-                            _lastQueryFilter.UseMyDepartStations ? _lastQueryFilter.MyDepartStations : null
+                            _lastQueryFilter.UseMyDepartStations ? _lastQueryFilter.MyDepartStations : null,
+                            _lastQueryFilter.UseRouteStations ? _lastQueryFilter.RouteStationIds : null
                         );
 
                         Stations = new ObservableCollection<StationInfo>(stations);
