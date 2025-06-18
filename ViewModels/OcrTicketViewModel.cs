@@ -190,7 +190,7 @@ namespace TA_WPF.ViewModels
             SeatTypes = new ObservableCollection<string>
             {
                 "新空调硬座", "软座", "新空调硬卧", "新空调软卧",
-                "商务座", "一等座", "二等座", "硬卧代硬座"
+                "商务座", "特等座", "一等座", "二等座", "硬卧代硬座"
             };
 
             // 初始化附加信息相关集合
@@ -735,6 +735,9 @@ namespace TA_WPF.ViewModels
                         OnPropertyChanged(nameof(IsSeatNoEnabled));
                         OnPropertyChanged(nameof(IsSeatPositionEnabled));
                         LogHelper.LogInfo("取消勾选无座且已解锁，恢复座位号和座位位置输入框为可编辑状态");
+                        
+                        // 取消勾选无座时，更新座位位置
+                        UpdateSeatPositions();
                     }
                 }
             }
@@ -1980,7 +1983,17 @@ namespace TA_WPF.ViewModels
                 switch (SelectedSeatType)
                 {
                     case "商务座":
+                    case "特等座":
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("F");
+                        break;
                     case "一等座":
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("D");
+                        SeatPositions.Add("F");
+                        break;
                     case "二等座":
                         SeatPositions.Add("A");
                         SeatPositions.Add("B");
@@ -2003,6 +2016,13 @@ namespace TA_WPF.ViewModels
                         SeatPositions.Add("中");
                         SeatPositions.Add("下");
                         break;
+                    case "硬卧代硬座":
+                        SeatPositions.Add("A");
+                        SeatPositions.Add("B");
+                        SeatPositions.Add("C");
+                        SeatPositions.Add("D");
+                        SeatPositions.Add("F");
+                        break;
                     default:
                         SeatPositions.Add("A");
                         SeatPositions.Add("B");
@@ -2018,15 +2038,16 @@ namespace TA_WPF.ViewModels
                     SelectedSeatPosition = currentPosition;
                     LogHelper.LogInfo($"保留原有座位位置: {currentPosition}");
                 }
-                // 如果没有有效的位置选择且有位置选项，则设置默认选择第一个
-                else if (string.IsNullOrEmpty(currentPosition) && SeatPositions.Count > 0)
+                // 如果有位置选项，并且未选择"无座"，则设置默认选择第一个
+                else if (SeatPositions.Count > 0 && !IsNoSeat)
                 {
                     SelectedSeatPosition = SeatPositions[0];
                     LogHelper.LogInfo($"设置默认座位位置: {SelectedSeatPosition}");
                 }
-                else if (SeatPositions.Count == 0)
+                else
                 {
                     SelectedSeatPosition = string.Empty;
+                    LogHelper.LogInfo("清空座位位置");
                 }
 
                 // 重要：如果之前是锁定状态，确保更新后仍然是锁定状态

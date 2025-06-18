@@ -867,7 +867,8 @@
                                                        SelectedItem="{Binding SelectedSeatPosition}"
                                                        Width="60"
                                                        Margin="8,0,0,0"
-                                                       IsEnabled="{Binding IsSeatPositionEnabled}">
+                                                       IsEnabled="{Binding IsSeatPositionEnabled}"
+                                                       Visibility="{Binding IsSeatPositionVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                 <ComboBox.Style>
                                                     <Style TargetType="ComboBox" BasedOn="{StaticResource FormComboBoxStyle}">
                                                         <Setter Property="IsEnabled" Value="True" />

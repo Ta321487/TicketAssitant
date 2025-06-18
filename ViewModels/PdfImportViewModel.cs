@@ -693,6 +693,11 @@ namespace TA_WPF.ViewModels
                 {
                     _isNoSeat = value;
                     OnPropertyChanged(nameof(IsNoSeat));
+                    
+                    if (!value) // 取消勾选无座时，更新座位位置
+                    {
+                        UpdateSeatPositions();
+                    }
                 }
             }
         }
@@ -725,6 +730,8 @@ namespace TA_WPF.ViewModels
                 {
                     _selectedSeatType = value;
                     OnPropertyChanged(nameof(SelectedSeatType));
+                    UpdateSeatPositions(); // 调用更新座位位置选项方法
+                    OnPropertyChanged(nameof(IsSeatPositionVisible));
                 }
             }
         }
@@ -2384,5 +2391,109 @@ namespace TA_WPF.ViewModels
                 "6. 在本程序中导入下载的PDF文件进行识别",
                 "如何获取12306电子客票");
         }
+
+        /// <summary>
+        /// 根据座位类型更新座位位置选项
+        /// </summary>
+        private void UpdateSeatPositions()
+        {
+            try
+            {
+                // 保存当前选中的位置，以便在可能的情况下保留
+                string currentPosition = SelectedSeatPosition;
+                
+                // 确保座位位置集合已经初始化
+                if (SeatPositions == null)
+                {
+                    // 如果集合未初始化，在构造函数中应已初始化，不应该执行到此处
+                    LogHelper.LogError("座位位置集合未初始化");
+                    return;
+                }
+                
+                // 清空当前座位位置集合
+                SeatPositions.Clear();
+                
+                // 根据不同的座位类型设置不同的位置选项
+                if (!string.IsNullOrEmpty(_selectedSeatType))
+                {
+                    switch (_selectedSeatType)
+                    {
+                        case "商务座":
+                        case "特等座":
+                            SeatPositions.Add("A");
+                            SeatPositions.Add("C");
+                            SeatPositions.Add("F");
+                            break;
+                        case "一等座":
+                            SeatPositions.Add("A");
+                            SeatPositions.Add("C");
+                            SeatPositions.Add("D");
+                            SeatPositions.Add("F");
+                            break;
+                        case "二等座":
+                            SeatPositions.Add("A");
+                            SeatPositions.Add("B");
+                            SeatPositions.Add("C");
+                            SeatPositions.Add("D");
+                            SeatPositions.Add("F");
+                            break;
+                        case "新空调硬卧":
+                        case "新空调软卧":
+                            SeatPositions.Add("上");
+                            SeatPositions.Add("中");
+                            SeatPositions.Add("下");
+                            break;
+                        case "软座":
+                            SeatPositions.Add("A");
+                            SeatPositions.Add("B");
+                            SeatPositions.Add("C");
+                            SeatPositions.Add("D");
+                            break;
+                        case "硬卧代硬座":
+                            SeatPositions.Add("A");
+                            SeatPositions.Add("B");
+                            SeatPositions.Add("C");
+                            SeatPositions.Add("D");
+                            SeatPositions.Add("F");
+                            break;
+                        case "新空调硬座":
+                            // 硬座通常不显示位置
+                            break;
+                        default:
+                            // 默认不显示位置选项
+                            break;
+                    }
+                }
+                
+                // 尝试保留原来的位置选择（如果该位置在新的选项中存在）
+                if (!string.IsNullOrEmpty(currentPosition) && SeatPositions.Contains(currentPosition))
+                {
+                    SelectedSeatPosition = currentPosition;
+                }
+                // 如果有位置选项，并且未选择"无座"，则设置默认选择第一个
+                else if (SeatPositions.Count > 0 && !IsNoSeat)
+                {
+                    SelectedSeatPosition = SeatPositions[0];
+                }
+                else
+                {
+                    SelectedSeatPosition = string.Empty;
+                }
+                
+                // 通知UI更新
+                OnPropertyChanged(nameof(SeatPositions));
+                OnPropertyChanged(nameof(IsSeatPositionVisible));
+                OnPropertyChanged(nameof(SelectedSeatPosition));
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError("更新座位位置选项时出错", ex);
+            }
+        }
+
+        /// <summary>
+        /// 是否显示座位位置
+        /// </summary>
+        public bool IsSeatPositionVisible => SeatPositions != null && SeatPositions.Count > 0 && _selectedSeatType != "新空调硬座";
     }
 }
