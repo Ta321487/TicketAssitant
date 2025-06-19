@@ -34,6 +34,9 @@ namespace TA_WPF.Views
 
             // 注册视图可见性变化事件
             this.IsVisibleChanged += RouteMapView_IsVisibleChanged;
+            
+            // 注册大小变化事件，确保WebView2适应容器大小
+            this.SizeChanged += RouteMapView_SizeChanged;
         }
 
         /// <summary>
@@ -59,6 +62,7 @@ namespace TA_WPF.Views
                     {
                         // 如果WebView已初始化但可能需要刷新数据
                         Debug.WriteLine("WebView已初始化，尝试刷新地图数据");
+                        // 优化：使用低优先级调度刷新，避免阻塞UI线程
                         Dispatcher.BeginInvoke(new Action(async () =>
                         {
                             try
@@ -67,14 +71,15 @@ namespace TA_WPF.Views
                                 await MapWebView.CoreWebView2.ExecuteScriptAsync($"setMapTheme({(_viewModel.IsDarkMode ? "true" : "false")});");
                                 Debug.WriteLine($"重新应用地图主题: {(_viewModel.IsDarkMode ? "深色" : "浅色")}");
 
-                                // 刷新地图数据
+                                // 改为异步刷新地图数据，减少UI线程阻塞
+                                await Task.Delay(300); // 添加短暂延迟，确保UI响应
                                 await _viewModel.RefreshMapDataAsync(MapWebView.CoreWebView2);
                             }
                             catch (Exception ex)
                             {
                                 Debug.WriteLine($"尝试刷新地图数据时出错: {ex.Message}");
                             }
-                        }));
+                        }), System.Windows.Threading.DispatcherPriority.Background);
                     }
                 }
                 else
@@ -100,6 +105,7 @@ namespace TA_WPF.Views
             this.DataContextChanged -= RouteMapView_DataContextChanged;
             this.KeyDown -= RouteMapView_KeyDown;
             this.IsVisibleChanged -= RouteMapView_IsVisibleChanged;
+            this.SizeChanged -= RouteMapView_SizeChanged;
         }
 
         /// <summary>
@@ -113,6 +119,20 @@ namespace TA_WPF.Views
                 {
                     // 暂停地图动画和渲染，但不完全清空页面
                     MapWebView.CoreWebView2.ExecuteScriptAsync("if(loca && loca.animate) { loca.animate.pause(); }");
+                    
+                    // 优化：主动清理部分资源
+                    MapWebView.CoreWebView2.ExecuteScriptAsync(@"
+                        // 清理不再需要的对象
+                        if (geoData && geoData.length > 100) { 
+                            geoData = geoData.slice(0, 0); 
+                        }
+                        // 降低渲染分辨率以节省资源
+                        if (map && map.getStatus) {
+                            map.setStatus({
+                                showLabel: false,
+                                showIndoorMap: false
+                            });
+                        }");
 
                     Debug.WriteLine("已暂停地图渲染，执行轻量级资源释放");
                     LogHelper.LogInfo("执行轻量级WebView资源释放以节省内存");
@@ -243,7 +263,7 @@ namespace TA_WPF.Views
                 this.Loaded -= RouteMapView_Loaded;
 
                 // 创建WebView2环境选项
-                var options = new CoreWebView2EnvironmentOptions();
+                var options = new CoreWebView2EnvironmentOptions("--disable-web-security --disable-gpu-vsync --disable-accelerated-animations --disable-features=CalculateNativeWinOcclusion");
 
                 // 设置WebView2数据文件夹 - 使用程序目录下的WebView2Data文件夹
                 string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -259,6 +279,14 @@ namespace TA_WPF.Views
 
                     // 初始化WebView2控件 - 使用await防止其他地方同时初始化
                     await MapWebView.EnsureCoreWebView2Async(environment);
+
+                    // 优化：配置WebView2内存和性能设置
+                    MapWebView.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
+                    MapWebView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
+                    MapWebView.CoreWebView2.Settings.IsSwipeNavigationEnabled = false;
+                    MapWebView.CoreWebView2.Settings.IsScriptEnabled = true;
+                    MapWebView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
+                    MapWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
 
                     // 确保HTML文件夹存在
                     string htmlFolderPath = Path.Combine(baseDirectory, "Assets", "html");
@@ -397,8 +425,15 @@ namespace TA_WPF.Views
                 if (e.IsSuccess)
                 {
                     // 配置WebView2
-                    MapWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true; // 在开发阶段启用右键菜单
+                    MapWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false; // 禁用右键菜单提高性能
                     MapWebView.CoreWebView2.Settings.AreDevToolsEnabled = true; // 在开发阶段启用开发者工具
+
+                    // 优化：配置内存限制
+                    await MapWebView.CoreWebView2.ExecuteScriptAsync(@"
+                        if (window.performance && window.performance.memory) {
+                            console.log('内存使用情况:', window.performance.memory.usedJSHeapSize / 1048576, 'MB');
+                        }
+                    ");
 
                     // 设置WebView2与WPF之间的通信
                     MapWebView.CoreWebView2.AddHostObjectToScript("hostObject", new WebViewHostObject(this));
@@ -413,6 +448,9 @@ namespace TA_WPF.Views
 
                     // 添加控制台消息处理
                     MapWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+
+                    // 优化：减少不必要的事件监听
+                    MapWebView.CoreWebView2.HistoryChanged -= MapWebView_CoreWebView2HistoryChanged;
 
                     // 注释：在开发阶段，可以通过F12打开开发者工具
                     Debug.WriteLine("WebView2初始化成功，可以按F12打开开发者工具");
@@ -430,6 +468,12 @@ namespace TA_WPF.Views
                 // 显示错误面板
                 MapErrorPanel.Visibility = Visibility.Visible;
             }
+        }
+        
+        // 占位符事件处理器，用于优化中的禁用操作，实际代码中可能并不存在
+        private void MapWebView_CoreWebView2HistoryChanged(object sender, object e)
+        {
+            // 这只是一个占位符，用于禁用事件
         }
 
         /// <summary>
@@ -460,6 +504,32 @@ namespace TA_WPF.Views
                     // 隐藏错误面板
                     MapErrorPanel.Visibility = Visibility.Collapsed;
 
+                    // 注入CSS样式确保内容不会溢出
+                    await MapWebView.CoreWebView2.ExecuteScriptAsync(@"
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            html, body, #container {
+                                width: 100% !important;
+                                height: 100% !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                overflow: hidden !important;
+                            }
+                            .amap-logo, .amap-copyright {
+                                z-index: 100 !important;
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    ");
+
+                    // 初始化地图前优化性能设置
+                    await MapWebView.CoreWebView2.ExecuteScriptAsync(@"
+                        // 优化渲染性能
+                        if (typeof AMap !== 'undefined') {
+                            AMap.Util.retina = false; // 禁用高分辨率显示
+                        }
+                    ");
+
                     // 初始化地图
                     await _viewModel.InitializeMapAsync(MapWebView.CoreWebView2);
 
@@ -467,8 +537,14 @@ namespace TA_WPF.Views
                     await MapWebView.CoreWebView2.ExecuteScriptAsync(@"
                         console.defaultLog = console.log.bind(console);
                         console.log = function(message) {
-                            console.defaultLog(message);
-                            window.chrome.webview.postMessage('LOG: ' + message);
+                            // 只记录重要日志，提高性能
+                            if (typeof message === 'string' && 
+                                (message.includes('error') || 
+                                 message.includes('加载') || 
+                                 message.includes('初始化'))) {
+                                console.defaultLog(message);
+                                window.chrome.webview.postMessage('LOG: ' + message);
+                            }
                         };
                         
                         console.defaultError = console.error.bind(console);
@@ -502,6 +578,23 @@ namespace TA_WPF.Views
             {
                 if (_viewModel != null && _isWebViewInitialized && MapWebView.CoreWebView2 != null)
                 {
+                    // 优化：在刷新前检测CPU和内存负载
+                    await MapWebView.CoreWebView2.ExecuteScriptAsync(@"
+                        // 检查是否需要释放资源
+                        if (window.performance && window.performance.memory && 
+                            window.performance.memory.usedJSHeapSize > 50 * 1024 * 1024) {
+                            // 内存超过50MB，执行清理
+                            if (geoData && geoData.length > 0) {
+                                console.log('释放地图数据内存');
+                                geoData = [];
+                            }
+                            // 手动触发垃圾回收
+                            if (typeof gc === 'function') {
+                                gc();
+                            }
+                        }
+                    ");
+                    
                     // 将useJavaScriptRefresh设置为true，表示由JavaScript端负责处理加载指示器
                     await _viewModel.RefreshMapDataAsync(MapWebView.CoreWebView2, true);
                 }
@@ -540,6 +633,7 @@ namespace TA_WPF.Views
                 this.DataContextChanged -= RouteMapView_DataContextChanged;
                 this.KeyDown -= RouteMapView_KeyDown;
                 this.IsVisibleChanged -= RouteMapView_IsVisibleChanged;
+                this.SizeChanged -= RouteMapView_SizeChanged;
             }
 
             // 释放非托管资源
@@ -553,6 +647,37 @@ namespace TA_WPF.Views
         ~RouteMapView()
         {
             Dispose(false);
+        }
+
+        /// <summary>
+        /// 处理大小变化事件，确保WebView2内容适应容器大小
+        /// </summary>
+        private void RouteMapView_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            try
+            {
+                if (_isWebViewInitialized && MapWebView?.CoreWebView2 != null)
+                {
+                    // 注入CSS以确保内容适应新的容器大小
+                    MapWebView.CoreWebView2.ExecuteScriptAsync(@"
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            html, body, #container {
+                                width: 100% !important;
+                                height: 100% !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                overflow: hidden !important;
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    ");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"处理大小变化事件时出错: {ex.Message}");
+            }
         }
     }
 

@@ -23,8 +23,15 @@ namespace TA_WPF.Views
             // 注册数据上下文变更事件
             DataContextChanged += DashboardView_DataContextChanged;
 
-            // 注册加载事件
+            // 注册加载和卸载事件
             Loaded += DashboardView_Loaded;
+            Unloaded += DashboardView_Unloaded;
+            
+            // 注册键盘事件，用于快捷键支持
+            this.KeyDown += DashboardView_KeyDown;
+            
+            // 设置可获取键盘焦点
+            this.Focusable = true;
         }
 
         private void DashboardView_Loaded(object sender, RoutedEventArgs e)
@@ -36,6 +43,9 @@ namespace TA_WPF.Views
 
                 // 加载数据
                 viewModel.RefreshDataAsync();
+                
+                // 获取键盘焦点，以便接收键盘事件
+                this.Focus();
             }
         }
 
@@ -464,6 +474,44 @@ namespace TA_WPF.Views
                 parent = VisualTreeHelper.GetParent(parent);
             }
             return parent as ScrollViewer;
+        }
+
+        /// <summary>
+        /// 处理键盘事件，支持F5刷新和F11全屏快捷键
+        /// </summary>
+        private void DashboardView_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (DataContext is DashboardViewModel viewModel)
+            {
+                // F5 - 刷新数据
+                if (e.Key == Key.F5)
+                {
+                    viewModel.RefreshCommand.Execute(null);
+                    e.Handled = true;
+                    Debug.WriteLine("触发F5快捷键：刷新仪表盘数据");
+                }
+                // F11 - 切换全屏模式
+                else if (e.Key == Key.F11)
+                {
+                    viewModel.ToggleFullScreenCommand.Execute(null);
+                    e.Handled = true;
+                    Debug.WriteLine("触发F11快捷键：切换全屏模式");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 处理视图卸载事件，取消事件订阅
+        /// </summary>
+        private void DashboardView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            // 取消事件订阅，防止内存泄漏
+            DataContextChanged -= DashboardView_DataContextChanged;
+            Loaded -= DashboardView_Loaded;
+            Unloaded -= DashboardView_Unloaded;
+            this.KeyDown -= DashboardView_KeyDown;
+            
+            Debug.WriteLine("仪表盘视图已卸载，事件订阅已取消");
         }
     }
 }

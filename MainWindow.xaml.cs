@@ -278,6 +278,13 @@ namespace TA_WPF
                         // 标记事件已处理
                         e.Handled = true;
                     }
+                    // 处理F5和F11键，在显示仪表盘时路由到DashboardView
+                    else if ((e.Key == Key.F5 || e.Key == Key.F11) && mainViewModel.ShowDashboardView)
+                    {
+                        // 不在此处理，让事件传递到DashboardView
+                        // 但不标记为已处理，确保事件可以传递到DashboardView
+                        Debug.WriteLine($"检测到{e.Key}键，将路由到仪表盘视图");
+                    }
                 }
             }
             catch (Exception ex)

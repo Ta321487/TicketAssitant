@@ -9,7 +9,12 @@
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
              xmlns:converters="clr-namespace:TA_WPF.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="1900" d:DesignWidth="1800">
+             d:DesignHeight="1900" d:DesignWidth="1800"
+             Focusable="True"
+             FocusVisualStyle="{x:Null}"
+             KeyboardNavigation.TabNavigation="None"
+             KeyboardNavigation.DirectionalNavigation="None"
+             KeyboardNavigation.IsTabStop="True">
     
     <UserControl.Resources>
         <ResourceDictionary>
@@ -338,7 +343,7 @@
             </materialDesign:Card>
             
             <!-- 地图视图容器 -->
-            <Grid Grid.Row="3" Grid.RowSpan="3" Margin="0,0,0,16" Height="800" MinHeight="800"
+            <Grid Grid.Row="3" Grid.RowSpan="3" Margin="0,0,0,16" 
                  Visibility="{Binding IsMapViewVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <materialDesign:Card Padding="0" VerticalAlignment="Stretch">
                     <local:RouteMapView DataContext="{Binding RouteMapViewModel}"/>

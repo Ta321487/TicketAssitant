@@ -561,9 +561,32 @@ namespace TA_WPF.ViewModels
                     });
                 }
 
-                // 1. 从数据库获取行程数据 (可以在后台线程执行)
-                var routeData = await GetRouteDataAsync().ConfigureAwait(false);
+                // 1. 从数据库获取行程数据 (在后台线程执行)
+                var routeDataTask = Task.Run(async () => await GetRouteDataAsync().ConfigureAwait(false));
 
+                // 在数据加载时，设置地图准备状态
+                await Application.Current.Dispatcher.InvokeAsync(async () =>
+                {
+                    try {
+                        // 准备地图接收数据
+                        await webView.ExecuteScriptAsync(@"
+                            // 预先清空数据，释放内存
+                            if (geoData && geoData.length > 0) {
+                                geoData = [];
+                            }
+                            // 暂停不必要的渲染以提高性能
+                            if (loca && loca.animate) {
+                                loca.animate.pause();
+                            }
+                        ");
+                    } catch (Exception ex) {
+                        Debug.WriteLine($"准备地图接收数据时出错: {ex.Message}");
+                    }
+                });
+
+                // 等待数据加载完成
+                var routeData = await routeDataTask;
+                
                 // 记录获取到的数据
                 Debug.WriteLine($"获取到{routeData.Count}条路线数据");
 
@@ -575,8 +598,8 @@ namespace TA_WPF.ViewModels
                     LogHelper.LogWarning($"路线数据数量较少({routeData.Count}条)，请检查车站经纬度信息完整性");
                 }
 
-                // 2. 将数据转换为前端可使用的JSON格式 (可以在后台线程执行)
-                string jsonData = ConvertToJson(routeData);
+                // 2. 将数据转换为前端可使用的JSON格式 (在后台线程执行)
+                string jsonData = await Task.Run(() => ConvertToJson(routeData));
 
                 // 记录没有数据的情况
                 if (routeData.Count == 0)
@@ -606,11 +629,72 @@ namespace TA_WPF.ViewModels
                             await Task.Delay(1000);
                         }
 
-                        // 加载路线数据
-                        await webView.ExecuteScriptAsync($"loadRouteData({jsonData});");
-                        LogHelper.LogInfo($"地图数据已刷新，加载了{routeData.Count}条路线，时间范围：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
-                        Debug.WriteLine($"地图数据已刷新，加载了{routeData.Count}条路线，时间范围：{SelectedTimeRange}，{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
-
+                        // 优化：分批加载数据以减少UI阻塞
+                        if (routeData.Count > 200) {
+                            // 如果数据超过200条，分批加载
+                            Debug.WriteLine($"数据量较大({routeData.Count}条)，分批加载");
+                            
+                            // 先确保地图容器已准备好
+                            await webView.ExecuteScriptAsync(@"
+                                // 创建全局变量存储分批数据
+                                window.batchedData = [];
+                                
+                                // 确保已初始化相关对象
+                                if (!window.routeProcessing) {
+                                    window.routeProcessing = {
+                                        processing: false,
+                                        batchSize: 100,
+                                        loadNextBatch: function() {
+                                            if (window.batchedData && window.batchedData.length > 0) {
+                                                const batch = window.batchedData.shift();
+                                                if (batch) {
+                                                    loadRouteData(batch);
+                                                    console.log('加载了一批路线数据，剩余批次: ' + window.batchedData.length);
+                                                    
+                                                    // 如果还有数据，延迟加载下一批
+                                                    if (window.batchedData.length > 0) {
+                                                        setTimeout(window.routeProcessing.loadNextBatch, 200);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    };
+                                }
+                            ");
+                            
+                            // 将数据分成100条一批
+                            int batchSize = 100;
+                            int totalBatches = (routeData.Count + batchSize - 1) / batchSize; // 计算总批次数
+                            
+                            for (int i = 0; i < totalBatches; i++) {
+                                // 计算当前批次的数据范围
+                                int start = i * batchSize;
+                                int count = Math.Min(batchSize, routeData.Count - start);
+                                
+                                // 提取当前批次的数据
+                                var batchData = routeData.GetRange(start, count);
+                                
+                                // 转换为JSON
+                                string batchJson = await Task.Run(() => ConvertToJson(batchData));
+                                
+                                // 发送到WebView
+                                await webView.ExecuteScriptAsync($"window.batchedData.push({batchJson});");
+                                
+                                // 如果是第一批，立即开始加载
+                                if (i == 0) {
+                                    await webView.ExecuteScriptAsync("window.routeProcessing.loadNextBatch();");
+                                }
+                            }
+                            
+                            LogHelper.LogInfo($"地图数据已分批刷新，共{totalBatches}批，{routeData.Count}条路线");
+                            Debug.WriteLine($"地图数据已分批刷新，共{totalBatches}批，{routeData.Count}条路线");
+                        } else {
+                            // 数据量较小，直接加载
+                            await webView.ExecuteScriptAsync($"loadRouteData({jsonData});");
+                            LogHelper.LogInfo($"地图数据已刷新，加载了{routeData.Count}条路线");
+                            Debug.WriteLine($"地图数据已刷新，加载了{routeData.Count}条路线");
+                        }
+                        
                         // 确保在数据加载后应用正确的主题
                         await webView.ExecuteScriptAsync($"setMapTheme({(IsDarkMode ? "true" : "false")});");
                         Debug.WriteLine($"刷新数据后重新应用地图主题为{(IsDarkMode ? "深色" : "浅色")}模式");
@@ -673,10 +757,14 @@ namespace TA_WPF.ViewModels
                     return result;
                 }
 
-                // 根据时间范围筛选车票
-                var filteredTickets = tickets.Where(t => t.DepartDate.HasValue &&
-                                                      t.DepartDate.Value >= StartDate &&
-                                                      t.DepartDate.Value <= EndDate).ToList();
+                // 优化：使用LINQ进行高性能筛选，避免高频调用DateTime操作
+                var startDateTicks = StartDate.Ticks;
+                var endDateTicks = EndDate.Ticks;
+                
+                // 根据时间范围筛选车票 - 优化处理逻辑，减少DateTime比较操作
+                var filteredTickets = tickets.Where(t => t.DepartDate.HasValue && 
+                                                      t.DepartDate.Value.Ticks >= startDateTicks && 
+                                                      t.DepartDate.Value.Ticks <= endDateTicks).ToList();
 
                 Debug.WriteLine($"根据时间范围筛选后剩余{filteredTickets.Count}条车票记录，时间范围：{StartDate:yyyy-MM-dd} 至 {EndDate:yyyy-MM-dd}");
 
@@ -686,8 +774,11 @@ namespace TA_WPF.ViewModels
                     return result;
                 }
 
+                // 优化：预估结果集大小以减少内存分配
+                result = new List<RouteMapData>(filteredTickets.Count);
+
                 // 收集所有出发站和到达站的名称
-                var allStationNames = new HashSet<string>();
+                var allStationNames = new HashSet<string>(filteredTickets.Count * 2);
                 foreach (var ticket in filteredTickets)
                 {
                     if (!string.IsNullOrWhiteSpace(ticket.DepartStation))
@@ -701,10 +792,10 @@ namespace TA_WPF.ViewModels
                 }
 
                 // 创建站点信息查询任务字典
-                var stationQueryTasks = new Dictionary<string, Task<StationInfo>>();
+                var stationQueryTasks = new Dictionary<string, Task<StationInfo>>(allStationNames.Count);
 
                 // 创建站名和站点信息的映射字典
-                var stationCache = new Dictionary<string, StationInfo>();
+                var stationCache = new Dictionary<string, StationInfo>(allStationNames.Count);
 
                 Debug.WriteLine($"需要查询{allStationNames.Count}个站点信息");
 
@@ -741,8 +832,11 @@ namespace TA_WPF.ViewModels
                 int missingDepartCoordinatesCount = 0;
                 int missingArriveCoordinatesCount = 0;
 
-                // 处理车票数据，获取起始站和终点站的经纬度信息
-                foreach (var ticket in filteredTickets)
+                // 并行处理车票数据，获取起始站和终点站的经纬度信息
+                var validTickets = new System.Collections.Concurrent.ConcurrentBag<RouteMapData>();
+                
+                // 使用并行处理提升性能
+                Parallel.ForEach(filteredTickets, ticket =>
                 {
                     // 从缓存中获取站点信息
                     StationInfo departStation = null;
@@ -761,16 +855,14 @@ namespace TA_WPF.ViewModels
                     // 检查站点信息是否存在
                     if (departStation == null)
                     {
-                        missingDepartStationCount++;
-                        Debug.WriteLine($"车票 {ticket.TrainNo} ({ticket.DepartStation}-{ticket.ArriveStation}) 的出发站信息在数据库中不存在");
-                        continue;
+                        Interlocked.Increment(ref missingDepartStationCount);
+                        return;
                     }
 
                     if (arriveStation == null)
                     {
-                        missingArriveStationCount++;
-                        Debug.WriteLine($"车票 {ticket.TrainNo} ({ticket.DepartStation}-{ticket.ArriveStation}) 的到达站信息在数据库中不存在");
-                        continue;
+                        Interlocked.Increment(ref missingArriveStationCount);
+                        return;
                     }
 
                     // 检查经纬度信息是否完整
@@ -779,36 +871,45 @@ namespace TA_WPF.ViewModels
 
                     if (!hasDepartCoordinates)
                     {
-                        missingDepartCoordinatesCount++;
-                        Debug.WriteLine($"车票 {ticket.TrainNo} 的出发站 {ticket.DepartStation} 缺少经纬度信息");
+                        Interlocked.Increment(ref missingDepartCoordinatesCount);
                     }
 
                     if (!hasArriveCoordinates)
                     {
-                        missingArriveCoordinatesCount++;
-                        Debug.WriteLine($"车票 {ticket.TrainNo} 的到达站 {ticket.ArriveStation} 缺少经纬度信息");
+                        Interlocked.Increment(ref missingArriveCoordinatesCount);
                     }
 
                     // 确保两个站点都有经纬度信息
                     if (hasDepartCoordinates && hasArriveCoordinates)
                     {
-                        // 创建路线数据对象
-                        var routeData = new RouteMapData
+                        try
                         {
-                            DepartStation = departStation.StationName,
-                            DepartLongitude = double.Parse(departStation.Longitude),
-                            DepartLatitude = double.Parse(departStation.Latitude),
-                            ArriveStation = arriveStation.StationName,
-                            ArriveLongitude = double.Parse(arriveStation.Longitude),
-                            ArriveLatitude = double.Parse(arriveStation.Latitude),
-                            TrainNo = ticket.TrainNo,
-                            DepartDate = ticket.DepartDate?.ToString("yyyy-MM-dd") ?? string.Empty,
-                            Money = ticket.Money ?? 0
-                        };
+                            // 创建路线数据对象
+                            var routeData = new RouteMapData
+                            {
+                                DepartStation = departStation.StationName,
+                                DepartLongitude = double.Parse(departStation.Longitude),
+                                DepartLatitude = double.Parse(departStation.Latitude),
+                                ArriveStation = arriveStation.StationName,
+                                ArriveLongitude = double.Parse(arriveStation.Longitude),
+                                ArriveLatitude = double.Parse(arriveStation.Latitude),
+                                TrainNo = ticket.TrainNo,
+                                DepartDate = ticket.DepartDate?.ToString("yyyy-MM-dd") ?? string.Empty,
+                                Money = ticket.Money ?? 0
+                            };
 
-                        result.Add(routeData);
+                            validTickets.Add(routeData);
+                        }
+                        catch (Exception ex)
+                        {
+                            // 忽略单个票据的解析错误，不应影响整体处理
+                            Debug.WriteLine($"处理车票 {ticket.TrainNo} 时出错: {ex.Message}");
+                        }
                     }
-                }
+                });
+
+                // 将并行处理结果转换为List
+                result = validTickets.ToList();
 
                 // 记录过滤信息
                 int validCount = result.Count;
@@ -845,25 +946,26 @@ namespace TA_WPF.ViewModels
                     return "[]";
                 }
 
-                // 创建JSON数组
-                var json = new System.Text.StringBuilder();
+                // 优化：预估StringBuilder容量，避免频繁扩容
+                int estimatedCapacity = routeData.Count * 250; // 估计每个路线对象约250字节
+                var json = new System.Text.StringBuilder(estimatedCapacity);
                 json.Append("[");
 
                 for (int i = 0; i < routeData.Count; i++)
                 {
                     var data = routeData[i];
 
-                    // 添加单个路线数据
+                    // 减少字符串连接操作
                     json.Append("{");
-                    json.Append($"\"departStation\":\"{data.DepartStation}\",");
-                    json.Append($"\"departLongitude\":{data.DepartLongitude},");
-                    json.Append($"\"departLatitude\":{data.DepartLatitude},");
-                    json.Append($"\"arriveStation\":\"{data.ArriveStation}\",");
-                    json.Append($"\"arriveLongitude\":{data.ArriveLongitude},");
-                    json.Append($"\"arriveLatitude\":{data.ArriveLatitude},");
-                    json.Append($"\"trainNo\":\"{data.TrainNo}\",");
-                    json.Append($"\"departDate\":\"{data.DepartDate}\",");
-                    json.Append($"\"money\":{data.Money}");
+                    json.Append("\"departStation\":\"").Append(data.DepartStation).Append("\",");
+                    json.Append("\"departLongitude\":").Append(data.DepartLongitude).Append(",");
+                    json.Append("\"departLatitude\":").Append(data.DepartLatitude).Append(",");
+                    json.Append("\"arriveStation\":\"").Append(data.ArriveStation).Append("\",");
+                    json.Append("\"arriveLongitude\":").Append(data.ArriveLongitude).Append(",");
+                    json.Append("\"arriveLatitude\":").Append(data.ArriveLatitude).Append(",");
+                    json.Append("\"trainNo\":\"").Append(data.TrainNo).Append("\",");
+                    json.Append("\"departDate\":\"").Append(data.DepartDate).Append("\",");
+                    json.Append("\"money\":").Append(data.Money);
                     json.Append("}");
 
                     // 除最后一个元素外，添加逗号
