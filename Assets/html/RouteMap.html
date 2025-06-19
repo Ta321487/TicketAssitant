@@ -257,6 +257,129 @@
         let mapRenderTimer = null; // 添加渲染延迟计时器
         let pendingOperation = null; // 添加待执行操作
         
+        // 事件监听器跟踪系统 - 用于防止内存泄漏
+        window._eventListeners = [];
+        
+        // 安全地添加事件监听器，并跟踪它们以便后续移除
+        function addSafeEventListener(element, type, callback) {
+            if (!element || !type || !callback) return;
+            
+            // 检查是否为高德地图对象（使用on方法而不是addEventListener）
+            if (element && typeof element.on === 'function') {
+                // 高德地图对象使用on方法添加事件
+                element.on(type, callback);
+                
+                // 仍然跟踪事件，但使用特殊标记表示这是地图事件
+                window._eventListeners.push({
+                    element: element,
+                    type: type,
+                    callback: callback,
+                    isMapEvent: true
+                });
+                
+                return callback;
+            }
+            
+            // 标准DOM元素使用addEventListener
+            if (element && typeof element.addEventListener === 'function') {
+                element.addEventListener(type, callback);
+                window._eventListeners.push({
+                    element: element,
+                    type: type,
+                    callback: callback,
+                    isMapEvent: false
+                });
+            } else {
+                console.warn('无法为对象添加事件监听器，对象不支持addEventListener或on方法', element, type);
+            }
+            
+            return callback;
+        }
+        
+        // 安全地移除事件监听器
+        function removeSafeEventListener(element, type, callback) {
+            if (!element || !type || !callback) return;
+            
+            // 检查是否为高德地图对象
+            if (element && typeof element.off === 'function') {
+                // 高德地图对象使用off方法移除事件
+                element.off(type, callback);
+            } else if (element && typeof element.removeEventListener === 'function') {
+                // 标准DOM元素使用removeEventListener
+                element.removeEventListener(type, callback);
+            }
+            
+            // 从跟踪数组中移除
+            const index = window._eventListeners.findIndex(item => 
+                item.element === element && 
+                item.type === type && 
+                item.callback === callback
+            );
+            
+            if (index !== -1) {
+                window._eventListeners.splice(index, 1);
+            }
+        }
+        
+        // 移除所有事件监听器
+        function removeAllEventListeners() {
+            if (!window._eventListeners) return;
+            
+            for (let i = window._eventListeners.length - 1; i >= 0; i--) {
+                const item = window._eventListeners[i];
+                if (item && item.element) {
+                    try {
+                        if (item.isMapEvent && typeof item.element.off === 'function') {
+                            // 高德地图事件
+                            item.element.off(item.type, item.callback);
+                        } else if (!item.isMapEvent && typeof item.element.removeEventListener === 'function') {
+                            // DOM事件
+                            item.element.removeEventListener(item.type, item.callback);
+                        }
+                    } catch (e) {
+                        console.error('移除事件监听器出错:', e);
+                    }
+                }
+            }
+            
+            window._eventListeners = [];
+        }
+        
+        // 优化：离开页面时清理资源
+        window.addEventListener('beforeunload', function() {
+            clearMapData();
+            removeAllEventListeners();
+            
+            // 清理地图资源
+            if (map) {
+                try {
+                    map.clearEvents();
+                    map.destroy();
+                    map = null;
+                } catch(e) {}
+            }
+            
+            // 清理Loca资源
+            if (loca) {
+                try {
+                    if (loca.animate) loca.animate.stop();
+                    loca.dispose();
+                    loca = null;
+                } catch(e) {}
+            }
+            
+            // 清理标记点
+            markers = [];
+            
+            // 清理数据
+            geoData = [];
+            
+            // 清理批处理数据
+            if (window.batchedData) {
+                window.batchedData = [];
+            }
+        });
+        
         // 新增：根据主题设置地图样式
         function setMapTheme(isDarkMode) {
             console.log('调用setMapTheme函数，isDarkMode=' + isDarkMode);
@@ -265,6 +388,10 @@
                 // 检查地图实例是否已初始化
                 if (!map) {
                     console.error('地图实例未初始化，无法设置样式');
+                    
+                    // 保存主题设置，以便地图初始化后应用
+                    window.pendingTheme = isDarkMode ? 'dark' : 'light';
+                    console.log('已保存主题设置，将在地图初始化后应用');
                     return;
                 }
                 
@@ -295,6 +422,16 @@
                     }
                     
                     console.log('地图主题已成功更新为: ' + (isDarkMode ? '深色模式' : '浅色模式'));
+                    
+                    // 如果有时间范围提示，更新其样式
+                    const timeRangeMessage = document.getElementById('timeRangeMessage');
+                    if (timeRangeMessage && timeRangeMessage.style.display !== 'none') {
+                        if (isDarkMode) {
+                            timeRangeMessage.classList.add('dark-mode');
+                        } else {
+                            timeRangeMessage.classList.remove('dark-mode');
+                        }
+                    }
                 }, 100);
             } catch (error) {
                 console.error('设置地图主题时出错: ' + error);
@@ -314,156 +451,173 @@
         
         // 初始化函数
         function initMap() {
-            // 加载完成后隐藏加载指示器
-            hideLoading();
-            
-            // 检查API密钥是否设置
-            if (!amapWebKey || amapWebKey.trim() === '') {
-                showApiMissingMessage();
-                return;
-            } else {
-                hideApiMissingMessage();
-            }
-            
-            // 初始地图样式 - 默认使用浅色主题
-            const initialMapStyle = 'amap://styles/whitesmoke';
-            console.log('初始化地图，默认样式: ' + initialMapStyle);
-            
-            // 创建地图实例 - 优化：降低初始化时的渲染代价
-            map = new AMap.Map('container', {
-                zoom: 4,
-                center: [105.0, 35.0],
-                viewMode: '2D',
-                mapStyle: initialMapStyle,
-                showLabel: false, // 初始化时不显示标签，提高性能
-                zooms: [4, 10],
-                rotateEnable: false,
-                pitchEnable: false,
-                dragEnable: true,
-                zoomEnable: true,
-                doubleClickZoom: true,
-                keyboardEnable: false,
-                features: ['bg', 'road'], // 减少初始特性数量
-                defaultCursor: 'default',
-                WebGLParams: {
-                    preserveDrawingBuffer: true,
-                    antialias: false // 禁用抗锯齿以提高性能
-                },
-                rightClick: false,
-                limitBounds: new AMap.Bounds([73.66, 3.86], [135.05, 53.55]),
-                boundsLook: true,
-                showBuildingBlock: false,
-                isHotspot: false,
-                showIndoorMap: false, // 禁用室内地图
-                expandZoomRange: false, // 禁用缩放范围扩展
-                touchZoom: {
-                    sensitivity: 2 // 降低触摸缩放灵敏度
-                }
-            });
-            
-            // 添加拖动事件监听，优化拖动性能
-            map.on('dragging', function() {
-                if (!isMapDragging) {
-                    isMapDragging = true;
-                    // 拖动时暂停动画和复杂渲染
-                    if (loca && loca.animate) {
-                        loca.animate.pause();
-                    }
-                }
-            });
-            
-            map.on('dragend', function() {
-                isMapDragging = false;
+            try {
+                // 加载完成后隐藏加载指示器
+                hideLoading();
                 
-                // 设置延时，避免频繁刷新
-                clearTimeout(mapRenderTimer);
-                mapRenderTimer = setTimeout(() => {
-                    // 拖动结束后恢复动画
-                    if (loca && loca.animate) {
-                        loca.animate.start();
-                    }
-                    
-                    // 如果有待执行的操作，执行它
-                    if (pendingOperation) {
-                        pendingOperation();
-                        pendingOperation = null;
-                    }
-                }, 300); // 300毫秒延迟
-            });
-            
-            // 添加自定义右键菜单（为空，实际上是禁用右键菜单）
-            map.on('rightclick', function(e) {
-                // 阻止默认右键行为
-                e.originalEvent.preventDefault();
-                return false;
-            });
-            
-            // 优化：创建高性能版本的Loca容器
-            loca = new Loca.Container({
-                map: map,
-                ambLight: {
-                    intensity: 0.5 // 减少环境光强度
-                },
-                directLight: {
-                    intensity: 0.5 // 减少直射光强度
-                },
-                shadowQuality: 'low', // 降低阴影质量
-                logarithmicDepth: false // 禁用对数深度缓冲
-            });
-
-            // 创建LineLayer图层代替PulseLineLayer
-            pulseLineLayer = new Loca.LineLayer({
-                zIndex: 10,
-                opacity: 1.0,
-                visible: true,
-                zooms: [4, 10],  // 与地图zooms保持一致
-                // 优化：添加高性能渲染选项
-                depth: false, // 禁用深度
-                shininess: 0, // 禁用反光
-                bloom: false  // 禁用辉光效果
-            });
-
-            // 配置图层
-            pulseLineLayer.setSource(new Loca.GeoJSONSource({
-                data: {
-                    type: 'FeatureCollection',
-                    features: []
+                // 检查API密钥是否设置
+                if (!amapWebKey || amapWebKey.trim() === '') {
+                    showApiMissingMessage();
+                    return;
+                } else {
+                    hideApiMissingMessage();
                 }
-            }));
-
-            // 设置图层样式 - 使用简单的线条样式
-            pulseLineLayer.setStyle({
-                altitude: 0,
-                lineWidth: 3,
-                color: '#2196F3', // Material Blue
-                height: 0,
-                // 优化：禁用复杂特效
-                hasShadow: false,
-                hasHighlight: false
-            });
-
-            // 添加图层到Loca容器
-            loca.add(pulseLineLayer);
-            
-            // 输出调试信息
-            console.log('初始化线图层，颜色设置为: #2196F3');
-            
-            // 限制地图拖动范围在中国区域内
-            const bounds = new AMap.Bounds([73.66, 3.86], [135.05, 53.55]); // 中国经纬度范围
-            map.setLimitBounds(bounds);
-            
-            // 优化：只在静止时启用复杂特性
-            map.on('moveend', function() {
-                // 先不启用标签，延迟到拖动完全停止后
-                setTimeout(() => {
-                    if (map && !isMapDragging) {
-                        map.setFeatures(['bg', 'road', 'building', 'point']);
-                        map.setStatus({showLabel: true});
+                
+                // 初始地图样式 - 默认使用浅色主题
+                const initialMapStyle = 'amap://styles/whitesmoke';
+                console.log('初始化地图，默认样式: ' + initialMapStyle);
+                
+                // 创建地图实例 - 优化：降低初始化时的渲染代价
+                map = new AMap.Map('container', {
+                    zoom: 4,
+                    center: [105.0, 35.0],
+                    viewMode: '2D',
+                    mapStyle: initialMapStyle,
+                    showLabel: false, // 初始化时不显示标签，提高性能
+                    zooms: [4, 10],
+                    rotateEnable: false,
+                    pitchEnable: false,
+                    dragEnable: true,
+                    zoomEnable: true,
+                    doubleClickZoom: true,
+                    keyboardEnable: false,
+                    features: ['bg', 'road'], // 减少初始特性数量
+                    defaultCursor: 'default',
+                    WebGLParams: {
+                        preserveDrawingBuffer: true,
+                        antialias: false // 禁用抗锯齿以提高性能
+                    },
+                    rightClick: false,
+                    limitBounds: new AMap.Bounds([73.66, 3.86], [135.05, 53.55]),
+                    boundsLook: true,
+                    showBuildingBlock: false,
+                    isHotspot: false,
+                    showIndoorMap: false, // 禁用室内地图
+                    expandZoomRange: false, // 禁用缩放范围扩展
+                    touchZoom: {
+                        sensitivity: 2 // 降低触摸缩放灵敏度
                     }
-                }, 300);
-            });
-            
-            isMapInitialized = true;
+                });
+                
+                // 检查地图是否创建成功
+                if (!map) {
+                    console.error('地图实例创建失败');
+                    return;
+                }
+                
+                // 添加拖动事件监听，优化拖动性能
+                map.on('dragging', function() {
+                    if (!isMapDragging) {
+                        isMapDragging = true;
+                        // 拖动时暂停动画和复杂渲染
+                        if (loca && loca.animate) {
+                            loca.animate.pause();
+                        }
+                    }
+                });
+                
+                map.on('dragend', function() {
+                    isMapDragging = false;
+                    
+                    // 设置延时，避免频繁刷新
+                    clearTimeout(mapRenderTimer);
+                    mapRenderTimer = setTimeout(() => {
+                        // 拖动结束后恢复动画
+                        if (loca && loca.animate) {
+                            loca.animate.start();
+                        }
+                        
+                        // 如果有待执行的操作，执行它
+                        if (pendingOperation) {
+                            pendingOperation();
+                            pendingOperation = null;
+                        }
+                    }, 300); // 300毫秒延迟
+                });
+                
+                // 添加自定义右键菜单（为空，实际上是禁用右键菜单）
+                map.on('rightclick', function(e) {
+                    // 阻止默认右键行为
+                    e.originalEvent.preventDefault();
+                    return false;
+                });
+                
+                // 优化：只在静止时启用复杂特性
+                map.on('moveend', function() {
+                    // 先不启用标签，延迟到拖动完全停止后
+                    setTimeout(() => {
+                        if (map && !isMapDragging) {
+                            map.setFeatures(['bg', 'road', 'building', 'point']);
+                            map.setStatus({showLabel: true});
+                        }
+                    }, 300);
+                });
+                
+                // 优化：创建高性能版本的Loca容器
+                try {
+                    loca = new Loca.Container({
+                        map: map,
+                        ambLight: {
+                            intensity: 0.5 // 减少环境光强度
+                        },
+                        directLight: {
+                            intensity: 0.5 // 减少直射光强度
+                        },
+                        shadowQuality: 'low', // 降低阴影质量
+                        logarithmicDepth: false // 禁用对数深度缓冲
+                    });
+    
+                    // 创建LineLayer图层代替PulseLineLayer
+                    pulseLineLayer = new Loca.LineLayer({
+                        zIndex: 10,
+                        opacity: 1.0,
+                        visible: true,
+                        zooms: [4, 10],  // 与地图zooms保持一致
+                        // 优化：添加高性能渲染选项
+                        depth: false, // 禁用深度
+                        shininess: 0, // 禁用反光
+                        bloom: false  // 禁用辉光效果
+                    });
+    
+                    // 配置图层
+                    pulseLineLayer.setSource(new Loca.GeoJSONSource({
+                        data: {
+                            type: 'FeatureCollection',
+                            features: []
+                        }
+                    }));
+    
+                    // 设置图层样式 - 使用简单的线条样式
+                    pulseLineLayer.setStyle({
+                        altitude: 0,
+                        lineWidth: 3,
+                        color: '#2196F3', // Material Blue
+                        height: 0,
+                        // 优化：禁用复杂特效
+                        hasShadow: false,
+                        hasHighlight: false
+                    });
+    
+                    // 添加图层到Loca容器
+                    loca.add(pulseLineLayer);
+                } catch (locaError) {
+                    console.error('创建Loca容器或图层时出错:', locaError);
+                    // 即使Loca初始化失败，也继续地图的其他初始化
+                }
+                
+                // 输出调试信息
+                console.log('初始化线图层，颜色设置为: #2196F3');
+                
+                // 限制地图拖动范围在中国区域内
+                const bounds = new AMap.Bounds([73.66, 3.86], [135.05, 53.55]); // 中国经纬度范围
+                map.setLimitBounds(bounds);
+                
+                isMapInitialized = true;
+            } catch (error) {
+                console.error('初始化地图时出错:', error);
+                hideLoading();
+                showNoDataMessage('初始化地图时出错: ' + error.message);
+            }
         }
         
         // 设置高德地图API密钥
@@ -625,6 +779,8 @@
         // 重新加载高德地图API
         function reloadAmapApi() {
             try {
+                console.log('开始重新加载高德地图API，WebKey=' + (amapWebKey ? '已设置' : '未设置'));
+                
                 // 移除现有的脚本
                 const scripts = document.getElementsByTagName('script');
                 for (let i = scripts.length - 1; i >= 0; i--) {
@@ -634,19 +790,70 @@
                     }
                 }
                 
+                // 重置地图相关变量
+                map = null;
+                loca = null;
+                pulseLineLayer = null;
+                isMapInitialized = false;
+                
                 // 添加新的脚本
                 const mapScript = document.createElement('script');
                 mapScript.src = `https://webapi.amap.com/maps?v=2.0&key=${amapWebKey}&securityJsCode=${amapSecurityKey}`;
+                
+                // 添加超时处理
+                let loadTimeout = setTimeout(() => {
+                    console.error('地图API加载超时');
+                    hideLoading();
+                    showNoDataMessage('地图API加载超时，请检查网络连接');
+                }, 15000);
+                
                 mapScript.onload = function() {
+                    clearTimeout(loadTimeout);
+                    console.log('地图API加载成功，开始加载Loca API');
+                    
                     // 加载Loca API
                     const locaScript = document.createElement('script');
                     locaScript.src = `https://webapi.amap.com/loca?v=2.0.0&key=${amapWebKey}`;
+                    
+                    let locaTimeout = setTimeout(() => {
+                        console.error('Loca API加载超时');
+                        // 即使Loca加载失败，也尝试初始化基本地图
+                        initMap();
+                    }, 10000);
+                    
                     locaScript.onload = function() {
+                        clearTimeout(locaTimeout);
+                        console.log('Loca API加载成功，开始初始化地图');
+                        
                         // 初始化地图
                         initMap();
+                        
+                        // 如果有待应用的主题设置，应用它
+                        if (window.pendingTheme) {
+                            setTimeout(() => {
+                                setMapTheme(window.pendingTheme === 'dark');
+                                window.pendingTheme = null;
+                            }, 500);
+                        }
                     };
+                    
+                    locaScript.onerror = function(e) {
+                        clearTimeout(locaTimeout);
+                        console.error('Loca API加载失败', e);
+                        // 即使Loca加载失败，也尝试初始化基本地图
+                        initMap();
+                    };
+                    
                     document.head.appendChild(locaScript);
                 };
+                
+                mapScript.onerror = function(e) {
+                    clearTimeout(loadTimeout);
+                    console.error('地图API加载失败', e);
+                    hideLoading();
+                    showApiMissingMessage();
+                };
+                
                 document.head.appendChild(mapScript);
             } catch (error) {
                 console.error('重新加载高德地图API时出错: ' + error);
@@ -671,23 +878,25 @@
                     // 先隐藏API缺失提示
                     hideApiMissingMessage();
                     
-                    // 使用延时确保DOM已经准备好
+                    // 显示加载中状态
+                    showLoading();
+                    
+                    // 重新加载API并初始化地图
+                    reloadAmapApi();
+                    
+                    // 保存数据以便地图初始化后加载
+                    window.pendingRouteData = routeData;
+                    
+                    // 设置延时检查地图是否初始化完成
                     setTimeout(() => {
-                        // 重新加载API并初始化地图
-                        reloadAmapApi();
-                        
-                        // 使用延时等待地图初始化完成后再次尝试加载数据
-                        setTimeout(() => {
-                            if (routeData && routeData.length > 0 && isMapInitialized) {
-                                // 递归调用自身加载数据
-                                loadRouteData(routeData);
-                            } else if (isMapInitialized) {
-                                // 地图已初始化但没有数据
-                                showNoDataMessage("没有可显示的路线数据");
-                                hideLoading();
-                            }
-                        }, 1000);
-                    }, 500);
+                        if (isMapInitialized && window.pendingRouteData) {
+                            console.log('地图已初始化，加载保存的路线数据');
+                            const savedData = window.pendingRouteData;
+                            window.pendingRouteData = null;
+                            loadRouteData(savedData);
+                        }
+                    }, 2000);
+                    
                     return;
                 }
                 
@@ -772,31 +981,35 @@
                 }
                 
                 // 优化：一次性更新数据源
-                pulseLineLayer.setSource(new Loca.GeoJSONSource({
-                    data: {
-                        type: 'FeatureCollection',
-                        features: geoData
-                    }
-                }));
-                
-                // 优化：只有在非拖动状态才更新动画
-                if (!isMapDragging) {
-                    loca.animate.start();
-                } else {
-                    // 如果正在拖动，将动画启动推迟到拖动结束
-                    pendingOperation = function() {
+                if (pulseLineLayer) {
+                    pulseLineLayer.setSource(new Loca.GeoJSONSource({
+                        data: {
+                            type: 'FeatureCollection',
+                            features: geoData
+                        }
+                    }));
+                    
+                    // 优化：只有在非拖动状态才更新动画
+                    if (loca && !isMapDragging) {
                         loca.animate.start();
-                    };
+                    } else {
+                        // 如果正在拖动，将动画启动推迟到拖动结束
+                        pendingOperation = function() {
+                            if (loca && loca.animate) {
+                                loca.animate.start();
+                            }
+                        };
+                    }
                 }
                 
                 // 优化：批量添加标记点
-                if (newMarkers.length > 0) {
+                if (newMarkers.length > 0 && map) {
                     map.add(newMarkers);
                     markers = newMarkers; // 保存引用以便后续清除
                 }
                 
                 // 更新地图视野
-                if (geoData.length > 0) {
+                if (geoData.length > 0 && map) {
                     // 提取所有坐标点
                     const positions = [];
                     for (const feature of geoData) {
@@ -830,10 +1043,14 @@
                         }
                     }
                 }
+                
+                // 数据加载完成，隐藏加载指示器
+                hideLoading();
+                console.log('路线数据加载完成，共' + routeData.length + '条路线');
             } catch (error) {
                 console.error('加载路线数据时出错: ' + error);
-            } finally {
                 hideLoading();
+                showNoDataMessage('加载路线数据时出错: ' + error.message);
             }
         }
         

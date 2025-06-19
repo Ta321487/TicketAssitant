@@ -152,16 +152,113 @@ namespace TA_WPF.Views
         {
             try
             {
-                if (_isWebViewInitialized && MapWebView != null && MapWebView.CoreWebView2 != null)
+                if (_isWebViewInitialized && MapWebView != null)
                 {
                     // 移除WebMessage事件处理器
                     if (MapWebView.CoreWebView2 != null)
                     {
+                        // 先在JavaScript端清理资源
+                        try
+                        {
+                            MapWebView.CoreWebView2.ExecuteScriptAsync(@"
+                                // 清理地图资源
+                                if (map) {
+                                    try {
+                                        // 清除所有事件监听
+                                        map.clearEvents();
+                                        // 销毁地图实例
+                                        map.destroy();
+                                        map = null;
+                                    } catch(e) {
+                                        console.error('清理map出错:', e);
+                                    }
+                                }
+                                
+                                // 清理Loca资源
+                                if (loca) {
+                                    try {
+                                        // 停止所有动画
+                                        if (loca.animate) loca.animate.stop();
+                                        // 销毁所有图层
+                                        loca.dispose();
+                                        loca = null;
+                                    } catch(e) {
+                                        console.error('清理loca出错:', e);
+                                    }
+                                }
+                                
+                                // 清理标记点
+                                if (markers && markers.length > 0) {
+                                    markers = [];
+                                }
+                                
+                                // 清理数据
+                                if (geoData && geoData.length > 0) {
+                                    geoData = [];
+                                }
+                                
+                                // 清理批处理数据
+                                if (window.batchedData && window.batchedData.length > 0) {
+                                    window.batchedData = [];
+                                }
+                                
+                                // 强制垃圾回收
+                                if (window.gc) {
+                                    window.gc();
+                                }
+                            ");
+                        }
+                        catch (Exception jsEx)
+                        {
+                            Debug.WriteLine($"清理JavaScript资源时出错: {jsEx.Message}");
+                        }
+                        
+                        // 移除事件处理器
                         MapWebView.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
+                        
+                        // 移除注入的宿主对象
+                        try
+                        {
+                            // 先调用ReleaseParent方法释放循环引用
+                            MapWebView.CoreWebView2.ExecuteScriptAsync("if(chrome.webview.hostObjects.hostObject) chrome.webview.hostObjects.hostObject.releaseParent();");
+                            // 等待执行完成
+                            Task.Delay(50).Wait();
+                            // 清除宿主对象引用
+                            MapWebView.CoreWebView2.ExecuteScriptAsync("window.chrome.webview.hostObjects.hostObject = undefined;");
+                            MapWebView.CoreWebView2.RemoveHostObjectFromScript("hostObject");
+                        }
+                        catch (Exception hostEx)
+                        {
+                            Debug.WriteLine($"移除宿主对象时出错: {hostEx.Message}");
+                        }
                     }
 
-                    // 只有在完全卸载视图时才导航到空白页面
+                    // 导航到空白页面帮助释放资源
                     MapWebView.NavigateToString("about:blank");
+                    
+                    // 重要：显式移除CoreWebView2的所有事件处理
+                    if (MapWebView.CoreWebView2 != null)
+                    {
+                        // 使用反射移除所有事件处理器 - 更彻底的方式
+                        try
+                        {
+                            var eventFields = typeof(CoreWebView2).GetFields(
+                                System.Reflection.BindingFlags.Instance | 
+                                System.Reflection.BindingFlags.NonPublic);
+                                
+                            foreach (var field in eventFields)
+                            {
+                                if (field.FieldType.IsSubclassOf(typeof(MulticastDelegate)))
+                                {
+                                    field.SetValue(MapWebView.CoreWebView2, null);
+                                }
+                            }
+                        }
+                        catch (Exception reflectionEx)
+                        {
+                            Debug.WriteLine($"使用反射清除事件处理器时出错: {reflectionEx.Message}");
+                        }
+                    }
 
                     // 通知ViewModel完全清理资源
                     if (_viewModel != null)
@@ -175,6 +272,7 @@ namespace TA_WPF.Views
                     // 强制垃圾回收
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
+                    GC.Collect();
 
                     Debug.WriteLine("WebView资源已完全释放");
                     LogHelper.LogInfo("WebView资源已完全释放以节省内存");
@@ -687,7 +785,7 @@ namespace TA_WPF.Views
     [System.Runtime.InteropServices.ComVisible(true)]
     public class WebViewHostObject
     {
-        private readonly RouteMapView _parent;
+        private RouteMapView _parent;
 
         public WebViewHostObject(RouteMapView parent)
         {
@@ -699,6 +797,13 @@ namespace TA_WPF.Views
         /// </summary>
         public void RefreshMap()
         {
+            // 检查父对象是否有效
+            if (_parent == null)
+            {
+                Debug.WriteLine("父对象已被清理，无法刷新地图");
+                return;
+            }
+            
             // 在UI线程上执行
             _parent.Dispatcher.Invoke(() => _parent.RefreshMap());
         }
@@ -709,6 +814,15 @@ namespace TA_WPF.Views
         public void LogMessage(string message)
         {
             Debug.WriteLine($"WebView消息: {message}");
+        }
+        
+        /// <summary>
+        /// 释放父对象引用，避免循环引用
+        /// </summary>
+        public void ReleaseParent()
+        {
+            Debug.WriteLine("释放WebViewHostObject中的父对象引用");
+            _parent = null;
         }
     }
 }

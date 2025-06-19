@@ -26,6 +26,9 @@ namespace TA_WPF.ViewModels
         private string _timeRangeMessage = "";
         private bool _showTimeRangeMessage = false;
 
+        // 存储地理数据的临时变量，防止在VM和JS之间形成循环引用
+        private object geoData = null;
+
         public RouteMapViewModel(DatabaseService databaseService, ConfigurationService configurationService)
         {
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
@@ -1073,6 +1076,48 @@ namespace TA_WPF.ViewModels
         {
             try
             {
+                // 将WebView引用置为null前先尝试清理
+                if (_currentWebView != null)
+                {
+                    try
+                    {
+                        // 尝试在JS中清理资源
+                        var task = _currentWebView.ExecuteScriptAsync(@"
+                            // 清理所有闭包和引用
+                            if (window.routeProcessing) {
+                                window.routeProcessing = null;
+                            }
+                            // 清理回调
+                            if (window.pendingOperation) {
+                                window.pendingOperation = null;
+                            }
+                            // 释放WebView2与JS环境之间的引用
+                            if (window.chrome && window.chrome.webview) {
+                                // 清理所有可能的事件监听器
+                                try {
+                                    const listeners = window._eventListeners;
+                                    if (listeners && Array.isArray(listeners)) {
+                                        for (const listener of listeners) {
+                                            if (listener && listener.element && listener.type && listener.callback) {
+                                                listener.element.removeEventListener(listener.type, listener.callback);
+                                            }
+                                        }
+                                        window._eventListeners = [];
+                                    }
+                                } catch (e) {}
+                            }
+                        ");
+                        
+                        // 很短暂地等待脚本执行
+                        task.Wait(100);
+                    }
+                    catch (Exception ex)
+                    {
+                        // 忽略执行脚本可能的异常
+                        Debug.WriteLine($"清理脚本执行失败: {ex.Message}");
+                    }
+                }
+
                 // 将WebView引用置为null
                 _currentWebView = null;
 
@@ -1082,10 +1127,17 @@ namespace TA_WPF.ViewModels
                 // 执行一些清理工作
                 _isRefreshing = false;
                 IsLoading = false;
+                
+                // 清理循环引用
+                geoData = null;
 
                 // 记录日志
                 LogHelper.LogInfo("已完全清理WebView资源以节省内存");
                 Debug.WriteLine("RouteMapViewModel: 已完全清理WebView资源");
+                
+                // 触发额外的垃圾回收循环
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
             catch (Exception ex)
             {
@@ -1099,8 +1151,28 @@ namespace TA_WPF.ViewModels
         /// </summary>
         ~RouteMapViewModel()
         {
-            // 取消订阅事件，避免内存泄漏
-            ConfigurationService.ApiKeyUpdated -= OnApiKeyUpdated;
+            try
+            {
+                // 取消订阅事件，避免内存泄漏
+                // 不能直接检查事件是否为null，直接尝试取消订阅即可
+                ConfigurationService.ApiKeyUpdated -= OnApiKeyUpdated;
+                
+                // 清理WebView引用
+                _currentWebView = null;
+                
+                // 标记未初始化
+                IsMapInitialized = false;
+                
+                // 清理其他资源
+                _isRefreshing = false;
+                geoData = null;
+                
+                Debug.WriteLine("RouteMapViewModel 析构函数执行完毕，资源已清理");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"RouteMapViewModel 析构函数执行出错: {ex.Message}");
+            }
         }
 
         /// <summary>

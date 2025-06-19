@@ -3908,17 +3908,37 @@ namespace TA_WPF.Services
                                 END
                             ) AS total_distance,
                             ROUND(
-                                SUM(
-                                    CASE
-                                        WHEN rsm1.distance_from_start <= rsm2.distance_from_start 
-                                        THEN rsm2.distance_from_start - rsm1.distance_from_start
-                                        ELSE 0
-                                    END
-                                ) / (
-                                    SELECT total_distance 
-                                    FROM route_info 
-                                    WHERE id = @RouteId
-                                ) * 100, 
+                                (
+                                    SUM(
+                                        CASE
+                                            WHEN rsm1.distance_from_start <= rsm2.distance_from_start 
+                                            THEN rsm2.distance_from_start - rsm1.distance_from_start
+                                            ELSE 0
+                                        END
+                                    ) / (
+                                        SELECT SUM(
+                                            CASE
+                                                WHEN rsm1_inner.distance_from_start <= rsm2_inner.distance_from_start 
+                                                THEN rsm2_inner.distance_from_start - rsm1_inner.distance_from_start
+                                                ELSE 0
+                                            END
+                                        )
+                                        FROM
+                                            train_ride_info tri_inner
+                                        JOIN
+                                            route_ticket_mapping rtm_inner ON tri_inner.id = rtm_inner.ticket_id
+                                        JOIN
+                                            station_info si_depart_inner ON tri_inner.depart_station_code = si_depart_inner.station_code
+                                        JOIN
+                                            station_info si_arrive_inner ON tri_inner.arrive_station_code = si_arrive_inner.station_code
+                                        JOIN
+                                            route_station_mapping rsm1_inner ON rtm_inner.route_id = rsm1_inner.route_id AND si_depart_inner.id = rsm1_inner.station_id
+                                        JOIN
+                                            route_station_mapping rsm2_inner ON rtm_inner.route_id = rsm2_inner.route_id AND si_arrive_inner.id = rsm2_inner.station_id
+                                        WHERE
+                                            rtm_inner.route_id = @RouteId
+                                    )
+                                ) * 100,
                                 1
                             ) AS percentage
                         FROM
@@ -4077,11 +4097,17 @@ namespace TA_WPF.Services
                         SELECT 
                             si.railway_bureau AS bureau,
                             SUM(rsm.distance_from_prev) AS total_distance,
-                            ROUND(SUM(rsm.distance_from_prev) / (
-                                SELECT total_distance 
-                                FROM route_info 
-                                WHERE id = @RouteId
-                            ) * 100, 2) AS percentage
+                            ROUND(
+                                SUM(rsm.distance_from_prev) / (
+                                    SELECT SUM(rsm_inner.distance_from_prev)
+                                    FROM route_station_mapping rsm_inner
+                                    JOIN station_info si_inner ON rsm_inner.station_id = si_inner.id
+                                    WHERE rsm_inner.route_id = @RouteId
+                                    AND si_inner.railway_bureau IS NOT NULL
+                                    AND si_inner.railway_bureau <> ''
+                                ) * 100,
+                                2
+                            ) AS percentage
                         FROM route_station_mapping rsm
                         JOIN station_info si ON rsm.station_id = si.id
                         WHERE rsm.route_id = @RouteId
