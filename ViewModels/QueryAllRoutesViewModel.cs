@@ -6,6 +6,9 @@ using TA_WPF.Models;
 using TA_WPF.Services;
 using TA_WPF.Utils;
 using TA_WPF.Views;
+using System.Text;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace TA_WPF.ViewModels
 {
@@ -26,6 +29,16 @@ namespace TA_WPF.ViewModels
         private DistanceRangeType _currentDistanceRange = DistanceRangeType.None;
         private bool _currentIsFavorite = false;
         private bool _currentIsAndCondition = true;
+
+        // 添加排序相关字段
+        private string _currentSortField = "sort_order"; // 默认排序字段
+        private bool _currentSortAscending = true; // 默认升序
+
+        // 添加静态字段保存排序状态
+        private static string _savedSortField = "sort_order";
+        private static bool _savedSortAscending = true;
+        private static bool _hasCustomSorting = false;
+
         // 添加DatabaseService属性，用于在页面中直接创建RouteDetailWindow
         public DatabaseService DatabaseService => _databaseService;
 
@@ -35,14 +48,21 @@ namespace TA_WPF.ViewModels
             _paginationViewModel = paginationViewModel ?? throw new ArgumentNullException(nameof(paginationViewModel));
             _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
 
-            _advancedQueryViewModel = new AdvancedQueryRouteViewModel(databaseService);
-            _advancedQueryViewModel.FilterApplied += AdvancedQueryViewModel_FilterApplied;
-
             _routes = new ObservableCollection<RouteInfo>();
             _selectedRoutes = new ObservableCollection<RouteInfo>();
 
-            _paginationViewModel.PageChanged += async (s, e) => await LoadRoutesAsync();
-            _paginationViewModel.PageSizeChanged += async (s, e) => await LoadRoutesAsync();
+            // 从静态变量中恢复排序状态
+            if (_hasCustomSorting)
+            {
+                _currentSortField = _savedSortField;
+                _currentSortAscending = _savedSortAscending;
+            }
+
+            _advancedQueryViewModel = new AdvancedQueryRouteViewModel();
+            _advancedQueryViewModel.FilterApplied += AdvancedQueryViewModel_FilterApplied;
+
+            _paginationViewModel.PageChanged += (s, e) => LoadRoutesAsync().ConfigureAwait(false);
+            _paginationViewModel.PageSizeChanged += (s, e) => LoadRoutesAsync().ConfigureAwait(false);
 
             // Initialize commands
             RefreshCommand = new RelayCommand(async () => await LoadRoutesAsync());
@@ -51,6 +71,9 @@ namespace TA_WPF.ViewModels
             DeleteRouteCommand = new RelayCommand<RouteInfo>(DeleteRoute);
             DeleteRoutesCommand = new RelayCommand(DeleteSelectedRoutes);
             AdvancedQueryCommand = new RelayCommand(OpenAdvancedQuery);
+
+            // 添加排序命令
+            SortRoutesCommand = new RelayCommand<string>(SortRoutes);
 
             // 添加选择相关命令
             SelectAllCommand = new RelayCommand(SelectAll, CanSelectAll);
@@ -208,6 +231,9 @@ namespace TA_WPF.ViewModels
         public ICommand DeleteRouteCommand { get; }
         public ICommand DeleteRoutesCommand { get; }
         public ICommand AdvancedQueryCommand { get; }
+
+        // 添加排序命令
+        public ICommand SortRoutesCommand { get; }
 
         // 选择相关命令
         public ICommand SelectAllCommand { get; }
@@ -541,35 +567,33 @@ namespace TA_WPF.ViewModels
             IsLoading = true;
             try
             {
-                // 使用高级查询条件获取路线总数
+                // 获取过滤条件下的总记录数
                 TotalCount = await GetFilteredRouteCountAsync();
 
-                // 使用高级查询条件加载路线数据
+                // 获取当前页的数据
                 var routesData = await GetFilteredRoutesAsync();
 
+                // 将列表转换为ObservableCollection并更新UI
                 Routes = new ObservableCollection<RouteInfo>(routesData);
 
-                // 清除选择
-                SelectedRoutes.Clear();
+                // 如果没有数据，且TotalCount显示应该有数据，则可能是最后一页没有数据了
+                // 返回到第一页重新加载
+                if (Routes.Count == 0 && TotalCount > 0 && _paginationViewModel.CurrentPage > 1)
+                {
+                    _paginationViewModel.CurrentPage = 1;
+                    await LoadRoutesAsync();
+                    return;
+                }
 
-                // 通知UI更新数据状态
-                OnPropertyChanged(nameof(HasData));
-                OnPropertyChanged(nameof(HasNoData));
-                OnPropertyChanged(nameof(HasSelection));
-                OnPropertyChanged(nameof(IsAllSelected));
+                // 更新选中项状态
+                UpdateSelectionStates();
             }
             catch (Exception ex)
             {
-                LogHelper.LogError($"加载路线列表失败: {ex.Message}");
                 MessageBoxHelper.ShowError($"加载路线列表失败: {ex.Message}");
                 Routes.Clear();
                 SelectedRoutes.Clear();
                 TotalCount = 0;
-                // 通知UI更新数据状态
-                OnPropertyChanged(nameof(HasData));
-                OnPropertyChanged(nameof(HasNoData));
-                OnPropertyChanged(nameof(HasSelection));
-                OnPropertyChanged(nameof(IsAllSelected));
             }
             finally
             {
@@ -615,137 +639,78 @@ namespace TA_WPF.ViewModels
         // 构建筛选SQL查询
         private string BuildFilterQuerySQL(bool isCountQuery)
         {
-            // 所有非空条件列表
-            var conditions = new List<string>();
+            StringBuilder sb = new StringBuilder();
 
-            // 检查是否所有查询条件都为空（查询全部数据的情况）
-            bool allConditionsEmpty = string.IsNullOrWhiteSpace(_currentRouteName) &&
-                                      _currentDistanceRange == DistanceRangeType.None &&
-                                      !_currentIsFavorite;
-
-            // 如果要查询所有数据，就不添加任何条件
-            if (!allConditionsEmpty)
-            {
-                if (_currentIsAndCondition)
-                {
-                    // AND条件模式 - 对未设置的条件使用IS NULL
-
-                    // 处理路线名称条件
-                    if (!string.IsNullOrWhiteSpace(_currentRouteName))
-                    {
-                        conditions.Add($"route_name LIKE '%{_currentRouteName}%'");
-                    }
-                    else
-                    {
-                        conditions.Add("route_name IS NULL");
-                    }
-
-                    // 处理总里程范围条件
-                    if (_currentDistanceRange == DistanceRangeType.None)
-                    {
-                        conditions.Add("total_distance IS NULL");
-                    }
-                    else
-                    {
-                        // 有明确的距离范围选择
-                        switch (_currentDistanceRange)
-                        {
-                            case DistanceRangeType.Range1: // 0-100公里
-                                conditions.Add("(total_distance <= 100)");
-                                break;
-                            case DistanceRangeType.Range2: // 100-500公里
-                                conditions.Add("(total_distance > 100 AND total_distance <= 500)");
-                                break;
-                            case DistanceRangeType.Range3: // 500-1000公里
-                                conditions.Add("(total_distance > 500 AND total_distance <= 1000)");
-                                break;
-                            case DistanceRangeType.Range4: // 1000-2000公里
-                                conditions.Add("(total_distance > 1000 AND total_distance <= 2000)");
-                                break;
-                            case DistanceRangeType.Range5: // 2000公里以上
-                                conditions.Add("(total_distance > 2000)");
-                                break;
-                        }
-                    }
-
-                    // 处理收藏状态条件
-                    if (_currentIsFavorite)
-                    {
-                        conditions.Add("is_favorite = 1");
-                    }
-                    else
-                    {
-                        conditions.Add("(is_favorite IS NULL OR is_favorite = 0)");
-                    }
-                }
-                else
-                {
-                    // OR条件模式 - 只有设置了的条件才添加
-
-                    // 处理路线名称条件（模糊匹配）
-                    if (!string.IsNullOrWhiteSpace(_currentRouteName))
-                    {
-                        conditions.Add($"route_name LIKE '%{_currentRouteName}%'");
-                    }
-
-                    // 处理总里程范围条件
-                    switch (_currentDistanceRange)
-                    {
-                        case DistanceRangeType.Range1: // 0-100公里
-                            conditions.Add("(total_distance <= 100)");
-                            break;
-                        case DistanceRangeType.Range2: // 100-500公里
-                            conditions.Add("(total_distance > 100 AND total_distance <= 500)");
-                            break;
-                        case DistanceRangeType.Range3: // 500-1000公里
-                            conditions.Add("(total_distance > 500 AND total_distance <= 1000)");
-                            break;
-                        case DistanceRangeType.Range4: // 1000-2000公里
-                            conditions.Add("(total_distance > 1000 AND total_distance <= 2000)");
-                            break;
-                        case DistanceRangeType.Range5: // 2000公里以上
-                            conditions.Add("(total_distance > 2000)");
-                            break;
-                    }
-
-                    // 处理收藏状态条件
-                    if (_currentIsFavorite)
-                    {
-                        conditions.Add("is_favorite = 1");
-                    }
-                }
-            }
-
-            // 构建完整SQL查询
-            string sql;
             if (isCountQuery)
             {
-                sql = "SELECT COUNT(*) FROM route_info";
+                sb.Append("SELECT COUNT(*) FROM route_info WHERE 1=1");
             }
             else
             {
-                sql = "SELECT * FROM route_info";
+                // 基本查询
+                sb.Append("SELECT * FROM route_info WHERE 1=1");
             }
 
-            // 添加WHERE子句
+            // 以下为筛选条件
+            List<string> conditions = new List<string>();
+
+            // 路线名称筛选
+            if (!string.IsNullOrWhiteSpace(_currentRouteName))
+            {
+                conditions.Add($"route_name LIKE '%{_currentRouteName}%'");
+            }
+
+            // 总里程筛选
+            if (_currentDistanceRange != DistanceRangeType.None)
+            {
+                switch (_currentDistanceRange)
+                {
+                    case DistanceRangeType.Range1: // 0-100公里
+                        conditions.Add("total_distance < 100");
+                        break;
+                    case DistanceRangeType.Range2: // 100-500公里
+                        conditions.Add("total_distance >= 100 AND total_distance <= 500");
+                        break;
+                    case DistanceRangeType.Range3: // 500-1000公里
+                        conditions.Add("total_distance > 500 AND total_distance <= 1000");
+                        break;
+                    case DistanceRangeType.Range4: // 1000-2000公里
+                        conditions.Add("total_distance > 1000 AND total_distance <= 2000");
+                        break;
+                    case DistanceRangeType.Range5: // 2000公里以上
+                        conditions.Add("total_distance > 2000");
+                        break;
+                }
+            }
+
+            // 收藏状态筛选
+            if (_currentIsFavorite)
+            {
+                conditions.Add("is_favorite = 1");
+            }
+
+            // 将所有条件用AND或OR连接
             if (conditions.Count > 0)
             {
-                sql += " WHERE ";
-
-                // 根据条件组合方式连接条件
                 string connector = _currentIsAndCondition ? " AND " : " OR ";
-                sql += string.Join(connector, conditions);
+                sb.Append(" AND (");
+                sb.Append(string.Join(connector, conditions));
+                sb.Append(")");
             }
 
-            // 添加排序和分页（仅对数据查询）
+            // 如果不是计数查询，添加排序和分页
             if (!isCountQuery)
             {
-                sql += " ORDER BY id DESC";
-                sql += $" LIMIT {(_paginationViewModel.CurrentPage - 1) * _paginationViewModel.PageSize}, {_paginationViewModel.PageSize}";
+                // 添加排序
+                sb.Append($" ORDER BY {_currentSortField} {(_currentSortAscending ? "ASC" : "DESC")}");
+
+                // 添加分页
+                int offset = (_paginationViewModel.CurrentPage - 1) * _paginationViewModel.PageSize;
+                sb.Append($" LIMIT {_paginationViewModel.PageSize} OFFSET {offset}");
             }
 
-            Debug.WriteLine($"生成的SQL查询语句: {sql}");
-            return sql;
+            Debug.WriteLine($"生成的SQL查询语句: {sb.ToString()}");
+            return sb.ToString();
         }
 
         // 添加方法用于通知UI更新选择状态
@@ -758,6 +723,181 @@ namespace TA_WPF.ViewModels
             OnPropertyChanged(nameof(CanShowRouteDetails));
         }
 
+        /// <summary>
+        /// 排序路线
+        /// </summary>
+        /// <param name="sortBy">排序字段：TotalDistance_Asc/Desc, CreateTime_Asc/Desc, UpdateTime_Asc/Desc</param>
+        private async void SortRoutes(string sortBy)
+        {
+            if (string.IsNullOrEmpty(sortBy) || Routes == null || Routes.Count == 0)
+            {
+                return;
+            }
 
+            IsLoading = true;
+            try
+            {
+                // 解析排序方式
+                string sortField = sortBy.Split('_')[0];
+                bool isAscending = sortBy.EndsWith("_Asc");
+
+                // 记住当前页中选中的项
+                Dictionary<int, bool> selectedStates = new Dictionary<int, bool>();
+                foreach (var route in Routes)
+                {
+                    selectedStates[route.Id] = route.IsSelected;
+                }
+
+                // 保存当前排序状态，以便分页时使用
+                switch (sortField)
+                {
+                    case "TotalDistance":
+                        _currentSortField = "total_distance";
+                        break;
+                    case "CreateTime":
+                        _currentSortField = "create_time";
+                        break;
+                    case "UpdateTime":
+                        _currentSortField = "update_time";
+                        break;
+                    default:
+                        _currentSortField = "sort_order";
+                        break;
+                }
+                _currentSortAscending = isAscending;
+
+                // 保存排序状态到静态变量
+                _savedSortField = _currentSortField;
+                _savedSortAscending = _currentSortAscending;
+                _hasCustomSorting = true;
+
+                // 获取所有路线
+                var allRoutes = await _databaseService.GetRoutesAsync();
+
+                // 根据当前排序字段排序
+                var sortedRoutes = isAscending
+                    ? allRoutes.OrderBy(r => GetSortValue(r, sortField))
+                    : allRoutes.OrderByDescending(r => GetSortValue(r, sortField));
+
+                // 重新分配排序值，以10为步长
+                Dictionary<int, int> newSortOrders = new Dictionary<int, int>();
+                int sortOrder = 10;
+                foreach (var route in sortedRoutes)
+                {
+                    newSortOrders[route.Id] = sortOrder;
+                    sortOrder += 10;
+                }
+
+                // 更新数据库中的排序顺序
+                bool success = await _databaseService.UpdateRouteSortOrdersAsync(newSortOrders);
+                if (!success)
+                {
+                    LogHelper.LogError("更新路线排序顺序失败");
+                }
+                else
+                {
+                    LogHelper.LogInfo($"成功更新{newSortOrders.Count}条路线的排序顺序");
+                }
+
+                // 直接使用DatabaseService按指定字段获取已排序的数据
+                TotalCount = await _databaseService.GetRouteCountAsync();
+                var routesData = await _databaseService.GetRoutesAsync(
+                    _paginationViewModel.CurrentPage,
+                    _paginationViewModel.PageSize,
+                    _currentSortField,
+                    isAscending);
+
+                // 将列表转换为ObservableCollection并更新UI
+                var newRoutes = new ObservableCollection<RouteInfo>(routesData);
+
+                // 恢复选中状态
+                foreach (var route in newRoutes)
+                {
+                    if (selectedStates.TryGetValue(route.Id, out bool isSelected))
+                    {
+                        route.IsSelected = isSelected;
+                    }
+                }
+
+                // 更新UI显示的集合
+                Routes = newRoutes;
+
+                // 提示排序完成
+                string sortName = "";
+                string sortDirection = isAscending ? "升序" : "降序";
+
+                switch (sortField)
+                {
+                    case "TotalDistance":
+                        sortName = "总里程";
+                        break;
+                    case "CreateTime":
+                        sortName = "创建日期";
+                        break;
+                    case "UpdateTime":
+                        sortName = "修改日期";
+                        break;
+                }
+
+                LogHelper.LogInfo($"路线已按{sortName}({sortDirection})排序完成");
+
+                // 通知UI更新
+                NotifySelectionChanged();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"排序路线时出错: {ex.Message}", ex);
+                MessageBoxHelper.ShowError($"排序路线时出错: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// 根据排序字段获取对应的值
+        /// </summary>
+        private object GetSortValue(RouteInfo route, string sortField)
+        {
+            switch (sortField)
+            {
+                case "TotalDistance":
+                    return route.TotalDistance;
+                case "CreateTime":
+                    return route.CreateTime;
+                case "UpdateTime":
+                    return route.UpdateTime;
+                default:
+                    return route.SortOrder;
+            }
+        }
+
+        /// <summary>
+        /// 更新选中状态
+        /// </summary>
+        private void UpdateSelectionStates()
+        {
+            // 清除当前选中项
+            SelectedRoutes.Clear();
+
+            // 对于新加载的数据，重新设置选中状态
+            foreach (var route in Routes)
+            {
+                if (route.IsSelected)
+                {
+                    SelectedRoutes.Add(route);
+                }
+            }
+
+            // 通知UI更新相关状态
+            OnPropertyChanged(nameof(HasData));
+            OnPropertyChanged(nameof(HasNoData));
+            OnPropertyChanged(nameof(HasSelection));
+            OnPropertyChanged(nameof(IsAllSelected));
+            OnPropertyChanged(nameof(SelectedItemsCount));
+            OnPropertyChanged(nameof(CanEditSelectedRoute));
+            OnPropertyChanged(nameof(CanShowRouteDetails));
+        }
     }
 }

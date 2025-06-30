@@ -1840,7 +1840,9 @@ namespace TA_WPF.Services
                     // 构建排序方向
                     string direction = ascending ? "ASC" : "DESC";
 
-                    string query = $@"SELECT * FROM ticket_collections_info 
+                    string query = $@"SELECT tci.*, 
+                                   (SELECT COUNT(*) FROM collection_mapped_tickets_info cmti WHERE cmti.collection_id = tci.id) AS ticket_count
+                                   FROM ticket_collections_info tci
                                    ORDER BY {orderBy} {direction}
                                    LIMIT @Offset, @PageSize";
 
@@ -1858,27 +1860,15 @@ namespace TA_WPF.Services
                         }
                     }
 
-                    // 获取每个收藏夹关联的车票数量
-                    foreach (var collection in items)
-                    {
-                        string countQuery = "SELECT COUNT(*) FROM collection_mapped_tickets_info WHERE collection_id = @CollectionId";
-                        using (var countCommand = new MySqlCommand(countQuery, connection))
-                        {
-                            countCommand.Parameters.AddWithValue("@CollectionId", collection.Id);
-                            object result = await countCommand.ExecuteScalarAsync();
-                            collection.TicketCount = Convert.ToInt32(result);
-                        }
-                    }
+                    return items;
                 }
             }
             catch (Exception ex)
             {
                 LogHelper.LogError($"获取收藏夹列表失败: {ex.Message}", ex);
                 Debug.WriteLine($"获取收藏夹列表失败: {ex.Message}");
-                throw;
+                throw new Exception($"获取收藏夹列表失败: {ex.Message}", ex);
             }
-
-            return items;
         }
 
         /// <summary>
@@ -2355,6 +2345,13 @@ namespace TA_WPF.Services
                         command.Parameters.AddWithValue("@AddTime", DateTime.Now);
 
                         int rowsAffected = await command.ExecuteNonQueryAsync();
+                        
+                        // 添加成功后更新收藏夹的车票数量
+                        if (rowsAffected > 0)
+                        {
+                            await UpdateCollectionTicketCountAsync(collectionId);
+                        }
+                        
                         return rowsAffected > 0;
                     }
                 }
@@ -2506,11 +2503,12 @@ namespace TA_WPF.Services
                     int ticketCount = await GetCollectionTicketCountAsync(collectionId);
 
                     // 更新收藏夹中的车票数量字段
-                    string query = "UPDATE ticket_collections_info SET update_time = @UpdateTime WHERE id = @CollectionId";
+                    string query = "UPDATE ticket_collections_info SET ticket_count = @TicketCount, update_time = @UpdateTime WHERE id = @CollectionId";
 
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@CollectionId", collectionId);
+                        command.Parameters.AddWithValue("@TicketCount", ticketCount);
                         command.Parameters.AddWithValue("@UpdateTime", DateTime.Now);
 
                         int rowsAffected = await command.ExecuteNonQueryAsync();
@@ -4139,6 +4137,65 @@ namespace TA_WPF.Services
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 批量更新路线排序顺序
+        /// </summary>
+        /// <param name="routeSortOrders">路线ID和排序顺序的字典</param>
+        /// <returns>更新是否成功</returns>
+        public async Task<bool> UpdateRouteSortOrdersAsync(Dictionary<int, int> routeSortOrders)
+        {
+            if (routeSortOrders == null || routeSortOrders.Count == 0)
+            {
+                return true; // 没有要更新的项，视为成功
+            }
+
+            try
+            {
+                using (var connection = await GetOpenConnectionWithRetryAsync())
+                {
+                    // 使用事务确保批量更新的原子性
+                    using (var transaction = await connection.BeginTransactionAsync())
+                    {
+                        string query = "UPDATE route_info SET sort_order = @SortOrder WHERE id = @Id";
+                        using (var command = new MySqlCommand(query, connection, transaction as MySqlTransaction))
+                        {
+                            // 创建可重用的参数
+                            var idParam = command.Parameters.Add("@Id", MySqlDbType.Int32);
+                            var sortOrderParam = command.Parameters.Add("@SortOrder", MySqlDbType.Int32);
+
+                            // 执行每条更新
+                            int successCount = 0;
+                            foreach (var kvp in routeSortOrders)
+                            {
+                                idParam.Value = kvp.Key;        // 路线ID
+                                sortOrderParam.Value = kvp.Value; // 排序顺序
+
+                                int rowsAffected = await command.ExecuteNonQueryAsync();
+                                if (rowsAffected > 0)
+                                {
+                                    successCount++;
+                                }
+                            }
+
+                            // 提交事务
+                            await transaction.CommitAsync();
+
+                            // 记录执行结果
+                            Debug.WriteLine($"批量更新路线排序顺序结果: {successCount}/{routeSortOrders.Count} 条记录更新成功");
+
+                            return successCount > 0;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError($"批量更新路线排序顺序失败: {ex.Message}", ex);
+                Debug.WriteLine($"批量更新路线排序顺序失败: {ex.Message}");
+                return false;
+            }
         }
     }
 }

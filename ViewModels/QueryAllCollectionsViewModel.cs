@@ -476,7 +476,7 @@ namespace TA_WPF.ViewModels
         /// <summary>
         /// 是否可以移动收藏夹
         /// </summary>
-        private bool CanMoveCollection() => SelectedItemsCount > 0;
+        private bool CanMoveCollection() => SelectedItemsCount == 1;
 
         /// <summary>
         /// 排序收藏夹
@@ -532,7 +532,7 @@ namespace TA_WPF.ViewModels
                 // 处理特殊字段 - 车票数量排序需要特殊处理
                 if (sortField == "TicketCount")
                 {
-                    // 获取所有集合
+                    // 获取所有集合，这个方法会包含正确的车票数量
                     var allCollections = await _databaseService.GetAllCollectionsAsync();
 
                     // 根据车票数量排序

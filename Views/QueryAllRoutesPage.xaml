@@ -258,6 +258,70 @@
                     </StackPanel>
                 </Button>
                 
+                <!-- 添加排序按钮 -->
+                <Button Style="{StaticResource MaterialDesignFlatButton}"
+                        ToolTip="排序"
+                        Margin="0,0,8,0"
+                        Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Foreground="{DynamicResource GlobalAccentBrush}"
+                        Height="36"
+                        Click="SortButton_Click"
+                        Name="SortButton">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Sort" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="排序" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button.ContextMenu>
+                        <ContextMenu FontFamily="Microsoft YaHei">
+                            <MenuItem Header="按总里程排序" FontFamily="Microsoft YaHei">
+                                <MenuItem.Icon>
+                                    <materialDesign:PackIcon Kind="RulerSquare" />
+                                </MenuItem.Icon>
+                                <MenuItem Header="升序" Command="{Binding SortRoutesCommand}" CommandParameter="TotalDistance_Asc" FontFamily="Microsoft YaHei">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="SortAscending" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="降序" Command="{Binding SortRoutesCommand}" CommandParameter="TotalDistance_Desc" FontFamily="Microsoft YaHei">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="SortDescending" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuItem>
+                            <MenuItem Header="按创建日期排序" FontFamily="Microsoft YaHei">
+                                <MenuItem.Icon>
+                                    <materialDesign:PackIcon Kind="Creation" />
+                                </MenuItem.Icon>
+                                <MenuItem Header="升序" Command="{Binding SortRoutesCommand}" CommandParameter="CreateTime_Asc" FontFamily="Microsoft YaHei">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="SortAscending" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="降序" Command="{Binding SortRoutesCommand}" CommandParameter="CreateTime_Desc" FontFamily="Microsoft YaHei">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="SortDescending" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuItem>
+                            <MenuItem Header="按修改日期排序" FontFamily="Microsoft YaHei">
+                                <MenuItem.Icon>
+                                    <materialDesign:PackIcon Kind="Update" />
+                                </MenuItem.Icon>
+                                <MenuItem Header="升序" Command="{Binding SortRoutesCommand}" CommandParameter="UpdateTime_Asc" FontFamily="Microsoft YaHei">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="SortAscending" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="降序" Command="{Binding SortRoutesCommand}" CommandParameter="UpdateTime_Desc" FontFamily="Microsoft YaHei">
+                                    <MenuItem.Icon>
+                                        <materialDesign:PackIcon Kind="SortDescending" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+                
                 <!-- 添加删除按钮 -->
                 <Button Command="{Binding DeleteRoutesCommand}" 
                         Style="{StaticResource MaterialDesignRaisedButton}"

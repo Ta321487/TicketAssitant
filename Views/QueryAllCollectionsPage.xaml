@@ -224,7 +224,7 @@
                         Style="{StaticResource MaterialDesignFlatButton}"
                         ToolTip="将选中收藏夹中的车票移动到另一个收藏夹中"
                         Margin="0,0,8,0"
-                        IsEnabled="{Binding HasSelection}"
+                        IsEnabled="{Binding CanEditSelectedCollection}"
                         Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Foreground="{DynamicResource GlobalAccentBrush}"
                         Height="36">
