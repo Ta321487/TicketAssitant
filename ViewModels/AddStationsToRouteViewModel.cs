@@ -125,12 +125,12 @@ namespace TA_WPF.ViewModels
                 {
                     // 非首个站点默认为经停站
                     IsPassingStation = true;
-                    _showAddPositionOptions = true;
+                    _showAddPositionOptions = false; // 不显示添加位置选项
                     _addToEnd = true; // 默认添加到结尾
                 }
 
-                // 获取前一个站点（如果存在且添加到结尾）
-                if (!_isFirstStation && _addToEnd)
+                // 获取前一个站点（用于距离计算）
+                if (!_isFirstStation)
                 {
                     var stations = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999); // 获取所有站点
                     if (stations != null && stations.Count > 0)
@@ -310,8 +310,8 @@ namespace TA_WPF.ViewModels
                     _distanceFromPrev = value;
                     OnPropertyChanged(nameof(DistanceFromPrev));
 
-                    // 当添加到结尾时，更新累计距离
-                    if (_addToEnd && _previousStation != null && value.HasValue)
+                    // 更新累计距离
+                    if (_previousStation != null && value.HasValue)
                     {
                         DistanceFromStart = _previousStation.DistanceFromStart + value.Value;
                     }
@@ -361,24 +361,82 @@ namespace TA_WPF.ViewModels
             {
                 if (_isStartStation != value)
                 {
-                    _isStartStation = value;
-                    OnPropertyChanged(nameof(IsStartStation));
-
-                    // 当选择为起点时，自动取消其他角色
+                    // 如果要设置为起点站，先检查是否已存在起点站
                     if (value)
                     {
-                        _isEndStation = false;
-                        _isPassingStation = false; // 明确设置为false
-                        OnPropertyChanged(nameof(IsEndStation));
-                        OnPropertyChanged(nameof(IsPassingStation));
-
-                        if (IsTransferStation)
+                        Task.Run(async () =>
                         {
-                            // 如果需要保持换乘角色，则启用下一行
-                            // IsTransferStation = false;
-                        }
+                            try
+                            {
+                                // 获取当前路线的所有站点
+                                var stations = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999);
+                                var existingStartStation = stations?.FirstOrDefault(s => (s.StationRole & 1) != 0);
+                                
+                                // 如果已存在起点站，且不是添加到起点的情况
+                                if (existingStartStation != null && !_addToStart)
+                                {
+                                    // 在UI线程上执行
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        MessageBoxHelper.ShowWarning("当前路线已存在起点站，一个路线只能有一个起点站");
+                                        // 不改变状态
+                                        OnPropertyChanged(nameof(IsStartStation));
+                                    });
+                                    return;
+                                }
+                                
+                                // 如果没有起点站或是添加到起点的情况，允许设置
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    SetStartStationState(true);
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                LogHelper.LogError($"检查起点站时出错: {ex.Message}", ex);
+                                // 出错时允许设置，避免阻塞用户操作
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    SetStartStationState(true);
+                                });
+                            }
+                        });
+                    }
+                    else
+                    {
+                        // 如果是取消起点站状态，直接设置
+                        SetStartStationState(false);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 设置起点站状态
+        /// </summary>
+        private void SetStartStationState(bool isStart)
+        {
+            _isStartStation = isStart;
+            OnPropertyChanged(nameof(IsStartStation));
+
+            // 如果是起点站，不能同时是终点站或经停站
+            if (isStart)
+            {
+                if (_isEndStation)
+                {
+                    _isEndStation = false;
+                    OnPropertyChanged(nameof(IsEndStation));
+                }
+
+                if (_isPassingStation)
+                {
+                    _isPassingStation = false;
+                    OnPropertyChanged(nameof(IsPassingStation));
+                }
+
+                // 起点站的距离起点和距离上一站必须为0
+                DistanceFromStart = 0;
+                DistanceFromPrev = 0;
             }
         }
 
@@ -392,25 +450,77 @@ namespace TA_WPF.ViewModels
             {
                 if (_isEndStation != value)
                 {
-                    _isEndStation = value;
-                    OnPropertyChanged(nameof(IsEndStation));
-                    Debug.WriteLine($"终点站属性设置为: {value}，经停站属性当前值: {_isPassingStation}");
-
-                    // 当选择为终点时，自动取消其他角色
+                    // 如果要设置为终点站，先检查是否已存在终点站
                     if (value)
                     {
-                        _isStartStation = false;
-                        _isPassingStation = false; // 明确设置为false
-                        OnPropertyChanged(nameof(IsStartStation));
-                        OnPropertyChanged(nameof(IsPassingStation));
-                        Debug.WriteLine($"设置为终点站: 经停站属性现在为 {_isPassingStation}");
-
-                        if (IsTransferStation)
+                        Task.Run(async () =>
                         {
-                            // 如果需要保持换乘角色，则启用下一行
-                            // IsTransferStation = false;
-                        }
+                            try
+                            {
+                                // 获取当前路线的所有站点
+                                var stations = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999);
+                                var existingEndStation = stations?.FirstOrDefault(s => (s.StationRole & 2) != 0);
+                                
+                                // 如果已存在终点站，且不是添加到终点的情况
+                                if (existingEndStation != null && !_addToEnd)
+                                {
+                                    // 在UI线程上执行
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        MessageBoxHelper.ShowWarning("当前路线已存在终点站，一个路线只能有一个终点站");
+                                        // 不改变状态
+                                        OnPropertyChanged(nameof(IsEndStation));
+                                    });
+                                    return;
+                                }
+                                
+                                // 如果没有终点站或是添加到终点的情况，允许设置
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    SetEndStationState(true);
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                LogHelper.LogError($"检查终点站时出错: {ex.Message}", ex);
+                                // 出错时允许设置，避免阻塞用户操作
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    SetEndStationState(true);
+                                });
+                            }
+                        });
                     }
+                    else
+                    {
+                        // 如果是取消终点站状态，直接设置
+                        SetEndStationState(false);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 设置终点站状态
+        /// </summary>
+        private void SetEndStationState(bool isEnd)
+        {
+            _isEndStation = isEnd;
+            OnPropertyChanged(nameof(IsEndStation));
+
+            // 如果是终点站，不能同时是起点站或经停站
+            if (isEnd)
+            {
+                if (_isStartStation)
+                {
+                    _isStartStation = false;
+                    OnPropertyChanged(nameof(IsStartStation));
+                }
+
+                if (_isPassingStation)
+                {
+                    _isPassingStation = false;
+                    OnPropertyChanged(nameof(IsPassingStation));
                 }
             }
         }
@@ -483,7 +593,7 @@ namespace TA_WPF.ViewModels
         }
 
         /// <summary>
-        /// 添加到开头
+        /// 添加到开头（保留字段，但不在UI中使用）
         /// </summary>
         public bool AddToStart
         {
@@ -494,53 +604,12 @@ namespace TA_WPF.ViewModels
                 {
                     _addToStart = value;
                     OnPropertyChanged(nameof(AddToStart));
-                    if (value)
-                    {
-                        _addToEnd = false;
-                        OnPropertyChanged(nameof(AddToEnd));
-
-                        // 异步加载第一个站点作为下一个站点
-                        LoadFirstStationAsync();
-
-                        // 提示将原起点改为经停站
-                        Application.Current.Dispatcher.BeginInvoke(new Action(async () =>
-                        {
-                            // 检查原来的第一个站点是否为起点
-                            var stations = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 1);
-                            bool hasStartStation = stations?.Count > 0 && (stations[0].StationRole & 1) != 0; // 检查StationRole的第一位是否为1
-
-                            if (hasStartStation)
-                            {
-                                bool changeRole = MessageBoxHelper.ShowQuestion("添加到路线开头时，原起点将被改为经停站，是否继续？", "修改角色") == true;
-                                if (changeRole)
-                                {
-                                    // 将当前站点设为起点
-                                    IsPassingStation = false; // 先设置经停站为false
-                                    IsStartStation = true;    // 再设置起点站为true
-                                }
-                                else
-                                {
-                                    // 用户取消，恢复为添加到结尾
-                                    _addToStart = false;
-                                    _addToEnd = true;
-                                    OnPropertyChanged(nameof(AddToStart));
-                                    OnPropertyChanged(nameof(AddToEnd));
-                                }
-                            }
-                            else
-                            {
-                                // 如果没有起点，默认设置为起点
-                                IsPassingStation = false;
-                                IsStartStation = true;
-                            }
-                        }));
-                    }
                 }
             }
         }
 
         /// <summary>
-        /// 添加到结尾
+        /// 添加到结尾（保留字段，但不在UI中使用）
         /// </summary>
         public bool AddToEnd
         {
@@ -551,35 +620,6 @@ namespace TA_WPF.ViewModels
                 {
                     _addToEnd = value;
                     OnPropertyChanged(nameof(AddToEnd));
-                    if (value)
-                    {
-                        _addToStart = false;
-                        OnPropertyChanged(nameof(AddToStart));
-
-                        // 异步加载最后一个站点作为上一个站点
-                        LoadLastStationAsync();
-
-                        // 询问是否设置为终点
-                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            bool setAsEnd = MessageBoxHelper.ShowQuestion("是否将此站点设置为终点站？", "设置终点") == true;
-                            if (setAsEnd)
-                            {
-                                Debug.WriteLine("用户选择将站点设置为终点站");
-                                IsPassingStation = false; // 先设置经停站为false
-                                IsEndStation = true;      // 再设置终点站为true
-                                Debug.WriteLine($"添加到结尾处理完成: 终点站={_isEndStation}, 经停站={_isPassingStation}");
-                            }
-                            else
-                            {
-                                // 如果不设为终点站，默认设为经停站
-                                Debug.WriteLine("用户选择不将站点设置为终点站，将设置为经停站");
-                                IsEndStation = false;
-                                IsPassingStation = true;
-                                Debug.WriteLine($"添加到结尾处理完成: 终点站={_isEndStation}, 经停站={_isPassingStation}");
-                            }
-                        }));
-                    }
                 }
             }
         }
@@ -632,9 +672,9 @@ namespace TA_WPF.ViewModels
                 {
                     _previousStation = stations.LastOrDefault();
                     // 如果有前一个站点，设置累计距离基于前一个站点
-                    if (_previousStation != null)
+                    if (_previousStation != null && DistanceFromPrev.HasValue)
                     {
-                        DistanceFromStart = _previousStation.DistanceFromStart + DistanceFromPrev;
+                        DistanceFromStart = _previousStation.DistanceFromStart + DistanceFromPrev.Value;
                     }
                 }
             }
@@ -655,8 +695,6 @@ namespace TA_WPF.ViewModels
                 if (stations != null && stations.Count > 0)
                 {
                     _nextStation = stations.FirstOrDefault();
-                    // 如果要添加到开头，累计距离设为0，所有后续站点需要重新计算
-                    DistanceFromStart = 0;
                 }
             }
             catch (Exception ex)
@@ -718,21 +756,28 @@ namespace TA_WPF.ViewModels
                 bool success = await _databaseService.AddStationToRouteAsync(mapping);
                 Debug.WriteLine($"保存到数据库结果: {success}");
 
-                // 如果添加到开头，需要更新所有后续站点的累计距离
-                if (success && _addToStart)
+                // 验证保存后的车站角色
+                if (success)
                 {
-                    await UpdateSubsequentStationsDistanceAsync();
+                    var savedStation = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999);
+                    var newStation = savedStation?.FirstOrDefault(s => s.StationId == SelectedStation.Id);
+                    if (newStation != null)
+                    {
+                        Debug.WriteLine($"保存后验证: 车站={newStation.Station?.StationName}, 角色值={newStation.StationRole}, " +
+                                        $"解析: 起点={newStation.IsStartStation}, 终点={newStation.IsEndStation}, " +
+                                        $"经停={newStation.IsPassingStation}, 换乘={newStation.IsTransferStation}");
+                    }
                 }
 
-                // 如果设置为起点并添加到开头，需要将原起点更改为经停站
-                if (success && _addToStart && IsStartStation)
+                // 如果设置为起点，需要将原起点更改为经停站
+                if (success && IsStartStation)
                 {
                     Debug.WriteLine("执行更新原起点为经停站");
                     await UpdateOriginalStartStationAsync();
                 }
 
-                // 如果设置为终点并添加到结尾，需要将原终点更改为经停站
-                if (success && _addToEnd && IsEndStation)
+                // 如果设置为终点，需要将原终点更改为经停站
+                if (success && IsEndStation)
                 {
                     Debug.WriteLine("执行更新原终点为经停站");
                     await UpdateOriginalEndStationAsync();
@@ -975,12 +1020,20 @@ namespace TA_WPF.ViewModels
 
                 if (originalStartStation != null)
                 {
+                    // 确保不是正在添加的同一个站点
+                    if (originalStartStation.StationId == SelectedStation.Id)
+                    {
+                        Debug.WriteLine("原起点站与当前添加的站点相同，不进行修改");
+                        return;
+                    }
+                    
                     // 修改角色为经停站
                     originalStartStation.StationRole = (byte)(originalStartStation.StationRole & ~1); // 清除起点标志
                     originalStartStation.StationRole |= 4; // 设置经停站标志
 
                     // 保存更新
                     await _databaseService.UpdateRouteStationAsync(originalStartStation);
+                    Debug.WriteLine($"已将原起点站 {originalStartStation.Station?.StationName} 更改为经停站");
                 }
             }
             catch (Exception ex)
@@ -1189,20 +1242,12 @@ namespace TA_WPF.ViewModels
                     return;
                 }
 
-                // 检查是否有相关站点信息（非首站情况）
-                if (_addToEnd && (_previousStation == null ||
+                // 检查是否有前一个站点信息
+                if (_previousStation == null ||
                     string.IsNullOrWhiteSpace(_previousStation.Station?.Longitude) ||
-                    string.IsNullOrWhiteSpace(_previousStation.Station?.Latitude)))
+                    string.IsNullOrWhiteSpace(_previousStation.Station?.Latitude))
                 {
                     MessageBoxHelper.ShowWarning("前序站点缺少经纬度信息，无法计算距离");
-                    IsLoading = false;
-                    return;
-                }
-                else if (_addToStart && (_nextStation == null ||
-                    string.IsNullOrWhiteSpace(_nextStation.Station?.Longitude) ||
-                    string.IsNullOrWhiteSpace(_nextStation.Station?.Latitude)))
-                {
-                    MessageBoxHelper.ShowWarning("后续站点缺少经纬度信息，无法计算距离");
                     IsLoading = false;
                     return;
                 }
@@ -1211,40 +1256,20 @@ namespace TA_WPF.ViewModels
                 {
                     try
                     {
-                        if (_addToEnd && _previousStation != null)
-                        {
-                            // 计算与前一站的距离
-                            decimal distance = await _distanceCalculationService.CalculateDistanceAsync(
-                                _previousStation.Station.Longitude,
-                                _previousStation.Station.Latitude,
-                                SelectedStation.Longitude,
-                                SelectedStation.Latitude);
+                        // 计算与前一站的距离
+                        decimal distance = await _distanceCalculationService.CalculateDistanceAsync(
+                            _previousStation.Station.Longitude,
+                            _previousStation.Station.Latitude,
+                            SelectedStation.Longitude,
+                            SelectedStation.Latitude);
 
-                            // 在UI线程上更新距离
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                DistanceFromPrev = distance;
-                                // 累计距离 = 前一站累计距离 + 站间距离
-                                DistanceFromStart = _previousStation.DistanceFromStart + distance;
-                            });
-                        }
-                        else if (_addToStart && _nextStation != null)
+                        // 在UI线程上更新距离
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            // 计算与后一站的距离
-                            decimal distance = await _distanceCalculationService.CalculateDistanceAsync(
-                                SelectedStation.Longitude,
-                                SelectedStation.Latitude,
-                                _nextStation.Station.Longitude,
-                                _nextStation.Station.Latitude);
-
-                            // 在UI线程上更新距离
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                DistanceFromPrev = distance;
-                                // 累计距离设为0，后续站点需要重新计算
-                                DistanceFromStart = 0;
-                            });
-                        }
+                            DistanceFromPrev = distance;
+                            // 累计距离 = 前一站累计距离 + 站间距离
+                            DistanceFromStart = _previousStation.DistanceFromStart + distance;
+                        });
                     }
                     catch (Exception ex)
                     {

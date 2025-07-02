@@ -28,6 +28,7 @@
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         </ResourceDictionary>
     </Window.Resources>
 
@@ -126,7 +127,7 @@
                         materialDesign:HintAssist.Hint="距起点累计距离(公里)"
                         Text="{Binding DistanceFromStart, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
-                        IsEnabled="{Binding AddToStart}"
+                        IsEnabled="{Binding IsStartStation, Converter={StaticResource InverseBooleanConverter}}"
                         VerticalAlignment="Center" />
 
                     <!-- 计划停留时间 -->

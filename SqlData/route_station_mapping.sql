@@ -10,6 +10,7 @@ CREATE TABLE `route_station_mapping` (
   `route_id` int NOT NULL COMMENT '路线ID',
   `station_id` int NOT NULL COMMENT '车站ID',
   `station_role` tinyint NULL DEFAULT 0 COMMENT '车站角色：1=起点,2=终点,4=经停,8=换乘',
+  `order_index` int NULL DEFAULT 0 COMMENT '在路线中的顺序',
   `stay_time` int NULL DEFAULT 0 COMMENT '计划停留时间(分钟)',
   `notes` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
   `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',

@@ -2706,6 +2706,7 @@ namespace TA_WPF.Services
                       `station_role` tinyint NULL DEFAULT 0 COMMENT '车站角色：1=起点,2=终点,4=经停,8=换乘',
                       `stay_time` int NULL DEFAULT 0 COMMENT '计划停留时间(分钟)',
                       `notes` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
+                      `order_index` int NULL DEFAULT 0 COMMENT '在路线中的顺序',
                       `add_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
                       `distance_from_prev` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '距离上一站点距离(公里)',
                       `distance_from_start` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '距起点累计距离(公里)',

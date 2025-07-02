@@ -606,6 +606,28 @@ namespace TA_WPF.ViewModels
                 return false;
             }
 
+            // 如果设置为起点站，检查路线是否已有其他起点站
+            if (_isStartStation && !_wasStartStation)
+            {
+                bool hasStartStation = await CheckRouteHasStartStationAsync();
+                if (hasStartStation)
+                {
+                    MessageBoxHelper.ShowError("该路线已有起点站，一个路线只能有一个起点站");
+                    return false;
+                }
+            }
+
+            // 如果设置为终点站，检查路线是否已有其他终点站
+            if (_isEndStation && !_wasEndStation)
+            {
+                bool hasEndStation = await CheckRouteHasEndStationAsync();
+                if (hasEndStation)
+                {
+                    MessageBoxHelper.ShowError("该路线已有终点站，一个路线只能有一个终点站");
+                    return false;
+                }
+            }
+
             // 验证距离数据
             if (_distanceFromPrev == null || _distanceFromPrev < 0)
             {
