@@ -83,6 +83,7 @@ namespace TA_WPF.ViewModels
             CancelCommand = new RelayCommand(Cancel);
             StationSearchCommand = new RelayCommand<string>(text => DebounceSearch(text));
             CalculateDistanceCommand = new RelayCommand(CalculateDistance, CanCalculateDistance);
+            SelectStationCommand = new RelayCommand<StationInfo>(SetSelectedStation);
 
             // 设置窗口标题
             WindowTitle = $"添加车站到路线 - {_routeInfo.RouteName}";
@@ -656,6 +657,11 @@ namespace TA_WPF.ViewModels
         /// </summary>
         public ICommand CalculateDistanceCommand { get; }
 
+        /// <summary>
+        /// 选择车站命令
+        /// </summary>
+        public ICommand SelectStationCommand { get; }
+
         #endregion
 
         #region 方法
@@ -756,28 +762,34 @@ namespace TA_WPF.ViewModels
                 bool success = await _databaseService.AddStationToRouteAsync(mapping);
                 Debug.WriteLine($"保存到数据库结果: {success}");
 
-                // 验证保存后的车站角色
-                if (success)
+                // 如果保存失败，显示错误消息并返回
+                if (!success)
                 {
-                    var savedStation = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999);
-                    var newStation = savedStation?.FirstOrDefault(s => s.StationId == SelectedStation.Id);
-                    if (newStation != null)
-                    {
-                        Debug.WriteLine($"保存后验证: 车站={newStation.Station?.StationName}, 角色值={newStation.StationRole}, " +
-                                        $"解析: 起点={newStation.IsStartStation}, 终点={newStation.IsEndStation}, " +
-                                        $"经停={newStation.IsPassingStation}, 换乘={newStation.IsTransferStation}");
-                    }
+                    IsLoading = false;
+                    MessageBoxHelper.ShowError($"保存车站到路线失败，请检查数据库连接或联系管理员。车站: {SelectedStation?.StationName}");
+                    LogHelper.LogError($"保存车站到路线失败: 车站={SelectedStation?.StationName}, 路线={_routeInfo?.RouteName}");
+                    return;
+                }
+
+                // 验证保存后的车站角色
+                var savedStation = await _databaseService.GetRouteStationsAsync(_routeInfo.Id, 1, 9999);
+                var newStation = savedStation?.FirstOrDefault(s => s.StationId == SelectedStation.Id);
+                if (newStation != null)
+                {
+                    Debug.WriteLine($"保存后验证: 车站={newStation.Station?.StationName}, 角色值={newStation.StationRole}, " +
+                                    $"解析: 起点={newStation.IsStartStation}, 终点={newStation.IsEndStation}, " +
+                                    $"经停={newStation.IsPassingStation}, 换乘={newStation.IsTransferStation}");
                 }
 
                 // 如果设置为起点，需要将原起点更改为经停站
-                if (success && IsStartStation)
+                if (IsStartStation)
                 {
                     Debug.WriteLine("执行更新原起点为经停站");
                     await UpdateOriginalStartStationAsync();
                 }
 
                 // 如果设置为终点，需要将原终点更改为经停站
-                if (success && IsEndStation)
+                if (IsEndStation)
                 {
                     Debug.WriteLine("执行更新原终点为经停站");
                     await UpdateOriginalEndStationAsync();
@@ -833,11 +845,15 @@ namespace TA_WPF.ViewModels
                 return false;
             }
 
-            // 验证非起点站的距离不能为空或0
-            if (!IsStartStation && (!DistanceFromPrev.HasValue || !DistanceFromStart.HasValue || DistanceFromPrev.Value == 0 || DistanceFromStart.Value == 0))
+            // 验证非起点站的距离不能为空
+            if (!IsStartStation)
             {
-                MessageBoxHelper.ShowError("非起点站的站间距离和累计距离不能为空或0，请填写或使用计算功能");
-                return false;
+                if (!DistanceFromPrev.HasValue || !DistanceFromStart.HasValue)
+                {
+                    MessageBoxHelper.ShowError("非起点站的站间距离和累计距离不能为空，请填写或使用计算功能");
+                    return false;
+                }
+                // 允许距离为0（某些特殊情况，如同一站的不同站台）
             }
 
             // 验证停留时间必须为非负整数

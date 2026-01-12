@@ -30,6 +30,7 @@
             
             <!-- 增强的MaterialDesign输入框样式 - 改善深色模式下的可见性 -->
             <Style x:Key="EnhancedMaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                 <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource GlobalAccentBrush}" />
                 <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}" />
                 <Setter Property="FontSize" Value="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
@@ -54,6 +55,11 @@
                         <DropShadowEffect ShadowDepth="1" BlurRadius="3" Opacity="0.3" Color="Black" />
                     </Setter.Value>
                 </Setter>
+            </Style>
+            
+            <!-- AutoHideScrollViewer样式 -->
+            <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer">
+                <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -112,17 +118,28 @@
                                     BorderBrush="{DynamicResource MaterialDesignDivider}" 
                                     BorderThickness="1" 
                                     MaxHeight="200">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <ItemsControl ItemsSource="{Binding RouteNameSuggestions}">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                            Style="{StaticResource AutoHideScrollViewerStyle}">
+                                    <ItemsControl ItemsSource="{Binding RouteNameSuggestions}"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                KeyboardNavigation.TabNavigation="Cycle">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Button Command="{Binding DataContext.SelectRouteNameCommand, 
                                                                 RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"
                                                         Content="{Binding RouteName}"
-                                                        HorizontalContentAlignment="Left"
-                                                        HorizontalAlignment="Stretch"
-                                                        Style="{StaticResource MaterialDesignFlatButton}"/>
+                                                        HorizontalContentAlignment="Center"
+                                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                                        Width="{Binding ActualWidth, 
+                                                                RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                AncestorType=ScrollViewer}}"
+                                                        FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -227,6 +244,7 @@
                             Margin="0,0,16,0"/>
                 <RadioButton Content="AND (同时满足所有条件)" 
                                 IsChecked="{Binding IsAndCondition, Mode=TwoWay}" 
+                                IsEnabled="{Binding HasMultipleFilters}"
                                 Foreground="{DynamicResource GlobalAccentBrush}"
                                 Background="{DynamicResource GlobalAccentBrush}"
                                 BorderBrush="{DynamicResource GlobalAccentBrush}"
@@ -235,6 +253,7 @@
                                 Margin="0,0,16,0"/>
                 <RadioButton Content="OR (满足任一条件)" 
                                 IsChecked="{Binding IsOrCondition, Mode=TwoWay}" 
+                                IsEnabled="{Binding HasMultipleFilters}"
                                 Foreground="{DynamicResource GlobalAccentBrush}"
                                 Background="{DynamicResource GlobalAccentBrush}"
                                 BorderBrush="{DynamicResource GlobalAccentBrush}"

@@ -48,34 +48,35 @@
                 <Setter Property="FontWeight" Value="Medium"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
             <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <!-- Foreground 继承自 MaterialDesignCustomTextBox -->
             </Style>
             <Style x:Key="FormNumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomNumberTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <!-- Foreground 继承自 MaterialDesignCustomNumberTextBox -> MaterialDesignCustomTextBox -->
             </Style>
             <Style x:Key="FormReadOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomReadOnlyTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <!-- Foreground 继承自 MaterialDesignCustomReadOnlyTextBox -> MaterialDesignCustomTextBox -->
             </Style>
             <Style x:Key="FormSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomSearchTextBox}">
                 <Setter Property="Margin" Value="0,8,0,8"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <!-- Foreground 继承自 MaterialDesignCustomSearchTextBox -> MaterialDesignCustomTextBox -->
             </Style>
             <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer">
                 <Setter Property="Template">

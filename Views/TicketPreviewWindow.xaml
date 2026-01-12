@@ -68,6 +68,7 @@
 
         <!-- 自定义表单文本框样式 -->
         <Style x:Key="FormTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
             <Setter Property="IsEnabled" Value="False"/>
             <Setter Property="Height" Value="32"/>

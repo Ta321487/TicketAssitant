@@ -21,8 +21,10 @@
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
-        FontFamily="Microsoft YaHei"
-        ResizeMode="CanMinimize"
+        FontFamily="Microsoft YaHei UI"
+        FontSize="{Binding FontSize}"
+        ResizeMode="CanResize"
+        Style="{StaticResource MaterialDesignWindow}"
         materialDesign:ThemeAssist.Theme="{Binding IsDarkMode, Converter={StaticResource BooleanToThemeConverter}}">
 
     <Window.Resources>
@@ -48,6 +50,7 @@
         <!-- 标题 -->
         <TextBlock Grid.Row="0" 
                    Text="编辑路线" 
+                   FontSize="24"
                    Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
                    Margin="0,0,0,20" 
                    HorizontalAlignment="Center"/>
@@ -145,29 +148,36 @@
             <Button Command="{Binding SaveCommand}" 
                     IsEnabled="{Binding IsValid}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    Margin="0,0,10,0"
-                    Width="100"
+                    Margin="0,0,16,0"
+                    Height="48"
+                    MinHeight="36"
+                    FontSize="{DynamicResource MaterialDesignFontSize}"
+                    Padding="16,8"
                     Foreground="{DynamicResource GlobalAccentBrush}">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="ContentSave" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="保存" VerticalAlignment="Center" FontSize="{Binding MainViewModel.FontSize}"/>
+                    <materialDesign:PackIcon Kind="ContentSave" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="保存"/>
                 </StackPanel>
             </Button>
             
             <Button Command="{Binding CancelCommand}" 
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    Width="100"
+                    Margin="0,0,16,0"
+                    Height="48"
+                    MinHeight="36"
+                    FontSize="{DynamicResource MaterialDesignFontSize}"
+                    Padding="16,8"
                     Foreground="{DynamicResource GlobalAccentBrush}">
                 <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Close" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="关闭" VerticalAlignment="Center" FontSize="{Binding MainViewModel.FontSize}"/>
+                    <materialDesign:PackIcon Kind="Close" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="关闭"/>
                 </StackPanel>
             </Button>
         </StackPanel>
 
         <!-- 加载指示器 -->
         <Grid Grid.Row="0" Grid.RowSpan="3" 
-              Background="#88000000" 
+              Background="#80000000" 
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ProgressBar IsIndeterminate="True" 
                          Style="{StaticResource MaterialDesignCircularProgressBar}" 

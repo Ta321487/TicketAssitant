@@ -95,34 +95,5 @@ namespace TA_WPF.Views
             _themeService.ApplyThemeToWindow(this, isDarkMode);
         }
 
-        /// <summary>
-        /// 处理车站建议列表选择改变事件
-        /// </summary>
-        private void StationSuggestionListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is ListBox listBox && listBox.SelectedItem != null)
-            {
-                try
-                {
-                    // 获取选中的车站
-                    var selectedStation = listBox.SelectedItem as StationInfo;
-                    if (selectedStation != null)
-                    {
-                        // 设置选中的车站
-                        _viewModel.SetSelectedStation(selectedStation);
-                    }
-
-                    // 关闭下拉框
-                    _viewModel.IsStationDropdownOpen = false;
-
-                    // 清除选择，避免下次打开时仍然选中
-                    listBox.SelectedItem = null;
-                }
-                catch (Exception ex)
-                {
-                    MessageBoxHelper.ShowError($"选择车站发生错误: {ex.Message}", "错误");
-                }
-            }
-        }
     }
 }

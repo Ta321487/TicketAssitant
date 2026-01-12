@@ -651,6 +651,7 @@
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                 <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
                 <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
             
             <!-- MaterialDesign数字输入框样式 -->
@@ -663,6 +664,7 @@
                 <Setter Property="materialDesign:TextFieldAssist.TextBoxViewMargin" Value="1,0,1,0"/>
                 <Setter Property="Padding" Value="8,8,4,8"/>
                 <Setter Property="materialDesign:HintAssist.FloatingOffset" Value="0,-18"/>
+                <!-- Foreground 继承自 MaterialDesignCustomTextBox -->
             </Style>
             
             <!-- MaterialDesign只读文本框样式 -->
@@ -671,12 +673,14 @@
                 <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="False"/>
                 <Setter Property="Background" Value="{DynamicResource MaterialDesignTextFieldBoxBackground}"/>
                 <Setter Property="Opacity" Value="0.8"/>
+                <!-- Foreground 继承自 MaterialDesignCustomTextBox -->
             </Style>
             
             <!-- MaterialDesign搜索框样式 -->
             <Style x:Key="MaterialDesignCustomSearchTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignCustomTextBox}">
                 <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="True"/>
                 <Setter Property="materialDesign:TextFieldAssist.PrefixText" Value="🔍"/>
+                <!-- Foreground 继承自 MaterialDesignCustomTextBox -->
                 <Setter Property="materialDesign:HintAssist.Hint" Value="搜索..."/>
             </Style>
             

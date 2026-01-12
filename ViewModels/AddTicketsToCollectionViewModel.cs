@@ -563,6 +563,7 @@ namespace TA_WPF.ViewModels
                 {
                     _departStationFilter = value;
                     OnPropertyChanged(nameof(DepartStationFilter));
+                    OnPropertyChanged(nameof(HasMultipleFilters));
                 }
             }
         }
@@ -579,6 +580,7 @@ namespace TA_WPF.ViewModels
                 {
                     _trainNoFilter = value;
                     OnPropertyChanged(nameof(TrainNoFilter));
+                    OnPropertyChanged(nameof(HasMultipleFilters));
                 }
             }
         }
@@ -595,6 +597,7 @@ namespace TA_WPF.ViewModels
                 {
                     _arriveStationFilter = value;
                     OnPropertyChanged(nameof(ArriveStationFilter));
+                    OnPropertyChanged(nameof(HasMultipleFilters));
                 }
             }
         }
@@ -622,6 +625,7 @@ namespace TA_WPF.ViewModels
                     }
 
                     OnPropertyChanged(nameof(SelectedYearOption));
+                    OnPropertyChanged(nameof(HasMultipleFilters));
                 }
             }
         }
@@ -779,6 +783,35 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(IsOrCondition));
                     OnPropertyChanged(nameof(IsAndCondition));
                 }
+            }
+        }
+
+        /// <summary>
+        /// 计算激活的筛选条件数量
+        /// </summary>
+        private int GetActiveFilterCount()
+        {
+            int count = 0;
+            if (!string.IsNullOrWhiteSpace(_departStationFilter))
+                count++;
+            if (!string.IsNullOrWhiteSpace(_arriveStationFilter))
+                count++;
+            if (!string.IsNullOrWhiteSpace(_trainNoFilter))
+                count++;
+            if (_selectedYearOption != null && _selectedYearOption.Year.HasValue)
+                count++;
+            return count;
+        }
+
+        /// <summary>
+        /// 是否有多个筛选条件（用于控制AND/OR选项的可用性）
+        /// </summary>
+        public bool HasMultipleFilters
+        {
+            get
+            {
+                int count = GetActiveFilterCount();
+                return count > 1;
             }
         }
 
@@ -1185,6 +1218,7 @@ namespace TA_WPF.ViewModels
                 // 使用对应的FilteredTrainRideInfoCount方法
                 int count = await _databaseService.GetFilteredTrainRideInfoCountAsync(
                     DepartStationFilter,
+                    ArriveStationFilter,
                     TrainNoFilter,
                     SelectedYearOption?.Year,  // 使用SelectedYearOption中的Year属性
                     null, // 传入null表示不考虑座位位置条件
@@ -1197,6 +1231,7 @@ namespace TA_WPF.ViewModels
                     var allTickets = await _databaseService.GetFilteredTrainRideInfosAsync(
                         1, int.MaxValue,
                         DepartStationFilter,
+                        ArriveStationFilter,
                         TrainNoFilter,
                         SelectedYearOption?.Year,  // 使用SelectedYearOption中的Year属性
                         null, // 传入null表示不考虑座位位置条件
@@ -1228,6 +1263,7 @@ namespace TA_WPF.ViewModels
                     _paginationViewModel.CurrentPage,
                     _paginationViewModel.PageSize,
                     DepartStationFilter,
+                    ArriveStationFilter,
                     TrainNoFilter,
                     SelectedYearOption?.Year,  // 使用SelectedYearOption中的Year属性
                     null, // 传入null表示不考虑座位位置条件
@@ -1249,6 +1285,7 @@ namespace TA_WPF.ViewModels
                             1,
                             int.MaxValue,
                             DepartStationFilter,
+                            ArriveStationFilter,
                             TrainNoFilter,
                             SelectedYearOption?.Year,  // 使用SelectedYearOption中的Year属性
                             null, // 传入null表示不考虑座位位置条件

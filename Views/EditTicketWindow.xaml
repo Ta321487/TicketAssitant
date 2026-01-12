@@ -35,6 +35,7 @@
                 <Setter Property="FontWeight" Value="Medium"/>
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="FontSize" Value="{DynamicResource MaterialDesignFontSize}"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             </Style>
 
             <!-- 文本框样式 -->
@@ -43,7 +44,7 @@
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <!-- Foreground 继承自 MaterialDesignCustomTextBox -->
             </Style>
 
             <!-- 数字文本框样式 -->
@@ -52,7 +53,7 @@
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <!-- Foreground 继承自 MaterialDesignCustomNumberTextBox -> MaterialDesignCustomTextBox -->
             </Style>
 
             <!-- 搜索文本框样式 -->
@@ -61,7 +62,7 @@
                 <Setter Property="FontFamily" Value="Microsoft YaHei"/>
                 <Setter Property="Height" Value="Auto"/>
                 <Setter Property="MinHeight" Value="45"/>
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <!-- Foreground 继承自 MaterialDesignCustomTextBox -->
             </Style>
 
             <!-- 下拉框样式 -->

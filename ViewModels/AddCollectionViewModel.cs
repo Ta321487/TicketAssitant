@@ -25,6 +25,7 @@ namespace TA_WPF.ViewModels
         private string _coverImagePath;
         private int _importance;
         private bool _isLoading;
+        private double _fontSize;
 
         /// <summary>
         /// 构造函数
@@ -36,6 +37,14 @@ namespace TA_WPF.ViewModels
             _databaseService = databaseService;
             _mainViewModel = mainViewModel;
             _importance = 3; // 默认重要性为3星
+
+            // 从应用程序资源获取当前字体大小
+            if (Application.Current?.Resources != null &&
+                Application.Current.Resources.Contains("MaterialDesignFontSize"))
+            {
+                _fontSize = (double)Application.Current.Resources["MaterialDesignFontSize"];
+                OnPropertyChanged(nameof(FontSize));
+            }
 
             // 记录初始化的评分值
             Debug.WriteLine($"AddCollectionViewModel初始化时的评分值: {_importance}");
@@ -76,6 +85,22 @@ namespace TA_WPF.ViewModels
         /// 主视图模型，用于访问全局设置（如字号）
         /// </summary>
         public MainViewModel MainViewModel => _mainViewModel;
+
+        /// <summary>
+        /// 字体大小
+        /// </summary>
+        public double FontSize
+        {
+            get => _fontSize;
+            set
+            {
+                if (_fontSize != value)
+                {
+                    _fontSize = value;
+                    OnPropertyChanged(nameof(FontSize));
+                }
+            }
+        }
 
         /// <summary>
         /// 收藏夹名称

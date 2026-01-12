@@ -217,12 +217,39 @@ namespace TA_WPF.ViewModels
                     return;
                 }
 
+                // 检查数据一致性
+                StatusMessage = "正在检查数据一致性...";
+                var (officialCount, databaseCount, missingInDatabase, extraInDatabase, extraStationCodes, missingStationCodes) = 
+                    await _stationImportService.CheckDataConsistencyAsync();
+
+                // 构建确认消息
+                string confirmMessage = $"从12306获取到{TotalStations}个车站信息。\n\n";
+                confirmMessage += $"数据统计：\n";
+                confirmMessage += $"  官方车站数：{officialCount}\n";
+                confirmMessage += $"  数据库当前数：{databaseCount}\n";
+                
+                if (extraInDatabase > 0)
+                {
+                    confirmMessage += $"  数据库中有{extraInDatabase}个车站不在官方数据中\n";
+                }
+                
+                if (missingInDatabase > 0)
+                {
+                    confirmMessage += $"  官方数据中有{missingInDatabase}个车站不在数据库中\n";
+                }
+                
+                confirmMessage += $"\n是否导入并同步数据？\n";
+                if (extraInDatabase > 0)
+                {
+                    confirmMessage += $"（将删除{extraInDatabase}个不在官方数据中的车站）";
+                }
+
                 // 确认导入
                 if (TotalStations > 0)
                 {
                     var confirmResult = MessageBoxHelper.ShowConfirmation(
-                        $"从12306获取到{TotalStations}个车站信息，是否导入？",
-                        "确认导入");
+                        confirmMessage,
+                        "确认导入并同步");
 
                     if (confirmResult != MessageBoxResult.Yes)
                     {
@@ -250,13 +277,42 @@ namespace TA_WPF.ViewModels
                     _importedStationIds.Clear();
                     _importedStationIds.AddRange(importedIds);
 
+                    // 如果数据库中有不在官方数据中的车站，进行同步删除
+                    int deletedCount = 0;
+                    if (extraInDatabase > 0)
+                    {
+                        StatusMessage = $"正在同步数据，删除{extraInDatabase}个不在官方数据中的车站...";
+                        var (deleted, deletedStationNames) = await _stationImportService.SyncWithOfficialDataAsync(
+                            UpdateProgress,
+                            _cancellationTokenSource.Token);
+                        
+                        deletedCount = deleted;
+                        if (deletedCount > 0)
+                        {
+                            LogHelper.LogInfo($"已删除{deletedCount}个不在12306官方数据中的车站");
+                        }
+                    }
+
+                    // 标记数据已变更（只要有导入成功的车站或删除的车站）
+                    _dataChanged = imported > 0 || deletedCount > 0;
+                    
+                    // 如果数据已变更，立即触发刷新回调，更新总记录数
+                    if (_dataChanged && DataRefreshCallback != null)
+                    {
+                        try
+                        {
+                            DataRefreshCallback.Invoke();
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.LogWarning($"触发数据刷新回调时出错: {ex.Message}");
+                        }
+                    }
+
                     // 显示导入结果
                     StatusMessage = "导入完成！请点击【关闭】按钮返回。";
                     HasImportResult = true;
                     ShouldGuideToClose = true;
-
-                    // 标记数据已变更（只要有导入成功的车站）
-                    _dataChanged = imported > 0;
 
                     // 保存导入的车站列表，便于后续操作
                     foreach (var stationName in newStations)
@@ -267,6 +323,10 @@ namespace TA_WPF.ViewModels
                             _importedStations.Add(station);
                         }
                     }
+
+                    // 再次检查数据一致性，获取最终统计
+                    var (finalOfficialCount, finalDatabaseCount, finalMissing, finalExtra, _, _) = 
+                        await _stationImportService.CheckDataConsistencyAsync();
 
                     string newStationsText = string.Empty;
                     if (imported > 0 && newStations.Count > 0)
@@ -282,9 +342,19 @@ namespace TA_WPF.ViewModels
                         }
                     }
 
+                    string syncText = "";
+                    if (deletedCount > 0)
+                    {
+                        syncText = $"\n已删除：{deletedCount}个不在官方数据中的车站";
+                    }
+
                     ImportSummary = $"总共：{total}个车站\n" +
                                     $"新增：{imported}个车站\n" +
                                     $"已存在：{skipped}个车站" +
+                                    syncText +
+                                    $"\n\n同步后统计：\n" +
+                                    $"  官方车站数：{finalOfficialCount}\n" +
+                                    $"  数据库车站数：{finalDatabaseCount}" +
                                     newStationsText;
                 }
                 else

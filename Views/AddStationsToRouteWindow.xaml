@@ -29,6 +29,14 @@
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:BooleanToThemeConverter x:Key="BooleanToThemeConverter" />
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer">
+                <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+                <Style.Triggers>
+                    <Trigger Property="ComputedVerticalScrollBarVisibility" Value="Collapsed">
+                        <Setter Property="Padding" Value="0"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -68,27 +76,40 @@
                         </TextBox>
                         <Popup 
                             IsOpen="{Binding IsStationDropdownOpen}" 
-                            PlacementTarget="{Binding ElementName=StationSearchTextBox}" 
-                            Placement="Bottom" 
-                            Width="{Binding ActualWidth, ElementName=StationSearchTextBox}"
-                            VerticalOffset="5"
+                            PlacementTarget="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
+                            Width="{Binding ActualWidth, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Grid}}"
                             StaysOpen="False">
-                            <materialDesign:Card UniformCornerRadius="4" Padding="0">
-                                <ListBox 
-                                    x:Name="StationSuggestionListBox"
-                                    ItemsSource="{Binding StationSuggestions}" 
-                                    MaxHeight="200"
-                                    Background="{DynamicResource MaterialDesignPaper}"
-                                    SelectionChanged="StationSuggestionListBox_SelectionChanged">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock 
-                                                Text="{Binding StationName}" 
-                                                Padding="8,4" />
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </materialDesign:Card>
+                            <Border Background="{DynamicResource MaterialDesignPaper}" 
+                                    BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                                    BorderThickness="1" 
+                                    MaxHeight="200">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                            Style="{StaticResource AutoHideScrollViewerStyle}">
+                                    <ItemsControl ItemsSource="{Binding StationSuggestions}"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                KeyboardNavigation.TabNavigation="Cycle">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Command="{Binding DataContext.SelectStationCommand, 
+                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{Binding StationName}"
+                                                        HorizontalContentAlignment="Center"
+                                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                                        Width="{Binding ActualWidth, 
+                                                                RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                AncestorType=ScrollViewer}}"
+                                                        FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
                         </Popup>
                     </Grid>
 

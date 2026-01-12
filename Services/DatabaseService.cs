@@ -650,6 +650,7 @@ namespace TA_WPF.Services
         /// 根据筛选条件获取车票总数
         /// </summary>
         /// <param name="departStation">出发车站</param>
+        /// <param name="arriveStation">到达车站</param>
         /// <param name="trainNo">车次号</param>
         /// <param name="year">出发年份</param>
         /// <param name="seatPosition">座位位置类型</param>
@@ -657,6 +658,7 @@ namespace TA_WPF.Services
         /// <returns>符合条件的车票总数</returns>
         public async Task<int> GetFilteredTrainRideInfoCountAsync(
             string departStation,
+            string arriveStation,
             string trainNo,
             int? year,
             SeatPositionType? seatPosition,
@@ -680,6 +682,7 @@ namespace TA_WPF.Services
                     // 检查是否有任何筛选条件
                     bool hasAnyCondition =
                         !string.IsNullOrWhiteSpace(departStation) ||
+                        !string.IsNullOrWhiteSpace(arriveStation) ||
                         !string.IsNullOrWhiteSpace(trainNo) ||
                         year.HasValue ||
                         departDate.HasValue ||
@@ -691,10 +694,12 @@ namespace TA_WPF.Services
                         conditions.Add("depart_station LIKE @departStation");
                         parameters.Add("@departStation", $"%{departStation}%");
                     }
-                    else if (isAndCondition && hasAnyCondition && (!string.IsNullOrWhiteSpace(trainNo) || year.HasValue || departDate.HasValue || (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
+
+                    // 添加到达站筛选条件
+                    if (!string.IsNullOrWhiteSpace(arriveStation))
                     {
-                        // 只有在AND模式且至少有一个其他条件时，才添加IS NULL限制
-                        conditions.Add("depart_station IS NULL");
+                        conditions.Add("arrive_station LIKE @arriveStation");
+                        parameters.Add("@arriveStation", $"%{arriveStation}%");
                     }
 
                     // 添加车次号筛选条件
@@ -703,24 +708,12 @@ namespace TA_WPF.Services
                         conditions.Add("train_no LIKE @trainNo");
                         parameters.Add("@trainNo", $"%{trainNo}%");
                     }
-                    else if (isAndCondition && hasAnyCondition && (!string.IsNullOrWhiteSpace(departStation) || year.HasValue || departDate.HasValue || (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
-                    {
-                        // 只有在AND模式且至少有一个其他条件时，才添加IS NULL限制
-                        conditions.Add("train_no IS NULL");
-                    }
 
                     // 添加年份筛选条件
                     if (year.HasValue)
                     {
                         conditions.Add("YEAR(depart_date) = @year");
                         parameters.Add("@year", year.Value);
-                    }
-                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue &&
-                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) ||
-                              (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
-                    {
-                        // 只有在AND模式且至少有一个其他条件且没有指定具体日期时，才添加IS NULL限制
-                        conditions.Add("depart_date IS NULL");
                     }
 
                     // 添加出发日期筛选条件
@@ -745,12 +738,6 @@ namespace TA_WPF.Services
                         {
                             conditions.Add("(seat_no LIKE '%B' OR seat_no LIKE '%E')");
                         }
-                    }
-                    else if (isAndCondition && hasAnyCondition && seatPosition.HasValue && seatPosition.Value == SeatPositionType.None &&
-                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) || year.HasValue || departDate.HasValue))
-                    {
-                        // 只有在AND模式且至少有一个其他条件且明确指定了None时，才添加IS NULL限制
-                        conditions.Add("seat_no IS NULL");
                     }
 
                     // 构建WHERE子句（如果有条件）
@@ -800,6 +787,7 @@ namespace TA_WPF.Services
         /// <param name="pageNumber">页码</param>
         /// <param name="pageSize">每页记录数</param>
         /// <param name="departStation">出发车站</param>
+        /// <param name="arriveStation">到达车站</param>
         /// <param name="trainNo">车次号</param>
         /// <param name="year">出发年份</param>
         /// <param name="seatPosition">座位位置类型</param>
@@ -809,6 +797,7 @@ namespace TA_WPF.Services
             int pageNumber,
             int pageSize,
             string departStation,
+            string arriveStation,
             string trainNo,
             int? year,
             SeatPositionType? seatPosition,
@@ -832,6 +821,7 @@ namespace TA_WPF.Services
                     // 检查是否有任何筛选条件
                     bool hasAnyCondition =
                         !string.IsNullOrWhiteSpace(departStation) ||
+                        !string.IsNullOrWhiteSpace(arriveStation) ||
                         !string.IsNullOrWhiteSpace(trainNo) ||
                         year.HasValue ||
                         departDate.HasValue ||
@@ -843,10 +833,12 @@ namespace TA_WPF.Services
                         conditions.Add("depart_station LIKE @departStation");
                         parameters.Add("@departStation", $"%{departStation}%");
                     }
-                    else if (isAndCondition && hasAnyCondition && (!string.IsNullOrWhiteSpace(trainNo) || year.HasValue || departDate.HasValue || (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
+
+                    // 添加到达站筛选条件
+                    if (!string.IsNullOrWhiteSpace(arriveStation))
                     {
-                        // 只有在AND模式且至少有一个其他条件时，才添加IS NULL限制
-                        conditions.Add("depart_station IS NULL");
+                        conditions.Add("arrive_station LIKE @arriveStation");
+                        parameters.Add("@arriveStation", $"%{arriveStation}%");
                     }
 
                     // 添加车次号筛选条件
@@ -855,24 +847,12 @@ namespace TA_WPF.Services
                         conditions.Add("train_no LIKE @trainNo");
                         parameters.Add("@trainNo", $"%{trainNo}%");
                     }
-                    else if (isAndCondition && hasAnyCondition && (!string.IsNullOrWhiteSpace(departStation) || year.HasValue || departDate.HasValue || (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
-                    {
-                        // 只有在AND模式且至少有一个其他条件时，才添加IS NULL限制
-                        conditions.Add("train_no IS NULL");
-                    }
 
                     // 添加年份筛选条件
                     if (year.HasValue)
                     {
                         conditions.Add("YEAR(depart_date) = @year");
                         parameters.Add("@year", year.Value);
-                    }
-                    else if (isAndCondition && hasAnyCondition && !departDate.HasValue &&
-                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) ||
-                              (seatPosition.HasValue && seatPosition.Value != SeatPositionType.None)))
-                    {
-                        // 只有在AND模式且至少有一个其他条件且没有指定具体日期时，才添加IS NULL限制
-                        conditions.Add("depart_date IS NULL");
                     }
 
                     // 添加出发日期筛选条件
@@ -897,12 +877,6 @@ namespace TA_WPF.Services
                         {
                             conditions.Add("(seat_no LIKE '%B' OR seat_no LIKE '%E')");
                         }
-                    }
-                    else if (isAndCondition && hasAnyCondition && seatPosition.HasValue && seatPosition.Value == SeatPositionType.None &&
-                             (!string.IsNullOrWhiteSpace(departStation) || !string.IsNullOrWhiteSpace(trainNo) || year.HasValue || departDate.HasValue))
-                    {
-                        // 只有在AND模式且至少有一个其他条件且明确指定了None时，才添加IS NULL限制
-                        conditions.Add("seat_no IS NULL");
                     }
 
                     // 构建WHERE子句（如果有条件）
@@ -3592,8 +3566,9 @@ namespace TA_WPF.Services
             }
             catch (Exception ex)
             {
+                // 记录日志后向上抛出，让调用方可以显示具体错误原因
                 LogHelper.LogError($"添加车站到路线失败: {ex.Message}", ex);
-                return false;
+                throw;
             }
         }
 

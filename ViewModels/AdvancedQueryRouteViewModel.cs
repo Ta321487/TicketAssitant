@@ -123,6 +123,7 @@ namespace TA_WPF.ViewModels
                 {
                     _routeNameFilter = value;
                     OnPropertyChanged(nameof(RouteNameFilter));
+                    OnPropertyChanged(nameof(HasMultipleFilters));
                     UpdateQueryButtonText();
 
                     // 输入变化时搜索匹配的路线名称
@@ -151,6 +152,7 @@ namespace TA_WPF.ViewModels
                     OnPropertyChanged(nameof(IsDistance3Selected));
                     OnPropertyChanged(nameof(IsDistance4Selected));
                     OnPropertyChanged(nameof(IsDistance5Selected));
+                    OnPropertyChanged(nameof(HasMultipleFilters));
                     UpdateQueryButtonText();
                 }
             }
@@ -248,6 +250,7 @@ namespace TA_WPF.ViewModels
                 {
                     _isFavoriteChecked = value;
                     OnPropertyChanged(nameof(IsFavoriteChecked));
+                    OnPropertyChanged(nameof(HasMultipleFilters));
                     UpdateQueryButtonText();
                 }
             }
@@ -410,6 +413,33 @@ namespace TA_WPF.ViewModels
             return !string.IsNullOrWhiteSpace(RouteNameFilter) ||
                    SelectedDistanceRange != DistanceRangeType.None ||
                    IsFavoriteChecked;
+        }
+
+        /// <summary>
+        /// 计算激活的筛选条件数量
+        /// </summary>
+        private int GetActiveFilterCount()
+        {
+            int count = 0;
+            if (!string.IsNullOrWhiteSpace(_routeNameFilter))
+                count++;
+            if (_selectedDistanceRange != DistanceRangeType.None)
+                count++;
+            if (_isFavoriteChecked)
+                count++;
+            return count;
+        }
+
+        /// <summary>
+        /// 是否有多个筛选条件（用于控制AND/OR选项的可用性）
+        /// </summary>
+        public bool HasMultipleFilters
+        {
+            get
+            {
+                int count = GetActiveFilterCount();
+                return count > 1;
+            }
         }
 
         /// <summary>

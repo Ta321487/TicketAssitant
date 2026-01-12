@@ -30,6 +30,7 @@
             
             <!-- 增强的MaterialDesign输入框样式 - 改善深色模式下的可见性 -->
             <Style x:Key="EnhancedMaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                 <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource GlobalAccentBrush}" />
                 <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource GlobalAccentBrush}" />
                 <Setter Property="FontSize" Value="{Binding DataContext.FontSize, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
@@ -74,6 +75,11 @@
                         <DropShadowEffect ShadowDepth="1" BlurRadius="3" Opacity="0.3" Color="Black" />
                     </Setter.Value>
                 </Setter>
+            </Style>
+            
+            <!-- AutoHideScrollViewer样式 -->
+            <Style x:Key="AutoHideScrollViewerStyle" TargetType="ScrollViewer">
+                <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             </Style>
 
             <!-- 添加DataTrigger来支持动态显示/隐藏的动画 -->
@@ -178,17 +184,28 @@
                                     BorderBrush="{DynamicResource MaterialDesignDivider}" 
                                     BorderThickness="1" 
                                     MaxHeight="200">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <ItemsControl ItemsSource="{Binding StationSuggestions}">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                            Style="{StaticResource AutoHideScrollViewerStyle}">
+                                    <ItemsControl ItemsSource="{Binding StationSuggestions}"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                KeyboardNavigation.TabNavigation="Cycle">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Button Command="{Binding DataContext.SelectStationCommand, 
                                                                 RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}"
                                                         Content="{Binding StationName}"
-                                                        HorizontalContentAlignment="Left"
-                                                        HorizontalAlignment="Stretch"
-                                                        Style="{StaticResource MaterialDesignFlatButton}"/>
+                                                        HorizontalContentAlignment="Center"
+                                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                                        Width="{Binding ActualWidth, 
+                                                                RelativeSource={RelativeSource Mode=FindAncestor, 
+                                                                AncestorType=ScrollViewer}}"
+                                                        FocusVisualStyle="{DynamicResource MaterialDesignFocusVisual}"/>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>

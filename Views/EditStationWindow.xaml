@@ -7,9 +7,9 @@
         xmlns:local="clr-namespace:TA_WPF.Views"
         mc:Ignorable="d"
         Title="{Binding WindowTitle}"
-        Width="600" Height="600"
-        WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        Width="800" Height="750"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanMinimize"
         FontFamily="Microsoft YaHei UI"
         FontSize="{Binding FontSize}"
         Style="{StaticResource MaterialDesignWindow}"
@@ -18,14 +18,17 @@
         materialDesign:ThemeAssist.Theme="{Binding IsDarkMode, Converter={StaticResource BooleanToThemeConverter}}">
 
     <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.DeepPurple.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Lime.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        
+        <!-- 表单标签样式 -->
+        <Style x:Key="FormLabelStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,16,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Width" Value="80"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+        </Style>
     </Window.Resources>
 
     <materialDesign:DialogHost>
@@ -46,109 +49,159 @@
 
             <!-- 主内容 -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Orientation="Vertical" Margin="0,10">
+                <Grid Margin="0,10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+
+
                     <!-- 车站名称 -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="车站名称:" Style="{StaticResource FormLabelStyle}"/>
                     <TextBox 
-                        Margin="0,5,0,15"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        Grid.Row="0" Grid.Column="1"
+                        Margin="0,8,0,8"
+                        Style="{StaticResource MaterialDesignCustomTextBox}"
                         materialDesign:HintAssist.Hint="车站名称"
                         Text="{Binding StationName, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
-                        VerticalAlignment="Center" />
+                        VerticalAlignment="Center" 
+                        Height="Auto"
+                        MinHeight="45"/>
 
                     <!-- 省份 -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="省份:" Style="{StaticResource FormLabelStyle}"/>
                     <TextBox 
-                        Margin="0,5,0,15"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        Grid.Row="1" Grid.Column="1"
+                        Margin="0,8,0,8"
+                        Style="{StaticResource MaterialDesignCustomTextBox}"
                         materialDesign:HintAssist.Hint="省份"
                         Text="{Binding Province, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
-                        VerticalAlignment="Center" />
+                        VerticalAlignment="Center" 
+                        Height="Auto"
+                        MinHeight="45"/>
 
                     <!-- 城市 -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="城市:" Style="{StaticResource FormLabelStyle}"/>
                     <TextBox 
-                        Margin="0,5,0,15"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        Grid.Row="2" Grid.Column="1"
+                        Margin="0,8,0,8"
+                        Style="{StaticResource MaterialDesignCustomTextBox}"
                         materialDesign:HintAssist.Hint="城市"
                         Text="{Binding City, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
-                        VerticalAlignment="Center" />
+                        VerticalAlignment="Center" 
+                        Height="Auto"
+                        MinHeight="45"/>
 
-                    <!-- 区/县 -->
+                    <!-- 区县 -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="区县:" Style="{StaticResource FormLabelStyle}"/>
                     <TextBox 
-                        Margin="0,5,0,15"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                        materialDesign:HintAssist.Hint="区/县"
+                        Grid.Row="3" Grid.Column="1"
+                        Margin="0,8,0,8"
+                        Style="{StaticResource MaterialDesignCustomTextBox}"
+                        materialDesign:HintAssist.Hint="区县"
                         Text="{Binding District, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
-                        VerticalAlignment="Center" />
+                        VerticalAlignment="Center" 
+                        Height="Auto"
+                        MinHeight="45"/>
 
-                    <!-- 经度和纬度 (放在同一行) -->
-                    <Grid Margin="0,5,0,15">
+                    <!-- 经度和纬度 -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="坐标:" Style="{StaticResource FormLabelStyle}"/>
+                    <Grid Grid.Row="4" Grid.Column="1" Margin="0,8,0,8">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        
-                        <!-- 经度 -->
                         <TextBox 
                             Grid.Column="0"
-                            Margin="0,0,5,0"
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource MaterialDesignCustomTextBox}"
                             materialDesign:HintAssist.Hint="经度"
                             Text="{Binding Longitude, UpdateSourceTrigger=PropertyChanged}"
                             materialDesign:TextFieldAssist.HasClearButton="True"
-                            VerticalAlignment="Center" />
-                            
-                        <!-- 纬度 -->
+                            VerticalAlignment="Center" 
+                            Height="Auto"
+                            MinHeight="45"/>
                         <TextBox 
                             Grid.Column="1"
-                            Margin="5,0,0,0"
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            Margin="10,0,0,0"
+                            Style="{StaticResource MaterialDesignCustomTextBox}"
                             materialDesign:HintAssist.Hint="纬度"
                             Text="{Binding Latitude, UpdateSourceTrigger=PropertyChanged}"
                             materialDesign:TextFieldAssist.HasClearButton="True"
-                            VerticalAlignment="Center" />
+                            VerticalAlignment="Center" 
+                            Height="Auto"
+                            MinHeight="45"/>
                     </Grid>
 
                     <!-- 车站拼音 -->
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="车站拼音:" Style="{StaticResource FormLabelStyle}"/>
                     <TextBox 
-                        Margin="0,5,0,15"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        Grid.Row="5" Grid.Column="1"
+                        Margin="0,8,0,8"
+                        Style="{StaticResource MaterialDesignCustomTextBox}"
                         materialDesign:HintAssist.Hint="车站拼音"
                         Text="{Binding StationPinyin, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
-                        VerticalAlignment="Center" />
+                        VerticalAlignment="Center" 
+                        Height="Auto"
+                        MinHeight="45"/>
 
                     <!-- 车站代码 -->
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="车站代码:" Style="{StaticResource FormLabelStyle}"/>
                     <TextBox 
-                        Margin="0,5,0,15"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        Grid.Row="6" Grid.Column="1"
+                        Margin="0,8,0,8"
+                        Style="{StaticResource MaterialDesignCustomTextBox}"
                         materialDesign:HintAssist.Hint="车站代码"
                         Text="{Binding StationCode, UpdateSourceTrigger=PropertyChanged}"
                         materialDesign:TextFieldAssist.HasClearButton="True"
-                        VerticalAlignment="Center" />
+                        VerticalAlignment="Center" 
+                        Height="Auto"
+                        MinHeight="45"/>
                         
                     <!-- 车站等级 -->
+                    <TextBlock Grid.Row="7" Grid.Column="0" Text="车站等级:" Style="{StaticResource FormLabelStyle}"/>
                     <ComboBox 
-                        Margin="0,5,0,15"
-                        Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                        Grid.Row="7" Grid.Column="1"
+                        Margin="0,8,0,8"
+                        Style="{StaticResource MaterialDesignComboBox}"
                         materialDesign:HintAssist.Hint="车站等级"
                         ItemsSource="{Binding StationLevels}"
                         SelectedValue="{Binding StationLevel}"
                         SelectedValuePath="Key"
                         DisplayMemberPath="Value"
-                        VerticalAlignment="Center" />
+                        VerticalAlignment="Center" 
+                        Height="Auto"
+                        MinHeight="45"/>
                         
                     <!-- 所属铁路局 (带自动完成功能) -->
-                    <Grid Margin="0,5,0,15">
+                    <TextBlock Grid.Row="8" Grid.Column="0" Text="所属铁路局:" Style="{StaticResource FormLabelStyle}"/>
+                    <Grid Grid.Row="8" Grid.Column="1" Margin="0,8,0,8">
                         <TextBox
                             x:Name="RailwayBureauTextBox"
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            Style="{StaticResource MaterialDesignCustomTextBox}"
                             materialDesign:HintAssist.Hint="所属铁路局（输入可联想）"
                             Text="{Binding RailwayBureauInput, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                             materialDesign:TextFieldAssist.HasClearButton="True"
                             VerticalAlignment="Center"
+                            Height="Auto"
+                            MinHeight="45"
                             materialDesign:TextFieldAssist.TextBoxViewMargin="0,0,0,0">
                             <TextBox.InputBindings>
                                 <KeyBinding Key="Return" 
@@ -173,32 +226,32 @@
                                         <DataTemplate>
                                             <TextBlock 
                                                 Text="{Binding}" 
-                                                Padding="8,4" />
+                                                Padding="8,4"
+                                                Foreground="{DynamicResource MaterialDesignBody}"/>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
                             </materialDesign:Card>
                         </Popup>
                     </Grid>
-                </StackPanel>
+                </Grid>
             </ScrollViewer>
 
             <!-- 底部按钮区域 -->
-            <Grid Grid.Row="2" Margin="0,20,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <!-- 获取车站信息按钮 - 放在左侧 -->
+            <StackPanel Grid.Row="2" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right" 
+                        Margin="0,20,0,0">
+                <!-- 获取车站信息按钮 -->
                 <Button 
-                    Grid.Column="0"
                     Command="{Binding GetStationInfoCommand}"
-                    Margin="0,0,10,0"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    Foreground="{DynamicResource PrimaryHueMidBrush}"
-                    HorizontalAlignment="Left"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
+                    Margin="0,0,16,0"
+                    Height="48"
+                    MinHeight="36"
+                    FontSize="{DynamicResource MaterialDesignFontSize}"
+                    Padding="16,8"
                     ToolTip="通过第三方服务获取车站详细信息">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="DatabaseSearch" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -208,13 +261,14 @@
 
                 <!-- 取消按钮 -->
                 <Button 
-                    Grid.Column="1"
                     Command="{Binding CancelCommand}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    Foreground="{DynamicResource PrimaryHueMidBrush}"
-                    Margin="0,0,10,0"
-                    Height="40"
-                    Width="100"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
+                    Margin="0,0,16,0"
+                    Height="48"
+                    MinHeight="36"
+                    FontSize="{DynamicResource MaterialDesignFontSize}"
+                    Padding="16,8"
                     ToolTip="取消修改并关闭窗口">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Close" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -224,20 +278,21 @@
 
                 <!-- 修改按钮 -->
                 <Button 
-                    Grid.Column="2"
                     Command="{Binding SaveCommand}"
                     IsEnabled="{Binding CanSaveStation}"
                     Style="{StaticResource MaterialDesignFlatButton}"
-                    Foreground="{DynamicResource PrimaryHueMidBrush}"
-                    Height="40"
-                    Width="100"
+                    Foreground="{DynamicResource GlobalAccentBrush}"
+                    Height="48"
+                    MinHeight="36"
+                    FontSize="{DynamicResource MaterialDesignFontSize}"
+                    Padding="16,8"
                     ToolTip="保存修改内容">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="ContentSave" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBlock Text="修改"/>
                     </StackPanel>
                 </Button>
-            </Grid>
+            </StackPanel>
 
             <!-- 加载指示器 -->
             <Grid Grid.Row="0" Grid.RowSpan="3" 

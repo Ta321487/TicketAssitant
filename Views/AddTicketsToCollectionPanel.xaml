@@ -27,6 +27,7 @@
             
             <!-- 增强的MaterialDesign输入框样式 - 改善深色模式下的可见性 -->
             <Style x:Key="EnhancedMaterialDesignOutlinedTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
                 <Setter Property="materialDesign:HintAssist.Foreground" Value="{DynamicResource PrimaryHueMidBrush}" />
                 <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="{DynamicResource PrimaryHueMidBrush}" />
                 <Setter Property="FontSize" Value="{Binding MainViewModel.FontSize}" />
@@ -270,8 +271,8 @@
                 
                 <!-- 搜索条件连接方式 -->
                 <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="5">
-                    <RadioButton Content="AND" IsChecked="{Binding IsAndCondition}" Margin="0,0,10,0" />
-                    <RadioButton Content="OR" IsChecked="{Binding IsOrCondition}" />
+                    <RadioButton Content="AND" IsChecked="{Binding IsAndCondition}" IsEnabled="{Binding HasMultipleFilters}" Margin="0,0,10,0" />
+                    <RadioButton Content="OR" IsChecked="{Binding IsOrCondition}" IsEnabled="{Binding HasMultipleFilters}" />
                 </StackPanel>
                 
                 <!-- 排除已有车票 -->

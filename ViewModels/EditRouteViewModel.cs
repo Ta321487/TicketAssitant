@@ -27,6 +27,7 @@ namespace TA_WPF.ViewModels
         private string _totalDistance;
         private bool _isFavorite;
         private bool _isLoading;
+        private double _fontSize;
 
         /// <summary>
         /// 构造函数
@@ -64,6 +65,14 @@ namespace TA_WPF.ViewModels
             Debug.WriteLine($"ViewModel中的图片数据: {(_coverImage != null ? $"{_coverImage.Length}字节" : "空")}");
             Debug.WriteLine($"HasCoverImage值: {HasCoverImage}");
 
+            // 从应用程序资源获取当前字体大小
+            if (Application.Current?.Resources != null &&
+                Application.Current.Resources.Contains("MaterialDesignFontSize"))
+            {
+                _fontSize = (double)Application.Current.Resources["MaterialDesignFontSize"];
+                OnPropertyChanged(nameof(FontSize));
+            }
+
             // 初始化命令
             SaveCommand = new RelayCommand(SaveRoute, CanSaveRoute);
             CancelCommand = new RelayCommand(CancelOperation);
@@ -81,6 +90,22 @@ namespace TA_WPF.ViewModels
         /// 主视图模型，用于访问全局设置（如字号）
         /// </summary>
         public MainViewModel MainViewModel => _mainViewModel;
+
+        /// <summary>
+        /// 字体大小
+        /// </summary>
+        public double FontSize
+        {
+            get => _fontSize;
+            set
+            {
+                if (_fontSize != value)
+                {
+                    _fontSize = value;
+                    OnPropertyChanged(nameof(FontSize));
+                }
+            }
+        }
 
         /// <summary>
         /// 路线ID
